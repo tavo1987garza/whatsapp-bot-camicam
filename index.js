@@ -77,11 +77,19 @@ app.post('/webhook', async (req, res) => {
   const from = message.from;
   const userMessage = message?.text?.body.toLowerCase() || '';
 
+  // 📌 Detectar respuestas de BOTONES INTERACTIVOS
+  const buttonReply = message?.interactive?.button_reply?.id;
+  if (buttonReply) {
+    userMessage = buttonReply.toLowerCase(); // Sobrescribimos userMessage con la opción del botón
+  }
+
   try {
     if (["hola", "info", "precio", "información", "empezar"].some((word) => userMessage.includes(word))) {
       await sendWhatsAppButtons(from);
-    } else if (userMessage.includes('xv') || userMessage.includes('boda') || userMessage.includes('evento')) {
-      const tipoEvento = userMessage.includes("xv") ? "xv" : userMessage.includes("boda") ? "boda" : "otro";
+    } else if (["xv_event", "wedding_event", "other_event"].includes(userMessage)) {
+      // 📌 Identificamos qué tipo de evento seleccionó el usuario
+      const tipoEvento = userMessage === "xv_event" ? "xv" : userMessage === "wedding_event" ? "boda" : "otro";
+
       await sendWhatsAppMessage(from, `✨ Estos son nuestros servicios para *${tipoEvento.toUpperCase()}*:\n- ${businessInfo.services[tipoEvento].join('\n- ')}`);
       await sendWhatsAppMessage(from, "¿Quieres armar tu paquete o prefieres un paquete recomendado?", ["Armar mi paquete", "Paquete recomendado"]);
     } else if (userMessage.includes("paquete recomendado")) {
@@ -103,7 +111,6 @@ app.post('/webhook', async (req, res) => {
           ]
         }
       ];
-    
       await sendWhatsAppList(from, "Servicios Extra 🎁", "Elige un servicio adicional para mejorar tu paquete:", "Seleccionar", sections);
     } else if (userMessage.includes("no")) {
       await sendWhatsAppMessage(from, "🎉 Tu cotización está lista. ¿Quieres recibirla en PDF o prefieres agendar una llamada?", ["Recibir PDF", "Agendar llamada"]);
