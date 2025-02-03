@@ -1,41 +1,20 @@
-// Importar dependencias en modo ES Modules
-import dotenv from 'dotenv'; // Para cargar variables de entorno
+import dotenv from 'dotenv';
 import express from 'express';
 import bodyParser from 'body-parser';
 import axios from 'axios';
 import OpenAI from 'openai';
 
-// Cargar variables de entorno
 dotenv.config();
 
-// Crear instancia de Express
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configurar cliente de OpenAI
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Middleware para manejar JSON
 app.use(bodyParser.json());
 
-// Ruta para la raíz
-app.get('/', async (req, res) => {
-  res.send('¡Servidor funcionando correctamente!');
-  console.log("Ruta '/' accedida correctamente.");
-
-  // Prueba para enviar mensaje usando sendWhatsAppMessage
-  try {
-    console.log('Enviando mensaje de prueba a WhatsApp...');
-    await sendWhatsAppMessage('528133971595', 'hello_world', 'en_US');
-    console.log('Mensaje de prueba enviado exitosamente.');
-  } catch (error) {
-    console.error('Error al enviar mensaje de prueba:', error.message);
-  }
-});
-
-// Información de tu negocio
 const businessInfo = {
   services: {
     xv: ["Cabina de Fotos", "Cabina 360", "Letras gigantes", "Niebla de Piso", "Lluvia de Mariposas", "Chisperos de Piso", "Scrapbook"],
@@ -49,29 +28,8 @@ const businessInfo = {
   }
 };
 
-// Ruta para la verificación inicial del webhook
-app.get('/webhook', (req, res) => {
-  const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
-  const mode = req.query['hub.mode'];
-  const token = req.query['hub.verify_token'];
-  const challenge = req.query['hub.challenge'];
-
-  console.log(`Webhook recibido: mode=${mode}, token=${token}`);
-
-  if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-    console.log('Webhook verificado');
-    res.status(200).send(challenge);
-  } else {
-    console.error('Error en la verificación del webhook');
-    res.sendStatus(403);
-  }
-});
-
-// Ruta para manejar eventos de WhatsApp
 app.post('/webhook', async (req, res) => {
   const body = req.body;
-
-  console.log('Cuerpo recibido:', JSON.stringify(body, null, 2));
 
   if (body.object && body.entry) {
     const message = body.entry[0].changes[0].value.messages[0];
@@ -105,8 +63,7 @@ ${businessInfo.packages[tipoEvento]}`);
   res.status(200).send('EVENT_RECEIVED');
 });
 
-// Función para enviar mensajes a través de la API de WhatsApp
-async function sendWhatsAppMessage(to, message) {
+async function sendWhatsAppMessage(to, message, buttons = []) {
   const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
   const data = {
     messaging_product: 'whatsapp',
@@ -130,7 +87,6 @@ async function sendWhatsAppMessage(to, message) {
   }
 }
 
-// Iniciar el servidor
 app.listen(PORT, () => {
   console.log(`Servidor funcionando en http://localhost:${PORT}`);
 }).on('error', (err) => {
