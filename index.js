@@ -158,31 +158,30 @@ async function handleUserMessage(from, userMessage, buttonReply) {
 }
 
 
-////SELECCION MIS XV
+//// SELECCIÓN MIS XV
 else if (messageLower === 'evento_xv') {
-await sendWhatsAppMessage(from, 'En *Camicam Photobooth* estamos comprometidos para que tu evento luzca hermoso😍\n\nTe presentamos todos los servicios que ofrecemos 🎉\n\n' +
-  '🔸Cabina de fotos\n' +
-  '🔸Cabina 360\n' +
-  '🔸Letras Gigantes\n' +
-  '🔸Carrito de shots Con Alcohol\n' +
-  '🔸Carrito de shots Sin Alcohol\n' +
-  '🔸Lluvia de Mariposas\n' +
-  '🔸Lluvia Metálica\n' +
-  '🔸Chisperos de Mano\n' +
-  '🔸Chisperos de Piso\n' +
-  '🔸Scrapbook\n' +
-  '🔸Niebla de Piso\n' +
-  '🔸Audio Guest Book\n\n' +
-  '¿Te gustaría armar tu propio paquete? ¿O prefieres nuestro paquete recomendado?');
+  await sendWhatsAppMessage(from, 'En *Camicam Photobooth* estamos comprometidos para que tu evento luzca hermoso😍\n\nTe presentamos todos los servicios que ofrecemos 🎉\n\n' +
+    '🔸Cabina de fotos\n' +
+    '🔸Cabina 360\n' +
+    '🔸Letras Gigantes\n' +
+    '🔸Carrito de shots Con Alcohol\n' +
+    '🔸Carrito de shots Sin Alcohol\n' +
+    '🔸Lluvia de Mariposas\n' +
+    '🔸Lluvia Metálica\n' +
+    '🔸Chisperos de Mano\n' +
+    '🔸Chisperos de Piso\n' +
+    '🔸Scrapbook\n' +
+    '🔸Niebla de Piso\n' +
+    '🔸Audio Guest Book\n\n' +
+    '¿Te gustaría armar tu propio paquete? ¿O prefieres nuestro paquete recomendado?');
 
-await sendInteractiveMessage(from, 'Te recomendamos el\n *"Paquete Mis XV"*\n\n¿Cómo te gustaría continuar?', [
-  { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
-  { id: 'ver_paquete_xv', title: '🎉 Ver Paquete Mis XV' }
-]);
+  await sendInteractiveMessage(from, 'Te recomendamos el\n *"Paquete Mis XV"*\n\n¿Cómo te gustaría continuar?', [
+    { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, // Botón reutilizado
+    { id: 'ver_paquete_xv', title: '🎉 Ver Paquete Mis XV' }
+  ]);
 }
 
-
-////SELECCION WEDDING
+//// SELECCIÓN WEDDING
 else if (messageLower === 'evento_boda') {
   await sendWhatsAppMessage(from, 'En *Camicam Photobooth* estamos comprometidos para que tu evento luzca hermoso😍\n\nTe presentamos todos los servicios que ofrecemos 🎉\n\n' +
     '🔸Cabina de fotos\n' +
@@ -198,36 +197,34 @@ else if (messageLower === 'evento_boda') {
     '🔸Niebla de Piso\n' +
     '🔸Audio Guest Book\n\n' +
     '¿Te gustaría armar tu propio paquete? ¿O prefieres nuestro paquete recomendado?');
-  
-    await sendInteractiveMessage(from, '💍 Para Bodas, te recomendamos el *Paquete WEDDING*. ¿Cómo te gustaría continuar?', [
-    { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
+
+  await sendInteractiveMessage(from, '💍 Para Bodas, te recomendamos el *Paquete WEDDING*. ¿Cómo te gustaría continuar?', [
+    { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, // Botón reutilizado
     { id: 'ver_paquete_wedding', title: '🎊 Ver Paquete WEDDING' }
   ]);
-  }
+}
 
-
-
-////SELECCION PARTY
+//// SELECCIÓN PARTY
 else if (messageLower === 'evento_otro') {
-await sendWhatsAppMessage(from, 'En *Camicam Photobooth* estamos comprometidos para que tu evento luzca hermoso😍\n\nTe presentamos todos los servicios que ofrecemos 🎉\n\n' +
-  '🔸Cabina de fotos\n' +
-  '🔸Cabina 360\n' +
-  '🔸Letras Gigantes\n' +
-  '🔸Carrito de shots Con Alcohol\n' +
-  '🔸Carrito de shots Sin Alcohol\n' +
-  '🔸Lluvia de Mariposas\n' +
-  '🔸Lluvia Metálica\n' +
-  '🔸Chisperos de Mano\n' +
-  '🔸Chisperos de Piso\n' +
-  '🔸Scrapbook\n' +
-  '🔸Niebla de Piso\n' +
-  '🔸Audio Guest Book\n\n' +
-  '¿Te gustaría armar tu propio paquete? ¿O prefieres nuestro paquete recomendado?');
+  await sendWhatsAppMessage(from, 'En *Camicam Photobooth* estamos comprometidos para que tu evento luzca hermoso😍\n\nTe presentamos todos los servicios que ofrecemos 🎉\n\n' +
+    '🔸Cabina de fotos\n' +
+    '🔸Cabina 360\n' +
+    '🔸Letras Gigantes\n' +
+    '🔸Carrito de shots Con Alcohol\n' +
+    '🔸Carrito de shots Sin Alcohol\n' +
+    '🔸Lluvia de Mariposas\n' +
+    '🔸Lluvia Metálica\n' +
+    '🔸Chisperos de Mano\n' +
+    '🔸Chisperos de Piso\n' +
+    '🔸Scrapbook\n' +
+    '🔸Niebla de Piso\n' +
+    '🔸Audio Guest Book\n\n' +
+    '¿Te gustaría armar tu propio paquete? ¿O prefieres nuestro paquete recomendado?');
 
-await sendInteractiveMessage(from, '🎊 Para otros eventos, te recomendamos el *Paquete Party*. ¿Cómo te gustaría continuar?', [
-  { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
-  { id: 'ver_paquete_party', title: '🎊 Ver Paquete Party' }
-]);
+  await sendInteractiveMessage(from, '🎊 Para otros eventos, te recomendamos el *Paquete Party*. ¿Cómo te gustaría continuar?', [
+    { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, // Botón reutilizado
+    { id: 'ver_paquete_party', title: '🎊 Ver Paquete Party' }
+  ]);
 }
 
  // 🟢 Respuestas a los botones
