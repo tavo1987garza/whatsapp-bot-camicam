@@ -184,26 +184,26 @@ await sendInteractiveMessage(from, 'Te recomendamos el\n *"Paquete Mis XV"*\n\n�
 
 ////SELECCION WEDDING
 else if (messageLower === 'evento_boda') {
-await sendWhatsAppMessage(from, 'En *Camicam Photobooth* estamos comprometidos para que tu evento luzca hermoso😍\n\nTe presentamos todos los servicios que ofrecemos 🎉\n\n' +
-  '🔸Cabina de fotos\n' +
-  '🔸Cabina 360\n' +
-  '🔸Letras Gigantes\n' +
-  '🔸Carrito de shots Con Alcohol\n' +
-  '🔸Carrito de shots Sin Alcohol\n' +
-  '🔸Lluvia de Mariposas\n' +
-  '🔸Lluvia Metálica\n' +
-  '🔸Chisperos de Mano\n' +
-  '🔸Chisperos de Piso\n' +
-  '🔸Scrapbook\n' +
-  '🔸Niebla de Piso\n' +
-  '🔸Audio Guest Book\n\n' +
-  '¿Te gustaría armar tu propio paquete? ¿O prefieres nuestro paquete recomendado?');
-
-await sendInteractiveMessage(from, '💍 Para Bodas, te recomendamos el *Paquete Wedding*.¿Cómo te gustaría continuar?', [
-  { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
-  { id: 'ver_paquete_wedding', title: '💍 Ver Paquete Wedding' }
-]);
-}
+  await sendWhatsAppMessage(from, 'En *Camicam Photobooth* estamos comprometidos para que tu evento luzca hermoso😍\n\nTe presentamos todos los servicios que ofrecemos 🎉\n\n' +
+    '🔸Cabina de fotos\n' +
+    '🔸Cabina 360\n' +
+    '🔸Letras Gigantes\n' +
+    '🔸Carrito de shots Con Alcohol\n' +
+    '🔸Carrito de shots Sin Alcohol\n' +
+    '🔸Lluvia de Mariposas\n' +
+    '🔸Lluvia Metálica\n' +
+    '🔸Chisperos de Mano\n' +
+    '🔸Chisperos de Piso\n' +
+    '🔸Scrapbook\n' +
+    '🔸Niebla de Piso\n' +
+    '🔸Audio Guest Book\n\n' +
+    '¿Te gustaría armar tu propio paquete? ¿O prefieres nuestro paquete recomendado?');
+  
+  await sendInteractiveMessage(from, '💍 Para Bodas, te recomendamos el *Paquete WEDDING*. ¿Cómo te gustaría continuar?', [
+    { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
+    { id: 'ver_paquete_wedding', title: '🎊 Ver Paquete WEDDING' }
+  ]);
+  }
 
 
 
