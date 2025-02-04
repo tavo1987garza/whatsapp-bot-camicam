@@ -156,6 +156,9 @@ async function handleUserMessage(from, userMessage, buttonReply) {
       { id: 'evento_otro', title: '🎊 Otro Evento' }
     ]);
 }
+
+
+////SELECCION MIS XV
 else if (messageLower === 'evento_xv') {
 await sendWhatsAppMessage(from, 'En *Camicam Photobooth* estamos comprometidos para que tu evento luzca hermoso😍\n\nTe presentamos todos los servicios que ofrecemos 🎉\n\n' +
   '🔸Cabina de fotos\n' +
@@ -177,22 +180,56 @@ await sendInteractiveMessage(from, 'Te recomendamos el\n *"Paquete Mis XV"*\n\n�
   { id: 'ver_paquete_xv', title: '🎉 Ver Paquete Mis XV' }
 ]);
 }
-else if (messageLower === 'evento_boda') {
-await sendWhatsAppMessage(from, '💍 Para Bodas, te recomendamos el *Paquete Wedding*.');
 
-await sendInteractiveMessage(from, '¿Cómo te gustaría continuar?', [
+
+////SELECCION WEDDING
+else if (messageLower === 'evento_boda') {
+await sendWhatsAppMessage(from, 'En *Camicam Photobooth* estamos comprometidos para que tu evento luzca hermoso😍\n\nTe presentamos todos los servicios que ofrecemos 🎉\n\n' +
+  '🔸Cabina de fotos\n' +
+  '🔸Cabina 360\n' +
+  '🔸Letras Gigantes\n' +
+  '🔸Carrito de shots Con Alcohol\n' +
+  '🔸Carrito de shots Sin Alcohol\n' +
+  '🔸Lluvia de Mariposas\n' +
+  '🔸Lluvia Metálica\n' +
+  '🔸Chisperos de Mano\n' +
+  '🔸Chisperos de Piso\n' +
+  '🔸Scrapbook\n' +
+  '🔸Niebla de Piso\n' +
+  '🔸Audio Guest Book\n\n' +
+  '¿Te gustaría armar tu propio paquete? ¿O prefieres nuestro paquete recomendado?');
+
+await sendInteractiveMessage(from, '💍 Para Bodas, te recomendamos el *Paquete Wedding*.¿Cómo te gustaría continuar?', [
   { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
   { id: 'ver_paquete_wedding', title: '💍 Ver Paquete Wedding' }
 ]);
 }
-else if (messageLower === 'evento_otro') {
-await sendWhatsAppMessage(from, '🎊 Para otros eventos, te recomendamos el *Paquete Party*.');
 
-await sendInteractiveMessage(from, '¿Cómo te gustaría continuar?', [
+
+
+////SELECCION PARTY
+else if (messageLower === 'evento_otro') {
+await sendWhatsAppMessage(from, 'En *Camicam Photobooth* estamos comprometidos para que tu evento luzca hermoso😍\n\nTe presentamos todos los servicios que ofrecemos 🎉\n\n' +
+  '🔸Cabina de fotos\n' +
+  '🔸Cabina 360\n' +
+  '🔸Letras Gigantes\n' +
+  '🔸Carrito de shots Con Alcohol\n' +
+  '🔸Carrito de shots Sin Alcohol\n' +
+  '🔸Lluvia de Mariposas\n' +
+  '🔸Lluvia Metálica\n' +
+  '🔸Chisperos de Mano\n' +
+  '🔸Chisperos de Piso\n' +
+  '🔸Scrapbook\n' +
+  '🔸Niebla de Piso\n' +
+  '🔸Audio Guest Book\n\n' +
+  '¿Te gustaría armar tu propio paquete? ¿O prefieres nuestro paquete recomendado?');
+
+await sendInteractiveMessage(from, '🎊 Para otros eventos, te recomendamos el *Paquete Party*. ¿Cómo te gustaría continuar?', [
   { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
   { id: 'ver_paquete_party', title: '🎊 Ver Paquete Party' }
 ]);
 }
+
  // 🟢 Respuestas a los botones
  else if (messageLower === 'ver_paquete_xv') {
   await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg');
