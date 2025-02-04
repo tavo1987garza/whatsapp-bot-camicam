@@ -139,11 +139,12 @@ async function sendWhatsAppVideo(to, videoUrl, caption) {
 
 
 // 📌 Función para manejar los mensajes del usuario
-async function handleUserMessage(from, userMessage) {
+async function handleUserMessage(from, userMessage, buttonReply) {
   let responseText = '';
 
   // Normalizar el mensaje a minúsculas para comparación
-  const messageLower = userMessage.toLowerCase();
+  const messageLower = buttonReply ? buttonReply.toLowerCase() : userMessage.toLowerCase(); // Ahora también considera botones
+
 
   // 🟢 Flujos predefinidos (eventos, paquetes, etc.)
   if (messageLower.includes('info') || messageLower.includes('costos') || messageLower.includes('hola') || 
