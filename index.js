@@ -189,7 +189,8 @@ async function handleUserMessage(from, userMessage, buttonReply) {
     // 🟢 Validar si el usuario quiere "Armar mi paquete"
     else if (messageLower === 'armar_paquete') {  
        await sendWhatsAppMessage (from, '🔗 Para armar tu paquete personalizado, visita nuestro cotizador en el siguiente enlace:\n🌐 www.cami-cam.com/cotizador/');
-       await sendWhatsAppVideo(from, 'http://cami-cam.com/wp-content/uploads/2023/11/cabina-360-y-Letras.mp4', '📹 Cómo usar el cotizador de Camicam Photobooth');    
+       await sendWhatsAppMessage(from, '📹 Mira este video para aprender a usar nuestro cotizador:\n👉 https://www.youtube.com/watch?v=https://youtu.be/ZclEfPsJxdQ');
+
       }
     
 
