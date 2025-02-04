@@ -161,45 +161,10 @@ async function handleUserMessage(from, userMessage, buttonReply) {
     } 
     
     // 🟢 Validar si el usuario quiere "Armar mi paquete"
-    else if (messageLower === 'armar_paquete') {
-      await sendWhatsAppMessage(from, 
-        "📸 *Personaliza tu paquete* 🎉\n\n" +
-        "Selecciona los servicios que deseas agregando los números separados por comas:\n\n" +
-        "1️⃣ Cabina de Fotos (Fotos ilimitadas por 3 horas)\n" +
-        "2️⃣ Cabina 360 (Videos en cámara lenta para redes sociales)\n" +
-        "3️⃣ Chisperos (Efecto de chispas para momentos especiales)\n" +
-        "4️⃣ Niebla de Piso (Efecto de niebla baja para baile)\n" +
-        "5️⃣ Carrito de Shots (Con o sin alcohol según el evento)\n" +
-        "6️⃣ Scrapbook (Álbum con recuerdos de la cabina de fotos)\n\n" +
-        "*Ejemplo:* Si quieres Cabina de Fotos, Chisperos y Carrito de Shots, responde con: 1,3,5");
-    }
-
-    else if (/^[1-6](,[1-6])*$/g.test(messageLower)) {  // Validar que el usuario haya enviado números válidos
-      const opciones = {
-        "1": "📸 Cabina de Fotos",
-        "2": "🎥 Cabina 360",
-        "3": "✨ Chisperos",
-        "4": "🌫 Niebla de Piso",
-        "5": "🍹 Carrito de Shots",
-        "6": "📖 Scrapbook"
-      };
-    
-      // Convertir la respuesta en una lista de servicios seleccionados
-      let seleccionados = messageLower.split(',').map(num => opciones[num.trim()]).filter(Boolean);
-    
-      if (seleccionados.length === 0) {
-        await sendWhatsAppMessage(from, "⚠️ No entendí tu selección. Asegúrate de usar solo los números indicados.");
-        return;
+    else if (messageLower === 'armar_paquete') {  
+       await sendWhatsAppMessage (from, '🔗 Para armar tu paquete personalizado, visita nuestro cotizador en el siguiente enlace: 🌐 www.cami-cam.com/cotizador/');
+       await sendVideoMessage(from, 'https://www.cami-cam.com/videos/como_usar_cotizador.mp4', '📹 Cómo usar el cotizador de Camicam Photobooth');    
       }
-    
-    
-      // Crear mensaje de confirmación con los servicios seleccionados
-      let mensajeConfirmacion = `✅ *Has seleccionado los siguientes servicios:*\n\n` + 
-                                seleccionados.map(s => `✔ ${s}`).join('\n') + 
-                                `\n\n📅 ¿Para qué fecha necesitas el servicio?`;
-    
-      await sendWhatsAppMessage(from, mensajeConfirmacion);
-    }
     
 
     else {
@@ -227,6 +192,27 @@ async function handleUserMessage(from, userMessage, buttonReply) {
 
 ////////////////////////////////////////////////////////////////////
 
+// 📌 Función para enviar videos
+async function sendVideoMessage(to, videoUrl, caption) {
+  const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+
+  const data = {
+    messaging_product: 'whatsapp',
+    to: to,
+    type: 'video',
+    video: {
+      link: videoUrl,
+      caption: caption
+    }
+  };
+
+  await axios.post(url, data, {
+    headers: {
+      Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+      'Content-Type': 'application/json'
+    }
+  });
+}
 
 // 📌 Función para enviar mensajes de texto
 async function sendWhatsAppMessage(to, message) {
