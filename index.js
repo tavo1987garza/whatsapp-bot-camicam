@@ -143,9 +143,9 @@ async function handleUserMessage(from, userMessage, buttonReply) {
   let responseText = '';
 
   // Normalizar el mensaje a minúsculas para comparación
-  const messageLower = buttonReply ? buttonReply.toLowerCase() : userMessage.toLowerCase(); // Ahora también considera botones
+  const messageLower = buttonReply ? buttonReply.toLowerCase() : userMessage.toLowerCase();
 
-
+  try {
   // 🟢 Flujos predefinidos (eventos, paquetes, etc.)
   if (messageLower.includes('info') || messageLower.includes('costos') || messageLower.includes('hola') || 
     messageLower.includes('precio') || messageLower.includes('información')) {
@@ -199,7 +199,7 @@ else if (messageLower === 'evento_boda') {
     '🔸Audio Guest Book\n\n' +
     '¿Te gustaría armar tu propio paquete? ¿O prefieres nuestro paquete recomendado?');
   
-  await sendInteractiveMessage(from, '💍 Para Bodas, te recomendamos el *Paquete WEDDING*. ¿Cómo te gustaría continuar?', [
+    await sendInteractiveMessage(from, '💍 Para Bodas, te recomendamos el *Paquete WEDDING*. ¿Cómo te gustaría continuar?', [
     { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
     { id: 'ver_paquete_wedding', title: '🎊 Ver Paquete WEDDING' }
   ]);
@@ -282,26 +282,22 @@ else if (messageLower === 'ver_paquete_party') {
   // 🟢 RESPUESTA INTELIGENTE CON OPENAI
   else {
     console.log(`🧠 Enviando mensaje desconocido a OpenAI: ${userMessage}`);
-
-    try {
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4",  // Puedes usar "gpt-3.5-turbo" si prefieres menor costo
-        messages: [{ role: "system", content: "Eres un asistente amigable de una empresa de renta de photobooth para eventos. Responde preguntas sobre servicios, precios y disponibilidad." },
-                   { role: "user", content: userMessage }],
-        max_tokens: 100
-      });
-
-      responseText = completion.choices[0]?.message?.content || "Lo siento, no entendí bien tu mensaje. ¿Puedes reformularlo?";
-
+  
+        const completion = await openai.chat.completions.create({
+          model: "gpt-4",  // Puedes usar "gpt-3.5-turbo" si prefieres menor costo
+          messages: [{ role: "system", content: "Eres un asistente amigable de una empresa de renta de photobooth para eventos. Responde preguntas sobre servicios, precios y disponibilidad." },
+                     { role: "user", content: userMessage }],
+          max_tokens: 100
+        });
+  
+        responseText = completion.choices[0]?.message?.content || "Lo siento, no entendí bien tu mensaje. ¿Puedes reformularlo?";
+        await sendWhatsAppMessage(from, responseText);
+      }
     } catch (error) {
-      console.error("❌ Error al consultar OpenAI:", error.message);
-      responseText = "Lo siento, ocurrió un error al procesar tu solicitud. Inténtalo nuevamente.";
+      console.error("❌ Error al manejar el mensaje:", error.message);
+      await sendWhatsAppMessage(from, "Lo siento, ocurrió un error al procesar tu solicitud. Inténtalo nuevamente.");
     }
-
-    await sendWhatsAppMessage(from, responseText);
   }
-}
-
 
 ////////////////////////////////////////////////////////////////////
 
