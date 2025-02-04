@@ -173,10 +173,10 @@ else if (messageLower === 'evento_xv') {
     '🔸Scrapbook\n' +
     '🔸Niebla de Piso\n' +
     '🔸Audio Guest Book\n\n' +
-    '¿Te gustaría armar tu propio paquete? ¿O prefieres nuestro paquete recomendado?');
+    'Arma tu paquete con todo lo que necesites!!\n\nO si prefieres revisa nuestro paquete recomendado');
 
   await sendInteractiveMessage(from, 'Te recomendamos el\n *"Paquete Mis XV"*\n\n¿Cómo te gustaría continuar?', [
-    { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, // Botón reutilizado
+    { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, 
     { id: 'ver_paquete_xv', title: '🎉 Ver Paquete Mis XV' }
   ]);
 }
@@ -196,9 +196,9 @@ else if (messageLower === 'evento_boda') {
     '🔸Scrapbook\n' +
     '🔸Niebla de Piso\n' +
     '🔸Audio Guest Book\n\n' +
-    '¿Te gustaría armar tu propio paquete? ¿O prefieres nuestro paquete recomendado?');
+    'Arma tu paquete con todo lo que necesites!!\n\nO si prefieres revisa nuestro paquete recomendado');
 
-  await sendInteractiveMessage(from, '💍 Para Bodas, te recomendamos el *Paquete WEDDING*. ¿Cómo te gustaría continuar?', [
+  await sendInteractiveMessage(from, '💍 Para Bodas, te recomendamos el\n*Paquete WEDDING*.\n\n¿Cómo te gustaría continuar?', [
     { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, // Botón reutilizado
     { id: 'ver_paquete_wedding', title: '🎊 Ver Paq. WEDDING' }
   ]);
@@ -219,10 +219,10 @@ else if (messageLower === 'evento_otro') {
     '🔸Scrapbook\n' +
     '🔸Niebla de Piso\n' +
     '🔸Audio Guest Book\n\n' +
-    '¿Te gustaría armar tu propio paquete? ¿O prefieres nuestro paquete recomendado?');
+    'Arma tu paquete con todo lo que necesites!!\n\nO si prefieres revisa nuestro paquete recomendado');
 
-  await sendInteractiveMessage(from, '🎊 Para otros eventos, te recomendamos el *Paquete Party*. ¿Cómo te gustaría continuar?', [
-    { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, // Botón reutilizado
+  await sendInteractiveMessage(from, '🎊 Para otros eventos, te recomendamos el\n*Paquete Party*.\n\n¿Cómo te gustaría continuar?', [
+    { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, 
     { id: 'ver_paquete_party', title: '🎊 Ver Paquete Party' }
   ]);
 }
