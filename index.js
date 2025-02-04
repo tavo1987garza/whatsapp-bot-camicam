@@ -134,6 +134,31 @@ async function sendWhatsAppVideo(to, videoUrl, caption) {
   }
 }
 
+//Preguntas frecuentes
+const faqs = [
+  {
+    question: /(horario|atencion|abierto|cierra)/i,
+    answer: 'Nuestro horario de atención es de lunes a viernes de 9:00 AM a 6:00 PM, y sábados de 10:00 AM a 2:00 PM.'
+  },
+  {
+    question: /(envio|domicilio|transport)/i,
+    answer: 'Sí, realizamos envíos a domicilio en un radio de 50 km sin costo adicional. Para distancias mayores, aplica un cargo extra.'
+  },
+  {
+    question: /(pago|metodo|tarjeta|efectivo)/i,
+    answer: 'Aceptamos tarjetas de crédito/débito, transferencias bancarias y pagos en efectivo.'
+  }
+];
+
+function findFAQ(userMessage) {
+  for (const faq of faqs) {
+    if (faq.question.test(userMessage)) {
+      return faq.answer;
+    }
+  }
+  return null;
+}
+
 
 //////////////////////////////////////////////////////////////////////
 
@@ -146,8 +171,38 @@ async function handleUserMessage(from, userMessage, buttonReply) {
   const messageLower = buttonReply ? buttonReply.toLowerCase() : userMessage.toLowerCase();
 
   try {
+
+        // Verificar si el mensaje coincide con una pregunta frecuente
+        const faqAnswer = findFAQ(userMessage);
+        if (faqAnswer) {
+          await sendWhatsAppMessage(from, faqAnswer);
+          return;
+        }
+      
+        // Menú de preguntas frecuentes
+        else if (messageLower === 'faq' || messageLower.includes('preguntas frecuentes')) {
+          await sendInteractiveMessage(from, 'Estas son algunas preguntas frecuentes. Selecciona una para obtener más información:', [
+            { id: 'faq_horario', title: '🕒 Horario de atención' },
+            { id: 'faq_envios', title: '🚚 Envíos a domicilio' },
+            { id: 'faq_pagos', title: '💳 Métodos de pago' }
+          ]);
+        }
+      
+        // Respuestas a las FAQ seleccionadas
+        else if (messageLower === 'faq_horario') {
+          await sendWhatsAppMessage(from, 'Nuestro horario de atención es de lunes a viernes de 9:00 AM a 6:00 PM, y sábados de 10:00 AM a 2:00 PM.');
+        }
+      
+        else if (messageLower === 'faq_envios') {
+          await sendWhatsAppMessage(from, 'Sí, realizamos envíos a domicilio en un radio de 50 km sin costo adicional. Para distancias mayores, aplica un cargo extra.');
+        }
+      
+        else if (messageLower === 'faq_pagos') {
+          await sendWhatsAppMessage(from, 'Aceptamos tarjetas de crédito/débito, transferencias bancarias y pagos en efectivo.');
+        }
+      
   // 🟢 Flujos predefinidos (eventos, paquetes, etc.)
-  if (messageLower.includes('info') || messageLower.includes('costos') || messageLower.includes('hola') || 
+  else if (messageLower.includes('info') || messageLower.includes('costos') || messageLower.includes('hola') || 
     messageLower.includes('precio') || messageLower.includes('información')) {
 
     await sendInteractiveMessage(from, 'Hola 👋 gracias por contactarnos, te damos la bienvenida a *Camicam Photobooth* 😃\n\nPor favor, indícame qué tipo de evento tienes 📋', [
