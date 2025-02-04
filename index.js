@@ -200,7 +200,7 @@ else if (messageLower === 'evento_boda') {
 
   await sendInteractiveMessage(from, '💍 Para Bodas, te recomendamos el *Paquete WEDDING*. ¿Cómo te gustaría continuar?', [
     { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, // Botón reutilizado
-    { id: 'ver_paquete_wedding', title: '🎊 Ver Paquete WEDDING' }
+    { id: 'ver_paquete_wedding', title: '🎊 Ver Paq. WEDDING' }
   ]);
 }
 
