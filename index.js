@@ -139,110 +139,128 @@ async function sendWhatsAppVideo(to, videoUrl, caption) {
 
 
 // 📌 Función para manejar los mensajes del usuario
-async function handleUserMessage(from, userMessage, buttonReply) {
-  try {
-    let responseText = '';
-    const messageLower = buttonReply ? buttonReply.toLowerCase() : userMessage.toLowerCase(); // Ahora también considera botones
+async function handleUserMessage(from, userMessage) {
+  let responseText = '';
 
-    if (["info", "costos", "hola", "precio", "información"].some(word => messageLower.includes(word))) {
-      await sendInteractiveMessage(from, 'Hola 👋 Gracias por contactarnos\n\nTe damos la bienvenida a *Camicam Photobooth*! 😃\n\nSelecciona porfavor qué tipo de evento tienes', [
-        { id: 'evento_xv', title: '🎉 XV Años' },
-        { id: 'evento_boda', title: '💍 Boda' },
-        { id: 'evento_otro', title: '🎊 Otro Evento' }
-      ]);
-    } 
-    
-    else if (messageLower === 'evento_xv') {
-      await sendWhatsAppMessage(from, 'En *Camicam Photobooth* estamos comprometidos para que tu evento luzca hermoso😍\n\nTe presentamos todos los servicios que ofrecemos 🎉\n\n'+
-        '🔸Cabina de fotos\n' +
-        '🔸Cabina 360\n' +
-        '🔸Letras Gigantes\n' +
-        '🔸Carrito de shots Con Alcohol\n' +
-        '🔸Carrito de shots Sin Alcohol\n' +
-        '🔸Lluvia de Mariposas\n' +
-        '🔸Lluvia Metálica\n' +
-        '🔸Chisperos de Mano\n' +
-        '🔸Chisperos de Piso\n' +
-        '🔸Scrapbook\n' +
-        '🔸Niebla de Piso\n' +
-        '🔸Audio Guest Book\n\n' +
-        '¿Te gustaría armar tu propio paquete?\n\n¿O prefieres nuestro paquete recomendado?'
-      );
-      await sendInteractiveMessage(from, 'Te recomendamos el\n *"Paquete Mis XV"*\n\n¿Cómo te gustaría continuar?', [
-        { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
-        { id: 'ver_paquete_xv', title: '🎉 Ver Paquete Mis XV' }
-      ]);
-    } 
-    
-    else if (messageLower === 'ver_paquete_xv') {
-      await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg');
-      await sendInteractiveMessage(from, '🎉 PAQUETE MIS XV 🎊\n\n💰 Precio Regular: $11,200\n💰 Descuento 50% OFF\n*TOTAL A PAGAR: $5,600*', [
-        { id: 'reservar_paquete_xv', title: '📅 Reservar ' },
-        { id: 'armar_paquete', title: '🛠 Armar mi paquete' }
-      ]);
-    } 
-    
-    else if (messageLower === 'reservar_paquete_xv') {
-      await sendWhatsAppMessage(from, '📅 ¡Genial! Para reservar el *Paquete Mis XV*, dime la fecha de tu evento.');
-    } 
-    else if (messageLower === 'evento_boda') {
-      await sendWhatsAppMessage(from, '💍 En *Camicam Photobooth* tenemos los mejores servicios para bodas ✨\n\nEstos son nuestros servicios\n\n'+
-        '🔸Cabina de fotos\n' +
-        '🔸Cabina 360\n' +
-        '🔸Letras Gigantes\n' +
-        '🔸Carrito de shots Con Alcohol\n' +
-        '🔸Carrito de shots Sin Alcohol\n' +
-        '🔸Lluvia de Mariposas\n' +
-        '🔸Lluvia Metálica\n' +
-        '🔸Chisperos de Mano\n' +
-        '🔸Chisperos de Piso\n' +
-        '🔸Scrapbook\n' +
-        '🔸Niebla de Piso\n' +
-        '🔸Audio Guest Book\n\n' +
-        '¿Te gustaría armar tu propio paquete?\n\n¿O prefieres nuestro paquete recomendado?'
-      );
-      await sendInteractiveMessage(from, 'Te recomendamos el\n *"Paquete WEDDING"*\n\n¿Cómo te gustaría continuar?', [
-        { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
-        { id: 'ver_paquete_wedding', title: '🎉 Ver Paquete WEDDING' }
-      ]);
-    } 
+  // Normalizar el mensaje a minúsculas para comparación
+  const messageLower = userMessage.toLowerCase();
 
-    else if (messageLower === 'ver_paquete_wedding') {
-      await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2024/09/Paquete-Wedding.jpg');
-      await sendInteractiveMessage(from, '🎉 PAQUETE WEDDING 🎊\n\n💰 Precio Regular: $8,900\n💰 Descuento 50% OFF\n*TOTAL A PAGAR: $4,450*', [
-        { id: 'reservar_paquete_wedding', title: '📅 Reservar ' },
-        { id: 'armar_paquete', title: '🛠 Armar mi paquete' }
-      ]);
-    } 
-    else if (messageLower === 'reservar_paquete_wedding') {
-      await sendWhatsAppMessage(from, '📅 ¡Genial! Para reservar el *Paquete WEDDING*, dime la fecha de tu evento.');
-    } 
-    
-    // 🟢 Validar si el usuario quiere "Armar mi paquete"
-    else if (messageLower === 'armar_paquete') {  
-       await sendWhatsAppMessage (from, '🔗 Para armar tu paquete personalizado, visita nuestro cotizador en el siguiente enlace:\n🌐 www.cami-cam.com/cotizador/');
-       
-      }
+  // 🟢 Flujos predefinidos (eventos, paquetes, etc.)
+  if (messageLower.includes('info') || messageLower.includes('costos') || messageLower.includes('hola') || 
+    messageLower.includes('precio') || messageLower.includes('información')) {
 
-    else {
-      try {
-        const completion = await openai.chat.completions.create({
-          model: "gpt-4",
-          messages: [{ role: "system", content: "Eres un asistente amigable de una empresa de renta de photobooth para eventos." },
-                     { role: "user", content: userMessage }],
-          max_tokens: 100
-        });
-        responseText = completion.choices[0]?.message?.content || "Lo siento, no entendí bien tu mensaje.";
-      } catch (error) {
-        console.error("❌ Error al consultar OpenAI:", error.message);
-        responseText = "Lo siento, ocurrió un error al procesar tu solicitud.";
-      }
-      await sendWhatsAppMessage(from, responseText);
+    await sendInteractiveMessage(from, 'Hola 👋 gracias por contactarnos, te damos la bienvenida a *Camicam Photobooth* 😃\n\nPor favor, indícame qué tipo de evento tienes 📋', [
+      { id: 'evento_xv', title: '🎉 XV Años' },
+      { id: 'evento_boda', title: '💍 Boda' },
+      { id: 'evento_otro', title: '🎊 Otro Evento' }
+    ]);
+}
+else if (messageLower === 'evento_xv') {
+await sendWhatsAppMessage(from, 'En *Camicam Photobooth* estamos comprometidos para que tu evento luzca hermoso😍\n\nTe presentamos todos los servicios que ofrecemos 🎉\n\n' +
+  '🔸Cabina de fotos\n' +
+  '🔸Cabina 360\n' +
+  '🔸Letras Gigantes\n' +
+  '🔸Carrito de shots Con Alcohol\n' +
+  '🔸Carrito de shots Sin Alcohol\n' +
+  '🔸Lluvia de Mariposas\n' +
+  '🔸Lluvia Metálica\n' +
+  '🔸Chisperos de Mano\n' +
+  '🔸Chisperos de Piso\n' +
+  '🔸Scrapbook\n' +
+  '🔸Niebla de Piso\n' +
+  '🔸Audio Guest Book\n\n' +
+  '¿Te gustaría armar tu propio paquete? ¿O prefieres nuestro paquete recomendado?');
+
+await sendInteractiveMessage(from, 'Te recomendamos el\n *"Paquete Mis XV"*\n\n¿Cómo te gustaría continuar?', [
+  { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
+  { id: 'ver_paquete_xv', title: '🎉 Ver Paquete Mis XV' }
+]);
+}
+else if (messageLower === 'evento_boda') {
+await sendWhatsAppMessage(from, '💍 Para Bodas, te recomendamos el *Paquete Wedding*.');
+
+await sendInteractiveMessage(from, '¿Cómo te gustaría continuar?', [
+  { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
+  { id: 'ver_paquete_wedding', title: '💍 Ver Paquete Wedding' }
+]);
+}
+else if (messageLower === 'evento_otro') {
+await sendWhatsAppMessage(from, '🎊 Para otros eventos, te recomendamos el *Paquete Party*.');
+
+await sendInteractiveMessage(from, '¿Cómo te gustaría continuar?', [
+  { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
+  { id: 'ver_paquete_party', title: '🎊 Ver Paquete Party' }
+]);
+}
+ // 🟢 Respuestas a los botones
+ else if (messageLower === 'ver_paquete_xv') {
+  await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg');
+  await sendInteractiveMessage(from, '🎉 PAQUETE MIS XV 🎊\n\n' +
+    '*Incluye*\n\n' +
+    '✅ Cabina de Fotos (3 Horas)\n' +
+    '✅ Lluvia de mariposas\n' +
+    '✅ 6 Letras Gigantes (5 Horas)\n' +
+    '✅ 2 Chisperos\n\n' +
+    '💰 Precio Regular: $11,200\n' +
+    '💰 Descuento 50% OFF\n*TOTAL A PAGAR: $5,600*\n\n' +
+    'Bono Exclusivo hasta el 28 de Febrero 2025:\n' + 
+    '✅ Scrapbook para la cabina de fotos completamente GRATIS 🎁\n\n' +
+    '📅 ¿Quieres reservar este paquete? \n¿O prefieres armar el tuyo?',[
+  
+      { id: 'reservar_paquete_xv', title: '📅 Reservar ' },
+      { id: 'armar_paquete', title: '🛠 Armar mi paquete' }
+    ]);
+}
+
+else if (messageLower === 'reservar_paquete_xv') {
+  await sendWhatsAppMessage(from, '📅 ¡Genial! Para reservar el *Paquete Mis XV*, Por favor dime la fecha de tu evento.');
+} 
+// 🟢 Validar si el usuario quiere "Armar mi paquete"
+else if (messageLower === 'armar_paquete') {  
+  await sendWhatsAppMessage (from, '🔗 Para armar tu paquete personalizado, visita nuestro cotizador en el siguiente enlace:\n🌐 www.cami-cam.com/cotizador/');
+  
+ }
+
+else if (messageLower === 'ver_paquete_wedding') {
+  await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-WEDDING.jpg', '💍 PAQUETE WEDDING 🎊');
+  await sendWhatsAppMessage(from, '💍 *PAQUETE WEDDING* 🎊\n' +
+    '✅ Cabina 360 + Carrito de Shots\n' +
+    '🔠 4 Letras Gigantes\n' +
+    '✨ 2 Chisperos\n' +
+    '💰 *Precio regular:* $8,900\n' +
+    '🔥 *Descuento 50% OFF*: **Total: $4,450**\n\n' +
+    '📅 ¿Para qué fecha necesitas el servicio?');
+} 
+else if (messageLower === 'ver_paquete_party') {
+  await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-PARTY.jpg', '🎊 PAQUETE PARTY 🎉');
+  await sendWhatsAppMessage(from, '🎊 *PAQUETE PARTY* 🎉\n' +
+    '✅ Cabina de Fotos\n' +
+    '🔠 4 Letras Gigantes\n' +
+    '💰 *Precio:* $3,000\n\n' +
+    '📅 ¿Para qué fecha necesitas el servicio?');
+
+} 
+
+  // 🟢 RESPUESTA INTELIGENTE CON OPENAI
+  else {
+    console.log(`🧠 Enviando mensaje desconocido a OpenAI: ${userMessage}`);
+
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4",  // Puedes usar "gpt-3.5-turbo" si prefieres menor costo
+        messages: [{ role: "system", content: "Eres un asistente amigable de una empresa de renta de photobooth para eventos. Responde preguntas sobre servicios, precios y disponibilidad." },
+                   { role: "user", content: userMessage }],
+        max_tokens: 100
+      });
+
+      responseText = completion.choices[0]?.message?.content || "Lo siento, no entendí bien tu mensaje. ¿Puedes reformularlo?";
+
+    } catch (error) {
+      console.error("❌ Error al consultar OpenAI:", error.message);
+      responseText = "Lo siento, ocurrió un error al procesar tu solicitud. Inténtalo nuevamente.";
     }
 
-  } catch (error) {
-    console.error(`Error en handleUserMessage: ${error.message}`);
-    await sendWhatsAppMessage(from, "Ocurrió un error, por favor intenta más tarde.");
+    await sendWhatsAppMessage(from, responseText);
   }
 }
 
