@@ -162,60 +162,45 @@ async function handleUserMessage(from, userMessage, buttonReply) {
     
     // 🟢 Validar si el usuario quiere "Armar mi paquete"
     else if (messageLower === 'armar_paquete') {
-      console.log('✅ El usuario seleccionó "Armar mi paquete"');
-    
-      // 📌 Enviamos una LISTA INTERACTIVA en lugar de botones separados
-      const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
-    
-      const data = {
-        messaging_product: 'whatsapp',
-        to: from,
-        type: 'interactive',
-        interactive: {
-          type: 'list',
-          header: { type: 'text', text: '🛠 Personaliza tu paquete' },
-          body: { text: 'Selecciona los servicios que quieres agregar a tu paquete 🎉' },
-          action: {
-            button: 'Ver opciones',
-            sections: [
-              {
-                title: 'Fotografía y Cabinas 📸',
-                rows: [
-                  { id: 'agregar_cabina', title: 'Cabina de Fotos', description: 'Fotos ilimitadas por 3 horas' },
-                  { id: 'cabina_360', title: 'Cabina 360', description: 'Videos en cámara lenta para redes sociales' }
-                ]
-              },
-              {
-                title: 'Efectos Especiales ✨',
-                rows: [
-                  { id: 'agregar_chisperos', title: 'Chisperos', description: 'Chisperos de piso para momentos mágicos' },
-                  { id: 'agregar_niebla', title: 'Niebla de Piso', description: 'Efecto de niebla baja para baile' }
-                ]
-              },
-              {
-                title: 'Bebidas y Extras 🍹',
-                rows: [
-                  { id: 'agregar_shots', title: 'Carrito de Shots', description: 'Con o sin alcohol según el evento' },
-                  { id: 'scrapbook', title: 'Scrapbook', description: 'Álbum con recuerdos de la cabina de fotos' }
-                ]
-              }
-            ]
-          }
-        }
+      await sendWhatsAppMessage(from, 
+        "📸 *Personaliza tu paquete* 🎉\n\n" +
+        "Selecciona los servicios que deseas agregando los números separados por comas:\n\n" +
+        "1️⃣ Cabina de Fotos (Fotos ilimitadas por 3 horas)\n" +
+        "2️⃣ Cabina 360 (Videos en cámara lenta para redes sociales)\n" +
+        "3️⃣ Chisperos (Efecto de chispas para momentos especiales)\n" +
+        "4️⃣ Niebla de Piso (Efecto de niebla baja para baile)\n" +
+        "5️⃣ Carrito de Shots (Con o sin alcohol según el evento)\n" +
+        "6️⃣ Scrapbook (Álbum con recuerdos de la cabina de fotos)\n\n" +
+        "*Ejemplo:* Si quieres Cabina de Fotos, Chisperos y Carrito de Shots, responde con: 1,3,5");
+    }
+
+    else if (/^[1-6](,[1-6])*$/g.test(messageLower)) {  // Validar que el usuario haya enviado números válidos
+      const opciones = {
+        "1": "📸 Cabina de Fotos",
+        "2": "🎥 Cabina 360",
+        "3": "✨ Chisperos",
+        "4": "🌫 Niebla de Piso",
+        "5": "🍹 Carrito de Shots",
+        "6": "📖 Scrapbook"
       };
     
-      try {
-        const response = await axios.post(url, data, {
-          headers: {
-            Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        console.log('✅ Lista interactiva enviada:', response.data);
-      } catch (error) {
-        console.error('❌ Error al enviar lista interactiva:', error.response?.data || error.message);
+      // Convertir la respuesta en una lista de servicios seleccionados
+      let seleccionados = messageLower.split(',').map(num => opciones[num.trim()]).filter(Boolean);
+    
+      if (seleccionados.length === 0) {
+        await sendWhatsAppMessage(from, "⚠️ No entendí tu selección. Asegúrate de usar solo los números indicados.");
+        return;
       }
+    
+    
+      // Crear mensaje de confirmación con los servicios seleccionados
+      let mensajeConfirmacion = `✅ *Has seleccionado los siguientes servicios:*\n\n` + 
+                                seleccionados.map(s => `✔ ${s}`).join('\n') + 
+                                `\n\n📅 ¿Para qué fecha necesitas el servicio?`;
+    
+      await sendWhatsAppMessage(from, mensajeConfirmacion);
     }
+    
 
     else {
       try {
