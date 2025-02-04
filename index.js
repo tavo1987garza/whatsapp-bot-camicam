@@ -107,6 +107,32 @@ async function sendInteractiveMessage(to, body, buttons) {
   }
 }
 
+// 📌 Función para enviar videos
+async function sendWhatsAppVideo(to, videoUrl, caption) {
+  const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+
+  const data = {
+    messaging_product: 'whatsapp',
+    to: to,
+    type: 'video',
+    video: {
+      link: videoUrl,
+      caption: caption
+    }
+  };
+
+  try {
+    const response = await axios.post(url, data, {
+      headers: {
+        Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    console.log('✅ Video enviado:', response.data);
+  } catch (error) {
+    console.error('❌ Error al enviar el video:', error.response?.data || error.message);
+  }
+}
 
 
 //////////////////////////////////////////////////////////////////////
@@ -119,7 +145,7 @@ async function handleUserMessage(from, userMessage, buttonReply) {
     const messageLower = buttonReply ? buttonReply.toLowerCase() : userMessage.toLowerCase(); // Ahora también considera botones
 
     if (["info", "costos", "hola", "precio", "información"].some(word => messageLower.includes(word))) {
-      await sendInteractiveMessage(from, 'Hola 👋 gracias por contactarnos en *Camicam Photobooth*! 😃\n\n¿Qué tipo de evento tienes?', [
+      await sendInteractiveMessage(from, 'Hola 👋 Gracias por contactarnos\n\nTe damos la bienvenida a *Camicam Photobooth*! 😃\n\nSelecciona porfavor qué tipo de evento tienes', [
         { id: 'evento_xv', title: '🎉 XV Años' },
         { id: 'evento_boda', title: '💍 Boda' },
         { id: 'evento_otro', title: '🎊 Otro Evento' }
@@ -140,7 +166,7 @@ async function handleUserMessage(from, userMessage, buttonReply) {
         '🔸Scrapbook\n' +
         '🔸Niebla de Piso\n' +
         '🔸Audio Guest Book\n\n' +
-        '¿Te gustaría armar tu propio paquete? ¿O prefieres nuestro paquete recomendado?'
+        '¿Te gustaría armar tu propio paquete?\n\n¿O prefieres nuestro paquete recomendado?'
       );
       await sendInteractiveMessage(from, 'Te recomendamos el\n *"Paquete Mis XV"*\n\n¿Cómo te gustaría continuar?', [
         { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
@@ -162,8 +188,8 @@ async function handleUserMessage(from, userMessage, buttonReply) {
     
     // 🟢 Validar si el usuario quiere "Armar mi paquete"
     else if (messageLower === 'armar_paquete') {  
-       await sendWhatsAppMessage (from, '🔗 Para armar tu paquete personalizado, visita nuestro cotizador en el siguiente enlace: 🌐 www.cami-cam.com/cotizador/');
-       await sendVideoMessage(from, 'https://youtu.be/ZclEfPsJxdQ', '📹 Cómo usar el cotizador de Camicam Photobooth');    
+       await sendWhatsAppMessage (from, '🔗 Para armar tu paquete personalizado, visita nuestro cotizador en el siguiente enlace:\n🌐 www.cami-cam.com/cotizador/');
+       await sendWhatsAppVideo(from, 'https://youtu.be/ZclEfPsJxdQ', '📹 Cómo usar el cotizador de Camicam Photobooth');    
       }
     
 
@@ -192,27 +218,7 @@ async function handleUserMessage(from, userMessage, buttonReply) {
 
 ////////////////////////////////////////////////////////////////////
 
-// 📌 Función para enviar videos
-async function sendVideoMessage(to, videoUrl, caption) {
-  const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
 
-  const data = {
-    messaging_product: 'whatsapp',
-    to: to,
-    type: 'video',
-    video: {
-      link: videoUrl,
-      caption: caption
-    }
-  };
-
-  await axios.post(url, data, {
-    headers: {
-      Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-      'Content-Type': 'application/json'
-    }
-  });
-}
 
 // 📌 Función para enviar mensajes de texto
 async function sendWhatsAppMessage(to, message) {
