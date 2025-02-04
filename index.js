@@ -113,10 +113,10 @@ async function sendInteractiveMessage(to, body, buttons) {
 
 
 // 📌 Función para manejar los mensajes del usuario
-async function handleUserMessage(from, userMessage) {
+async function handleUserMessage(from, userMessage, buttonReply) {
   try {
     let responseText = '';
-    const messageLower = userMessage.toLowerCase();
+    const messageLower = buttonReply ? buttonReply.toLowerCase() : userMessage.toLowerCase(); // Ahora también considera botones
 
     if (["info", "costos", "hola", "precio", "información"].some(word => messageLower.includes(word))) {
       await sendInteractiveMessage(from, 'Hola 👋 gracias por contactarnos en *Camicam Photobooth*! 😃\n\n¿Qué tipo de evento tienes?', [
@@ -124,21 +124,29 @@ async function handleUserMessage(from, userMessage) {
         { id: 'evento_boda', title: '💍 Boda' },
         { id: 'evento_otro', title: '🎊 Otro Evento' }
       ]);
-    } else if (messageLower === 'evento_xv') {
+    } 
+    
+    else if (messageLower === 'evento_xv') {
       await sendWhatsAppMessage(from, 'En *Camicam Photobooth* estamos comprometidos para que tu evento luzca hermoso😍\n\nTe presentamos todos los servicios que ofrecemos 🎉');
       await sendInteractiveMessage(from, 'Te recomendamos el\n *"Paquete Mis XV"*\n\n¿Cómo te gustaría continuar?', [
         { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
         { id: 'ver_paquete_xv', title: '🎉 Ver Paquete Mis XV' }
       ]);
-    } else if (messageLower === 'ver_paquete_xv') {
+    } 
+    
+    else if (messageLower === 'ver_paquete_xv') {
       await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg');
-      await sendInteractiveMessage(from, '🎉 PAQUETE MIS XV 🎊\n\n💰 Precio Regular: $11,200\n💰 Descuento 50% OFF\n*TOTAL A PAGAR: $5,600*\n\n¿Quieres reservar este paquete?', [
+      await sendInteractiveMessage(from, '🎉 PAQUETE MIS XV 🎊\n\n💰 Precio Regular: $11,200\n💰 Descuento 50% OFF\n*TOTAL A PAGAR: $5,600*', [
         { id: 'reservar_paquete_xv', title: '📅 Reservar ' },
         { id: 'armar_paquete', title: '🛠 Armar mi paquete' }
       ]);
-    } else if (messageLower === 'reservar_paquete_xv') {
+    } 
+    
+    else if (messageLower === 'reservar_paquete_xv') {
       await sendWhatsAppMessage(from, '📅 ¡Genial! Para reservar el *Paquete Mis XV*, dime la fecha de tu evento.');
-    } else {
+    } 
+
+    else {
       try {
         const completion = await openai.chat.completions.create({
           model: "gpt-4",
@@ -153,11 +161,13 @@ async function handleUserMessage(from, userMessage) {
       }
       await sendWhatsAppMessage(from, responseText);
     }
+
   } catch (error) {
     console.error(`Error en handleUserMessage: ${error.message}`);
     await sendWhatsAppMessage(from, "Ocurrió un error, por favor intenta más tarde.");
   }
 }
+
 
 ////////////////////////////////////////////////////////////////////
 
