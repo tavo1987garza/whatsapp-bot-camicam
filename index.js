@@ -127,7 +127,7 @@ async function handleUserMessage(from, userMessage, buttonReply) {
     } 
     
     else if (messageLower === 'evento_xv') {
-      await sendWhatsAppMessage(from, 'En *Camicam Photobooth* estamos comprometidos para que tu evento luzca hermoso😍\n\nTe presentamos todos los servicios que ofrecemos 🎉'+
+      await sendWhatsAppMessage(from, 'En *Camicam Photobooth* estamos comprometidos para que tu evento luzca hermoso😍\n\nTe presentamos todos los servicios que ofrecemos 🎉\n\n'+
         '🔸Cabina de fotos\n' +
         '🔸Cabina 360\n' +
         '🔸Letras Gigantes\n' +
@@ -159,6 +159,63 @@ async function handleUserMessage(from, userMessage, buttonReply) {
     else if (messageLower === 'reservar_paquete_xv') {
       await sendWhatsAppMessage(from, '📅 ¡Genial! Para reservar el *Paquete Mis XV*, dime la fecha de tu evento.');
     } 
+    
+    // 🟢 Validar si el usuario quiere "Armar mi paquete"
+    else if (messageLower === 'armar_paquete') {
+      console.log('✅ El usuario seleccionó "Armar mi paquete"');
+    
+      // 📌 Enviamos una LISTA INTERACTIVA en lugar de botones separados
+      const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+    
+      const data = {
+        messaging_product: 'whatsapp',
+        to: from,
+        type: 'interactive',
+        interactive: {
+          type: 'list',
+          header: { type: 'text', text: '🛠 Personaliza tu paquete' },
+          body: { text: 'Selecciona los servicios que quieres agregar a tu paquete 🎉' },
+          action: {
+            button: 'Ver opciones',
+            sections: [
+              {
+                title: 'Fotografía y Cabinas 📸',
+                rows: [
+                  { id: 'agregar_cabina', title: 'Cabina de Fotos', description: 'Fotos ilimitadas por 3 horas' },
+                  { id: 'cabina_360', title: 'Cabina 360', description: 'Videos en cámara lenta para redes sociales' }
+                ]
+              },
+              {
+                title: 'Efectos Especiales ✨',
+                rows: [
+                  { id: 'agregar_chisperos', title: 'Chisperos', description: 'Chisperos de piso para momentos mágicos' },
+                  { id: 'agregar_niebla', title: 'Niebla de Piso', description: 'Efecto de niebla baja para baile' }
+                ]
+              },
+              {
+                title: 'Bebidas y Extras 🍹',
+                rows: [
+                  { id: 'agregar_shots', title: 'Carrito de Shots', description: 'Con o sin alcohol según el evento' },
+                  { id: 'scrapbook', title: 'Scrapbook', description: 'Álbum con recuerdos de la cabina de fotos' }
+                ]
+              }
+            ]
+          }
+        }
+      };
+    
+      try {
+        const response = await axios.post(url, data, {
+          headers: {
+            Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        console.log('✅ Lista interactiva enviada:', response.data);
+      } catch (error) {
+        console.error('❌ Error al enviar lista interactiva:', error.response?.data || error.message);
+      }
+    }
 
     else {
       try {
