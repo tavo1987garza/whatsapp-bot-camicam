@@ -185,14 +185,20 @@ async function handleUserMessage(from, userMessage, buttonReply) {
     else if (messageLower === 'reservar_paquete_xv') {
       await sendWhatsAppMessage(from, '📅 ¡Genial! Para reservar el *Paquete Mis XV*, dime la fecha de tu evento.');
     } 
+    else if (messageLower === 'evento_boda') {
+      await sendWhatsAppMessage(from, '💍 En *Camicam Photobooth* tenemos los mejores servicios para bodas ✨\n\nEstos son nuestros servicios:');
+      await sendWhatsAppMessage(from, '🔸 Cabina de fotos\n🔸 Cabina 360\n🔸 Letras Gigantes\n🔸 Carrito de shots Con Alcohol\n🔸 Carrito de shots Sin Alcohol\n🔸 Lluvia de Mariposas\n🔸 Lluvia Metálica\n🔸 Chisperos de Mano\n🔸 Chisperos de Piso\n🔸 Scrapbook\n🔸 Niebla de Piso\n🔸 Audio Guest Book\n\n¿Te gustaría armar tu propio paquete? ¿O prefieres nuestro paquete recomendado?');
+      await sendInteractiveMessage(from, 'Te recomendamos el\n *"Paquete Wedding"*\n\n¿Cómo te gustaría continuar?', [
+        { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
+        { id: 'ver_paquete_wedding', title: '💍 Ver Paquete Wedding' }
+      ]);
+    }
     
     // 🟢 Validar si el usuario quiere "Armar mi paquete"
     else if (messageLower === 'armar_paquete') {  
        await sendWhatsAppMessage (from, '🔗 Para armar tu paquete personalizado, visita nuestro cotizador en el siguiente enlace:\n🌐 www.cami-cam.com/cotizador/');
-       await sendWhatsAppMessage(from, '📹 Mira este video para aprender a usar nuestro cotizador:\n👉 https://www.youtube.com/watch?v=https://youtu.be/ZclEfPsJxdQ');
-
+       
       }
-    
 
     else {
       try {
