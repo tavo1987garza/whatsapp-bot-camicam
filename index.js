@@ -105,7 +105,17 @@ app.post('/webhook', async (req, res) => {
   const userMessage = message?.text?.body || '';
   const buttonReply = message?.interactive?.button_reply?.id || '';
 
-  await handleUserMessage(from, userMessage, buttonReply);
+  try {
+    // 🟢 Primero, verificamos si el mensaje coincide con una pregunta frecuente
+    if (await handleFAQs(from, userMessage)) return res.sendStatus(200);
+
+    // 🟢 Si no es una pregunta frecuente, lo pasamos a `handleUserMessage()`
+    await handleUserMessage(from, userMessage, buttonReply);
+    
+  } catch (error) {
+    console.error("❌ Error al manejar el mensaje:", error.message);
+    await sendWhatsAppMessage(from, "Lo siento, ocurrió un error al procesar tu solicitud. Inténtalo nuevamente.");
+  }
 
   res.sendStatus(200);
 });
@@ -177,46 +187,19 @@ async function sendWhatsAppVideo(to, videoUrl, caption) {
 }
 
 
-//Preguntas frecuentes
+// 📌 Preguntas frecuentes corregidas y optimizadas
 const faqs = [
-  {
-    question: /(como separo mi fecha|anticipo)/i,
-    answer: 'Separamos fecha con $500 el resto puede ser el dia del evento'
-  },
-  {
-    question: /(¿Hacen contrato?)/i,
-    answer: 'Si, una vez acreditado tu anticipo, lleno tu contrato y te envio foto'
-  },
-  {
-    question: /(¿Con cuanto timpo separo mi fecha?)/i,
-    answer: 'En el momento que Tú decidas puedes separar, siempre y cuando tenamos tu fecha disponible'
-  },
-  {
-    question: /(¿Se puede separar para 2026?)/i,
-    answer: 'Claro. Tenemos agenda abierta 2025 y 2026'
-  },
-  {
-    question: /(¿Cuanto se cobra de flete?)/i,
-    answer: 'Depende dónde sea tu evento'
-  },
-  {
-    question: /(¿Como reviso si tienen mi fecha disponible?)/i,
-    answer: 'Dime, ¿Para cuando es tu evento?'
-  },
-  {
-    question: /()/i,
-    answer: ''
-  },
-  {
-    question: /(ubicacion|ubican|oficinas)/i,
-    answer: 'Estamos en la Colonia Independencia en Monterrey. Atendemos el centro y hasta una distancia de 25 Km a la redonda  '
-  },
-  {
-    question: /(pago|metodo|tarjeta|efectivo)/i,
-    answer: 'Aceptamos transferencias bancarias, depositos y pagos en efectivo'
-  }
+  { question: /como separo mi fecha|anticipo/i, answer: 'Separamos fecha con $500. El resto puede ser el día del evento.' },
+  { question: /hacen contrato/i, answer: 'Sí, una vez acreditado tu anticipo, lleno tu contrato y te envío foto.' },
+  { question: /con cuanto tiempo separo mi fecha/i, answer: 'Puedes separar en cualquier momento, siempre que la fecha esté disponible.' },
+  { question: /se puede separar para 2026/i, answer: 'Sí, tenemos agenda abierta para 2025 y 2026.' },
+  { question: /cuánto se cobra de flete/i, answer: 'Depende de la ubicación del evento. Contáctanos con tu dirección para calcularlo.' },
+  { question: /cómo reviso si tienen mi fecha disponible/i, answer: 'Dime, ¿para cuándo es tu evento? 😊' },
+  { question: /ubicación|dónde están|oficinas/i, answer: '📍 Estamos en la Colonia Independencia en Monterrey. Atendemos eventos hasta 25 km a la redonda.' },
+  { question: /pago|método de pago|tarjeta|efectivo/i, answer: 'Aceptamos transferencias bancarias, depósitos y pagos en efectivo.' }
 ];
 
+// 📌 Función para buscar respuestas en preguntas frecuentes
 function findFAQ(userMessage) {
   for (const faq of faqs) {
     if (faq.question.test(userMessage)) {
@@ -224,6 +207,16 @@ function findFAQ(userMessage) {
     }
   }
   return null;
+}
+
+// 📌 Función para manejar preguntas frecuentes antes de enviar el mensaje a OpenAI
+async function handleFAQs(from, userMessage) {
+  const faqAnswer = findFAQ(userMessage);
+  if (faqAnswer) {
+    await sendWhatsAppMessage(from, faqAnswer);
+    return true;
+  }
+  return false;
 }
 
 
