@@ -134,28 +134,10 @@ app.post('/webhook', async (req, res) => {
     const handled = await handleUserMessage(from, userMessage, buttonReply);
     if (handled) return res.sendStatus(200);
 
-    // 🟢 Si `handleUserMessage()` tampoco maneja el mensaje, consultamos OpenAI
-    console.log(`🧠 Enviando mensaje desconocido a OpenAI: ${userMessage}`);
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [
-        { role: "system", content: "Eres un asistente amigable de una empresa de renta de photobooth para eventos. Responde preguntas sobre servicios, precios y disponibilidad." },
-        { role: "user", content: userMessage }
-      ],
-      max_tokens: 100
-    });
-
-    let responseText = completion.choices[0]?.message?.content || null;
-
-    // 🟢 Si OpenAI no pudo generar una respuesta útil, sugerimos ver la lista de preguntas frecuentes
-    if (!responseText || responseText.toLowerCase().includes("no estoy seguro") || responseText.toLowerCase().includes("no entendí")) {
-      await sendInteractiveMessage(from, "No estoy seguro de cómo responder a eso. ¿Quieres ver nuestras preguntas frecuentes?", [
-        { id: 'ver_faqs', title: '📖 Ver Preguntas Frecuentes' }
-      ]);
-    } else {
-      await sendWhatsAppMessage(from, responseText);
-    }
+    // 🟢 Si `handleUserMessage()` tampoco maneja el mensaje, sugerimos ver la lista de preguntas frecuentes
+    await sendInteractiveMessage(from, "No estoy seguro de cómo responder a eso. ¿Quieres ver nuestras preguntas frecuentes?", [
+      { id: 'ver_faqs', title: '📖 Ver Preguntas Frecuentes' }
+    ]);
 
   } catch (error) {
     console.error("❌ Error al manejar el mensaje:", error.message);
@@ -164,6 +146,7 @@ app.post('/webhook', async (req, res) => {
 
   res.sendStatus(200);
 });
+
 
 
 // 📌 Función para enviar mensajes interactivos con botones
