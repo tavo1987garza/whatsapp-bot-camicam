@@ -348,26 +348,6 @@ async function handleUserMessage(from, userMessage, buttonReply) {
 ////////////////////////////////////////////////////////////////////
 
 
-
-// 📌 Función para enviar mensajes de texto
-async function sendWhatsAppMessage(to, message) {
-  const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
-
-  const data = {
-      messaging_product: 'whatsapp',
-      to: to,
-      type: 'text',
-      text: { body: message }
-  };
-
-  await axios.post(url, data, {
-      headers: {
-          Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-          'Content-Type': 'application/json'
-      }
-  });
-}
-
 // 📌 Función para enviar mensajes de texto
 async function sendWhatsAppMessage(to, message) {
   const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
