@@ -94,6 +94,23 @@ app.get('/', async (req, res) => {
   }
 });
 
+// 📌 Ruta de prueba para mensajes interactivos
+app.get('/test-interactive', async (req, res) => {
+  const testNumber = "528133971595"; // Reemplázalo con tu número de prueba
+  console.log("➡ Enviando mensaje interactivo de prueba...");
+
+  try {
+    await sendInteractiveMessage(testNumber, "¿Quieres ver nuestras preguntas frecuentes?", [
+      { id: 'ver_faqs', title: '📖 Ver Preguntas Frecuentes' }
+    ]);
+    res.send("✅ Mensaje interactivo enviado correctamente");
+  } catch (error) {
+    console.error("❌ Error al enviar mensaje interactivo:", error.message);
+    res.send("❌ Hubo un error al enviar el mensaje interactivo");
+  }
+});
+
+
 // 📌 Webhook para manejar mensajes de WhatsApp
 app.post('/webhook', async (req, res) => {
   console.log('📩 Webhook activado:', JSON.stringify(req.body, null, 2));
@@ -119,13 +136,9 @@ app.post('/webhook', async (req, res) => {
     if (handled) return res.sendStatus(200);
 
     // 🟢 Si `handleUserMessage()` tampoco maneja el mensaje, sugerimos ver la lista de preguntas frecuentes
-    
-
-    if (!handled) { 
-      await sendInteractiveMessage(from, "No estoy seguro de cómo responder a eso. ¿Quieres ver nuestras preguntas frecuentes?", [
-        { id: 'ver_faqs', title: '📖 Ver Preguntas Frecuentes' }
-      ]);
-    }
+    await sendInteractiveMessage(from, "No estoy seguro de cómo responder a eso. ¿Quieres ver nuestras preguntas frecuentes?", [
+      { id: 'ver_faqs', title: '📖 Ver Preguntas Frecuentes' }
+    ]);
     
 
   } catch (error) {
