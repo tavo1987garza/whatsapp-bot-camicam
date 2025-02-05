@@ -378,7 +378,7 @@ else if (messageLower === 'evento_otro') {
 
  // 🟢 Respuestas a los botones
  // 🟢 Si el usuario selecciona "Ver preguntas frecuentes"
- if (messageLower === 'ver_faqs') {
+ else if (messageLower === 'ver_faqs') {
   await sendWhatsAppList(from, '📖 Preguntas Frecuentes', 'Selecciona una pregunta para obtener más información:', 'Ver preguntas', [
     {
       title: '💬 Preguntas Generales',
