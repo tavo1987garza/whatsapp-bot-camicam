@@ -105,10 +105,10 @@ app.post('/webhook', async (req, res) => {
   const userMessage = message?.text?.body || '';
   const buttonReply = message?.interactive?.button_reply?.id || '';
   const listReply = message?.interactive?.list_reply?.id || '';
-  const messageLower = buttonReply ? buttonReply.toLowerCase() : userMessage.toLowerCase();
+  const messageLower = buttonReply ? buttonReply.toLowerCase() : listReply ? listReply.toLowerCase() : userMessage.toLowerCase();
 
   try {
-    // 🟢 Si el usuario selecciona "Ver preguntas frecuentes" en el botón
+    // 🟢 Si el usuario selecciona "Ver preguntas frecuentes"
     if (messageLower === 'ver_faqs') {
       await sendWhatsAppList(from, '📖 Preguntas Frecuentes', 'Selecciona una pregunta para obtener más información:', 'Ver preguntas', [
         {
@@ -125,21 +125,20 @@ app.post('/webhook', async (req, res) => {
       return res.sendStatus(200);
     }
 
-    // 🟢 Primero, verificamos si el mensaje coincide con una pregunta frecuente
+    // 🟢 Verificamos si el mensaje coincide con una pregunta frecuente
     if (await handleFAQs(from, userMessage)) {
-      return res.sendStatus(200); // Detiene la ejecución si se encuentra una respuesta
-    }
-
-    // 🟢 Si el mensaje no coincide con una respuesta predefinida, pasamos a `handleUserMessage()`
-    if (await handleUserMessage(from, userMessage, buttonReply)) {
       return res.sendStatus(200);
     }
+
+    // 🟢 Pasamos a `handleUserMessage()`
+    const handled = await handleUserMessage(from, userMessage, buttonReply);
+    if (handled) return res.sendStatus(200);
 
     // 🟢 Si `handleUserMessage()` tampoco maneja el mensaje, consultamos OpenAI
     console.log(`🧠 Enviando mensaje desconocido a OpenAI: ${userMessage}`);
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4",  // Puedes usar "gpt-3.5-turbo" si prefieres menor costo
+      model: "gpt-4",
       messages: [
         { role: "system", content: "Eres un asistente amigable de una empresa de renta de photobooth para eventos. Responde preguntas sobre servicios, precios y disponibilidad." },
         { role: "user", content: userMessage }
@@ -165,6 +164,7 @@ app.post('/webhook', async (req, res) => {
 
   res.sendStatus(200);
 });
+
 
 // 📌 Función para enviar mensajes interactivos con botones
 async function sendInteractiveMessage(to, body, buttons) {
@@ -289,18 +289,17 @@ async function handleUserMessage(from, userMessage, buttonReply) {
   const context = userContext[from];
 
   try {
-    
-  // 🟢 Flujos predefinidos (eventos, paquetes, etc.)
-  if (messageLower.includes('info') || messageLower.includes('costos') || messageLower.includes('hola') || 
-    messageLower.includes('precio') || messageLower.includes('información')) {
+        // 🟢 Flujos predefinidos (eventos, paquetes, etc.)
+        if (messageLower.includes('info') || messageLower.includes('costos') || messageLower.includes('hola') || 
+        messageLower.includes('precio') || messageLower.includes('información')) {
 
-    await sendInteractiveMessage(from, 'Hola 👋 gracias por contactarnos, te damos la bienvenida a *Camicam Photobooth* 😃\n\nPor favor, indícame qué tipo de evento tienes 📋', [
-      { id: 'evento_xv', title: '🎉 XV Años' },
-      { id: 'evento_boda', title: '💍 Boda' },
-      { id: 'evento_otro', title: '🎊 Otro Evento' }
-    ]);
- }
-
+      await sendInteractiveMessage(from, 'Hola 👋 gracias por contactarnos, te damos la bienvenida a *Camicam Photobooth* 😃\n\nPor favor, indícame qué tipo de evento tienes 📋', [
+        { id: 'evento_xv', title: '🎉 XV Años' },
+        { id: 'evento_boda', title: '💍 Boda' },
+        { id: 'evento_otro', title: '🎊 Otro Evento' }
+      ]);
+      return true;
+    }
 
 //// SELECCIÓN MIS XV
 else if (messageLower === 'evento_xv') {
@@ -420,12 +419,21 @@ else if (messageLower === 'ver_paquete_party') {
 
 } 
 
- 
-    } catch (error) {
-      console.error("❌ Error al manejar el mensaje:", error.message);
-      await sendWhatsAppMessage(from, "Lo siento, ocurrió un error al procesar tu solicitud. Inténtalo nuevamente.");
-    }
+// 🟢 Reservar paquete
+if (messageLower === 'reservar_paquete_xv') {
+  await sendWhatsAppMessage(from, '📅 ¡Genial! Para reservar el *Paquete Mis XV*, por favor dime la fecha de tu evento.');
+  return true;
+}
+
+return false; // Si el mensaje no fue manejado por esta función, devuelve false
+
+  } catch (error) {
+    console.error("❌ Error en handleUserMessage:", error.message);
+    await sendWhatsAppMessage(from, "Lo siento, ocurrió un error.");
+    return false;
   }
+}
+
 
 ////////////////////////////////////////////////////////////////////
 
