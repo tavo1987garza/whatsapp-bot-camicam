@@ -124,7 +124,26 @@ app.post('/webhook', async (req, res) => {
   const listReply = message?.interactive?.list_reply?.id || '';
   const messageLower = buttonReply ? buttonReply.toLowerCase() : listReply ? listReply.toLowerCase() : userMessage.toLowerCase();
 
+  console.log("📌 Mensaje recibido:", userMessage);
+  console.log("🔘 Botón presionado:", buttonReply);
+  console.log("📄 Lista seleccionada:", listReply);
+
   try {
+    // 🟢 Detectar si el usuario hizo clic en "Preguntas Frecuentes"
+    if (buttonReply === 'ver_faqs') {
+      console.log("✅ Se detectó clic en el botón 'Preguntas Frecuentes'. Enviando lista...");
+      await sendWhatsAppList(from, '📖 Preguntas Frecuentes', 'Selecciona una pregunta para obtener más información:', 'Ver preguntas', [
+        {
+          title: '💬 Preguntas Generales',
+          rows: [
+            { id: 'faq_anticipo', title: '💰 ¿Cómo separo mi fecha?', description: 'Separamos con $500. El resto el día del evento.' },
+            { id: 'faq_contrato', title: '📜 ¿Hacen contrato?', description: 'Sí, se envía después del anticipo.' },
+            { id: 'faq_flete', title: '🚛 ¿Cuánto cobran de flete?', description: 'Depende de la ubicación. Pregunta para cotizar.' }
+          ]
+        }
+      ]);
+      return res.sendStatus(200);
+    }    
 
     // 🟢 Verificamos si el mensaje coincide con una pregunta frecuente
     if (await handleFAQs(from, userMessage)) {
@@ -396,20 +415,6 @@ else if (messageLower === 'evento_otro') {
 }
 
  // 🟢 Respuestas a los botones
- // 🟢 Si el usuario selecciona "Ver preguntas frecuentes"
- else if (messageLower === 'ver_faqs') {
-  await sendWhatsAppList(from, '📖 Preguntas Frecuentes', 'Selecciona una pregunta para obtener más información:', 'Ver preguntas', [
-    {
-      title: '💬 Preguntas Generales',
-      rows: [
-        { id: 'faq_anticipo', title: '💰 ¿Cómo separo mi fecha?', description: 'Separamos con $500. El resto el día del evento.' },
-        { id: 'faq_contrato', title: '📜 ¿Hacen contrato?', description: 'Sí, se envía después del anticipo.' },
-        { id: 'faq_flete', title: '🚛 ¿Cuánto cobran de flete?', description: 'Depende de la ubicación. Pregunta para cotizar.' },
-       ]
-    }
-  ]);
-  return res.sendStatus(200);
-}
 
  else if (messageLower === 'ver_paquete_xv') {
   await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg');
