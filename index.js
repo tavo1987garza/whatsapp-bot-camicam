@@ -104,8 +104,39 @@ app.post('/webhook', async (req, res) => {
   const from = message.from;
   const userMessage = message?.text?.body || '';
   const buttonReply = message?.interactive?.button_reply?.id || '';
+  const messageLower = buttonReply ? buttonReply.toLowerCase() : userMessage.toLowerCase();
 
   try {
+    // 🟢 Mostrar el menú de preguntas frecuentes si el usuario lo solicita
+    if (messageLower.includes('faq') || messageLower.includes('preguntas frecuentes') || messageLower.includes('ayuda')) {
+      await sendInteractiveMessage(from, '📖 *Preguntas Frecuentes* 📖\nSelecciona una opción para obtener más información:', [
+        { id: 'faq_anticipo', title: '💰 ¿Cómo separo mi fecha?' },
+        { id: 'faq_contrato', title: '📜 ¿Hacen contrato?' },
+        { id: 'faq_flete', title: '🚛 ¿Cuánto cobran de flete?' },
+        { id: 'faq_ubicacion', title: '📍 ¿Dónde están ubicados?' },
+        { id: 'faq_pagos', title: '💳 Métodos de pago' }
+      ]);
+      return res.sendStatus(200);
+    }
+
+    // 🟢 Si el usuario selecciona una pregunta del menú
+    switch (messageLower) {
+      case 'faq_anticipo':
+        await sendWhatsAppMessage(from, '💰 Separamos fecha con $500. El resto puede ser el día del evento.');
+        return;
+      case 'faq_contrato':
+        await sendWhatsAppMessage(from, '📜 Sí, una vez acreditado tu anticipo, lleno tu contrato y te envío foto.');
+        return;
+      case 'faq_flete':
+        await sendWhatsAppMessage(from, '🚛 El costo de flete depende de la ubicación del evento. Envíanos la dirección para calcularlo.');
+        return;
+      case 'faq_ubicacion':
+        await sendWhatsAppMessage(from, '📍 Estamos en la Colonia Independencia en Monterrey. Atendemos eventos hasta 25 km a la redonda.');
+        return;
+      case 'faq_pagos':
+        await sendWhatsAppMessage(from, '💳 Aceptamos transferencias bancarias, depósitos y pagos en efectivo.');
+        return;
+    }
     // 🟢 Primero, verificamos si el mensaje coincide con una pregunta frecuente
     if (await handleFAQs(from, userMessage)) return res.sendStatus(200);
 
@@ -190,12 +221,12 @@ async function sendWhatsAppVideo(to, videoUrl, caption) {
 // 📌 Preguntas frecuentes corregidas y optimizadas
 const faqs = [
   { question: /como separo mi fecha|anticipo/i, answer: 'Separamos fecha con $500. El resto puede ser el día del evento.' },
-  { question: /hacen contrato/i, answer: 'Sí, una vez acreditado tu anticipo, lleno tu contrato y te envío foto.' },
-  { question: /con cuanto tiempo separo mi fecha/i, answer: 'Puedes separar en cualquier momento, siempre que la fecha esté disponible.' },
-  { question: /se puede separar para 2026/i, answer: 'Sí, tenemos agenda abierta para 2025 y 2026.' },
-  { question: /cuánto se cobra de flete/i, answer: 'Depende de la ubicación del evento. Contáctanos con tu dirección para calcularlo.' },
+  { question: /hacen contrato|contrato/i, answer: 'Sí, una vez acreditado tu anticipo, lleno tu contrato y te envío foto.' },
+  { question: /con cuanto tiempo separo mi fecha|separar/i, answer: 'Puedes separar en cualquier momento, siempre que la fecha esté disponible.' },
+  { question: /se puede separar para 2026|2026/i, answer: 'Sí, tenemos agenda abierta para 2025 y 2026.' },
+  { question: /cuánto se cobra de flete|flete/i, answer: 'Depende de la ubicación del evento. Contáctanos con tu dirección para calcularlo.' },
   { question: /cómo reviso si tienen mi fecha disponible/i, answer: 'Dime, ¿para cuándo es tu evento? 😊' },
-  { question: /ubicación|dónde están|oficinas/i, answer: '📍 Estamos en la Colonia Independencia en Monterrey. Atendemos eventos hasta 25 km a la redonda.' },
+  { question: /ubicación|dónde están|ubican|oficinas/i, answer: '📍 Estamos en la Colonia Independencia en Monterrey. Atendemos eventos hasta 25 km a la redonda.' },
   { question: /pago|método de pago|tarjeta|efectivo/i, answer: 'Aceptamos transferencias bancarias, depósitos y pagos en efectivo.' }
 ];
 
