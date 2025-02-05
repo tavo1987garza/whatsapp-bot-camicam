@@ -108,7 +108,7 @@ app.post('/webhook', async (req, res) => {
   const messageLower = buttonReply ? buttonReply.toLowerCase() : userMessage.toLowerCase();
 
   try {
-     // 🟢 Si el usuario selecciona "Ver preguntas frecuentes" en el botón
+    // 🟢 Si el usuario selecciona "Ver preguntas frecuentes" en el botón
     if (messageLower === 'ver_faqs') {
       await sendWhatsAppList(from, '📖 Preguntas Frecuentes', 'Selecciona una pregunta para obtener más información:', 'Ver preguntas', [
         {
@@ -124,17 +124,40 @@ app.post('/webhook', async (req, res) => {
       ]);
       return res.sendStatus(200);
     }
+
     // 🟢 Primero, verificamos si el mensaje coincide con una pregunta frecuente
-    if (await handleFAQs(from, userMessage)) return res.sendStatus(200);
-    
-      // 🟢 Si el mensaje no coincide con una respuesta predefinida, enviar botón para ver preguntas frecuentes
-      await sendInteractiveMessage(from, "Lo siento, no entendí tu mensaje. ¿Quieres ver las preguntas frecuentes?", [
+    if (await handleFAQs(from, userMessage)) {
+      return res.sendStatus(200); // Detiene la ejecución si se encuentra una respuesta
+    }
+
+    // 🟢 Si el mensaje no coincide con una respuesta predefinida, pasamos a `handleUserMessage()`
+    if (await handleUserMessage(from, userMessage, buttonReply)) {
+      return res.sendStatus(200);
+    }
+
+    // 🟢 Si `handleUserMessage()` tampoco maneja el mensaje, consultamos OpenAI
+    console.log(`🧠 Enviando mensaje desconocido a OpenAI: ${userMessage}`);
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4",  // Puedes usar "gpt-3.5-turbo" si prefieres menor costo
+      messages: [
+        { role: "system", content: "Eres un asistente amigable de una empresa de renta de photobooth para eventos. Responde preguntas sobre servicios, precios y disponibilidad." },
+        { role: "user", content: userMessage }
+      ],
+      max_tokens: 100
+    });
+
+    let responseText = completion.choices[0]?.message?.content || null;
+
+    // 🟢 Si OpenAI no pudo generar una respuesta útil, sugerimos ver la lista de preguntas frecuentes
+    if (!responseText || responseText.toLowerCase().includes("no estoy seguro") || responseText.toLowerCase().includes("no entendí")) {
+      await sendInteractiveMessage(from, "No estoy seguro de cómo responder a eso. ¿Quieres ver nuestras preguntas frecuentes?", [
         { id: 'ver_faqs', title: '📖 Ver Preguntas Frecuentes' }
       ]);
+    } else {
+      await sendWhatsAppMessage(from, responseText);
+    }
 
-    // 🟢 Si no es una pregunta frecuente, lo pasamos a `handleUserMessage()`
-    await handleUserMessage(from, userMessage, buttonReply);
-    
   } catch (error) {
     console.error("❌ Error al manejar el mensaje:", error.message);
     await sendWhatsAppMessage(from, "Lo siento, ocurrió un error al procesar tu solicitud. Inténtalo nuevamente.");
@@ -397,20 +420,7 @@ else if (messageLower === 'ver_paquete_party') {
 
 } 
 
-  // 🟢 RESPUESTA INTELIGENTE CON OPENAI
-  else {
-    console.log(`🧠 Enviando mensaje desconocido a OpenAI: ${userMessage}`);
-  
-        const completion = await openai.chat.completions.create({
-          model: "gpt-4",  // Puedes usar "gpt-3.5-turbo" si prefieres menor costo
-          messages: [{ role: "system", content: "Eres un asistente amigable de una empresa de renta de photobooth para eventos. Responde preguntas sobre servicios, precios y disponibilidad." },
-                     { role: "user", content: userMessage }],
-          max_tokens: 100
-        });
-  
-        responseText = completion.choices[0]?.message?.content || "Lo siento, no entendí bien tu mensaje. ¿Puedes reformularlo?";
-        await sendWhatsAppMessage(from, responseText);
-      }
+ 
     } catch (error) {
       console.error("❌ Error al manejar el mensaje:", error.message);
       await sendWhatsAppMessage(from, "Lo siento, ocurrió un error al procesar tu solicitud. Inténtalo nuevamente.");
