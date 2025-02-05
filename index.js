@@ -350,7 +350,7 @@ async function handleUserMessage(from, userMessage, buttonReply) {
         if (messageLower.includes('info') || messageLower.includes('costos') || messageLower.includes('hola') || 
         messageLower.includes('precio') || messageLower.includes('información')) {
 
-      await sendInteractiveMessage(from, 'Hola 👋 gracias por contactarnos, te damos la bienvenida a *Camicam Photobooth* 😃\n\nPor favor, indícame qué tipo de evento tienes 📋', [
+      await sendInteractiveMessage(from, 'Hola 👋 gracias por contactarnos, te damos la bienvenida a *Camicam Photobooth* 😃\n\nPor favor, selecciona el tipo de evento que tienes 👇', [
         { id: 'evento_xv', title: '🎉 XV Años' },
         { id: 'evento_boda', title: '💍 Boda' },
         { id: 'evento_otro', title: '🎊 Otro Evento' }
@@ -373,9 +373,9 @@ else if (messageLower === 'evento_xv') {
     '🔸Scrapbook\n' +
     '🔸Niebla de Piso\n' +
     '🔸Audio Guest Book\n\n' +
-    'Arma tu paquete con todo lo que necesites!!\n\nO si prefieres revisa nuestro paquete recomendado');
+    '¿Quieres armar tu paquete?\n\nO prefieres el *Paquete MIS XV*?');
 
-  await sendInteractiveMessage(from, 'Te recomendamos el\n *"Paquete Mis XV"*\n\n¿Cómo te gustaría continuar?', [
+  await sendInteractiveMessage(from, 'Selecciona una Opción 👇', [
     { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, 
     { id: 'ver_paquete_xv', title: '🎉 Ver Paquete Mis XV' }
   ]);
