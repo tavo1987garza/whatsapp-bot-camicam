@@ -119,9 +119,14 @@ app.post('/webhook', async (req, res) => {
     if (handled) return res.sendStatus(200);
 
     // 🟢 Si `handleUserMessage()` tampoco maneja el mensaje, sugerimos ver la lista de preguntas frecuentes
-    await sendInteractiveMessage(from, "No estoy seguro de cómo responder a eso. ¿Quieres ver nuestras preguntas frecuentes?", [
-      { id: 'ver_faqs', title: '📖 Ver Preguntas Frecuentes' }
-    ]);
+    
+
+    if (!handled) { 
+      await sendInteractiveMessage(from, "No estoy seguro de cómo responder a eso. ¿Quieres ver nuestras preguntas frecuentes?", [
+        { id: 'ver_faqs', title: '📖 Ver Preguntas Frecuentes' }
+      ]);
+    }
+    
 
   } catch (error) {
     console.error("❌ Error al manejar el mensaje:", error.message);
@@ -139,6 +144,7 @@ async function sendInteractiveMessage(to, body, buttons) {
 
   const data = {
     messaging_product: 'whatsapp',
+    recipient_type: "individual",
     to: to,
     type: 'interactive',
     interactive: {
