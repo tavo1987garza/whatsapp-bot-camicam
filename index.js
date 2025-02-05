@@ -242,34 +242,39 @@ async function sendWhatsAppList(to, header, body, buttonText, sections) {
   const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
 
   const data = {
-      messaging_product: 'whatsapp',
-      recipient_type: 'individual',
-      to: to,
-      type: 'interactive',
-      interactive: {
-          type: 'list',
-          body: { text: body },
-          action: {
-              button: buttonText,
-              sections: sections.map(section => ({
-                  title: section.title,
-                  rows: section.rows.map(row => ({
-                      id: row.id,
-                      title: row.title,
-                      description: row.description || ""
-                  }))
-              }))
-          }
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to: to,
+    type: "interactive",
+    interactive: {
+      type: "list",
+      header: { type: "text", text: header },
+      body: { text: body },
+      action: {
+        button: buttonText,
+        sections: sections.map(section => ({
+          title: section.title,
+          rows: section.rows.map(row => ({
+            id: row.id,
+            title: row.title,
+            description: row.description || ""
+          }))
+        }))
       }
+    }
   };
 
   try {
     const response = await axios.post(url, data, {
-      headers: { Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`, 'Content-Type': 'application/json' }
+      headers: {
+        Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+        "Content-Type": "application/json"
+      }
     });
-    console.log('✅ Lista interactiva enviada:', response.data);
+
+    console.log("✅ Lista interactiva enviada:", response.data);
   } catch (error) {
-    console.error('❌ Error al enviar lista interactiva:', error.response?.data || error.message);
+    console.error("❌ Error al enviar lista interactiva:", error.response?.data || error.message);
   }
 }
 
