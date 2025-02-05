@@ -101,7 +101,7 @@ app.get('/test-interactive', async (req, res) => {
 
   try {
     await sendInteractiveMessage(testNumber, "¿Quieres ver nuestras preguntas frecuentes?", [
-      { id: 'ver_faqs', title: '📖 Ver Preguntas Frecuentes' }
+      { id: 'ver_faqs', title: 'Preguntas Frecuentes' }
     ]);
     res.send("✅ Mensaje interactivo enviado correctamente");
   } catch (error) {
@@ -137,7 +137,7 @@ app.post('/webhook', async (req, res) => {
 
     // 🟢 Si `handleUserMessage()` tampoco maneja el mensaje, sugerimos ver la lista de preguntas frecuentes
     await sendInteractiveMessage(from, "No estoy seguro de cómo responder a eso. ¿Quieres ver nuestras preguntas frecuentes?", [
-      { id: 'ver_faqs', title: '📖 Ver Preguntas Frecuentes' }
+      { id: 'ver_faqs', title: 'Preguntas Frecuentes' }
     ]);
     
 
