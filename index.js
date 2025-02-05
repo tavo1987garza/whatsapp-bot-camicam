@@ -104,12 +104,13 @@ app.post('/webhook', async (req, res) => {
   const from = message.from;
   const userMessage = message?.text?.body || '';
   const buttonReply = message?.interactive?.button_reply?.id || '';
+  const listReply = message?.interactive?.list_reply?.id || '';
   const messageLower = buttonReply ? buttonReply.toLowerCase() : userMessage.toLowerCase();
 
   try {
-    // 🟢 Si el usuario escribe "faq", "preguntas frecuentes" o "ayuda", mostramos la lista con respuestas
-    if (messageLower.includes('faq') || messageLower.includes('preguntas frecuentes') || messageLower.includes('ayuda')) {
-      await sendWhatsAppList(from, '📖 Preguntas Frecuentes', 'Aquí tienes información de las preguntas más comunes:', 'Ver más', [
+     // 🟢 Si el usuario selecciona "Ver preguntas frecuentes" en el botón
+    if (messageLower === 'ver_faqs') {
+      await sendWhatsAppList(from, '📖 Preguntas Frecuentes', 'Selecciona una pregunta para obtener más información:', 'Ver preguntas', [
         {
           title: '💬 Preguntas Generales',
           rows: [
@@ -407,7 +408,11 @@ else if (messageLower === 'ver_paquete_party') {
       }
     } catch (error) {
       console.error("❌ Error al manejar el mensaje:", error.message);
-      await sendWhatsAppMessage(from, "Lo siento, ocurrió un error al procesar tu solicitud. Inténtalo nuevamente.");
+        // 🟢 Si el mensaje no coincide con una respuesta predefinida, enviar botón para ver preguntas frecuentes
+    await sendInteractiveMessage(from, "Lo siento, no entendí tu mensaje. ¿Quieres ver las preguntas frecuentes?", [
+      { id: 'ver_faqs', title: '📖 Ver Preguntas Frecuentes' }
+    ]);
+    
     }
   }
 
