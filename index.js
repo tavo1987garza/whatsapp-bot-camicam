@@ -108,20 +108,6 @@ app.post('/webhook', async (req, res) => {
   const messageLower = buttonReply ? buttonReply.toLowerCase() : listReply ? listReply.toLowerCase() : userMessage.toLowerCase();
 
   try {
-    // 🟢 Si el usuario selecciona "Ver preguntas frecuentes"
-    if (messageLower === 'ver_faqs') {
-      await sendWhatsAppList(from, '📖 Preguntas Frecuentes', 'Selecciona una pregunta para obtener más información:', 'Ver preguntas', [
-        {
-          title: '💬 Preguntas Generales',
-          rows: [
-            { id: 'faq_anticipo', title: '💰 ¿Cómo separo mi fecha?', description: 'Separamos con $500. El resto el día del evento.' },
-            { id: 'faq_contrato', title: '📜 ¿Hacen contrato?', description: 'Sí, se envía después del anticipo.' },
-            { id: 'faq_flete', title: '🚛 ¿Cuánto cobran de flete?', description: 'Depende de la ubicación. Pregunta para cotizar.' },
-           ]
-        }
-      ]);
-      return res.sendStatus(200);
-    }
 
     // 🟢 Verificamos si el mensaje coincide con una pregunta frecuente
     if (await handleFAQs(from, userMessage)) {
@@ -210,6 +196,42 @@ async function sendWhatsAppVideo(to, videoUrl, caption) {
     console.log('✅ Video enviado:', response.data);
   } catch (error) {
     console.error('❌ Error al enviar el video:', error.response?.data || error.message);
+  }
+}
+
+////Funcion para enviar Listas Interactivas
+async function sendWhatsAppList(to, header, body, buttonText, sections) {
+  const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+
+  const data = {
+      messaging_product: 'whatsapp',
+      recipient_type: 'individual',
+      to: to,
+      type: 'interactive',
+      interactive: {
+          type: 'list',
+          body: { text: body },
+          action: {
+              button: buttonText,
+              sections: sections.map(section => ({
+                  title: section.title,
+                  rows: section.rows.map(row => ({
+                      id: row.id,
+                      title: row.title,
+                      description: row.description || ""
+                  }))
+              }))
+          }
+      }
+  };
+
+  try {
+    const response = await axios.post(url, data, {
+      headers: { Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`, 'Content-Type': 'application/json' }
+    });
+    console.log('✅ Lista interactiva enviada:', response.data);
+  } catch (error) {
+    console.error('❌ Error al enviar lista interactiva:', error.response?.data || error.message);
   }
 }
 
@@ -355,6 +377,21 @@ else if (messageLower === 'evento_otro') {
 }
 
  // 🟢 Respuestas a los botones
+ // 🟢 Si el usuario selecciona "Ver preguntas frecuentes"
+ if (messageLower === 'ver_faqs') {
+  await sendWhatsAppList(from, '📖 Preguntas Frecuentes', 'Selecciona una pregunta para obtener más información:', 'Ver preguntas', [
+    {
+      title: '💬 Preguntas Generales',
+      rows: [
+        { id: 'faq_anticipo', title: '💰 ¿Cómo separo mi fecha?', description: 'Separamos con $500. El resto el día del evento.' },
+        { id: 'faq_contrato', title: '📜 ¿Hacen contrato?', description: 'Sí, se envía después del anticipo.' },
+        { id: 'faq_flete', title: '🚛 ¿Cuánto cobran de flete?', description: 'Depende de la ubicación. Pregunta para cotizar.' },
+       ]
+    }
+  ]);
+  return res.sendStatus(200);
+}
+
  else if (messageLower === 'ver_paquete_xv') {
   await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg');
   await sendInteractiveMessage(from, '🎉 PAQUETE MIS XV 🎊\n\n' +
@@ -473,40 +510,6 @@ async function sendImageMessage(to, imageUrl, caption) {
   }
 }
 
-// 📌 Función para enviar listas interactivas
-async function sendWhatsAppList(to, header, body, buttonText, sections) {
-  const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
-
-  const data = {
-      messaging_product: 'whatsapp',
-      to: to,
-      type: 'interactive',
-      interactive: {
-          type: 'list',
-          header: { type: 'text', text: header },
-          body: { text: body },
-          action: {
-              button: buttonText,
-              sections: sections.map(section => ({
-                  title: section.title,
-                  rows: section.rows.map(row => ({
-                      id: row.id,
-                      title: row.title,
-                      description: row.description || ""
-                  }))
-              }))
-          }
-      }
-  };
-
-  try {
-    await axios.post(url, data, {
-      headers: { Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`, 'Content-Type': 'application/json' }
-    });
-  } catch (error) {
-    console.error('❌ Error al enviar lista interactiva:', error.response?.data || error.message);
-  }
-}
 
 // Iniciar el servidor
 app.listen(PORT, () => {
