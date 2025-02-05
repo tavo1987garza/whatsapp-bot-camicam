@@ -132,6 +132,7 @@ app.post('/webhook', async (req, res) => {
     // 🟢 Detectar si el usuario hizo clic en "Preguntas Frecuentes"
     if (buttonReply === 'ver_faqs') {
       console.log("✅ Se detectó clic en el botón 'Preguntas Frecuentes'. Enviando lista...");
+     
       await sendWhatsAppList(from, '📖 Preguntas Frecuentes', 'Selecciona una pregunta para obtener más información:', 'Ver preguntas', [
         {
           title: 'Preg. Frecuentes',
@@ -145,6 +146,16 @@ app.post('/webhook', async (req, res) => {
       return res.sendStatus(200);
     }    
 
+    // 🟢 Detectar si el usuario seleccionó una pregunta de la lista
+    if (listReply) {
+      console.log("✅ Se detectó selección de lista:", listReply);
+      const faqAnswer = findFAQ(listReply);
+      if (faqAnswer) {
+        await sendWhatsAppMessage(from, faqAnswer);
+        return res.sendStatus(200);
+      }
+    }
+
     // 🟢 Verificamos si el mensaje coincide con una pregunta frecuente
     if (await handleFAQs(from, userMessage)) {
       return res.sendStatus(200);
@@ -155,10 +166,10 @@ app.post('/webhook', async (req, res) => {
     if (handled) return res.sendStatus(200);
 
     // 🟢 Si `handleUserMessage()` tampoco maneja el mensaje, sugerimos ver la lista de preguntas frecuentes
+    console.log("❓ Mensaje no reconocido. Mostrando botón de Preguntas Frecuentes.");
     await sendInteractiveMessage(from, "No estoy seguro de cómo responder a eso. ¿Quieres ver nuestras preguntas frecuentes?", [
-      { id: 'ver_faqs', title: 'Preguntas Frecuentes' }
+      { id: 'ver_faqs', title: 'Preg. Frecuentes' }
     ]);
-    
 
   } catch (error) {
     console.error("❌ Error al manejar el mensaje:", error.message);
