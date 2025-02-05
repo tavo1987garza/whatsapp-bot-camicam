@@ -303,6 +303,7 @@ else if (messageLower === 'evento_xv') {
     { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, 
     { id: 'ver_paquete_xv', title: '🎉 Ver Paquete Mis XV' }
   ]);
+  return true;
 }
 
 //// SELECCIÓN WEDDING
@@ -326,6 +327,7 @@ else if (messageLower === 'evento_boda') {
     { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, // Botón reutilizado
     { id: 'ver_paquete_wedding', title: '🎊 Ver Paq. WEDDING' }
   ]);
+  return true;
 }
 
 //// SELECCIÓN PARTY
@@ -349,6 +351,7 @@ else if (messageLower === 'evento_otro') {
     { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, 
     { id: 'ver_paquete_party', title: '🎊 Ver Paquete Party' }
   ]);
+  return true;
 }
 
  // 🟢 Respuestas a los botones
