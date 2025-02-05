@@ -180,16 +180,40 @@ async function sendWhatsAppVideo(to, videoUrl, caption) {
 //Preguntas frecuentes
 const faqs = [
   {
-    question: /(horario|atencion|abierto|cierra)/i,
-    answer: 'Nuestro horario de atención es de lunes a viernes de 9:00 AM a 6:00 PM, y sábados de 10:00 AM a 2:00 PM.'
+    question: /(como separo mi fecha|anticipo)/i,
+    answer: 'Separamos fecha con $500 el resto puede ser el dia del evento'
   },
   {
-    question: /(envio|domicilio|transport)/i,
-    answer: 'Sí, realizamos envíos a domicilio en un radio de 50 km sin costo adicional. Para distancias mayores, aplica un cargo extra.'
+    question: /(¿Hacen contrato?)/i,
+    answer: 'Si, una vez acreditado tu anticipo, lleno tu contrato y te envio foto'
+  },
+  {
+    question: /(¿Con cuanto timpo separo mi fecha?)/i,
+    answer: 'En el momento que Tú decidas puedes separar, siempre y cuando tenamos tu fecha disponible'
+  },
+  {
+    question: /(¿Se puede separar para 2026?)/i,
+    answer: 'Claro. Tenemos agenda abierta 2025 y 2026'
+  },
+  {
+    question: /(¿Cuanto se cobra de flete?)/i,
+    answer: 'Depende dónde sea tu evento'
+  },
+  {
+    question: /(¿Como reviso si tienen mi fecha disponible?)/i,
+    answer: 'Dime, ¿Para cuando es tu evento?'
+  },
+  {
+    question: /()/i,
+    answer: ''
+  },
+  {
+    question: /(ubicacion|ubican|oficinas)/i,
+    answer: 'Estamos en la Colonia Independencia en Monterrey. Atendemos el centro y hasta una distancia de 25 Km a la redonda  '
   },
   {
     question: /(pago|metodo|tarjeta|efectivo)/i,
-    answer: 'Aceptamos tarjetas de crédito/débito, transferencias bancarias y pagos en efectivo.'
+    answer: 'Aceptamos transferencias bancarias, depositos y pagos en efectivo'
   }
 ];
 
