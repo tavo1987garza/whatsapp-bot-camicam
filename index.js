@@ -135,11 +135,11 @@ app.post('/webhook', async (req, res) => {
      
       await sendWhatsAppList(from, '📖 Preguntas Frecuentes', 'Selecciona una pregunta para obtener más información:', 'Ver preguntas', [
         {
-          title: 'Preg. Frecuentes',
+          title: 'Preg Frecuentes',
           rows: [
-            { id: 'faq_anticipo', title: '💰 ¿Cómo separo mi fecha?', description: 'Separamos con $500. El resto el día del evento.' },
-            { id: 'faq_contrato', title: '📜 ¿Hacen contrato?', description: 'Sí, se envía después del anticipo.' },
-            { id: 'faq_flete', title: '🚛 ¿Cuánto cobran de flete?', description: 'Depende de la ubicación. Pregunta para cotizar.' }
+            { id: 'faq_anticipo', title: '💰 Cómo separo mi fecha?', description: 'Separamos con $500. El resto el día del evento.' },
+            { id: 'faq_contrato', title: '📜 Hacen contrato?', description: 'Sí, se envía después del anticipo.' },
+            { id: 'faq_flete', title: '🚛 Cuánto cobran de flete?', description: 'Depende de la ubicación. Pregunta para cotizar.' }
           ]
         }
       ]);
