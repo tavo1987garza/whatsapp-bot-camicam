@@ -126,6 +126,11 @@ app.post('/webhook', async (req, res) => {
     }
     // 🟢 Primero, verificamos si el mensaje coincide con una pregunta frecuente
     if (await handleFAQs(from, userMessage)) return res.sendStatus(200);
+    
+      // 🟢 Si el mensaje no coincide con una respuesta predefinida, enviar botón para ver preguntas frecuentes
+      await sendInteractiveMessage(from, "Lo siento, no entendí tu mensaje. ¿Quieres ver las preguntas frecuentes?", [
+        { id: 'ver_faqs', title: '📖 Ver Preguntas Frecuentes' }
+      ]);
 
     // 🟢 Si no es una pregunta frecuente, lo pasamos a `handleUserMessage()`
     await handleUserMessage(from, userMessage, buttonReply);
@@ -408,11 +413,7 @@ else if (messageLower === 'ver_paquete_party') {
       }
     } catch (error) {
       console.error("❌ Error al manejar el mensaje:", error.message);
-        // 🟢 Si el mensaje no coincide con una respuesta predefinida, enviar botón para ver preguntas frecuentes
-    await sendInteractiveMessage(from, "Lo siento, no entendí tu mensaje. ¿Quieres ver las preguntas frecuentes?", [
-      { id: 'ver_faqs', title: '📖 Ver Preguntas Frecuentes' }
-    ]);
-    
+      await sendWhatsAppMessage(from, "Lo siento, ocurrió un error al procesar tu solicitud. Inténtalo nuevamente.");
     }
   }
 
