@@ -117,9 +117,7 @@ app.post('/webhook', async (req, res) => {
             { id: 'faq_anticipo', title: '💰 ¿Cómo separo mi fecha?', description: 'Separamos con $500. El resto el día del evento.' },
             { id: 'faq_contrato', title: '📜 ¿Hacen contrato?', description: 'Sí, se envía después del anticipo.' },
             { id: 'faq_flete', title: '🚛 ¿Cuánto cobran de flete?', description: 'Depende de la ubicación. Pregunta para cotizar.' },
-            { id: 'faq_ubicacion', title: '📍 ¿Dónde están ubicados?', description: 'Colonia Independencia, Monterrey. Hasta 25 km.' },
-            { id: 'faq_pagos', title: '💳 Métodos de pago', description: 'Aceptamos transferencias, depósitos y efectivo.' }
-          ]
+           ]
         }
       ]);
       return res.sendStatus(200);
@@ -224,7 +222,7 @@ const faqs = [
   { question: /se puede separar para 2026|2026/i, answer: 'Sí, tenemos agenda abierta para 2025 y 2026.' },
   { question: /cuánto se cobra de flete|flete/i, answer: 'Depende de la ubicación del evento. Contáctanos con tu dirección para calcularlo.' },
   { question: /cómo reviso si tienen mi fecha disponible/i, answer: 'Dime, ¿para cuándo es tu evento? 😊' },
-  { question: /ubicación|dónde están|ubican|oficinas/i, answer: '📍 Estamos en la Colonia Independencia en Monterrey. Atendemos eventos hasta 25 km a la redonda.' },
+  { question: /ubicación|dónde están|donde son|ubican|oficinas/i, answer: '📍 Estamos en la Colonia Independencia en Monterrey. Atendemos eventos hasta 25 km a la redonda.' },
   { question: /pago|método de pago|tarjeta|efectivo/i, answer: 'Aceptamos transferencias bancarias, depósitos y pagos en efectivo.' }
 ];
 
