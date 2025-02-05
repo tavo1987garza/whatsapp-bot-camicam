@@ -101,7 +101,7 @@ app.get('/test-interactive', async (req, res) => {
 
   try {
     await sendInteractiveMessage(testNumber, "¿Quieres ver nuestras preguntas frecuentes?", [
-      { id: 'ver_faq', title: 'Preguntas Frecuentes' }
+      { id: 'ver_faqs', title: 'Preguntas Frecuentes' }
     ]);
     res.send("✅ Mensaje interactivo enviado correctamente");
   } catch (error) {
@@ -137,7 +137,7 @@ app.post('/webhook', async (req, res) => {
 
     // 🟢 Si `handleUserMessage()` tampoco maneja el mensaje, sugerimos ver la lista de preguntas frecuentes
     await sendInteractiveMessage(from, "No estoy seguro de cómo responder a eso. ¿Quieres ver nuestras preguntas frecuentes?", [
-      { id: 'ver_faq', title: 'Preguntas Frecuentes' }
+      { id: 'ver_faqs', title: 'Preguntas Frecuentes' }
     ]);
     
 
@@ -397,7 +397,7 @@ else if (messageLower === 'evento_otro') {
 
  // 🟢 Respuestas a los botones
  // 🟢 Si el usuario selecciona "Ver preguntas frecuentes"
- else if (messageLower === 'ver_faq') {
+ else if (messageLower === 'ver_faqs') {
   await sendWhatsAppList(from, '📖 Preguntas Frecuentes', 'Selecciona una pregunta para obtener más información:', 'Ver preguntas', [
     {
       title: '💬 Preguntas Generales',
