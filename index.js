@@ -349,6 +349,8 @@ async function handleFAQs(from, userMessage) {
   return false;
 }
 
+  // Función para crear un retraso
+  const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 //////////////////////////////////////////////////////////////////////
 
 
@@ -387,8 +389,9 @@ async function handleUserMessage(from, userMessage, buttonReply) {
 //// SELECCIÓN MIS XV
 else if (messageLower === 'evento_xv') {
   await sendWhatsAppMessage(from, 'Estos son los servicios que ofrecemos en *Camicam Photobooth* 🎉');
-    await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg');
-
+  await delay(2000);
+  await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg');
+  await delay(3000);
   await sendInteractiveMessage(from, 'Arma tu paquete con todo lo que necesites!!\n\n', [
     { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, 
     { id: 'ver_paquete_xv', title: '🎉 Ver Paquete mis XV' }
