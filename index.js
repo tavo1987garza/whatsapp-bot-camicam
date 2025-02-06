@@ -386,19 +386,8 @@ async function handleUserMessage(from, userMessage, buttonReply) {
 
 //// SELECCIÓN MIS XV
 else if (messageLower === 'evento_xv') {
-  await sendWhatsAppMessage(from, 'Estos son los servicios que ofrecemos 🎉\n\n' +
-    '🔸Cabina de fotos\n' +
-    '🔸Cabina 360\n' +
-    '🔸Letras Gigantes\n' +
-    '🔸Carrito de shots Con Alcohol\n' +
-    '🔸Carrito de shots Sin Alcohol\n' +
-    '🔸Lluvia de Mariposas\n' +
-    '🔸Lluvia Metálica\n' +
-    '🔸Chisperos de Mano\n' +
-    '🔸Chisperos de Piso\n' +
-    '🔸Scrapbook\n' +
-    '🔸Niebla de Piso\n' +
-    '🔸Audio Guest Book\n\n');
+  await sendWhatsAppMessage(from, 'Estos son los servicios que ofrecemos en *Camicam Photobooth* 🎉');
+    await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg');
 
   await sendInteractiveMessage(from, 'Arma tu paquete con todo lo que necesites!!\n\n', [
     { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, 
