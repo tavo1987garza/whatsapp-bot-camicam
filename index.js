@@ -437,7 +437,7 @@ async function handleUserMessage(from, userMessage, buttonReply) {
 
         await sendWhatsAppMessage(from, 'Para brindarte la mejor atención');
         await activateTypingIndicator(from);
-        await delay(2000);
+        await delay(3000);
         await deactivateTypingIndicator(from);
 
         await sendInteractiveMessage(from, 'Por favor selecciona el tipo de evento que tienes 👇', [
@@ -453,14 +453,14 @@ else if (messageLower === 'evento_xv') {
   await sendWhatsAppMessage(from, 'Estos son los servicios que ofrecemos en *Camicam Photobooth* 🎉');
   
   await activateTypingIndicator(from);
-  await delay(1000);
+  await delay(2000);
   await deactivateTypingIndicator(from);
   await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg');
   
   await activateTypingIndicator(from);
-  await delay(5000);
+  await delay(6000);
   await deactivateTypingIndicator(from);
-  await sendInteractiveMessage(from, 'Arma tu paquete con todo lo que necesites!!\n\n', [
+  await sendInteractiveMessage(from, 'Puedes armar tu paquete con todo lo que necesites!! 😊\n\n', [
     { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, 
     { id: 'ver_paquete_xv', title: '🎉 Ver Paquete mis XV' }
   ]);
@@ -469,23 +469,18 @@ else if (messageLower === 'evento_xv') {
 
 //// SELECCIÓN WEDDING
 else if (messageLower === 'evento_boda') {
-  await sendWhatsAppMessage(from, 'En *Camicam Photobooth* estamos comprometidos para que tu evento luzca hermoso😍\n\nTe presentamos todos los servicios que ofrecemos 🎉\n\n' +
-    '🔸Cabina de fotos\n' +
-    '🔸Cabina 360\n' +
-    '🔸Letras Gigantes\n' +
-    '🔸Carrito de shots Con Alcohol\n' +
-    '🔸Carrito de shots Sin Alcohol\n' +
-    '🔸Lluvia de Mariposas\n' +
-    '🔸Lluvia Metálica\n' +
-    '🔸Chisperos de Mano\n' +
-    '🔸Chisperos de Piso\n' +
-    '🔸Scrapbook\n' +
-    '🔸Niebla de Piso\n' +
-    '🔸Audio Guest Book\n\n' +
-    'Arma tu paquete con todo lo que necesites!!\n\nO si prefieres revisa nuestro paquete recomendado');
-
-  await sendInteractiveMessage(from, '💍 Para Bodas, te recomendamos el\n*Paquete WEDDING*.\n\n¿Cómo te gustaría continuar?', [
-    { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, // Botón reutilizado
+  await sendWhatsAppMessage(from, 'Estos son los servicios que ofrecemos en *Camicam Photobooth* 🎉');
+  
+  await activateTypingIndicator(from);
+  await delay(2000);
+  await deactivateTypingIndicator(from);
+  await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg');
+  
+  await activateTypingIndicator(from);
+  await delay(6000);
+  await deactivateTypingIndicator(from);
+  await sendInteractiveMessage(from, 'Puedes armar tu paquete con todo lo que necesites!! 😊\n\n', [
+    { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, 
     { id: 'ver_paquete_wedding', title: '🎊 Ver Paq. WEDDING' }
   ]);
   return true;
@@ -493,22 +488,17 @@ else if (messageLower === 'evento_boda') {
 
 //// SELECCIÓN PARTY
 else if (messageLower === 'evento_otro') {
-  await sendWhatsAppMessage(from, 'En *Camicam Photobooth* estamos comprometidos para que tu evento luzca hermoso😍\n\nTe presentamos todos los servicios que ofrecemos 🎉\n\n' +
-    '🔸Cabina de fotos\n' +
-    '🔸Cabina 360\n' +
-    '🔸Letras Gigantes\n' +
-    '🔸Carrito de shots Con Alcohol\n' +
-    '🔸Carrito de shots Sin Alcohol\n' +
-    '🔸Lluvia de Mariposas\n' +
-    '🔸Lluvia Metálica\n' +
-    '🔸Chisperos de Mano\n' +
-    '🔸Chisperos de Piso\n' +
-    '🔸Scrapbook\n' +
-    '🔸Niebla de Piso\n' +
-    '🔸Audio Guest Book\n\n' +
-    'Arma tu paquete con todo lo que necesites!!\n\nO si prefieres revisa nuestro paquete recomendado');
-
-  await sendInteractiveMessage(from, '🎊 Para otros eventos, te recomendamos el\n*Paquete Party*.\n\n¿Cómo te gustaría continuar?', [
+  await sendWhatsAppMessage(from, 'Estos son los servicios que ofrecemos en *Camicam Photobooth* 🎉');
+  
+  await activateTypingIndicator(from);
+  await delay(2000);
+  await deactivateTypingIndicator(from);
+  await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg');
+  
+  await activateTypingIndicator(from);
+  await delay(6000);
+  await deactivateTypingIndicator(from);
+  await sendInteractiveMessage(from, 'Puedes armar tu paquete con todo lo que necesites!! 😊\n\n', [
     { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, 
     { id: 'ver_paquete_party', title: '🎊 Ver Paquete Party' }
   ]);
