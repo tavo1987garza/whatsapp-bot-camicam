@@ -509,19 +509,42 @@ else if (messageLower === 'evento_otro') {
 
  else if (messageLower === 'ver_paquete_xv') {
   await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg');
-  await sendInteractiveMessage(from, '🎉 PAQUETE MIS XV 🎊\n\n' +
-    '*Incluye*\n\n' +
-    '✅ Cabina de Fotos (3 Horas)\n' +
-    '✅ Lluvia de mariposas\n' +
-    '✅ 6 Letras Gigantes (5 Horas)\n' +
-    '✅ 2 Chisperos\n\n' +
-    '💰 Precio Regular: $11,200\n' +
-    '💰 Descuento 50% OFF\n*TOTAL A PAGAR: $5,600*\n\n' +
-    'Bono Exclusivo hasta el 28 de Febrero 2025:\n' + 
-    '✅ Scrapbook para la cabina de fotos completamente GRATIS 🎁\n\n' +
-    '📅 ¿Quieres reservar este paquete? \n¿O prefieres armar el tuyo?',[
+  await activateTypingIndicator(from);
+  await delay(3000);
+  await deactivateTypingIndicator(from);
+  await sendWhatsAppMessage(from, 'El paquete que estamos promocionando es el *PAQUETE MIS XV*');
+  await sendWhatsAppMessage(from, 'CONTRATA'+
+    '✅ Cabina de Fotos (3 Horas) y\n' +
+    '✅ Lluvia de mariposaspor \n\n' +
+    '✨ $6,200 ✨\n\n'+
+    'Mas flete, dependiendo dónde sea el evento 📍\n\n'+
+    'y llévate GRATIS la renta de:\n\n'+
+    '✅ 6 Letras Gigantes y\n'+
+    '✅ 2 Chisperos de piso'
+  );
+  await sendWhatsAppMessage(from, '*Pero espera!!');
+  await sendWhatsAppMessage(from, '¡Sólo este mes disfruta de un descuento de $600!');
+  await sendWhatsAppMessage(from, 'Paga únicamente ✨*$5,600*✨');
+  await sendWhatsAppMessage(from, 'Y ESO O ES TODO!!\n'+
+  'Aproveha también el Bono Exclusivo del mes de Febrero\n\n'+
+  '✅ Audio Guest Book\n\n'+
+  'Será un recuerdo muy bonito de tu evento\n\n'
+  );
+  await sendWhatsAppMessage(from, '¡Contrata TODO por tan sólo!\n\n'+
+    '✨*$5,600*✨');
+  await sendWhatsAppMessage(from, '¡SI! ¡Leiste bien!\n\n'+
+    '✅ Cabina de Fotos (3 Horas) y\n' +
+    '✅ Lluvia de mariposaspor \n\n' +
+    '✅ 6 Letras Gigantes y\n'+
+    '✅ 2 Chisperos de piso'+
+    '✅ Audio Guest Book por\n\n'+
+    '✨*$5,600*✨\n\n'+
+    'Mas flete, dependiendo dónde sea el evento 📍\n\n'
+  );
+  await sendInteractiveMessage(from, 'Te interesa? 🎊\n\n' +
+    'O prefieres armar tu paquete?\n',[
   
-      { id: 'reservar_paquete_xv', title: '📅 Reservar ' },
+      { id: 'reservar_paquete_xv', title: 'SI, Me interesa 😍' },
       { id: 'armar_paquete', title: '🛠 Armar mi paquete' }
     ]);
 }
