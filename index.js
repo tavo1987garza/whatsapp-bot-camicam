@@ -351,6 +351,58 @@ async function handleFAQs(from, userMessage) {
 
   // Función para crear un retraso
   const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+  // Función para activar el indicador de "escribiendo"
+  async function activateTypingIndicator(to) {
+    const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+    const headers = {
+      Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`, // Reemplaza con tu token de acceso
+      'Content-Type': 'application/json'
+    };
+    const data = {
+      messaging_product: 'whatsapp',
+      recipient_type: 'individual',
+      to: to,
+      type: 'text',
+      action: {
+        type: 'typing_on'
+      }
+    };
+  
+    try {
+      await axios.post(url, data, { headers });
+      console.log('Indicador de "escribiendo" activado');
+    } catch (error) {
+      console.error('Error al activar el indicador de "escribiendo":', error.response.data);
+    }
+  }
+  
+  // Función para desactivar el indicador de "escribiendo"
+  async function deactivateTypingIndicator(to) {
+    const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+    const headers = {
+      Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`, // Reemplaza con tu token de acceso
+      'Content-Type': 'application/json'
+    };
+    const data = {
+      messaging_product: 'whatsapp',
+      recipient_type: 'individual',
+      to: to,
+      type: 'text',
+      action: {
+        type: 'typing_off'
+      }
+    };
+  
+    try {
+      await axios.post(url, data, { headers });
+      console.log('Indicador de "escribiendo" desactivado');
+    } catch (error) {
+      console.error('Error al desactivar el indicador de "escribiendo":', error.response.data);
+    }
+  }
+
+
 //////////////////////////////////////////////////////////////////////
 
 
@@ -389,9 +441,18 @@ async function handleUserMessage(from, userMessage, buttonReply) {
 //// SELECCIÓN MIS XV
 else if (messageLower === 'evento_xv') {
   await sendWhatsAppMessage(from, 'Estos son los servicios que ofrecemos en *Camicam Photobooth* 🎉');
+  // Activar el indicador de "escribiendo"
+  await activateTypingIndicator(from);
   await delay(2000);
+  // Desactivar el indicador de "escribiendo"
+  await deactivateTypingIndicator(from);
+
   await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg');
+  // Activar el indicador de "escribiendo"
+  await activateTypingIndicator(from);
   await delay(3000);
+  // Desactivar el indicador de "escribiendo"
+  await deactivateTypingIndicator(from);
   await sendInteractiveMessage(from, 'Arma tu paquete con todo lo que necesites!!\n\n', [
     { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, 
     { id: 'ver_paquete_xv', title: '🎉 Ver Paquete mis XV' }
