@@ -430,7 +430,11 @@ async function handleUserMessage(from, userMessage, buttonReply) {
         if (messageLower.includes('info') || messageLower.includes('costos') || messageLower.includes('hola') || 
         messageLower.includes('precio') || messageLower.includes('información')) {
 
-      await sendInteractiveMessage(from, '¡Hola 👋! Soy tu asistente virtual de *Camicam Photobooth*.Para brindarte la mejor atención, por favor selecciona el tipo de evento que tienes tocando uno de los botones 👇.¡Estoy aquí para ayudarte! 😊', [
+        await sendWhatsAppMessage(from, '¡Hola 👋! Soy tu asistente virtual de *Camicam Photobooth*');
+        await activateTypingIndicator(from);
+        await delay(3000);
+        await deactivateTypingIndicator(from);
+        await sendInteractiveMessage(from, '.Para brindarte la mejor atención, por favor selecciona el tipo de evento que tienes tocando uno de los botones 👇', [
         { id: 'evento_xv', title: '🎉 XV Años' },
         { id: 'evento_boda', title: '💍 Boda' },
         { id: 'evento_otro', title: '🎊 Otro Evento' }
