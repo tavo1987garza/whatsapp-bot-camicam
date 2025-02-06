@@ -509,10 +509,15 @@ else if (messageLower === 'evento_otro') {
 
  else if (messageLower === 'ver_paquete_xv') {
   await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg');
+  
   await activateTypingIndicator(from);
   await delay(3000);
   await deactivateTypingIndicator(from);
   await sendWhatsAppMessage(from, 'El paquete que estamos promocionando es el *PAQUETE MIS XV*');
+  
+  await activateTypingIndicator(from);
+  await delay(4000);
+  await deactivateTypingIndicator(from);
   await sendWhatsAppMessage(from, 'CONTRATA'+
     '✅ Cabina de Fotos (3 Horas) y\n' +
     '✅ Lluvia de mariposaspor \n\n' +
@@ -522,16 +527,40 @@ else if (messageLower === 'evento_otro') {
     '✅ 6 Letras Gigantes y\n'+
     '✅ 2 Chisperos de piso'
   );
+
+  await activateTypingIndicator(from);
+  await delay(6000);
+  await deactivateTypingIndicator(from);
   await sendWhatsAppMessage(from, '*Pero espera!!');
+
+  await activateTypingIndicator(from);
+  await delay(3000);
+  await deactivateTypingIndicator(from);
   await sendWhatsAppMessage(from, '¡Sólo este mes disfruta de un descuento de $600!');
+
+  await activateTypingIndicator(from);
+  await delay(3000);
+  await deactivateTypingIndicator(from);
   await sendWhatsAppMessage(from, 'Paga únicamente ✨*$5,600*✨');
+
+  await activateTypingIndicator(from);
+  await delay(5000);
+  await deactivateTypingIndicator(from);
   await sendWhatsAppMessage(from, 'Y ESO O ES TODO!!\n'+
   'Aproveha también el Bono Exclusivo del mes de Febrero\n\n'+
   '✅ Audio Guest Book\n\n'+
   'Será un recuerdo muy bonito de tu evento\n\n'
   );
+
+  await activateTypingIndicator(from);
+  await delay(6000);
+  await deactivateTypingIndicator(from);
   await sendWhatsAppMessage(from, '¡Contrata TODO por tan sólo!\n\n'+
     '✨*$5,600*✨');
+
+    await activateTypingIndicator(from);
+    await delay(5000);
+    await deactivateTypingIndicator(from);
   await sendWhatsAppMessage(from, '¡SI! ¡Leiste bien!\n\n'+
     '✅ Cabina de Fotos (3 Horas) y\n' +
     '✅ Lluvia de mariposaspor \n\n' +
@@ -541,12 +570,17 @@ else if (messageLower === 'evento_otro') {
     '✨*$5,600*✨\n\n'+
     'Mas flete, dependiendo dónde sea el evento 📍\n\n'
   );
-  await sendInteractiveMessage(from, 'Te interesa? 🎊\n\n' +
+
+  await activateTypingIndicator(from);
+  await delay(6000);
+  await deactivateTypingIndicator(from);
+  await sendInteractiveMessage(from, 'Te interesa? 🎊\n' +
     'O prefieres armar tu paquete?\n',[
   
       { id: 'reservar_paquete_xv', title: 'SI, Me interesa 😍' },
       { id: 'armar_paquete', title: '🛠 Armar mi paquete' }
     ]);
+    return true;
 }
 
 else if (messageLower === 'reservar_paquete_xv') {
