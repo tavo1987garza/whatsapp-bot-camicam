@@ -432,9 +432,15 @@ async function handleUserMessage(from, userMessage, buttonReply) {
 
         await sendWhatsAppMessage(from, '¡Hola 👋! Soy tu asistente virtual de *Camicam Photobooth*');
         await activateTypingIndicator(from);
-        await delay(3000);
+        await delay(2000);
         await deactivateTypingIndicator(from);
-        await sendInteractiveMessage(from, 'Para brindarte la mejor atención, por favor selecciona el tipo de evento que tienes tocando uno de los botones 👇', [
+
+        await sendWhatsAppMessage(from, 'Para brindarte la mejor atención');
+        await activateTypingIndicator(from);
+        await delay(2000);
+        await deactivateTypingIndicator(from);
+
+        await sendInteractiveMessage(from, 'Por favor selecciona el tipo de evento que tienes 👇', [
         { id: 'evento_xv', title: '🎉 XV Años' },
         { id: 'evento_boda', title: '💍 Boda' },
         { id: 'evento_otro', title: '🎊 Otro Evento' }
