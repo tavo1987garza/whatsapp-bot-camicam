@@ -437,7 +437,7 @@ async function handleUserMessage(from, userMessage, buttonReply) {
 
         await sendWhatsAppMessage(from, 'Para brindarte la mejor atención');
         await activateTypingIndicator(from);
-        await delay(3000);
+        await delay(2000);
         await deactivateTypingIndicator(from);
 
         await sendInteractiveMessage(from, 'Por favor selecciona el tipo de evento que tienes 👇', [
@@ -460,7 +460,8 @@ else if (messageLower === 'evento_xv') {
   await activateTypingIndicator(from);
   await delay(6000);
   await deactivateTypingIndicator(from);
-  await sendInteractiveMessage(from, 'Puedes armar tu paquete con todo lo que necesites!! 😊\n\n', [
+  await sendInteractiveMessage(from, 'Puedes armar tu paquete con todo lo que necesites!! 😊\n\n'+
+    'O ver el Paquete que hemos preparado para XV 👸', [
     { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, 
     { id: 'ver_paquete_xv', title: '🎉 Ver Paquete mis XV' }
   ]);
@@ -511,56 +512,68 @@ else if (messageLower === 'evento_otro') {
   await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg');
   
   await activateTypingIndicator(from);
-  await delay(3000);
+  await delay(2000);
+  await sendWhatsAppMessage(from, 'El paquete que estamos promocionando es el:'+
+    '*"PAQUETE MIS XV"*');
   await deactivateTypingIndicator(from);
-  await sendWhatsAppMessage(from, 'El paquete que estamos promocionando es el *PAQUETE MIS XV*');
   
   await activateTypingIndicator(from);
   await delay(4000);
-  await deactivateTypingIndicator(from);
-  await sendWhatsAppMessage(from, 'CONTRATA'+
+  await sendWhatsAppMessage(from, '*INCLUYE*\n\n'+
     '✅ Cabina de Fotos (3 Horas) y\n' +
-    '✅ Lluvia de mariposaspor \n\n' +
+    '✅ Lluvia de mariposas por \n\n' +
     '✨ $6,200 ✨\n\n'+
-    'Mas flete, dependiendo dónde sea el evento 📍\n\n'+
-    'y llévate GRATIS la renta de:\n\n'+
+    'Mas flete, dependiendo dónde sea el evento 📍'
+  );
+  await deactivateTypingIndicator(from);
+
+  await activateTypingIndicator(from);
+  await delay(4000);
+  await sendWhatsAppMessage(from, 'y llévate GRATIS la renta de:\n\n'+
     '✅ 6 Letras Gigantes y\n'+
     '✅ 2 Chisperos de piso'
   );
+  await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
   await delay(6000);
+  await sendWhatsAppMessage(from, '*¡¡Pero espera!!*');
   await deactivateTypingIndicator(from);
-  await sendWhatsAppMessage(from, '*Pero espera!!');
 
   await activateTypingIndicator(from);
   await delay(3000);
-  await deactivateTypingIndicator(from);
   await sendWhatsAppMessage(from, '¡Sólo este mes disfruta de un descuento de $600!');
+  await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
   await delay(3000);
+  await sendWhatsAppMessage(from, 'Paga únicamente\n\n'+
+    '✨*$5,600*✨');
   await deactivateTypingIndicator(from);
-  await sendWhatsAppMessage(from, 'Paga únicamente ✨*$5,600*✨');
 
   await activateTypingIndicator(from);
   await delay(5000);
-  await deactivateTypingIndicator(from);
-  await sendWhatsAppMessage(from, 'Y ESO O ES TODO!!\n'+
+  await sendWhatsAppMessage(from, 'Y ESO NO ES TODO!!\n'+
   'Aproveha también el Bono Exclusivo del mes de Febrero\n\n'+
+  '*GRATIS* el Servicio de:\n\n'+
   '✅ Audio Guest Book\n\n'+
   'Será un recuerdo muy bonito de tu evento\n\n'
   );
+  await deactivateTypingIndicator(from);
+
+  await activateTypingIndicator(from);
+  await delay(5000);
+  await sendWhatsAppVideo(from,'http://cami-cam.com/wp-content/uploads/2024/10/Diseno-sin-titulo.mp4');
+  await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
   await delay(6000);
-  await deactivateTypingIndicator(from);
   await sendWhatsAppMessage(from, '¡Contrata TODO por tan sólo!\n\n'+
     '✨*$5,600*✨');
+  await deactivateTypingIndicator(from);
 
-    await activateTypingIndicator(from);
-    await delay(5000);
-    await deactivateTypingIndicator(from);
+  await activateTypingIndicator(from);
+  await delay(5000);
   await sendWhatsAppMessage(from, '¡SI! ¡Leiste bien!\n\n'+
     '✅ Cabina de Fotos (3 Horas) y\n' +
     '✅ Lluvia de mariposaspor \n\n' +
@@ -570,16 +583,19 @@ else if (messageLower === 'evento_otro') {
     '✨*$5,600*✨\n\n'+
     'Mas flete, dependiendo dónde sea el evento 📍\n\n'
   );
+  await deactivateTypingIndicator(from);
+
 
   await activateTypingIndicator(from);
   await delay(6000);
-  await deactivateTypingIndicator(from);
-  await sendInteractiveMessage(from, 'Te interesa? 🎊\n' +
+  await sendInteractiveMessage(from, 'Te interesa? 🎊\n\n' +
     'O prefieres armar tu paquete?\n',[
   
       { id: 'reservar_paquete_xv', title: 'SI, Me interesa 😍' },
       { id: 'armar_paquete', title: '🛠 Armar mi paquete' }
     ]);
+    await deactivateTypingIndicator(from);
+
     return true;
 }
 
