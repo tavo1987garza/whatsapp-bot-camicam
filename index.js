@@ -248,6 +248,33 @@ async function sendWhatsAppVideo(to, videoUrl, caption) {
   }
 }
 
+///Fucion para enviar imagenes
+async function sendImageMessage(to, imageUrl, caption) {
+  const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+
+  const data = {
+    messaging_product: 'whatsapp',
+    to: to,
+    type: 'image',
+    image: {
+      link: imageUrl,
+      caption: caption
+    }
+  };
+
+  try {
+    const response = await axios.post(url, data, {
+      headers: {
+        Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    console.log('Imagen enviada:', response.data);
+  } catch (error) {
+    console.error('Error al enviar imagen:', error.response?.data || error.message);
+  }
+}
+
 ////Funcion para enviar Listas Interactivas
 async function sendWhatsAppList(to, header, body, buttonText, sections) {
   const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
@@ -322,6 +349,25 @@ async function handleFAQs(from, userMessage) {
   return false;
 }
 
+/// Funcion para respuestas de OpenAi
+async function generateOpenAIResponse(prompt) {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4", // Puedes usar "gpt-3.5-turbo" si prefieres
+      messages: [
+        { role: "system", content: "Eres un asistente útil que proporciona información detallada y amigable sobre servicios de fotobooth y eventos." },
+        { role: "user", content: prompt }
+      ],
+      max_tokens: 150,
+      temperature: 0.7,
+    });
+
+    return response.choices[0].message.content;
+  } catch (error) {
+    console.error("Error al generar respuesta con OpenAI:", error);
+    return "Lo siento, ocurrió un error al procesar tu solicitud. Inténtalo nuevamente.";
+  }
+}
 
 //////////////////////////////////////////////////////////////////////
 
@@ -373,9 +419,9 @@ else if (messageLower === 'evento_xv') {
     '🔸Scrapbook\n' +
     '🔸Niebla de Piso\n' +
     '🔸Audio Guest Book\n\n' +
-    '¿Quieres armar tu paquete?\n\nO prefieres el *Paquete MIS XV*?');
+    '¿Quieres armar tu paquete?\n\n');
 
-  await sendInteractiveMessage(from, '', [
+  await sendInteractiveMessage(from, '¿O prefieres el PAQUETE MIS XV?', [
     { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, 
     { id: 'ver_paquete_xv', title: '🎉 Ver Paquete Mis XV' }
   ]);
@@ -479,14 +525,43 @@ else if (messageLower === 'ver_paquete_party') {
     '📅 ¿Para qué fecha necesitas el servicio?');
 
 } 
-
-// 🟢 Reservar paquete
-if (messageLower === 'reservar_paquete_xv') {
-  await sendWhatsAppMessage(from, '📅 ¡Genial! Para reservar el *Paquete Mis XV*, por favor dime la fecha de tu evento.');
+// 🟢 Si el usuario pregunta por cotizaciones
+if (messageLower.includes('cotizar') || messageLower.includes('precio total')) {
+  const serviciosSeleccionados = context.serviciosSeleccionados;
+  if (serviciosSeleccionados.length > 0) {
+    const total = calcularCosto(serviciosSeleccionados);
+    await sendWhatsAppMessage(from, `El costo total de los servicios seleccionados es: $${total}.`);
+  } else {
+    await sendWhatsAppMessage(from, 'Por favor, selecciona algunos servicios antes de solicitar una cotización.');
+  }
   return true;
 }
 
-return false; // Si el mensaje no fue manejado por esta función, devuelve false
+// 🟢 Si no se maneja el mensaje en los flujos predefinidos, consultar a OpenAI
+const prompt = `Eres un asistente de ventas para Camicam Photobooth. Aquí tienes la lista de servicios y precios:
+- Cabina de fotos: $2000
+- Cabina 360: $3000
+- Letras gigantes: $1500
+- Carrito de shots con alcohol: $2500
+- Carrito de shots sin alcohol: $2000
+- Lluvia de mariposas: $1000
+- Lluvia metálica: $1200
+- Chisperos de mano: $800
+- Chisperos de piso: $1000
+- Scrapbook: $500
+- Niebla de piso: $600
+- Audio Guest Book: $700
+
+Los paquetes sugeridos son:
+1. Paquete Mis XV: $5600 (incluye cabina de fotos, lluvia de mariposas, letras gigantes y chisperos de mano).
+2. Paquete WEDDING: $4450 (incluye cabina 360, carrito de shots con alcohol, letras gigantes y chisperos de piso).
+3. Paquete Party: $3000 (incluye cabina de fotos y letras gigantes).
+
+El usuario ha dicho: "${userMessage}". Responde de manera amigable y profesional, y si el usuario pregunta por precios o cotizaciones, proporciona una estimación basada en los servicios mencionados.`;
+
+const openAIResponse = await generateOpenAIResponse(prompt);
+await sendWhatsAppMessage(from, openAIResponse);
+return true;
 
   } catch (error) {
     console.error("❌ Error en handleUserMessage:", error.message);
@@ -517,37 +592,6 @@ async function sendWhatsAppMessage(to, message) {
           'Content-Type': 'application/json'
       }
   });
-}
-
-
-
-
-
-
-async function sendImageMessage(to, imageUrl, caption) {
-  const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
-
-  const data = {
-    messaging_product: 'whatsapp',
-    to: to,
-    type: 'image',
-    image: {
-      link: imageUrl,
-      caption: caption
-    }
-  };
-
-  try {
-    const response = await axios.post(url, data, {
-      headers: {
-        Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    console.log('Imagen enviada:', response.data);
-  } catch (error) {
-    console.error('Error al enviar imagen:', error.response?.data || error.message);
-  }
 }
 
 
