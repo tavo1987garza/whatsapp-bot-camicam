@@ -375,7 +375,7 @@ else if (messageLower === 'evento_xv') {
     '🔸Audio Guest Book\n\n' +
     '¿Quieres armar tu paquete?\n\nO prefieres el *Paquete MIS XV*?');
 
-  await sendInteractiveMessage(from, 'Selecciona una Opción 👇', [
+  await sendInteractiveMessage(from, '', [
     { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, 
     { id: 'ver_paquete_xv', title: '🎉 Ver Paquete Mis XV' }
   ]);
@@ -456,9 +456,9 @@ else if (messageLower === 'reservar_paquete_xv') {
 } 
 // 🟢 Validar si el usuario quiere "Armar mi paquete"
 else if (messageLower === 'armar_paquete') {  
-  await sendWhatsAppMessage (from, '🔗 Para armar tu paquete personalizado, visita nuestro cotizador en el siguiente enlace:\n🌐 www.cami-cam.com/cotizador/');
-  
- }
+  await sendWhatsAppMessage(from, '🔗 Para armar tu paquete personalizado, visita nuestro cotizador en el siguiente enlace:\n🌐 www.cami-cam.com/cotizador/');
+  return true; // Asegúrate de devolver true para indicar que la acción fue manejada
+}
 
 else if (messageLower === 'ver_paquete_wedding') {
   await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-WEDDING.jpg', '💍 PAQUETE WEDDING 🎊');
