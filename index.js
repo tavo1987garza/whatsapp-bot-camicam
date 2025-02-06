@@ -434,7 +434,7 @@ async function handleUserMessage(from, userMessage, buttonReply) {
         await activateTypingIndicator(from);
         await delay(3000);
         await deactivateTypingIndicator(from);
-        await sendInteractiveMessage(from, '.Para brindarte la mejor atención, por favor selecciona el tipo de evento que tienes tocando uno de los botones 👇', [
+        await sendInteractiveMessage(from, 'Para brindarte la mejor atención, por favor selecciona el tipo de evento que tienes tocando uno de los botones 👇', [
         { id: 'evento_xv', title: '🎉 XV Años' },
         { id: 'evento_boda', title: '💍 Boda' },
         { id: 'evento_otro', title: '🎊 Otro Evento' }
@@ -445,17 +445,14 @@ async function handleUserMessage(from, userMessage, buttonReply) {
 //// SELECCIÓN MIS XV
 else if (messageLower === 'evento_xv') {
   await sendWhatsAppMessage(from, 'Estos son los servicios que ofrecemos en *Camicam Photobooth* 🎉');
-  // Activar el indicador de "escribiendo"
+  
   await activateTypingIndicator(from);
-  await delay(2000);
-  // Desactivar el indicador de "escribiendo"
+  await delay(1000);
   await deactivateTypingIndicator(from);
-
   await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg');
-  // Activar el indicador de "escribiendo"
+  
   await activateTypingIndicator(from);
-  await delay(3000);
-  // Desactivar el indicador de "escribiendo"
+  await delay(5000);
   await deactivateTypingIndicator(from);
   await sendInteractiveMessage(from, 'Arma tu paquete con todo lo que necesites!!\n\n', [
     { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, 
