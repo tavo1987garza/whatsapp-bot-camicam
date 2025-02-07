@@ -419,30 +419,35 @@ function formatMessage(text, style = "normal") {
   return text;
 }
 
+ // Función para formatear precios en el formato $5,600
+ function formatPrice(amount) {
+  return `$${amount.toLocaleString('en-US')}`;
+}
+
 // Función para manejar la lógica de los paquetes
 async function handlePackage(from, packageName, imageUrl, includes, price, discount, freeItems, videoUrl) {
   await sendImageMessage(from, imageUrl);
 
-  await sendMessageWithTyping(from, `El paquete que estamos promocionando es el\n${formatMessage(`"${packageName}"`, "bold")}`, 2000);
+  await sendMessageWithTyping(from, `El paquete que estamos promocionando es el\n${formatMessage(`"${packageName}"`, "bold")}`, 3000);
 
-  await sendMessageWithTyping(from, `${formatMessage("INCLUYE", "bold")}\n\n${includes}\n\n${formatMessage(`✨ ${price} ✨`, "bold")}\n\n${formatMessage("Mas flete, dependiendo dónde sea el evento", "italic")} 📍`, 5000);
+  await sendMessageWithTyping(from, `${formatMessage("INCLUYE", "bold")}\n\n${includes}\n\n${formatMessage(`✨ ${formatPrice(price)} ✨`, "bold")}\n\n${formatMessage("Mas flete, dependiendo dónde sea el evento", "italic")} 📍`, 5000);
 
   await sendMessageWithTyping(from, `Y llévate GRATIS la renta de:\n\n${freeItems}`, 9000);
 
   await sendMessageWithTyping(from, `${formatMessage("¡¡ PERO ESPERA !! ✋", "bold")}`, 8000);
 
-  await sendMessageWithTyping(from, `¡Sólo durante éste mes disfruta de un descuento adicional de ${discount}!`, 5000);
+  await sendMessageWithTyping(from, `¡Sólo durante éste mes disfruta de un descuento adicional de ${formatPrice(discount)}!`, 5000);
 
-  await sendMessageWithTyping(from, `Paga únicamente\n\n${formatMessage(`✨ ${price - discount} ✨`, "bold")}`, 5000);
+  await sendMessageWithTyping(from, `Paga únicamente\n\n${formatMessage(`✨ ${formatPrice(price - discount)} ✨`, "bold")}`, 5000);
 
   await sendMessageWithTyping(from, `Y ESO NO ES TODO!!\n\n🎁 ${formatMessage("GRATIS", "bold")} el Servicio de:\n\n✅ Audio Guest Book\n\nSerá un recuerdo muy bonito de tu evento 😍`, 7000);
 
   await sendWhatsAppVideo(from, videoUrl);
   await delay(18000);
 
-  await sendMessageWithTyping(from, `¡Contrata TODO por tan sólo!\n\n${formatMessage(`✨ ${price - discount} ✨`, "bold")}`, 5000);
+  await sendMessageWithTyping(from, `¡Contrata TODO por tan sólo!\n\n${formatMessage(`✨ ${formatPrice(price - discount)} ✨`, "bold")}`, 5000);
 
-  await sendMessageWithTyping(from, `¡SI! ¡Leiste bien!\n\n${includes}\n🎁 ${formatMessage("DE REGALO", "bold")}\n${freeItems}\n✅ Descuento Adicional y\n✅ Audio Guest Book\n\npor tan sólo\n\n${formatMessage(`✨ ${price - discount} ✨`, "bold")}\n\n${formatMessage("Mas flete, dependiendo dónde sea tu evento", "italic")} 📍`, 18000);
+  await sendMessageWithTyping(from, `¡SI! ¡Leiste bien!\n\n${includes}\n🎁 ${formatMessage("DE REGALO", "bold")}\n${freeItems}\n✅ Descuento Adicional\n✅ Audio Guest Book\n\npor tan sólo\n\n${formatMessage(`✨ ${formatPrice(price - discount)} ✨`, "bold")}\n\n${formatMessage("Mas flete, dependiendo dónde sea tu evento", "italic")} 📍`, 18000);
 
   await sendMessageWithTyping(from, `Recuerda que este paquete solo estará vigente durante el mes de Febrero\n🗓️ Separa hoy mismo y asegura tu paquete antes de que te ganen la fecha`, 15000);
 
@@ -493,10 +498,10 @@ async function handleUserMessage(from, userMessage, buttonReply) {
         from,
         "PAQUETE MIS XV",
         "http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg",
-        "✅ Cabina de Fotos (3 Horas) y\n✅ Lluvia de mariposas",
+        "✅ Cabina de Fotos (3 Horas)\n✅ Lluvia de mariposas",
         6200,
         600,
-        "✅ 6 Letras Gigantes (5 horas) y\n✅ 2 Chisperos de piso",
+        "✅ 6 Letras Gigantes (5 horas)\n✅ 2 Chisperos de piso",
         "http://cami-cam.com/wp-content/uploads/2025/02/Audio-Guest-Book.mp4"
       );
     }
@@ -507,10 +512,10 @@ async function handleUserMessage(from, userMessage, buttonReply) {
         from,
         "PAQUETE WEDDING",
         "http://cami-cam.com/wp-content/uploads/2024/09/Paquete-Wedding.jpg",
-        "✅ Cabina de Fotos ó Cabina 360 (3 Horas) y\n✅ 4 Letras Gigantes: *A & A ❤️* (5 horas)",
+        "✅ Cabina de Fotos ó Cabina 360 (3 Horas)\n✅ 4 Letras Gigantes: *A & A ❤️* (5 horas)",
         5100,
         650,
-        "✅ Carrito de 100 Shots CON alcohol y\n✅ 2 Chisperos de piso",
+        "✅ Carrito de 100 Shots CON alcohol\n✅ 2 Chisperos de piso",
         "http://cami-cam.com/wp-content/uploads/2025/02/Audio-Guest-Book.mp4"
       );
     }
@@ -521,10 +526,10 @@ async function handleUserMessage(from, userMessage, buttonReply) {
         from,
         "PAQUETE PARTY",
         "http://cami-cam.com/wp-content/uploads/2024/06/PARTY.jpg",
-        "✅ Cabina 360 (3 Horas) y\n✅ 4 Letras Gigantes (5 horas)",
+        "✅ Cabina 360 (3 Horas)\n✅ 4 Letras Gigantes (5 horas)",
         5100,
         650,
-        "✅ Carrito de 100 Shots CON alcohol y\n✅ 2 Chisperos de piso",
+        "✅ Carrito de 100 Shots CON alcohol\n✅ 2 Chisperos de piso",
         "http://cami-cam.com/wp-content/uploads/2025/02/Audio-Guest-Book.mp4"
       );
     }
