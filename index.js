@@ -517,7 +517,7 @@ if (messageLower === 'evento_otro') {
 
   await activateTypingIndicator(from);
   await delay(8000);
-  await sendWhatsAppMessage(from, '*¡¡Pero espera!!*');
+  await sendWhatsAppMessage(from, '*¡¡ PERO ESPERA !!* ✋');
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
@@ -557,7 +557,7 @@ if (messageLower === 'evento_otro') {
   await sendWhatsAppMessage(from, '¡SI! ¡Leiste bien!\n\n'+
     '✅ Cabina de Fotos (3 Horas)\n' +
     '✅ Lluvia de mariposas\n' +
-    '🎁*DE REGALO*'+
+    '🎁*DE REGALO*\n'+
     '✅ 6 Letras Gigantes (5 horas)\n'+
     '✅ 2 Chisperos de piso\n'+
     '✅ Descuento Adicional y\n'+
@@ -565,8 +565,8 @@ if (messageLower === 'evento_otro') {
     'por tan sólo\n\n'+
     '        ✨*$5,600*✨\n\n'+
     'Mas flete, dependiendo dónde sea tu evento 📍\n\n'+
-    'Recuerda que este paquete solo estara vigente durante el mes de febrero'+
-    '📞 Contáctanos hoy mismo y asegura tu paquete antes de que te ganen la fecha '
+    'Recuerda que este paquete solo estara vigente durante el mes de febrero\n'+
+    '📞 Separa hoy mismo y asegura tu paquete antes de que te ganen la fecha '
   );
   await deactivateTypingIndicator(from);
 
