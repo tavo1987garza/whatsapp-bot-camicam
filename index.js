@@ -454,7 +454,7 @@ if (['info', 'costos', 'hola', 'precio', 'información'].some(word => messageLow
 }
 
 // Función para manejar la selección de eventos
-async function handleEventSelection(from, eventType, packageName) {
+async function handleEventSelection(from, eventType, packageName, buttonText) {
   const message = 'Conoce los servicios que ofrecemos en *Camicam Photobooth* 🎉';
   const imageUrl = 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg';
   const options = {
@@ -462,7 +462,7 @@ async function handleEventSelection(from, eventType, packageName) {
              `O ver el Paquete que hemos preparado para ${packageName} 👇`,
     buttons: [
       { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
-      { id: `ver_paquete_${eventType}`, title: `🎉 Ver PAQUETE ${packageName.toUpperCase()}` }
+      { id: `ver_paquete_${eventType}`, title: `🎉 ${buttonText}` }
     ]
   };
 
@@ -472,17 +472,17 @@ async function handleEventSelection(from, eventType, packageName) {
 
 // SELECCIÓN MIS XV
 if (messageLower === 'evento_xv') {
-  return handleEventSelection(from, 'xv', 'Mis XV');
+  return handleEventSelection(from, 'xv', 'Mis XV', 'Ver PAQUETE MIS XV');
 }
 
 // SELECCIÓN WEDDING
 if (messageLower === 'evento_boda') {
-  return handleEventSelection(from, 'wedding', 'Boda','Wedding');
+  return handleEventSelection(from, 'wedding', 'Bodas', 'Ver Paq. WEDDING');
 }
 
 // SELECCIÓN PARTY
 if (messageLower === 'evento_otro') {
-  return handleEventSelection(from, 'party','Otro', 'Party');
+  return handleEventSelection(from, 'party', 'Fiestas', 'Ver Paquete Party');
 }
 
  // 🟢 Respuestas a los botones
