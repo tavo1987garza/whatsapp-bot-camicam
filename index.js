@@ -437,7 +437,7 @@ async function handleUserMessage(from, userMessage, buttonReply) {
 
         await sendWhatsAppMessage(from, 'Para brindarte la mejor atención');
         await activateTypingIndicator(from);
-        await delay(2000);
+        await delay(2500);
         await deactivateTypingIndicator(from);
 
         await sendInteractiveMessage(from, 'Por favor selecciona el tipo de evento que tienes 👇', [
@@ -546,13 +546,13 @@ else if (messageLower === 'evento_otro') {
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
-  await delay(6000);
+  await delay(5000);
   await sendWhatsAppMessage(from, 'Paga únicamente\n\n'+
     '✨*$5,600*✨');
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
-  await delay(9000);
+  await delay(7000);
   await sendWhatsAppMessage(from, 'Y ESO NO ES TODO!!\n'+
   'Aproveha también el Bono Exclusivo del mes de Febrero\n\n'+
   '*GRATIS* el Servicio de:\n\n'+
