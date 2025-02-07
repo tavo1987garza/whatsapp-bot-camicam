@@ -503,7 +503,7 @@ if (messageLower === 'evento_otro') {
     '✅ Cabina de Fotos (3 Horas) y\n' +
     '✅ Lluvia de mariposas por \n\n' +
     '✨ $6,200 ✨\n\n'+
-    'Mas flete, dependiendo dónde sea el evento 📍'
+    '_Mas flete, dependiendo dónde sea el evento_ 📍'
   );
   await deactivateTypingIndicator(from);
 
@@ -557,17 +557,21 @@ if (messageLower === 'evento_otro') {
   await sendWhatsAppMessage(from, '¡SI! ¡Leiste bien!\n\n'+
     '✅ Cabina de Fotos (3 Horas)\n' +
     '✅ Lluvia de mariposas\n' +
-    '🎁*DE REGALO*\n'+
+    '🎁 *DE REGALO*\n'+
     '✅ 6 Letras Gigantes (5 horas)\n'+
     '✅ 2 Chisperos de piso\n'+
     '✅ Descuento Adicional y\n'+
     '✅ Audio Guest Book\n\n'+
     'por tan sólo\n\n'+
     '        ✨*$5,600*✨\n\n'+
-    'Mas flete, dependiendo dónde sea tu evento 📍\n\n'+
-    'Recuerda que este paquete solo estara vigente durante el mes de febrero\n'+
-    '📞 Separa hoy mismo y asegura tu paquete antes de que te ganen la fecha '
+    '_Mas flete, dependiendo dónde sea tu evento_ 📍\n\n'
   );
+  await deactivateTypingIndicator(from);
+
+  await activateTypingIndicator(from);
+  await delay(18000);
+  await sendWhatsAppMessage(from, 'Recuerda que este paquete solo estara vigente durante el mes de Febrero\n'+
+    '📞 Separa hoy mismo y asegura tu paquete antes de que te ganen la fecha ');
   await deactivateTypingIndicator(from);
 
 
@@ -600,7 +604,7 @@ else if (messageLower === 'ver_paquete_wedding') {
     '✅ 4 Letras Gigantes: *A & A ❤️* (5 horas)  \n\n' +
     'por tan sólo\n\n'+
     '      ✨ $5,100 ✨\n\n'+
-    'Mas flete, dependiendo dónde sea el evento 📍'
+    '_Mas flete, dependiendo dónde sea el evento_ 📍'
   );
   await deactivateTypingIndicator(from);
 
@@ -614,12 +618,12 @@ else if (messageLower === 'ver_paquete_wedding') {
 
   await activateTypingIndicator(from);
   await delay(8000);
-  await sendWhatsAppMessage(from, '*¡¡Pero espera!!*');
+  await sendWhatsAppMessage(from, '*¡¡ PERO ESPERA !! ✋*');
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
   await delay(5000);
-  await sendWhatsAppMessage(from, '¡Sólo este mes disfruta de un descuento de $650!');
+  await sendWhatsAppMessage(from, '¡Sólo durante éste mes disfruta de un descuento adicional de $650!');
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
@@ -632,7 +636,7 @@ else if (messageLower === 'ver_paquete_wedding') {
   await delay(7000);
   await sendWhatsAppMessage(from, 'Y ESO NO ES TODO!!\n\n'+
   'Aproveha también el Bono Exclusivo del mes de Febrero\n\n'+
-  '🎁*GRATIS* el Servicio de:\n\n'+
+  '🎁 *GRATIS* el Servicio de:\n\n'+
   '✅ Audio Guest Book\n\n'+
   'Será un recuerdo muy bonito de tu evento\n\n'
   );
@@ -657,11 +661,18 @@ else if (messageLower === 'ver_paquete_wedding') {
     '🎁*DE REGALO*'+
     '✅ Carrito de 100 Shots CON alcohol y'+
     '✅ 2 Chisperos de piso\n'+
+    '✅ Descuento Adicional y\n'+
     '✅ Audio Guest Book\n'+
     'por tan sólo\n\n'+
     '        ✨*$4,450*✨\n\n'+
-    'Mas flete, dependiendo dónde sea tu evento 📍'
+    '_Mas flete, dependiendo dónde sea tu evento_ 📍'
   );
+  await deactivateTypingIndicator(from);
+
+  await activateTypingIndicator(from);
+  await delay(18000);
+  await sendWhatsAppMessage(from, 'Recuerda que este paquete solo estara vigente durante el mes de Febrero\n'+
+    '📞 Separa hoy mismo y asegura tu paquete antes de que te ganen la fecha ');
   await deactivateTypingIndicator(from);
 
 
