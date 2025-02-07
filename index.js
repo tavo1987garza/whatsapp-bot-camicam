@@ -497,7 +497,7 @@ else if (messageLower === 'evento_otro') {
   await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg');
   
   await activateTypingIndicator(from);
-  await delay(6000);
+  await delay(8000);
   await deactivateTypingIndicator(from);
   await sendInteractiveMessage(from, 'Puedes armar tu paquete con todo lo que necesites!! 😊\n\n', [
     { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, 
@@ -573,7 +573,7 @@ else if (messageLower === 'evento_otro') {
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
-  await delay(8000);
+  await delay(5000);
   await sendWhatsAppMessage(from, '¡SI! ¡Leiste bien!\n\n'+
     '✅ Cabina de Fotos (3 Horas)\n' +
     '✅ Lluvia de mariposas\n' +
