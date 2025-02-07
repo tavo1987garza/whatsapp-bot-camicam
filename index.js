@@ -553,7 +553,7 @@ else if (messageLower === 'evento_otro') {
 
   await activateTypingIndicator(from);
   await delay(7000);
-  await sendWhatsAppMessage(from, 'Y ESO NO ES TODO!!\n'+
+  await sendWhatsAppMessage(from, 'Y ESO NO ES TODO!!\n\n'+
   'Aproveha también el Bono Exclusivo del mes de Febrero\n\n'+
   '*GRATIS* el Servicio de:\n\n'+
   '✅ Audio Guest Book\n\n'+
