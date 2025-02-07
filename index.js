@@ -427,8 +427,9 @@ function formatMessage(text, style = "normal") {
 // Función para manejar la lógica de los paquetes
 async function handlePackage(from, packageName, imageUrl, includes, price, discount, freeItems, videoUrl) {
   await sendImageMessage(from, imageUrl);
+  await delay(2000);
 
-  await sendMessageWithTyping(from, `El paquete que estamos promocionando es el\n${formatMessage(`"${packageName}"`, "bold")}`, 3000);
+  await sendMessageWithTyping(from, `El paquete que estamos promocionando es el\n${formatMessage(`"${packageName}"`, "bold")}`, 2000);
 
   await sendMessageWithTyping(from, `${formatMessage("INCLUYE", "bold")}\n\n${includes}\n\n${formatMessage(`✨ ${formatPrice(price)} ✨`, "bold")}\n\n${formatMessage("Mas flete, dependiendo dónde sea el evento", "italic")} 📍`, 5000);
 
