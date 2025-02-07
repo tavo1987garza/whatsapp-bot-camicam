@@ -404,7 +404,21 @@ async function handleFAQs(from, userMessage) {
 
 
 //////////////////////////////////////////////////////////////////////
+// Función para enviar mensajes con indicador de escritura
+async function sendMessageWithTyping(from, message, delayTime) {
+  await sendWhatsAppMessage(from, message);
+  await activateTypingIndicator(from);
+  await delay(delayTime);
+  await deactivateTypingIndicator(from);
+}
 
+// Función para enviar mensajes interactivos con imagen
+async function sendInteractiveMessageWithImage(from, message, imageUrl, options) {
+  await sendMessageWithTyping(from, message, 3000);
+  await sendImageMessage(from, imageUrl);
+  await delay(10000);
+  await sendInteractiveMessage(from, options.message, options.buttons);
+}
 
 // 📌 Función para manejar los mensajes del usuario
 async function handleUserMessage(from, userMessage, buttonReply) {
@@ -427,87 +441,53 @@ async function handleUserMessage(from, userMessage, buttonReply) {
 
   try {
         // 🟢 Flujos predefinidos (eventos, paquetes, etc.)
-        if (messageLower.includes('info') || messageLower.includes('costos') || messageLower.includes('hola') || 
-        messageLower.includes('precio') || messageLower.includes('información')) {
-
-        await sendWhatsAppMessage(from, '¡Hola 👋! Soy tu asistente virtual de *Camicam Photobooth*');
-        await activateTypingIndicator(from);
-        await delay(4000);
-        await deactivateTypingIndicator(from);
-
-        await sendWhatsAppMessage(from, 'Para brindarte la mejor atención');
-        await activateTypingIndicator(from);
-        await delay(2500);
-        await deactivateTypingIndicator(from);
-
-        await sendInteractiveMessage(from, 'Por favor selecciona el tipo de evento que tienes 👇', [
-        { id: 'evento_xv', title: '🎉 XV Años' },
-        { id: 'evento_boda', title: '💍 Boda' },
-        { id: 'evento_otro', title: '🎊 Otro Evento' }
-      ]);
-      return true;
-    }
-
-//// SELECCIÓN MIS XV
-else if (messageLower === 'evento_xv') {
-  await sendWhatsAppMessage(from, 'Conoce los servicios que ofrecemos en *Camicam Photobooth* 🎉');
+if (['info', 'costos', 'hola', 'precio', 'información'].some(word => messageLower.includes(word))) {
+  await sendMessageWithTyping(from, '¡Hola 👋! Soy tu asistente virtual de *Camicam Photobooth*', 4000);
+  await sendMessageWithTyping(from, 'Para brindarte la mejor atención', 2500);
   
-  await activateTypingIndicator(from);
-  await delay(3000);
-  await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg');
-  await deactivateTypingIndicator(from);
-  
-  await activateTypingIndicator(from);
-  await delay(10000);
-  await deactivateTypingIndicator(from);
-  await sendInteractiveMessage(from, 'Puedes armar tu paquete con todo lo que necesites!! 😊\n\n'+
-    'O ver el Paquete que hemos preparado para XV años 👸', [
-    { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, 
-    { id: 'ver_paquete_xv', title: '🎉 Ver PAQUETE MIS XV' }
+  await sendInteractiveMessage(from, 'Por favor selecciona el tipo de evento que tienes 👇', [
+    { id: 'evento_xv', title: '🎉 XV Años' },
+    { id: 'evento_boda', title: '💍 Boda' },
+    { id: 'evento_otro', title: '🎊 Otro Evento' }
   ]);
   return true;
 }
 
-//// SELECCIÓN WEDDING
-else if (messageLower === 'evento_boda') {
-  await sendWhatsAppMessage(from, 'Estos son los servicios que ofrecemos en *Camicam Photobooth* 🎉');
-  
-  await activateTypingIndicator(from);
-  await delay(2000);
-  await deactivateTypingIndicator(from);
-  await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg');
-  
-  await activateTypingIndicator(from);
-  await delay(8000);
-  await deactivateTypingIndicator(from);
-  await sendInteractiveMessage(from, 'Puedes armar tu paquete con todo lo que necesites!! 😊\n\n', [
-    { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, 
-    { id: 'ver_paquete_wedding', title: '🎊 Ver Paq. WEDDING' }
-  ]);
+// Función para manejar la selección de eventos
+async function handleEventSelection(from, eventType, packageName) {
+  const message = 'Conoce los servicios que ofrecemos en *Camicam Photobooth* 🎉';
+  const imageUrl = 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg';
+  const options = {
+    message: 'Puedes armar tu paquete con todo lo que necesites!! 😊\n\n' +
+             `O ver el Paquete que hemos preparado para ${packageName} 👇`,
+    buttons: [
+      { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
+      { id: `ver_paquete_${eventType}`, title: `🎉 Ver PAQUETE ${packageName.toUpperCase()}` }
+    ]
+  };
+
+  await sendInteractiveMessageWithImage(from, message, imageUrl, options);
   return true;
 }
 
-//// SELECCIÓN PARTY
-else if (messageLower === 'evento_otro') {
-  await sendWhatsAppMessage(from, 'Estos son los servicios que ofrecemos en *Camicam Photobooth* 🎉');
-  
-  await activateTypingIndicator(from);
-  await delay(2000);
-  await deactivateTypingIndicator(from);
-  await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg');
-  
-  await activateTypingIndicator(from);
-  await delay(8000);
-  await deactivateTypingIndicator(from);
-  await sendInteractiveMessage(from, 'Puedes armar tu paquete con todo lo que necesites!! 😊\n\n', [
-    { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, 
-    { id: 'ver_paquete_party', title: '🎊 Ver Paquete Party' }
-  ]);
-  return true;
+// SELECCIÓN MIS XV
+if (messageLower === 'evento_xv') {
+  return handleEventSelection(from, 'xv', 'Mis XV');
+}
+
+// SELECCIÓN WEDDING
+if (messageLower === 'evento_boda') {
+  return handleEventSelection(from, 'wedding', 'Wedding');
+}
+
+// SELECCIÓN PARTY
+if (messageLower === 'evento_otro') {
+  return handleEventSelection(from, 'party', 'Party');
 }
 
  // 🟢 Respuestas a los botones
 
+ /////////// 🟢 VER PAQUETE MIS XV 🟢 ///////////
  else if (messageLower === 'ver_paquete_xv') {
   await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg');
   
@@ -592,23 +572,14 @@ else if (messageLower === 'evento_otro') {
   await sendInteractiveMessage(from, 'Te interesa? 🎊\n\n' +
     'O prefieres armar tu paquete?\n',[
   
-      { id: 'reservar_paquete_xv', title: 'SI, Me interesa 😍' },
+      { id: 'reservar', title: 'SI, Me interesa 😍' },
       { id: 'armar_paquete', title: '🛠 Armar mi paquete' }
     ]);
     await deactivateTypingIndicator(from);
     return true;
 }
 
-// 🟢 Validar si al usuario le interesa el paquete" 
-else if (messageLower === 'reservar_paquete_xv') {
-  await sendWhatsAppMessage(from, '📅 ¡Genial! Para reservar el *Paquete Mis XV*, Por favor dime la fecha de tu evento.');
-} 
-// 🟢 Validar si el usuario quiere "Armar mi paquete"
-else if (messageLower === 'armar_paquete') {  
-  await sendWhatsAppMessage(from, '🔗 Para armar tu paquete personalizado, visita nuestro cotizador en el siguiente enlace:\n🌐 www.cami-cam.com/cotizador/');
-  return true; // Asegúrate de devolver true para indicar que la acción fue manejada
-}
-
+ /////////// 🟢 VER PAQUETE WEDDING 🟢 ///////////
 else if (messageLower === 'ver_paquete_wedding') {
   await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg');
   
@@ -693,13 +664,14 @@ else if (messageLower === 'ver_paquete_wedding') {
   await sendInteractiveMessage(from, 'Te interesa? 🎊\n\n' +
     'O prefieres armar tu paquete?\n',[
   
-      { id: 'reservar_paquete_xv', title: 'SI, Me interesa 😍' },
+      { id: 'reservar', title: 'SI, Me interesa 😍' },
       { id: 'armar_paquete', title: '🛠 Armar mi paquete' }
     ]);
     await deactivateTypingIndicator(from);
     return true;
 }
 
+ /////////// 🟢 VER PAQUETE PARTY 🟢 ///////////
 else if (messageLower === 'ver_paquete_party') {
   await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg');
   
@@ -784,12 +756,22 @@ else if (messageLower === 'ver_paquete_party') {
   await sendInteractiveMessage(from, 'Te interesa? 🎊\n\n' +
     'O prefieres armar tu paquete?\n',[
   
-      { id: 'reservar_paquete_xv', title: 'SI, Me interesa 😍' },
+      { id: 'reservar', title: 'SI, Me interesa 😍' },
       { id: 'armar_paquete', title: '🛠 Armar mi paquete' }
     ]);
     await deactivateTypingIndicator(from);
     return true;
 }   
+// 🟢 Validar si al usuario le interesa el paquete" 
+else if (messageLower === 'reservar') {
+  await sendWhatsAppMessage(from, '📅 ¡Genial! Para reservar el *Paquete Mis XV*, Por favor dime la fecha de tu evento.');
+  return true; // Asegúrate de devolver true para indicar que la acción fue manejada
+} 
+// 🟢 Validar si el usuario quiere "Armar mi paquete"
+else if (messageLower === 'armar_paquete') {  
+  await sendWhatsAppMessage(from, '🔗 Para armar tu paquete personalizado, visita nuestro cotizador en el siguiente enlace:\n🌐 www.cami-cam.com/cotizador/');
+  return true; // Asegúrate de devolver true para indicar que la acción fue manejada
+}
 
   } catch (error) {
     console.error("❌ Error en handleUserMessage:", error.message);
