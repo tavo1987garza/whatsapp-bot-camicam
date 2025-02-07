@@ -563,7 +563,7 @@ else if (messageLower === 'evento_otro') {
 
   await activateTypingIndicator(from);
   await delay(9000);
-  await sendWhatsAppVideo(from,'http://cami-cam.com/wp-content/uploads/2024/10/Diseno-sin-titulo.mp4');
+  await sendWhatsAppVideo(from,'http://cami-cam.com/wp-content/uploads/2025/02/Audio-Guest-Book.mp4');
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
@@ -596,10 +596,10 @@ else if (messageLower === 'evento_otro') {
       { id: 'armar_paquete', title: '🛠 Armar mi paquete' }
     ]);
     await deactivateTypingIndicator(from);
-
     return true;
 }
 
+// 🟢 Validar si al usuario le interesa el paquete" 
 else if (messageLower === 'reservar_paquete_xv') {
   await sendWhatsAppMessage(from, '📅 ¡Genial! Para reservar el *Paquete Mis XV*, Por favor dime la fecha de tu evento.');
 } 
@@ -610,33 +610,186 @@ else if (messageLower === 'armar_paquete') {
 }
 
 else if (messageLower === 'ver_paquete_wedding') {
-  await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-WEDDING.jpg', '💍 PAQUETE WEDDING 🎊');
-  await sendWhatsAppMessage(from, '💍 *PAQUETE WEDDING* 🎊\n' +
-    '✅ Cabina 360 + Carrito de Shots\n' +
-    '🔠 4 Letras Gigantes\n' +
-    '✨ 2 Chisperos\n' +
-    '💰 *Precio regular:* $8,900\n' +
-    '🔥 *Descuento 50% OFF*: **Total: $4,450**\n\n' +
-    '📅 ¿Para qué fecha necesitas el servicio?');
-} 
-else if (messageLower === 'ver_paquete_party') {
-  await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-PARTY.jpg', '🎊 PAQUETE PARTY 🎉');
-  await sendWhatsAppMessage(from, '🎊 *PAQUETE PARTY* 🎉\n' +
-    '✅ Cabina de Fotos\n' +
-    '🔠 4 Letras Gigantes\n' +
-    '💰 *Precio:* $3,000\n\n' +
-    '📅 ¿Para qué fecha necesitas el servicio?');
+  await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg');
+  
+  await activateTypingIndicator(from);
+  await delay(2000);
+  await sendWhatsAppMessage(from, 'El paquete que estamos promocionando es el\n'+
+    '*"PAQUETE MIS XV"*');
+  await deactivateTypingIndicator(from);
+  
+  await activateTypingIndicator(from);
+  await delay(5000);
+  await sendWhatsAppMessage(from, '*INCLUYE*\n\n'+
+    '✅ Cabina de Fotos (3 Horas) y\n' +
+    '✅ Lluvia de mariposas por \n\n' +
+    '✨ $6,200 ✨\n\n'+
+    'Mas flete, dependiendo dónde sea el evento 📍'
+  );
+  await deactivateTypingIndicator(from);
 
-} 
+  await activateTypingIndicator(from);
+  await delay(9000);
+  await sendWhatsAppMessage(from, 'y llévate GRATIS la renta de:\n\n'+
+    '✅ 6 Letras Gigantes y\n'+
+    '✅ 2 Chisperos de piso'
+  );
+  await deactivateTypingIndicator(from);
+
+  await activateTypingIndicator(from);
+  await delay(8000);
+  await sendWhatsAppMessage(from, '*¡¡Pero espera!!*');
+  await deactivateTypingIndicator(from);
+
+  await activateTypingIndicator(from);
+  await delay(5000);
+  await sendWhatsAppMessage(from, '¡Sólo este mes disfruta de un descuento de $600!');
+  await deactivateTypingIndicator(from);
+
+  await activateTypingIndicator(from);
+  await delay(5000);
+  await sendWhatsAppMessage(from, 'Paga únicamente\n\n'+
+    '✨*$5,600*✨');
+  await deactivateTypingIndicator(from);
+
+  await activateTypingIndicator(from);
+  await delay(7000);
+  await sendWhatsAppMessage(from, 'Y ESO NO ES TODO!!\n\n'+
+  'Aproveha también el Bono Exclusivo del mes de Febrero\n\n'+
+  '*GRATIS* el Servicio de:\n\n'+
+  '✅ Audio Guest Book\n\n'+
+  'Será un recuerdo muy bonito de tu evento\n\n'
+  );
+  await deactivateTypingIndicator(from);
+
+  await activateTypingIndicator(from);
+  await delay(9000);
+  await sendWhatsAppVideo(from,'http://cami-cam.com/wp-content/uploads/2025/02/Audio-Guest-Book.mp4');
+  await deactivateTypingIndicator(from);
+
+  await activateTypingIndicator(from);
+  await delay(18000);
+  await sendWhatsAppMessage(from, '¡Contrata TODO por tan sólo!\n\n'+
+    '✨*$5,600*✨');
+  await deactivateTypingIndicator(from);
+
+  await activateTypingIndicator(from);
+  await delay(5000);
+  await sendWhatsAppMessage(from, '¡SI! ¡Leiste bien!\n\n'+
+    '✅ Cabina de Fotos (3 Horas)\n' +
+    '✅ Lluvia de mariposas\n' +
+    '✅ 6 Letras Gigantes\n'+
+    '✅ 2 Chisperos de piso\n'+
+    '✅ Audio Guest Book\n'+
+    'por tan sólo\n\n'+
+    '        ✨*$5,600*✨\n\n'+
+    'Mas flete, dependiendo dónde sea tu evento 📍'
+  );
+  await deactivateTypingIndicator(from);
 
 
-// 🟢 Reservar paquete
-if (messageLower === 'reservar_paquete_xv') {
-  await sendWhatsAppMessage(from, '📅 ¡Genial! Para reservar el *Paquete Mis XV*, por favor dime la fecha de tu evento.');
-  return true;
+  await activateTypingIndicator(from);
+  await delay(15000);
+  await sendInteractiveMessage(from, 'Te interesa? 🎊\n\n' +
+    'O prefieres armar tu paquete?\n',[
+  
+      { id: 'reservar_paquete_xv', title: 'SI, Me interesa 😍' },
+      { id: 'armar_paquete', title: '🛠 Armar mi paquete' }
+    ]);
+    await deactivateTypingIndicator(from);
+    return true;
 }
-return false; // Si el mensaje no fue manejado por esta función, devuelve false
-    
+
+else if (messageLower === 'ver_paquete_party') {
+  await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg');
+  
+  await activateTypingIndicator(from);
+  await delay(2000);
+  await sendWhatsAppMessage(from, 'El paquete que estamos promocionando es el\n'+
+    '*"PAQUETE MIS XV"*');
+  await deactivateTypingIndicator(from);
+  
+  await activateTypingIndicator(from);
+  await delay(5000);
+  await sendWhatsAppMessage(from, '*INCLUYE*\n\n'+
+    '✅ Cabina de Fotos (3 Horas) y\n' +
+    '✅ Lluvia de mariposas por \n\n' +
+    '✨ $6,200 ✨\n\n'+
+    'Mas flete, dependiendo dónde sea el evento 📍'
+  );
+  await deactivateTypingIndicator(from);
+
+  await activateTypingIndicator(from);
+  await delay(9000);
+  await sendWhatsAppMessage(from, 'y llévate GRATIS la renta de:\n\n'+
+    '✅ 6 Letras Gigantes y\n'+
+    '✅ 2 Chisperos de piso'
+  );
+  await deactivateTypingIndicator(from);
+
+  await activateTypingIndicator(from);
+  await delay(8000);
+  await sendWhatsAppMessage(from, '*¡¡Pero espera!!*');
+  await deactivateTypingIndicator(from);
+
+  await activateTypingIndicator(from);
+  await delay(5000);
+  await sendWhatsAppMessage(from, '¡Sólo este mes disfruta de un descuento de $600!');
+  await deactivateTypingIndicator(from);
+
+  await activateTypingIndicator(from);
+  await delay(5000);
+  await sendWhatsAppMessage(from, 'Paga únicamente\n\n'+
+    '✨*$5,600*✨');
+  await deactivateTypingIndicator(from);
+
+  await activateTypingIndicator(from);
+  await delay(7000);
+  await sendWhatsAppMessage(from, 'Y ESO NO ES TODO!!\n\n'+
+  'Aproveha también el Bono Exclusivo del mes de Febrero\n\n'+
+  '*GRATIS* el Servicio de:\n\n'+
+  '✅ Audio Guest Book\n\n'+
+  'Será un recuerdo muy bonito de tu evento\n\n'
+  );
+  await deactivateTypingIndicator(from);
+
+  await activateTypingIndicator(from);
+  await delay(9000);
+  await sendWhatsAppVideo(from,'http://cami-cam.com/wp-content/uploads/2025/02/Audio-Guest-Book.mp4');
+  await deactivateTypingIndicator(from);
+
+  await activateTypingIndicator(from);
+  await delay(18000);
+  await sendWhatsAppMessage(from, '¡Contrata TODO por tan sólo!\n\n'+
+    '✨*$5,600*✨');
+  await deactivateTypingIndicator(from);
+
+  await activateTypingIndicator(from);
+  await delay(5000);
+  await sendWhatsAppMessage(from, '¡SI! ¡Leiste bien!\n\n'+
+    '✅ Cabina de Fotos (3 Horas)\n' +
+    '✅ Lluvia de mariposas\n' +
+    '✅ 6 Letras Gigantes\n'+
+    '✅ 2 Chisperos de piso\n'+
+    '✅ Audio Guest Book\n'+
+    'por tan sólo\n\n'+
+    '        ✨*$5,600*✨\n\n'+
+    'Mas flete, dependiendo dónde sea tu evento 📍'
+  );
+  await deactivateTypingIndicator(from);
+
+
+  await activateTypingIndicator(from);
+  await delay(15000);
+  await sendInteractiveMessage(from, 'Te interesa? 🎊\n\n' +
+    'O prefieres armar tu paquete?\n',[
+  
+      { id: 'reservar_paquete_xv', title: 'SI, Me interesa 😍' },
+      { id: 'armar_paquete', title: '🛠 Armar mi paquete' }
+    ]);
+    await deactivateTypingIndicator(from);
+    return true;
+}   
 
   } catch (error) {
     console.error("❌ Error en handleUserMessage:", error.message);
