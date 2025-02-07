@@ -453,7 +453,7 @@ else if (messageLower === 'evento_xv') {
   await sendWhatsAppMessage(from, 'Conoce los servicios que ofrecemos en *Camicam Photobooth* 🎉');
   
   await activateTypingIndicator(from);
-  await delay(4000);
+  await delay(3000);
   await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg');
   await deactivateTypingIndicator(from);
   
@@ -541,7 +541,7 @@ else if (messageLower === 'evento_otro') {
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
-  await delay(6000);
+  await delay(5000);
   await sendWhatsAppMessage(from, '¡Sólo este mes disfruta de un descuento de $600!');
   await deactivateTypingIndicator(from);
 
@@ -576,12 +576,13 @@ else if (messageLower === 'evento_otro') {
   await delay(8000);
   await sendWhatsAppMessage(from, '¡SI! ¡Leiste bien!\n\n'+
     '✅ Cabina de Fotos (3 Horas)\n' +
-    '✅ Lluvia de mariposas\n\n' +
+    '✅ Lluvia de mariposas\n' +
     '✅ 6 Letras Gigantes\n'+
     '✅ 2 Chisperos de piso\n'+
-    '✅ Audio Guest Book por tan sólo\n\n'+
-    '   ✨*$5,600*✨\n\n'+
-    'Mas flete, dependiendo dónde sea el evento 📍'
+    '✅ Audio Guest Book\n'+
+    'por tan sólo\n\n'+
+    '        ✨*$5,600*✨\n\n'+
+    'Mas flete, dependiendo dónde sea tu evento 📍'
   );
   await deactivateTypingIndicator(from);
 
