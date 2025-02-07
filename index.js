@@ -442,8 +442,8 @@ async function handleUserMessage(from, userMessage, buttonReply) {
   try {
         // 🟢 Flujos predefinidos (eventos, paquetes, etc.)
 if (['info', 'costos', 'hola', 'precio', 'información'].some(word => messageLower.includes(word))) {
-  await sendMessageWithTyping(from, '¡Hola 👋! Soy tu asistente virtual de *Camicam Photobooth*', 4000);
-  await sendMessageWithTyping(from, 'Para brindarte la mejor atención', 2500);
+  await sendMessageWithTyping(from, '¡Hola 👋! Soy *CAMIBOT* Asistente virtual de *Camicam Photobooth*', 4000);
+  await sendMessageWithTyping(from, 'Para brindarte la mejor atención', 2000);
   
   await sendInteractiveMessage(from, 'Por favor selecciona el tipo de evento que tienes 👇', [
     { id: 'evento_xv', title: '🎉 XV Años' },
@@ -502,7 +502,7 @@ if (messageLower === 'evento_otro') {
   await sendWhatsAppMessage(from, '*INCLUYE*\n\n'+
     '✅ Cabina de Fotos (3 Horas) y\n' +
     '✅ Lluvia de mariposas por \n\n' +
-    '✨ $6,200 ✨\n\n'+
+    '       ✨ $6,200 ✨\n\n'+
     '_Mas flete, dependiendo dónde sea el evento_ 📍'
   );
   await deactivateTypingIndicator(from);
@@ -528,7 +528,7 @@ if (messageLower === 'evento_otro') {
   await activateTypingIndicator(from);
   await delay(5000);
   await sendWhatsAppMessage(from, 'Paga únicamente\n\n'+
-    '✨*$5,600*✨');
+    '    ✨*$5,600*✨');
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
@@ -562,7 +562,7 @@ if (messageLower === 'evento_otro') {
     '✅ 2 Chisperos de piso\n'+
     '✅ Descuento Adicional y\n'+
     '✅ Audio Guest Book\n\n'+
-    'por tan sólo\n\n'+
+    '        por tan sólo\n\n'+
     '        ✨*$5,600*✨\n\n'+
     '_Mas flete, dependiendo dónde sea tu evento_ 📍\n\n'
   );
@@ -570,8 +570,8 @@ if (messageLower === 'evento_otro') {
 
   await activateTypingIndicator(from);
   await delay(18000);
-  await sendWhatsAppMessage(from, 'Recuerda que este paquete solo estara vigente durante el mes de Febrero\n'+
-    '📞 Separa hoy mismo y asegura tu paquete antes de que te ganen la fecha ');
+  await sendWhatsAppMessage(from, 'Recuerda que este paquete solo estara vigente durante el mes de Febrero\n\n'+
+    '🗓️ Separa hoy mismo y asegura tu paquete antes de que te ganen la fecha ');
   await deactivateTypingIndicator(from);
 
 
@@ -602,7 +602,7 @@ else if (messageLower === 'ver_paquete_wedding') {
   await sendWhatsAppMessage(from, '*INCLUYE*\n\n'+
     '✅ Cabina de Fotos ó Cabina 360 (3 Horas) y\n' +
     '✅ 4 Letras Gigantes: *A & A ❤️* (5 horas)  \n\n' +
-    'por tan sólo\n\n'+
+    '      por tan sólo\n\n'+
     '      ✨ $5,100 ✨\n\n'+
     '_Mas flete, dependiendo dónde sea el evento_ 📍'
   );
@@ -650,7 +650,7 @@ else if (messageLower === 'ver_paquete_wedding') {
   await activateTypingIndicator(from);
   await delay(18000);
   await sendWhatsAppMessage(from, '¡Contrata TODO por tan sólo!\n\n'+
-    '✨*$4,450*✨');
+    '     ✨*$4,450*✨');
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
@@ -663,7 +663,7 @@ else if (messageLower === 'ver_paquete_wedding') {
     '✅ 2 Chisperos de piso\n'+
     '✅ Descuento Adicional y\n'+
     '✅ Audio Guest Book\n'+
-    'por tan sólo\n\n'+
+    '        por tan sólo\n\n'+
     '        ✨*$4,450*✨\n\n'+
     '_Mas flete, dependiendo dónde sea tu evento_ 📍'
   );
@@ -672,7 +672,7 @@ else if (messageLower === 'ver_paquete_wedding') {
   await activateTypingIndicator(from);
   await delay(18000);
   await sendWhatsAppMessage(from, 'Recuerda que este paquete solo estara vigente durante el mes de Febrero\n'+
-    '📞 Separa hoy mismo y asegura tu paquete antes de que te ganen la fecha ');
+    '🗓️ Separa hoy mismo y asegura tu paquete antes de que te ganen la fecha ');
   await deactivateTypingIndicator(from);
 
 
