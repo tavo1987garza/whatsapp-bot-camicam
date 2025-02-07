@@ -432,7 +432,7 @@ async function handleUserMessage(from, userMessage, buttonReply) {
 
         await sendWhatsAppMessage(from, '¡Hola 👋! Soy tu asistente virtual de *Camicam Photobooth*');
         await activateTypingIndicator(from);
-        await delay(2000);
+        await delay(3000);
         await deactivateTypingIndicator(from);
 
         await sendWhatsAppMessage(from, 'Para brindarte la mejor atención');
@@ -450,20 +450,20 @@ async function handleUserMessage(from, userMessage, buttonReply) {
 
 //// SELECCIÓN MIS XV
 else if (messageLower === 'evento_xv') {
-  await sendWhatsAppMessage(from, 'Estos son los servicios que ofrecemos en *Camicam Photobooth* 🎉');
+  await sendWhatsAppMessage(from, 'Conoce los servicios que ofrecemos en *Camicam Photobooth* 🎉');
   
   await activateTypingIndicator(from);
-  await delay(2000);
-  await deactivateTypingIndicator(from);
+  await delay(3000);
   await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg');
+  await deactivateTypingIndicator(from);
   
   await activateTypingIndicator(from);
   await delay(6000);
   await deactivateTypingIndicator(from);
   await sendInteractiveMessage(from, 'Puedes armar tu paquete con todo lo que necesites!! 😊\n\n'+
-    'O ver el Paquete que hemos preparado para XV 👸', [
+    'O ver el Paquete que hemos preparado para XV años 👸', [
     { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, 
-    { id: 'ver_paquete_xv', title: '🎉 Ver Paquete mis XV' }
+    { id: 'ver_paquete_xv', title: '🎉 Ver PAQUETE MIS XV' }
   ]);
   return true;
 }
@@ -513,12 +513,12 @@ else if (messageLower === 'evento_otro') {
   
   await activateTypingIndicator(from);
   await delay(2000);
-  await sendWhatsAppMessage(from, 'El paquete que estamos promocionando es el:'+
+  await sendWhatsAppMessage(from, 'El paquete que estamos promocionando es el\n'+
     '*"PAQUETE MIS XV"*');
   await deactivateTypingIndicator(from);
   
   await activateTypingIndicator(from);
-  await delay(4000);
+  await delay(5000);
   await sendWhatsAppMessage(from, '*INCLUYE*\n\n'+
     '✅ Cabina de Fotos (3 Horas) y\n' +
     '✅ Lluvia de mariposas por \n\n' +
@@ -528,7 +528,7 @@ else if (messageLower === 'evento_otro') {
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
-  await delay(4000);
+  await delay(5000);
   await sendWhatsAppMessage(from, 'y llévate GRATIS la renta de:\n\n'+
     '✅ 6 Letras Gigantes y\n'+
     '✅ 2 Chisperos de piso'
@@ -536,23 +536,23 @@ else if (messageLower === 'evento_otro') {
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
-  await delay(6000);
+  await delay(7000);
   await sendWhatsAppMessage(from, '*¡¡Pero espera!!*');
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
-  await delay(3000);
+  await delay(4000);
   await sendWhatsAppMessage(from, '¡Sólo este mes disfruta de un descuento de $600!');
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
-  await delay(3000);
+  await delay(4000);
   await sendWhatsAppMessage(from, 'Paga únicamente\n\n'+
     '✨*$5,600*✨');
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
-  await delay(5000);
+  await delay(7000);
   await sendWhatsAppMessage(from, 'Y ESO NO ES TODO!!\n'+
   'Aproveha también el Bono Exclusivo del mes de Febrero\n\n'+
   '*GRATIS* el Servicio de:\n\n'+
@@ -562,18 +562,18 @@ else if (messageLower === 'evento_otro') {
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
-  await delay(5000);
+  await delay(7000);
   await sendWhatsAppVideo(from,'http://cami-cam.com/wp-content/uploads/2024/10/Diseno-sin-titulo.mp4');
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
-  await delay(6000);
+  await delay(15000);
   await sendWhatsAppMessage(from, '¡Contrata TODO por tan sólo!\n\n'+
     '✨*$5,600*✨');
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
-  await delay(5000);
+  await delay(7000);
   await sendWhatsAppMessage(from, '¡SI! ¡Leiste bien!\n\n'+
     '✅ Cabina de Fotos (3 Horas) y\n' +
     '✅ Lluvia de mariposaspor \n\n' +
@@ -587,7 +587,7 @@ else if (messageLower === 'evento_otro') {
 
 
   await activateTypingIndicator(from);
-  await delay(6000);
+  await delay(8000);
   await sendInteractiveMessage(from, 'Te interesa? 🎊\n\n' +
     'O prefieres armar tu paquete?\n',[
   
