@@ -477,12 +477,12 @@ if (messageLower === 'evento_xv') {
 
 // SELECCIÓN WEDDING
 if (messageLower === 'evento_boda') {
-  return handleEventSelection(from, 'wedding', 'Wedding');
+  return handleEventSelection(from, 'wedding', 'Boda','Wedding');
 }
 
 // SELECCIÓN PARTY
 if (messageLower === 'evento_otro') {
-  return handleEventSelection(from, 'party', 'Party');
+  return handleEventSelection(from, 'party','Otro', 'Party');
 }
 
  // 🟢 Respuestas a los botones
