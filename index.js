@@ -458,7 +458,7 @@ else if (messageLower === 'evento_xv') {
   await deactivateTypingIndicator(from);
   
   await activateTypingIndicator(from);
-  await delay(8000);
+  await delay(10000);
   await deactivateTypingIndicator(from);
   await sendInteractiveMessage(from, 'Puedes armar tu paquete con todo lo que necesites!! 😊\n\n'+
     'O ver el Paquete que hemos preparado para XV años 👸', [
@@ -567,7 +567,7 @@ else if (messageLower === 'evento_otro') {
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
-  await delay(15000);
+  await delay(18000);
   await sendWhatsAppMessage(from, '¡Contrata TODO por tan sólo!\n\n'+
     '✨*$5,600*✨');
   await deactivateTypingIndicator(from);
@@ -575,19 +575,19 @@ else if (messageLower === 'evento_otro') {
   await activateTypingIndicator(from);
   await delay(8000);
   await sendWhatsAppMessage(from, '¡SI! ¡Leiste bien!\n\n'+
-    '✅ Cabina de Fotos (3 Horas) y\n' +
-    '✅ Lluvia de mariposaspor \n\n' +
-    '✅ 6 Letras Gigantes y\n'+
-    '✅ 2 Chisperos de piso'+
-    '✅ Audio Guest Book por\n\n'+
-    '✨*$5,600*✨\n\n'+
-    'Mas flete, dependiendo dónde sea el evento 📍\n\n'
+    '✅ Cabina de Fotos (3 Horas)\n' +
+    '✅ Lluvia de mariposas\n\n' +
+    '✅ 6 Letras Gigantes\n'+
+    '✅ 2 Chisperos de piso\n'+
+    '✅ Audio Guest Book por tan sólo\n\n'+
+    '   ✨*$5,600*✨\n\n'+
+    'Mas flete, dependiendo dónde sea el evento 📍'
   );
   await deactivateTypingIndicator(from);
 
 
   await activateTypingIndicator(from);
-  await delay(9000);
+  await delay(15000);
   await sendInteractiveMessage(from, 'Te interesa? 🎊\n\n' +
     'O prefieres armar tu paquete?\n',[
   
