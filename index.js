@@ -557,7 +557,7 @@ if (messageLower === 'evento_otro') {
   await sendWhatsAppMessage(from, '¡SI! ¡Leiste bien!\n\n'+
     '✅ Cabina de Fotos (3 Horas)\n' +
     '✅ Lluvia de mariposas\n' +
-    '🎁 *DE REGALO*\n'+
+    '     🎁 *DE REGALO*\n'+
     '✅ 6 Letras Gigantes (5 horas)\n'+
     '✅ 2 Chisperos de piso\n'+
     '✅ Descuento Adicional y\n'+
@@ -658,7 +658,7 @@ else if (messageLower === 'ver_paquete_wedding') {
   await sendWhatsAppMessage(from, '¡SI! ¡Leiste bien!\n\n'+
     '✅ Cabina de Fotos o Cabina 360 (3 Horas)\n' +
     '✅ 4 Letras Gigantes: *A & A ❤️* (5 horas)\n'+
-    '🎁*DE REGALO*'+
+    '      🎁*DE REGALO*'+
     '✅ Carrito de 100 Shots CON alcohol y'+
     '✅ 2 Chisperos de piso\n'+
     '✅ Descuento Adicional y\n'+
@@ -695,48 +695,49 @@ else if (messageLower === 'ver_paquete_party') {
   await activateTypingIndicator(from);
   await delay(2000);
   await sendWhatsAppMessage(from, 'El paquete que estamos promocionando es el\n'+
-    '*"PAQUETE MIS XV"*');
+    '*"PAQUETE PARTY"*');
   await deactivateTypingIndicator(from);
   
   await activateTypingIndicator(from);
   await delay(5000);
   await sendWhatsAppMessage(from, '*INCLUYE*\n\n'+
-    '✅ Cabina de Fotos (3 Horas) y\n' +
-    '✅ Lluvia de mariposas por \n\n' +
-    '✨ $6,200 ✨\n\n'+
-    'Mas flete, dependiendo dónde sea el evento 📍'
+    '✅ Cabina de Fotos ó Cabina 360 (3 Horas) y\n' +
+    '✅ 4 Letras Gigantes (5 horas)\n\n' +
+    '      por tan sólo\n\n'+
+    '      ✨ $5,100 ✨\n\n'+
+    '_Mas flete, dependiendo dónde sea el evento_ 📍'
   );
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
   await delay(9000);
   await sendWhatsAppMessage(from, 'y llévate GRATIS la renta de:\n\n'+
-    '✅ 6 Letras Gigantes y\n'+
+    '✅ Carrito de 100 Shots CON alcohol y\n'+
     '✅ 2 Chisperos de piso'
   );
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
   await delay(8000);
-  await sendWhatsAppMessage(from, '*¡¡Pero espera!!*');
+  await sendWhatsAppMessage(from, '*¡¡ PERO ESPERA !! ✋*');
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
   await delay(5000);
-  await sendWhatsAppMessage(from, '¡Sólo este mes disfruta de un descuento de $600!');
+  await sendWhatsAppMessage(from, '¡Sólo durante éste mes disfruta de un descuento adicional de $650!');
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
   await delay(5000);
   await sendWhatsAppMessage(from, 'Paga únicamente\n\n'+
-    '✨*$5,600*✨');
+    '✨*$4,450*✨');
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
   await delay(7000);
   await sendWhatsAppMessage(from, 'Y ESO NO ES TODO!!\n\n'+
   'Aproveha también el Bono Exclusivo del mes de Febrero\n\n'+
-  '*GRATIS* el Servicio de:\n\n'+
+  '🎁 *GRATIS* el Servicio de:\n\n'+
   '✅ Audio Guest Book\n\n'+
   'Será un recuerdo muy bonito de tu evento\n\n'
   );
@@ -750,21 +751,29 @@ else if (messageLower === 'ver_paquete_party') {
   await activateTypingIndicator(from);
   await delay(18000);
   await sendWhatsAppMessage(from, '¡Contrata TODO por tan sólo!\n\n'+
-    '✨*$5,600*✨');
+    '     ✨*$4,450*✨');
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
   await delay(5000);
   await sendWhatsAppMessage(from, '¡SI! ¡Leiste bien!\n\n'+
-    '✅ Cabina de Fotos (3 Horas)\n' +
-    '✅ Lluvia de mariposas\n' +
-    '✅ 6 Letras Gigantes\n'+
+    '✅ Cabina de Fotos o Cabina 360 (3 Horas)\n' +
+    '✅ 4 Letras Gigantes (5 horas)\n'+
+    '     🎁 *DE REGALO*'+
+    '✅ Carrito de 100 Shots CON alcohol y'+
     '✅ 2 Chisperos de piso\n'+
+    '✅ Descuento Adicional y\n'+
     '✅ Audio Guest Book\n'+
-    'por tan sólo\n\n'+
-    '        ✨*$5,600*✨\n\n'+
-    'Mas flete, dependiendo dónde sea tu evento 📍'
+    '        por tan sólo\n\n'+
+    '        ✨*$4,450*✨\n\n'+
+    '_Mas flete, dependiendo dónde sea tu evento_ 📍'
   );
+  await deactivateTypingIndicator(from);
+
+  await activateTypingIndicator(from);
+  await delay(18000);
+  await sendWhatsAppMessage(from, 'Recuerda que este paquete solo estara vigente durante el mes de Febrero\n'+
+    '🗓️ Separa hoy mismo y asegura tu paquete antes de que te ganen la fecha ');
   await deactivateTypingIndicator(from);
 
 
@@ -778,7 +787,9 @@ else if (messageLower === 'ver_paquete_party') {
     ]);
     await deactivateTypingIndicator(from);
     return true;
-}   
+}
+
+
 // 🟢 Validar si al usuario le interesa el paquete" 
 else if (messageLower === 'reservar') {
   await sendWhatsAppMessage(from, '📅 ¡Genial! Para reservar el *Paquete Mis XV*, Por favor dime la fecha de tu evento.');
