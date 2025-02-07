@@ -437,7 +437,7 @@ async function handlePackage(from, packageName, imageUrl, includes, price, disco
 
   await sendMessageWithTyping(from, `${formatMessage("¡¡ PERO ESPERA !! ✋", "bold")}`, 8000);
 
-  await sendMessageWithTyping(from, `¡Sólo durante éste mes disfruta de un descuento adicional de ${formatPrice(discount)}!`, 5000);
+  await sendMessageWithTyping(from, `¡Sólo durante éste mes disfruta de un descuento de ${formatPrice(discount)}!`, 5000);
 
   await sendMessageWithTyping(from, `Paga únicamente\n\n${formatMessage(`✨ ${formatPrice(price - discount)} ✨`, "bold")}`, 5000);
 
@@ -448,9 +448,9 @@ async function handlePackage(from, packageName, imageUrl, includes, price, disco
 
   await sendMessageWithTyping(from, `¡Contrata TODO por tan sólo!\n\n${formatMessage(`✨ ${formatPrice(price - discount)} ✨`, "bold")}`, 5000);
 
-  await sendMessageWithTyping(from, `¡SI! ¡Leiste bien!\n\n${includes}\n🎁 ${formatMessage("DE REGALO", "bold")}\n${freeItems}\n✅ Descuento Adicional\n✅ Audio Guest Book\n\npor tan sólo\n\n${formatMessage(`✨ ${formatPrice(price - discount)} ✨`, "bold")}\n\n${formatMessage("Mas flete, dependiendo dónde sea tu evento", "italic")} 📍`, 18000);
+  await sendMessageWithTyping(from, `¡SI! ¡Leiste bien!\n\n${includes}\n\n🎁 ${formatMessage("DE REGALO", "bold")}\n${freeItems}\n✅ Un descuento de ${formatPrice(discount)}\n✅ Audio Guest Book\n\nTodo esto por tan sólo 😮\n\n${formatMessage(`✨ ${formatPrice(price - discount)} ✨`, "bold")}\n\n${formatMessage("Mas flete, dependiendo dónde sea tu evento", "italic")} 📍`, 18000);
 
-  await sendMessageWithTyping(from, `Recuerda que este paquete solo estará vigente durante el mes de Febrero\n🗓️ Separa hoy mismo y asegura tu paquete antes de que te ganen la fecha`, 15000);
+  await sendMessageWithTyping(from, `Recuerda que este paquete solo estará vigente durante el mes de Febrero\n\n🗓️ Separa hoy mismo y asegura tu paquete antes de que te ganen la fecha`, 15000);
 
   await sendInteractiveMessage(from, 'Te interesa? 🎊\n\nO prefieres armar tu paquete?\n', [
     { id: 'reservar', title: 'SI, Me interesa 😍' },
@@ -537,7 +537,7 @@ async function handleUserMessage(from, userMessage, buttonReply) {
 
     // 🟢 Validar si al usuario le interesa el paquete
     if (messageLower === 'reservar') {
-      await sendWhatsAppMessage(from, '¡De acuerdo! Separamos fecha con $500, el resto puede ser el día del evento.\n\n🗓️ Por favor dime la fecha de tu evento.');
+      await sendWhatsAppMessage(from, '¡De acuerdo!\n\n Para separar solicitamos un anticipo de $500, el resto puede ser el día del evento.\n\n🗓️ Por favor dime tu fecha para revisar disponibilidad ');
       return true;
     }
 
