@@ -478,7 +478,7 @@ else if (messageLower === 'evento_boda') {
   await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg');
   
   await activateTypingIndicator(from);
-  await delay(6000);
+  await delay(8000);
   await deactivateTypingIndicator(from);
   await sendInteractiveMessage(from, 'Puedes armar tu paquete con todo lo que necesites!! 😊\n\n', [
     { id: 'armar_paquete', title: '🛠 Armar mi paquete' }, 
@@ -528,7 +528,7 @@ else if (messageLower === 'evento_otro') {
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
-  await delay(7000);
+  await delay(9000);
   await sendWhatsAppMessage(from, 'y llévate GRATIS la renta de:\n\n'+
     '✅ 6 Letras Gigantes y\n'+
     '✅ 2 Chisperos de piso'
@@ -536,12 +536,12 @@ else if (messageLower === 'evento_otro') {
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
-  await delay(7000);
+  await delay(8000);
   await sendWhatsAppMessage(from, '*¡¡Pero espera!!*');
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
-  await delay(5000);
+  await delay(6000);
   await sendWhatsAppMessage(from, '¡Sólo este mes disfruta de un descuento de $600!');
   await deactivateTypingIndicator(from);
 
