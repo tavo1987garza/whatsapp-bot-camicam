@@ -472,7 +472,7 @@ async function handleEventSelection(from, eventType, packageName, buttonText) {
 
 // SELECCIÓN MIS XV
 if (messageLower === 'evento_xv') {
-  return handleEventSelection(from, 'xv', 'Mis XV', 'Ver PAQUETE MIS XV');
+  return handleEventSelection(from, 'xv', 'XV', 'Ver PAQUETE MIS XV');
 }
 
 // SELECCIÓN WEDDING
@@ -509,8 +509,8 @@ if (messageLower === 'evento_otro') {
 
   await activateTypingIndicator(from);
   await delay(9000);
-  await sendWhatsAppMessage(from, 'y llévate GRATIS la renta de:\n\n'+
-    '✅ 6 Letras Gigantes y\n'+
+  await sendWhatsAppMessage(from, 'Separa tu fecha en Febrero y llévate GRATIS la renta de:\n\n'+
+    '✅ 6 Letras Gigantes (5 horas) y\n'+
     '✅ 2 Chisperos de piso'
   );
   await deactivateTypingIndicator(from);
@@ -522,7 +522,7 @@ if (messageLower === 'evento_otro') {
 
   await activateTypingIndicator(from);
   await delay(5000);
-  await sendWhatsAppMessage(from, '¡Sólo este mes disfruta de un descuento de $600!');
+  await sendWhatsAppMessage(from, '¡Sólo durante éste mes disfruta de un descuento adicional de $600!');
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
@@ -534,10 +534,10 @@ if (messageLower === 'evento_otro') {
   await activateTypingIndicator(from);
   await delay(7000);
   await sendWhatsAppMessage(from, 'Y ESO NO ES TODO!!\n\n'+
-  'Aproveha también el Bono Exclusivo del mes de Febrero\n\n'+
-  '*GRATIS* el Servicio de:\n\n'+
+  'Aproveha también el Bono Exclusivo durante el mes de Febrero\n\n'+
+  '🎁 *GRATIS* el Servicio de:\n\n'+
   '✅ Audio Guest Book\n\n'+
-  'Será un recuerdo muy bonito de tu evento\n\n'
+  'Será un recuerdo muy bonito de tu evento 😍\n\n'
   );
   await deactivateTypingIndicator(from);
 
@@ -557,12 +557,16 @@ if (messageLower === 'evento_otro') {
   await sendWhatsAppMessage(from, '¡SI! ¡Leiste bien!\n\n'+
     '✅ Cabina de Fotos (3 Horas)\n' +
     '✅ Lluvia de mariposas\n' +
-    '✅ 6 Letras Gigantes\n'+
+    '🎁*DE REGALO*'+
+    '✅ 6 Letras Gigantes (5 horas)\n'+
     '✅ 2 Chisperos de piso\n'+
-    '✅ Audio Guest Book\n'+
+    '✅ Descuento Adicional y\n'+
+    '✅ Audio Guest Book\n\n'+
     'por tan sólo\n\n'+
     '        ✨*$5,600*✨\n\n'+
-    'Mas flete, dependiendo dónde sea tu evento 📍'
+    'Mas flete, dependiendo dónde sea tu evento 📍\n\n'+
+    'Recuerda que este paquete solo estara vigente durante el mes de febrero'+
+    '📞 Contáctanos hoy mismo y asegura tu paquete antes de que te ganen la fecha '
   );
   await deactivateTypingIndicator(from);
 
@@ -581,20 +585,21 @@ if (messageLower === 'evento_otro') {
 
  /////////// 🟢 VER PAQUETE WEDDING 🟢 ///////////
 else if (messageLower === 'ver_paquete_wedding') {
-  await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg');
+  await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2024/09/Paquete-Wedding.jpg');
   
   await activateTypingIndicator(from);
   await delay(2000);
   await sendWhatsAppMessage(from, 'El paquete que estamos promocionando es el\n'+
-    '*"PAQUETE MIS XV"*');
+    '*"PAQUETE WEDDING"*');
   await deactivateTypingIndicator(from);
   
   await activateTypingIndicator(from);
   await delay(5000);
   await sendWhatsAppMessage(from, '*INCLUYE*\n\n'+
-    '✅ Cabina de Fotos (3 Horas) y\n' +
-    '✅ Lluvia de mariposas por \n\n' +
-    '✨ $6,200 ✨\n\n'+
+    '✅ Cabina de Fotos ó Cabina 360 (3 Horas) y\n' +
+    '✅ 4 Letras Gigantes: *A & A ❤️* (5 horas)  \n\n' +
+    'por tan sólo\n\n'+
+    '      ✨ $5,100 ✨\n\n'+
     'Mas flete, dependiendo dónde sea el evento 📍'
   );
   await deactivateTypingIndicator(from);
@@ -602,7 +607,7 @@ else if (messageLower === 'ver_paquete_wedding') {
   await activateTypingIndicator(from);
   await delay(9000);
   await sendWhatsAppMessage(from, 'y llévate GRATIS la renta de:\n\n'+
-    '✅ 6 Letras Gigantes y\n'+
+    '✅ Carrito de 100 Shots CON alcohol y\n'+
     '✅ 2 Chisperos de piso'
   );
   await deactivateTypingIndicator(from);
@@ -614,20 +619,20 @@ else if (messageLower === 'ver_paquete_wedding') {
 
   await activateTypingIndicator(from);
   await delay(5000);
-  await sendWhatsAppMessage(from, '¡Sólo este mes disfruta de un descuento de $600!');
+  await sendWhatsAppMessage(from, '¡Sólo este mes disfruta de un descuento de $650!');
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
   await delay(5000);
   await sendWhatsAppMessage(from, 'Paga únicamente\n\n'+
-    '✨*$5,600*✨');
+    '✨*$4,450*✨');
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
   await delay(7000);
   await sendWhatsAppMessage(from, 'Y ESO NO ES TODO!!\n\n'+
   'Aproveha también el Bono Exclusivo del mes de Febrero\n\n'+
-  '*GRATIS* el Servicio de:\n\n'+
+  '🎁*GRATIS* el Servicio de:\n\n'+
   '✅ Audio Guest Book\n\n'+
   'Será un recuerdo muy bonito de tu evento\n\n'
   );
@@ -641,19 +646,20 @@ else if (messageLower === 'ver_paquete_wedding') {
   await activateTypingIndicator(from);
   await delay(18000);
   await sendWhatsAppMessage(from, '¡Contrata TODO por tan sólo!\n\n'+
-    '✨*$5,600*✨');
+    '✨*$4,450*✨');
   await deactivateTypingIndicator(from);
 
   await activateTypingIndicator(from);
   await delay(5000);
   await sendWhatsAppMessage(from, '¡SI! ¡Leiste bien!\n\n'+
-    '✅ Cabina de Fotos (3 Horas)\n' +
-    '✅ Lluvia de mariposas\n' +
-    '✅ 6 Letras Gigantes\n'+
+    '✅ Cabina de Fotos o Cabina 360 (3 Horas)\n' +
+    '✅ 4 Letras Gigantes: *A & A ❤️* (5 horas)\n'+
+    '🎁*DE REGALO*'+
+    '✅ Carrito de 100 Shots CON alcohol y'+
     '✅ 2 Chisperos de piso\n'+
     '✅ Audio Guest Book\n'+
     'por tan sólo\n\n'+
-    '        ✨*$5,600*✨\n\n'+
+    '        ✨*$4,450*✨\n\n'+
     'Mas flete, dependiendo dónde sea tu evento 📍'
   );
   await deactivateTypingIndicator(from);
