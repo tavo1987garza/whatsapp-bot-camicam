@@ -431,7 +431,7 @@ async function handlePackage(from, packageName, imageUrl, includes, price, disco
 
   await sendMessageWithTyping(from, `El paquete que estamos promocionando es el\n${formatMessage(`"${packageName}"`, "bold")}`, 2000);
 
-  await sendMessageWithTyping(from, `${formatMessage("INCLUYE", "bold")}\n\n${includes}\n\n${formatMessage(`✨ ${formatPrice(price)} ✨`, "bold")}\n\n${formatMessage("Mas flete, dependiendo dónde sea el evento", "italic")} 📍`, 5000);
+  await sendMessageWithTyping(from, `${formatMessage("INCLUYE", "bold")}\n\n${includes}\n\nPor Sólo\n\n${formatMessage(`✨ ${formatPrice(price)} ✨`, "bold")}\n\n${formatMessage("Mas flete, dependiendo dónde sea el evento", "italic")} 📍`, 5000);
 
   await sendMessageWithTyping(from, `Y llévate GRATIS la renta de:\n\n${freeItems}`, 9000);
 
@@ -487,6 +487,27 @@ function checkAvailability(dateString) {
 
 ///-------------------------------------------------------------///
 
+// Función para manejar la selección de eventos
+async function handleEventSelection(from, eventType, packageName, buttonText) {
+  const message = 'Conoce los servicios que ofrecemos en *Camicam Photobooth* 🎉';
+  const imageUrl = 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg';
+  const options = {
+    message: 'Puedes armar tu paquete con todo lo que necesites!! 😊\n\n' +
+             `O ver el Paquete que hemos preparado para ${packageName} 👇`,
+    buttons: [
+      { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
+      { id: `ver_paquete_${eventType}`, title: `🎉 ${buttonText}` }
+    ]
+  };
+
+  // Enviar la imagen y el mensaje interactivo
+  await sendImageMessage(from, imageUrl);
+  await delay(2000); // Pequeño retraso para asegurar que la imagen se muestre primero
+  await sendInteractiveMessage(from, options.message, options.buttons);
+
+  return true;
+}
+
 // 📌 Función para manejar los mensajes del usuario
 async function handleUserMessage(from, userMessage, buttonReply) {
   const messageLower = buttonReply ? buttonReply.toLowerCase() : userMessage.toLowerCase();
@@ -522,44 +543,17 @@ async function handleUserMessage(from, userMessage, buttonReply) {
 
     // SELECCIÓN MIS XV
     if (messageLower === 'evento_xv') {
-      return handlePackage(
-        from,
-        "PAQUETE MIS XV",
-        "http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg",
-        "✅ Cabina de Fotos (3 Horas)\n✅ Lluvia de mariposas",
-        6200,
-        600,
-        "✅ 6 Letras Gigantes (5 horas)\n✅ 2 Chisperos de piso",
-        "http://cami-cam.com/wp-content/uploads/2025/02/Audio-Guest-Book.mp4"
-      );
+      return handleEventSelection(from, 'xv', 'XV', 'Ver PAQUETE MIS XV');
     }
 
     // SELECCIÓN WEDDING
     if (messageLower === 'evento_boda') {
-      return handlePackage(
-        from,
-        "PAQUETE WEDDING",
-        "http://cami-cam.com/wp-content/uploads/2024/09/Paquete-Wedding.jpg",
-        "✅ Cabina de Fotos ó Cabina 360 (3 Horas)\n✅ 4 Letras Gigantes: *A & A ❤️* (5 horas)",
-        5100,
-        650,
-        "✅ Carrito de 100 Shots CON alcohol\n✅ 2 Chisperos de piso",
-        "http://cami-cam.com/wp-content/uploads/2025/02/Audio-Guest-Book.mp4"
-      );
+      return handleEventSelection(from, 'wedding', 'Bodas', 'Ver Paq. WEDDING');
     }
 
     // SELECCIÓN PARTY
     if (messageLower === 'evento_otro') {
-      return handlePackage(
-        from,
-        "PAQUETE PARTY",
-        "http://cami-cam.com/wp-content/uploads/2024/06/PARTY.jpg",
-        "✅ Cabina 360 (3 Horas)\n✅ 4 Letras Gigantes (5 horas)",
-        5100,
-        650,
-        "✅ Carrito de 100 Shots CON alcohol\n✅ 2 Chisperos de piso",
-        "http://cami-cam.com/wp-content/uploads/2025/02/Audio-Guest-Book.mp4"
-      );
+      return handleEventSelection(from, 'party', 'Fiestas', 'Ver Paquete Party');
     }
 
     // 🟢 Validar si al usuario le interesa el paquete
@@ -569,7 +563,6 @@ async function handleUserMessage(from, userMessage, buttonReply) {
       return true;
     }
 
-    
       // 🟢 Manejar la fecha proporcionada por el usuario
       if (userContext[from].estado === "esperando_fecha") {
         const fechaUsuario = messageLower.trim();
