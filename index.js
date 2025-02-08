@@ -521,8 +521,44 @@ async function handleUserMessage(from, userMessage, buttonReply) {
       return true;
     }
 
+    // Función para manejar la selección de eventos
+async function handleEventSelection(from, eventType, packageName, buttonText) {
+  const message = 'Conoce los servicios que ofrecemos en *Camicam Photobooth* 🎉';
+  const imageUrl = 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg';
+  const options = {
+    message: 'Puedes armar tu paquete con todo lo que necesites!! 😊\n\n' +
+             `O ver el Paquete que hemos preparado para ${packageName} 👇`,
+    buttons: [
+      { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
+      { id: `ver_paquete_${eventType}`, title: `🎉 ${buttonText}` }
+    ]
+  };
+
+  await sendInteractiveMessageWithImage(from, message, imageUrl, options);
+  return true;
+}
+
+
+// SELECCIÓN MIS XV
+if (messageLower === 'evento_xv') {
+  return handleEventSelection(from, 'xv', 'XV', 'Ver PAQUETE MIS XV');
+}
+
+// SELECCIÓN WEDDING
+if (messageLower === 'evento_boda') {
+  return handleEventSelection(from, 'wedding', 'Bodas', 'Ver Paq. WEDDING');
+}
+
+// SELECCIÓN PARTY
+if (messageLower === 'evento_otro') {
+  return handleEventSelection(from, 'party', 'Fiestas', 'Ver Paquete Party');
+}
+
+
+ // 🟢 Respuestas a los botones
+
     // SELECCIÓN MIS XV
-    if (messageLower === 'evento_xv') {
+    if (messageLower === 'ver_paquete_xv') {
       return handlePackage(
         from,
         "PAQUETE MIS XV",
@@ -536,7 +572,7 @@ async function handleUserMessage(from, userMessage, buttonReply) {
     }
 
     // SELECCIÓN WEDDING
-    if (messageLower === 'evento_boda') {
+    if (messageLower === 'ver_paquete_wedding') {
       return handlePackage(
         from,
         "PAQUETE WEDDING",
@@ -550,7 +586,7 @@ async function handleUserMessage(from, userMessage, buttonReply) {
     }
 
     // SELECCIÓN PARTY
-    if (messageLower === 'evento_otro') {
+    if (messageLower === 'ver_paquete_party') {
       return handlePackage(
         from,
         "PAQUETE PARTY",
