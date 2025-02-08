@@ -508,51 +508,66 @@ async function handleUserMessage(from, userMessage, buttonReply) {
   const context = userContext[from];
 
   try {
-    // 🟢 Flujos predefinidos (eventos, paquetes, etc.)
-    if (['info', 'costos', 'hola', 'precio', 'información'].some(word => messageLower.includes(word))) {
-      await sendMessageWithTyping(from, '¡Hola 👋! Soy *CAMIBOT* Asistente virtual de *Camicam Photobooth*', 4000);
-      await sendMessageWithTyping(from, 'Para brindarte la mejor atención', 2000);
+    // Función para enviar mensajes con indicador de escritura
+async function sendMessageWithTyping(from, message, delayTime) {
+  await sendWhatsAppMessage(from, message);
+  await activateTypingIndicator(from);
+  await delay(delayTime);
+  await deactivateTypingIndicator(from);
+}
 
-      await sendInteractiveMessage(from, 'Por favor selecciona el tipo de evento que tienes 👇', [
-        { id: 'evento_xv', title: '🎉 XV Años' },
-        { id: 'evento_boda', title: '💍 Boda' },
-        { id: 'evento_otro', title: '🎊 Otro Evento' }
-      ]);
-      return true;
-    }
+// Función para enviar mensajes interactivos con imagen
+async function sendInteractiveMessageWithImage(from, message, imageUrl, options) {
+  await sendMessageWithTyping(from, message, 3000);
+  await sendImageMessage(from, imageUrl);
+  await delay(10000);
+  await sendInteractiveMessage(from, options.message, options.buttons);
+}
 
-    // Función para manejar la selección de eventos
-async function handleEventSelection(from, eventType, packageName, buttonText) {
-  const message = 'Conoce los servicios que ofrecemos en *Camicam Photobooth* 🎉';
-  const imageUrl = 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg';
-  const options = {
-    message: 'Puedes armar tu paquete con todo lo que necesites!! 😊\n\n' +
-             `O ver el Paquete que hemos preparado para ${packageName} 👇`,
-    buttons: [
-      { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
-      { id: `ver_paquete_${eventType}`, title: `🎉 ${buttonText}` }
-    ]
-  };
-
-  await sendInteractiveMessageWithImage(from, message, imageUrl, options);
+   // 🟢 Flujos predefinidos (eventos, paquetes, etc.)
+if (['info', 'costos', 'hola', 'precio', 'información'].some(word => messageLower.includes(word))) {
+  await sendMessageWithTyping(from, '¡Hola 👋! Soy tu asistente virtual de *Camicam Photobooth*', 4000);
+  await sendMessageWithTyping(from, 'Para brindarte la mejor atención', 2500);
+  
+  await sendInteractiveMessage(from, 'Por favor selecciona el tipo de evento que tienes 👇', [
+    { id: 'evento_xv', title: '🎉 XV Años' },
+    { id: 'evento_boda', title: '💍 Boda' },
+    { id: 'evento_otro', title: '🎊 Otro Evento' }
+  ]);
   return true;
 }
 
-
-// SELECCIÓN MIS XV
-if (messageLower === 'evento_xv') {
-  return handleEventSelection(from, 'xv', 'XV', 'Ver PAQUETE MIS XV');
-}
-
-// SELECCIÓN WEDDING
-if (messageLower === 'evento_boda') {
-  return handleEventSelection(from, 'wedding', 'Bodas', 'Ver Paq. WEDDING');
-}
-
-// SELECCIÓN PARTY
-if (messageLower === 'evento_otro') {
-  return handleEventSelection(from, 'party', 'Fiestas', 'Ver Paquete Party');
-}
+    // Función para manejar la selección de eventos
+    async function handleEventSelection(from, eventType, packageName) {
+      const message = 'Conoce los servicios que ofrecemos en *Camicam Photobooth* 🎉';
+      const imageUrl = 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg';
+      const options = {
+        message: 'Puedes armar tu paquete con todo lo que necesites!! 😊\n\n' +
+                 `O ver el Paquete que hemos preparado para ${packageName} 👇`,
+        buttons: [
+          { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
+          { id: `ver_paquete_${eventType}`, title: `🎉 Ver PAQUETE ${packageName.toUpperCase()}` }
+        ]
+      };
+    
+      await sendInteractiveMessageWithImage(from, message, imageUrl, options);
+      return true;
+    }
+    
+    // SELECCIÓN MIS XV
+    if (messageLower === 'evento_xv') {
+      return handleEventSelection(from, 'xv', 'Mis XV');
+    }
+    
+    // SELECCIÓN WEDDING
+    if (messageLower === 'evento_boda') {
+      return handleEventSelection(from, 'wedding', 'Wedding');
+    }
+    
+    // SELECCIÓN PARTY
+    if (messageLower === 'evento_otro') {
+      return handleEventSelection(from, 'party', 'Party');
+    }
 
 
  // 🟢 Respuestas a los botones
