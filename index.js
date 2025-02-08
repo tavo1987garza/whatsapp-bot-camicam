@@ -460,6 +460,33 @@ async function handlePackage(from, packageName, imageUrl, includes, price, disco
   return true;
 }
 
+// Función para validar el formato de la fecha (DD/MM/AAAA)
+function isValidDate(dateString) {
+  const regex = /^\d{2}\/\d{2}\/\d{4}$/; // Formato DD/MM/AAAA
+  if (!regex.test(dateString)) return false;
+
+  const [day, month, year] = dateString.split('/').map(Number);
+  const date = new Date(year, month - 1, day); // Meses en JavaScript son 0-indexados
+
+  // Verificar si la fecha es válida
+  return (
+    date.getFullYear() === year &&
+    date.getMonth() + 1 === month &&
+    date.getDate() === day
+  );
+}
+
+// Función para verificar disponibilidad (simulada)
+function checkAvailability(dateString) {
+  // Aquí puedes conectar con una base de datos o API para verificar disponibilidad real
+  // Por ahora, simulamos que las fechas ocupadas son el 15/02/2024 y el 20/02/2024
+  const occupiedDates = ['15/02/2024', '20/02/2024'];
+  return !occupiedDates.includes(dateString);
+}
+////////////////////////////////////////////////////////////////////
+
+///-------------------------------------------------------------///
+
 // 📌 Función para manejar los mensajes del usuario
 async function handleUserMessage(from, userMessage, buttonReply) {
   const messageLower = buttonReply ? buttonReply.toLowerCase() : userMessage.toLowerCase();
@@ -537,9 +564,36 @@ async function handleUserMessage(from, userMessage, buttonReply) {
 
     // 🟢 Validar si al usuario le interesa el paquete
     if (messageLower === 'reservar') {
-      await sendWhatsAppMessage(from, '¡De acuerdo!\n\n Para separar solicitamos un anticipo de $500, el resto puede ser el día del evento.\n\n🗓️ Por favor dime tu fecha para revisar disponibilidad ');
+      await sendWhatsAppMessage(from, '¡De acuerdo!\n\n Para separar solicitamos un anticipo de $500, el resto puede ser el día del evento.\n\n🗓️ Por favor dime tu fecha para revisar disponibilidad (formato: DD/MM/AAAA).');
+      userContext[from].estado = "esperando_fecha"; // Cambiar el estado del usuario
       return true;
     }
+
+    
+      // 🟢 Manejar la fecha proporcionada por el usuario
+      if (userContext[from].estado === "esperando_fecha") {
+        const fechaUsuario = messageLower.trim();
+  
+        // Validar el formato de la fecha
+        if (!isValidDate(fechaUsuario)) {
+          await sendWhatsAppMessage(from, '⚠️ Formato de fecha incorrecto. Por favor, ingresa la fecha en el formato DD/MM/AAAA.');
+          return true;
+        }
+  
+        // Verificar disponibilidad
+        if (!checkAvailability(fechaUsuario)) {
+          await sendWhatsAppMessage(from, `Lo siento, la fecha ${fechaUsuario} no está disponible. Por favor, elige otra fecha.`);
+          return true;
+        }
+  
+        // Si la fecha está disponible, confirmar la reserva
+        userContext[from].fecha = fechaUsuario; // Guardar la fecha en el contexto
+        await sendWhatsAppMessage(from, `✅ ¡Perfecto! La fecha ${fechaUsuario} está disponible.\n\nPara confirmar tu reserva, por favor realiza el anticipo de $500 a la siguiente cuenta:\n\n💳 Banco: XYZ\n📌 CLABE: 123456789012345678\n👤 Titular: Camicam Photobooth`);
+  
+        // Cambiar el estado del usuario a "confirmando_pago"
+        userContext[from].estado = "confirmando_pago";
+        return true;
+      }
 
     // 🟢 Validar si el usuario quiere "Armar mi paquete"
     if (messageLower === 'armar_paquete') {
@@ -554,9 +608,7 @@ async function handleUserMessage(from, userMessage, buttonReply) {
   }
 }
 
-////////////////////////////////////////////////////////////////////
-
-
+///-------------------------------------------------------------///
 
 // 📌 Función para enviar mensajes de texto
 async function sendWhatsAppMessage(to, message) {
