@@ -508,6 +508,20 @@ async function handleEventSelection(from, eventType, packageName, buttonText) {
   return true;
 }
 
+// Función para manejar la información del paquete
+async function handlePackageDetails(from, eventType) {
+  if (eventType === 'xv') {
+    await sendImageMessage(from, 'http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg');
+    await sendMessageWithTyping(from, 'El paquete que estamos promocionando es el\n*"PAQUETE MIS XV"*', 2000);
+    await sendMessageWithTyping(from, '*INCLUYE*\n\n✅ Cabina de Fotos (3 Horas) y\n✅ Lluvia de mariposas\n\n✨ $6,200 ✨\n\n_Mas flete, dependiendo dónde sea el evento_ 📍', 5000);
+    // Continuar con el resto de los mensajes del paquete...
+  } else if (eventType === 'wedding') {
+    // Lógica para el paquete de bodas...
+  } else if (eventType === 'party') {
+    // Lógica para el paquete de fiestas...
+  }
+}
+
 // 📌 Función para manejar los mensajes del usuario
 async function handleUserMessage(from, userMessage, buttonReply) {
   const messageLower = buttonReply ? buttonReply.toLowerCase() : userMessage.toLowerCase();
@@ -556,14 +570,30 @@ async function handleUserMessage(from, userMessage, buttonReply) {
       return handleEventSelection(from, 'party', 'Fiestas', 'Ver Paquete Party');
     }
 
-    // 🟢 Validar si al usuario le interesa el paquete
+    //  Manejar la selección de "Ver PAQUETE MIS XV"
+    if (messageLower === 'ver_paquete_xv') {
+      return handlePackageDetails(from, 'xv');
+    }
+
+    //  Manejar la selección de "Ver Paq. WEDDING"
+    if (messageLower === 'ver_paquete_wedding') {
+      return handlePackageDetails(from, 'wedding');
+    }
+
+    //  Manejar la selección de "Ver Paquete Party"
+    if (messageLower === 'ver_paquete_party') {
+      return handlePackageDetails(from, 'party');
+    }
+
+
+    //  Validar si al usuario le interesa el paquete
     if (messageLower === 'reservar') {
       await sendWhatsAppMessage(from, '¡De acuerdo!\n\n Para separar solicitamos un anticipo de $500, el resto puede ser el día del evento.\n\n🗓️ Por favor dime tu fecha para revisar disponibilidad (formato: DD/MM/AAAA).');
       userContext[from].estado = "esperando_fecha"; // Cambiar el estado del usuario
       return true;
     }
 
-      // 🟢 Manejar la fecha proporcionada por el usuario
+      //  Manejar la fecha proporcionada por el usuario
       if (userContext[from].estado === "esperando_fecha") {
         const fechaUsuario = messageLower.trim();
   
