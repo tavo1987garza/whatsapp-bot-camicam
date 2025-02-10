@@ -544,7 +544,7 @@ if (['info', 'costos', 'hola', 'precio', 'información'].some(word => messageLow
       const options = {
         message:'Puedes ver videos de nuestros servicios. ▶️\n\n' + 
                 'Armar tu paquete con todo lo que necesites!! 😊\n\n' +
-                'O ver el Paquete que hemos preparado para ${packageName} 👇',
+                `O ver el Paquete que hemos preparado para ${packageName} 👇`,
         buttons: [
           { id: 'ver_videos', title: '▶️ Ver videos' },
           { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
