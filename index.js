@@ -542,9 +542,11 @@ if (['info', 'costos', 'hola', 'precio', 'información'].some(word => messageLow
       const message = 'Conoce los servicios que ofrecemos en *Camicam Photobooth* 🎉';
       const imageUrl = 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg';
       const options = {
-        message: 'Puedes armar tu paquete con todo lo que necesites!! 😊\n\n' +
-                 `O ver el Paquete que hemos preparado para ${packageName} 👇`,
+        message:'Puedes ver videos de nuestros servicios. ▶️\n\n' + 
+                'Armar tu paquete con todo lo que necesites!! 😊\n\n' +
+                'O ver el Paquete que hemos preparado para ${packageName} 👇',
         buttons: [
+          { id: 'ver_videos', title: '▶️ Ver videos' },
           { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
           { id: `ver_paquete_${eventType}`, title: `🎉 Ver PAQUETE ${packageName.toUpperCase()}` }
         ]
@@ -652,6 +654,15 @@ if (['info', 'costos', 'hola', 'precio', 'información'].some(word => messageLow
       await sendWhatsAppMessage(from, '🔗 Para armar tu paquete personalizado, visita nuestro cotizador en el siguiente enlace:\n🌐 www.cami-cam.com/cotizador/');
       return true;
     }
+
+      // 🟢 Manejar el botón "Ver videos"
+      if (messageLower === 'ver_videos') {
+        await sendWhatsAppMessage(from, 'Aquí tienes algunos videos de nuestros servicios:');
+        await sendWhatsAppVideo(from, 'http://cami-cam.com/wp-content/uploads/2025/02/Audio-Guest-Book.mp4', 'Audio Guest Book');
+        await sendWhatsAppVideo(from, 'http://cami-cam.com/wp-content/uploads/2025/02/Cabina-360.mp4', 'Cabina 360');
+        await sendWhatsAppVideo(from, 'http://cami-cam.com/wp-content/uploads/2025/02/Lluvia-de-Mariposas.mp4', 'Lluvia de Mariposas');
+        return true;
+      }
 
   } catch (error) {
     console.error("❌ Error en handleUserMessage:", error.message);
