@@ -659,8 +659,8 @@ if (['info', 'costos', 'hola', 'precio', 'información'].some(word => messageLow
       if (messageLower === 'ver_videos') {
         await sendWhatsAppMessage(from, 'Aquí tienes algunos videos de nuestros servicios:');
         await sendWhatsAppVideo(from, 'http://cami-cam.com/wp-content/uploads/2025/02/Audio-Guest-Book.mp4', 'Audio Guest Book');
-        await sendWhatsAppVideo(from, 'http://cami-cam.com/wp-content/uploads/2025/02/Cabina-360.mp4', 'Cabina 360');
-        await sendWhatsAppVideo(from, 'http://cami-cam.com/wp-content/uploads/2025/02/Lluvia-de-Mariposas.mp4', 'Lluvia de Mariposas');
+        await sendWhatsAppVideo(from, 'http://cami-cam.com/wp-content/uploads/2025/02/LETRAS-GIGANTES-ILUMINADAS.mp4', 'Letras Gigantes');
+        await sendWhatsAppVideo(from, 'http://cami-cam.com/wp-content/uploads/2025/02/LLUVIA-DE-MARIPOSAS-2.0.mp4', 'Lluvia de Mariposas');
         return true;
       }
 
