@@ -113,7 +113,7 @@ app.get('/test-interactive', async (req, res) => {
 
 //Funcion para enviar los mensjaes al CRM
 async function sendToCRM(contactData) {
-  const crmUrl = 'http://127.0.0.1:5000';
+  const crmUrl = 'http://127.0.0.1:5000/api/leads';
   try {
     const response = await axios.post(crmUrl, contactData, {
       headers: {
