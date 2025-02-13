@@ -111,6 +111,21 @@ app.get('/test-interactive', async (req, res) => {
 });
 
 
+//Funcion para enviar los mensjaes al CRM
+async function sendToCRM(contactData) {
+  const crmUrl = 'http://127.0.0.1:5000';
+  try {
+    const response = await axios.post(crmUrl, contactData, {
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    console.log('Datos enviados al CRM:', response.data);
+  } catch (error) {
+    console.error('Error al enviar datos al CRM:', error.message);
+  }
+}
+
 // 📌 Webhook para manejar mensajes de WhatsApp
 app.post('/webhook', async (req, res) => {
   console.log('📩 Webhook activado:', JSON.stringify(req.body, null, 2));
@@ -187,19 +202,7 @@ app.post('/webhook', async (req, res) => {
   res.sendStatus(200);
 });
 
-async function sendToCRM(contactData) {
-  const crmUrl = 'http://127.0.0.1:5000/api/leads'; // URL local del CRM
-  try {
-    const response = await axios.post(crmUrl, contactData, {
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-    console.log('Datos enviados al CRM:', response.data);
-  } catch (error) {
-    console.error('Error al enviar datos al CRM:', error.message);
-  }
-}
+
 
 
 // 📌 Función para enviar mensajes interactivos con botones
