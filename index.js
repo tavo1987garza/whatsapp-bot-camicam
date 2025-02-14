@@ -126,7 +126,7 @@ app.post('/webhook', async (req, res) => {
   console.log(`📩 Enviando mensaje de ${from} al CRM: ${userMessage}`);
 
   try {
-    const response = await axios.post('http://127.0.0.1:5000/recibir_mensaje', {
+    const response = await axios.post('https://camicam-crm-d78af2926170.herokuapp.com/recibir_mensaje', {
       plataforma: plataforma,
       remitente: from,
       mensaje: userMessage
