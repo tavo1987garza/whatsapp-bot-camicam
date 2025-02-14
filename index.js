@@ -114,7 +114,7 @@ app.get('/test-interactive', async (req, res) => {
 
 // 📌 Webhook para manejar mensajes de WhatsApp
 app.post('/webhook', async (req, res) => {
-  console.log('📩 Webhook activado:', JSON.stringify(req.body, null, 2));
+  console.log("📩 Webhook activado:", JSON.stringify(req.body, null, 2));
 
   const message = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
   if (!message) return res.sendStatus(404);
@@ -123,17 +123,20 @@ app.post('/webhook', async (req, res) => {
   const userMessage = message?.text?.body || '';
   const plataforma = "WhatsApp"; // O "Messenger", si proviene de allí
 
-  // 📌 Enviar el mensaje al CRM
+  console.log(`📩 Enviando mensaje de ${from} al CRM: ${userMessage}`);
+
   try {
-    await axios.post('http://127.0.0.1:5000/recibir_mensaje', {
+    const response = await axios.post('http://127.0.0.1:5000/recibir_mensaje', {
       plataforma: plataforma,
       remitente: from,
       mensaje: userMessage
     });
-    console.log("✅ Mensaje enviado al CRM correctamente");
+    console.log("✅ Respuesta del CRM:", response.data);
   } catch (error) {
     console.error("❌ Error al enviar mensaje al CRM:", error.message);
   }
+
+
 
   const buttonReply = message?.interactive?.button_reply?.id || '';
   const listReply = message?.interactive?.list_reply?.id || '';
