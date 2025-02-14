@@ -111,26 +111,15 @@ app.get('/test-interactive', async (req, res) => {
 });
 
 
-
 // 📌 Webhook para manejar mensajes de WhatsApp
-  app.post('/webhook', async (req, res) => {
-    console.log('📩 Webhook activado:', JSON.stringify(req.body, null, 2));
-  
-    const message = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
-    if (!message) return res.sendStatus(404);
-  
-    const from = message.from;
-    const userMessage = message?.text?.body || '';
-  
-    // Guardar el mensaje en el CRM
-    const contactData = {
-      phone: from,
-      last_message: userMessage,
-      last_interaction: new Date().toISOString(),
-      status: 'nuevo' // Estado inicial
-    };
-    await sendToCRM(contactData);
+app.post('/webhook', async (req, res) => {
+  console.log('📩 Webhook activado:', JSON.stringify(req.body, null, 2));
 
+  const message = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+  if (!message) return res.sendStatus(404);
+
+  const from = message.from;
+  const userMessage = message?.text?.body || '';
   const buttonReply = message?.interactive?.button_reply?.id || '';
   const listReply = message?.interactive?.list_reply?.id || '';
   const messageLower = buttonReply ? buttonReply.toLowerCase() : listReply ? listReply.toLowerCase() : userMessage.toLowerCase();
@@ -189,7 +178,6 @@ app.get('/test-interactive', async (req, res) => {
 
   res.sendStatus(200);
 });
-
 
 
 
@@ -494,23 +482,6 @@ function checkAvailability(dateString) {
   // Por ahora, simulamos que las fechas ocupadas son el 15/02/2024 y el 20/02/2024
   const occupiedDates = ['15/02/2024', '20/02/2024'];
   return !occupiedDates.includes(dateString);
-}
-
-
-//Funcion para enviar los mensjaes al CRM
-async function sendToCRM(contactData) {
-  console.log('Enviando datos al CRM:', contactData); // Agrega este console.log
-  const crmUrl = 'http://127.0.0.1:5000/api/leads';
-  try {
-    const response = await axios.post(crmUrl, contactData, {
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-    console.log('Datos enviados al CRM:', response.data);
-  } catch (error) {
-    console.error('Error al enviar datos al CRM:', error.message);
-  }
 }
 
 ////////////////////////////////////////////////////////////////////

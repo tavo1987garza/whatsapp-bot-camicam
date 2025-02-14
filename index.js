@@ -123,7 +123,7 @@ app.post('/webhook', async (req, res) => {
   console.log('Mensaje recibido:', userMessage);
 
   // Guardar el mensaje en el CRM
-  const contactData = {
+  /*const contactData = {
     phone: from,
     last_message: userMessage,
     last_interaction: new Date().toISOString(),
@@ -132,6 +132,7 @@ app.post('/webhook', async (req, res) => {
   console.log('Enviando datos al CRM:', contactData); // Agrega este console.log
   await sendToCRM(contactData);
   console.log('Datos enviados al CRM correctamente.');
+  */
 
   const buttonReply = message?.interactive?.button_reply?.id || '';
   const listReply = message?.interactive?.list_reply?.id || '';
