@@ -1,3 +1,4 @@
+
 // Importar dependencias en modo ES Modules
 import dotenv from 'dotenv'; // Para cargar variables de entorno
 import express from 'express';
@@ -120,19 +121,19 @@ app.post('/webhook', async (req, res) => {
 
   const from = message.from;
   const userMessage = message?.text?.body || '';
-  console.log('Mensaje recibido:', userMessage);
+  const plataforma = "WhatsApp"; // O "Messenger", si proviene de allí
 
-  // Guardar el mensaje en el CRM
-  /*const contactData = {
-    phone: from,
-    last_message: userMessage,
-    last_interaction: new Date().toISOString(),
-    status: 'nuevo' // Estado inicial
-  };
-  console.log('Enviando datos al CRM:', contactData); // Agrega este console.log
-  await sendToCRM(contactData);
-  console.log('Datos enviados al CRM correctamente.');
-  */
+  // 📌 Enviar el mensaje al CRM
+  try {
+    await axios.post('http://127.0.0.1:5000/recibir_mensaje', {
+      plataforma: plataforma,
+      remitente: from,
+      mensaje: userMessage
+    });
+    console.log("✅ Mensaje enviado al CRM correctamente");
+  } catch (error) {
+    console.error("❌ Error al enviar mensaje al CRM:", error.message);
+  }
 
   const buttonReply = message?.interactive?.button_reply?.id || '';
   const listReply = message?.interactive?.list_reply?.id || '';
@@ -193,6 +194,7 @@ app.post('/webhook', async (req, res) => {
   res.sendStatus(200);
 });
 
+/*
 //Función para enviar datos al CRM
 async function sendToCRM(contactData) {
   const crmUrl = 'http://127.0.0.1:5000/api/leads';
@@ -209,7 +211,7 @@ async function sendToCRM(contactData) {
   } finally {
     await new Promise(resolve => setTimeout(resolve, 500)); // Retardo de 500ms
   }
-}
+}*/
 
 // 📌 Función para enviar mensajes interactivos con botones
 async function sendInteractiveMessage(to, body, buttons) {
