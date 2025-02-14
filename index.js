@@ -111,20 +111,15 @@ app.get('/test-interactive', async (req, res) => {
 });
 
 
-
 // 📌 Webhook para manejar mensajes de WhatsApp
-  app.post('/webhook', async (req, res) => {
-    console.log('📩 Webhook activado:', JSON.stringify(req.body, null, 2));
-  
-    const message = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
-    if (!message) return res.sendStatus(404);
-  
-    const from = message.from;
-    const userMessage = message?.text?.body || '';
-  
-    // Guardar el mensaje en el CRM
-   
+app.post('/webhook', async (req, res) => {
+  console.log('📩 Webhook activado:', JSON.stringify(req.body, null, 2));
 
+  const message = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+  if (!message) return res.sendStatus(404);
+
+  const from = message.from;
+  const userMessage = message?.text?.body || '';
   const buttonReply = message?.interactive?.button_reply?.id || '';
   const listReply = message?.interactive?.list_reply?.id || '';
   const messageLower = buttonReply ? buttonReply.toLowerCase() : listReply ? listReply.toLowerCase() : userMessage.toLowerCase();
@@ -183,7 +178,6 @@ app.get('/test-interactive', async (req, res) => {
 
   res.sendStatus(200);
 });
-
 
 
 
@@ -489,10 +483,6 @@ function checkAvailability(dateString) {
   const occupiedDates = ['15/02/2024', '20/02/2024'];
   return !occupiedDates.includes(dateString);
 }
-
-
-//Funcion para enviar los mensjaes al CRM
-
 
 ////////////////////////////////////////////////////////////////////
 
