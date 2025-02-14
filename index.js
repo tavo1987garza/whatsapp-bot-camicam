@@ -123,13 +123,7 @@ app.get('/test-interactive', async (req, res) => {
     const userMessage = message?.text?.body || '';
   
     // Guardar el mensaje en el CRM
-    const contactData = {
-      phone: from,
-      last_message: userMessage,
-      last_interaction: new Date().toISOString(),
-      status: 'nuevo' // Estado inicial
-    };
-    await sendToCRM(contactData);
+   
 
   const buttonReply = message?.interactive?.button_reply?.id || '';
   const listReply = message?.interactive?.list_reply?.id || '';
@@ -498,20 +492,7 @@ function checkAvailability(dateString) {
 
 
 //Funcion para enviar los mensjaes al CRM
-async function sendToCRM(contactData) {
-  console.log('Enviando datos al CRM:', contactData); // Agrega este console.log
-  const crmUrl = 'http://127.0.0.1:5000/api/leads';
-  try {
-    const response = await axios.post(crmUrl, contactData, {
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-    console.log('Datos enviados al CRM:', response.data);
-  } catch (error) {
-    console.error('Error al enviar datos al CRM:', error.message);
-  }
-}
+
 
 ////////////////////////////////////////////////////////////////////
 
