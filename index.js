@@ -120,6 +120,19 @@ app.post('/webhook', async (req, res) => {
 
   const from = message.from;
   const userMessage = message?.text?.body || '';
+  console.log('Mensaje recibido:', userMessage);
+
+  // Guardar el mensaje en el CRM
+  const contactData = {
+    phone: from,
+    last_message: userMessage,
+    last_interaction: new Date().toISOString(),
+    status: 'nuevo' // Estado inicial
+  };
+  console.log('Enviando datos al CRM:', contactData); // Agrega este console.log
+  await sendToCRM(contactData);
+  console.log('Datos enviados al CRM correctamente.');
+
   const buttonReply = message?.interactive?.button_reply?.id || '';
   const listReply = message?.interactive?.list_reply?.id || '';
   const messageLower = buttonReply ? buttonReply.toLowerCase() : listReply ? listReply.toLowerCase() : userMessage.toLowerCase();
@@ -179,7 +192,23 @@ app.post('/webhook', async (req, res) => {
   res.sendStatus(200);
 });
 
-
+//Función para enviar datos al CRM
+async function sendToCRM(contactData) {
+  const crmUrl = 'http://127.0.0.1:5000/api/leads';
+  try {
+    console.log('Enviando datos al CRM:', contactData);
+    const response = await axios.post(crmUrl, contactData, {
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    console.log('Datos enviados al CRM:', response.data);
+  } catch (error) {
+    console.error('Error al enviar datos al CRM:', error.message);
+  } finally {
+    await new Promise(resolve => setTimeout(resolve, 500)); // Retardo de 500ms
+  }
+}
 
 // 📌 Función para enviar mensajes interactivos con botones
 async function sendInteractiveMessage(to, body, buttons) {
