@@ -136,6 +136,26 @@ app.post('/webhook', async (req, res) => {
     console.error("❌ Error al enviar mensaje al CRM:", error.message);
   }
 
+  // 📌 Endpoint para recibir mensajes desde el CRM y enviarlos a WhatsApp
+app.post('/enviar_mensaje', async (req, res) => {
+  try {
+    const { telefono, mensaje } = req.body;
+
+    if (!telefono || !mensaje) {
+      return res.status(400).json({ error: 'Faltan datos' });
+    }
+
+    console.log(`📩 Enviando mensaje desde el CRM a WhatsApp: ${telefono} -> ${mensaje}`);
+
+    await sendWhatsAppMessage(telefono, mensaje);
+
+    res.status(200).json({ mensaje: 'Mensaje enviado a WhatsApp correctamente' });
+  } catch (error) {
+    console.error('❌ Error al reenviar mensaje a WhatsApp:', error.message);
+    res.status(500).json({ error: 'Error al enviar mensaje a WhatsApp' });
+  }
+});
+
 
 
   const buttonReply = message?.interactive?.button_reply?.id || '';
