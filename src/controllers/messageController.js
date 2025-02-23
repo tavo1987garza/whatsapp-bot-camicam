@@ -1,12 +1,56 @@
 // src/controllers/messageController.js Contiene la lógica de procesamiento de mensajes y flujos de conversación.
 import axios from 'axios';
-import { sendWhatsAppMessage, sendInteractiveMessage, sendWhatsAppList, sendWhatsAppVideo, sendImageMessage, activateTypingIndicator, deactivateTypingIndicator } from '../services/whatsappService.js';
+import { 
+  sendWhatsAppMessage, 
+  sendInteractiveMessage, 
+  sendWhatsAppList, 
+  sendWhatsAppVideo, 
+  sendImageMessage, 
+  activateTypingIndicator, 
+  deactivateTypingIndicator 
+} from '../services/whatsappService.js';
 import { delay, isValidDate, checkAvailability, formatPrice, formatMessage } from '../utils/helpers.js';
 
 // Objeto para almacenar el contexto de cada usuario
 export const userContext = {};
 
-// Ruta para la verificación inicial del webhook
+// Array de FAQs (Preguntas Frecuentes)
+const faqs = [
+  { question: /como separo mi fecha|anticipo/i, answer: 'Separamos la fecha con $500. El resto puede pagarse el día del evento.' },
+  { question: /hacen contrato|contrato/i, answer: 'Sí, una vez acreditado tu anticipo llenamos tu contrato y te enviamos una foto.' },
+  { question: /con cuanto tiempo separo mi fecha|separar/i, answer: 'Puedes separar en cualquier momento, siempre y cuando la fecha esté disponible.' },
+  { question: /se puede separar para 2026|2026/i, answer: 'Sí, tenemos agenda abierta para 2025 y 2026.' },
+  { question: /cuánto se cobra de flete|flete/i, answer: 'Depende de la ubicación del evento. Contáctanos con tu dirección para cotizar.' },
+  { question: /cómo reviso si tienen mi fecha disponible/i, answer: 'Dime, ¿para cuándo es tu evento? 😊' },
+  { question: /ubicación|dónde están|donde son|ubican|oficinas/i, answer: '📍 Estamos en la Colonia Independencia en Monterrey. Atendemos eventos hasta 25 km a la redonda.' },
+  { question: /pago|método de pago|tarjeta|efectivo/i, answer: 'Aceptamos transferencias bancarias, depósitos y pagos en efectivo.' }
+];
+
+// Función para buscar respuesta en FAQs
+function findFAQ(userMessage) {
+  for (const faq of faqs) {
+    if (faq.question.test(userMessage)) {
+      return faq.answer;
+    }
+  }
+  return null;
+}
+
+// Función para manejar FAQs antes de enviar a otros flujos
+export async function handleFAQs(from, userMessage) {
+  const faqAnswer = findFAQ(userMessage);
+  if (faqAnswer) {
+    await sendWhatsAppMessage(from, faqAnswer);
+    return true;
+  }
+  return false;
+}
+
+// ---------------------------------------------------------------------
+// Controladores de Endpoints
+// ---------------------------------------------------------------------
+
+// 1. Verificar el webhook (GET /webhook)
 export const verifyWebhook = (req, res) => {
   const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
   const mode = req.query['hub.mode'];
@@ -24,12 +68,12 @@ export const verifyWebhook = (req, res) => {
   }
 };
 
-// Ruta raíz de prueba
+// 2. Ruta raíz de prueba (GET /)
 export const handleRoot = async (req, res) => {
   res.send('¡Servidor funcionando correctamente!');
   console.log("Ruta '/' accedida correctamente.");
 
-  // Ejemplo: enviar mensaje de prueba a WhatsApp
+  // Ejemplo: enviar mensaje de prueba a un número de WhatsApp
   try {
     console.log('Enviando mensaje de prueba a WhatsApp...');
     await sendWhatsAppMessage('528133971595', 'hello_world');
@@ -39,7 +83,7 @@ export const handleRoot = async (req, res) => {
   }
 };
 
-// Ruta para enviar un mensaje interactivo de prueba
+// 3. Ruta para mensajes interactivos de prueba (GET /test-interactive)
 export const testInteractive = async (req, res) => {
   const testNumber = "528133971595"; // Número de prueba
   console.log("➡ Enviando mensaje interactivo de prueba...");
@@ -54,7 +98,7 @@ export const testInteractive = async (req, res) => {
   }
 };
 
-// Función para procesar el webhook de WhatsApp
+// 4. Webhook para recibir mensajes desde WhatsApp (POST /webhook)
 export const processWebhook = async (req, res) => {
   console.log("📩 Webhook activado:", JSON.stringify(req.body, null, 2));
 
@@ -64,13 +108,12 @@ export const processWebhook = async (req, res) => {
 
   const from = message.from;
   const userMessage = message?.text?.body || '';
-  const plataforma = "WhatsApp";
+  const plataforma = "WhatsApp"; // O "Messenger" según corresponda
 
   console.log(`📩 Mensaje de ${from}: ${userMessage}`);
 
-  // Aquí se puede enviar el mensaje al CRM o procesarlo localmente.
+  // Ejemplo: reenviar el mensaje al CRM (verifica que el endpoint CRM esté configurado correctamente)
   try {
-    // Ejemplo: reenviar mensaje al CRM
     const response = await axios.post(process.env.CRM_ENDPOINT, {
       plataforma,
       remitente: from,
@@ -81,8 +124,227 @@ export const processWebhook = async (req, res) => {
     console.error("❌ Error al enviar mensaje al CRM:", error.message);
   }
 
-  // Procesar respuestas interactivas, FAQs, y flujos de conversación
-  // Se puede invocar aquí una función, por ejemplo: await handleUserMessage(from, userMessage);
+  // Aquí se procesa el mensaje entrante con flujos de conversación, FAQs, etc.
+  // Si el mensaje coincide con FAQs, se maneja allí; si no, se pasa a handleUserMessage.
+  if (await handleUserMessage(from, userMessage, message.interactive?.button_reply?.id)) {
+    return res.sendStatus(200);
+  }
 
+  // Si no se pudo manejar el mensaje, se muestra la opción de ver FAQs.
+  console.log("❓ Mensaje no reconocido. Mostrando botón de Preguntas Frecuentes.");
+  await sendInteractiveMessage(from, "No estoy seguro de cómo responder a eso. ¿Quieres ver nuestras preguntas frecuentes?", [
+    { id: 'ver_faqs', title: 'Preg. Frecuentes' }
+  ]);
   res.sendStatus(200);
 };
+
+// 5. Endpoint para recibir mensajes desde el CRM y reenviarlos a WhatsApp (POST /enviar_mensaje)
+export const enviarMensajeFromCRM = async (req, res) => {
+  try {
+    const { telefono, mensaje } = req.body;
+    if (!telefono || !mensaje) {
+      return res.status(400).json({ error: 'Faltan datos' });
+    }
+    console.log(`📩 Enviando mensaje desde el CRM a WhatsApp: ${telefono} -> ${mensaje}`);
+    await sendWhatsAppMessage(telefono, mensaje);
+    res.status(200).json({ mensaje: 'Mensaje enviado a WhatsApp correctamente' });
+  } catch (error) {
+    console.error('❌ Error al reenviar mensaje a WhatsApp:', error.message);
+    res.status(500).json({ error: 'Error al enviar mensaje a WhatsApp' });
+  }
+};
+
+// ---------------------------------------------------------------------
+// Funciones para el manejo de flujos de conversación
+// ---------------------------------------------------------------------
+
+// Función para manejar el flujo e interacción con el usuario
+export async function handleUserMessage(from, userMessage, buttonReply) {
+  const messageLower = buttonReply ? buttonReply.toLowerCase() : userMessage.toLowerCase();
+
+  // Inicializar el contexto del usuario si no existe
+  if (!userContext[from]) {
+    userContext[from] = {
+      estado: "inicio",
+      tipoEvento: null,
+      nombre: null,
+      fecha: null,
+      serviciosSeleccionados: [],
+      total: 0
+    };
+  }
+  const context = userContext[from];
+
+  try {
+    // Flujo básico de bienvenida e información
+    if (['info', 'costos', 'hola', 'precio', 'información'].some(word => messageLower.includes(word))) {
+      await sendWhatsAppMessage(from, '¡Hola 👋! Soy tu asistente virtual de *Camicam Photobooth*');
+      await delay(4000);
+      await sendInteractiveMessage(from, 'Por favor selecciona el tipo de evento que tienes 👇', [
+        { id: 'evento_xv', title: '🎉 XV Años' },
+        { id: 'evento_boda', title: '💍 Boda' },
+        { id: 'evento_otro', title: '🎊 Otro Evento' }
+      ]);
+      return true;
+    }
+
+    // Función interna para manejar la selección de eventos
+    async function handleEventSelection(from, eventType, packageName) {
+      const message = 'Conoce los servicios que ofrecemos en *Camicam Photobooth* 🎉';
+      const imageUrl = 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg';
+      const options = {
+        message: 'Puedes ver videos de nuestros servicios. ▶️\n\n' +
+                 'Armar tu paquete con todo lo que necesites!! 😊\n\n' +
+                 `O ver el Paquete que hemos preparado para ${packageName} 👇`,
+        buttons: [
+          { id: 'ver_videos', title: '▶️ Ver videos' },
+          { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
+          { id: `ver_paquete_${eventType}`, title: `🎉 Ver PAQUETE ${packageName.toUpperCase()}` }
+        ]
+      };
+      await sendImageMessage(from, imageUrl, '');
+      await delay(2000);
+      await sendWhatsAppMessage(from, `El paquete que estamos promocionando es el\n${formatMessage(`"${packageName}"`, "bold")}`);
+      await delay(2000);
+      await sendInteractiveMessage(from, options.message, options.buttons);
+      return true;
+    }
+
+    // Manejo de selección de evento según el mensaje recibido
+    if (messageLower === 'evento_xv') {
+      return await handleEventSelection(from, 'xv', 'Mis XV');
+    }
+    if (messageLower === 'evento_boda') {
+      return await handleEventSelection(from, 'wedding', 'Wedding');
+    }
+    if (messageLower === 'evento_otro') {
+      return await handleEventSelection(from, 'party', 'Party');
+    }
+
+    // Manejo de paquetes predefinidos
+    if (messageLower === 'ver_paquete_xv') {
+      return await handlePackage(
+        from,
+        "PAQUETE MIS XV",
+        "http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg",
+        "✅ Cabina de Fotos (3 Horas)\n✅ Lluvia de mariposas",
+        6200,
+        600,
+        "✅ 6 Letras Gigantes (5 horas)\n✅ 2 Chisperos de piso",
+        "http://cami-cam.com/wp-content/uploads/2025/02/Audio-Guest-Book.mp4"
+      );
+    }
+    if (messageLower === 'ver_paquete_wedding') {
+      return await handlePackage(
+        from,
+        "PAQUETE WEDDING",
+        "http://cami-cam.com/wp-content/uploads/2024/09/Paquete-Wedding.jpg",
+        "✅ Cabina de Fotos o Cabina 360 (3 Horas)\n✅ 4 Letras Gigantes: *A & A ❤️* (5 horas)",
+        5100,
+        650,
+        "✅ Carrito de 100 Shots CON alcohol\n✅ 2 Chisperos de piso",
+        "http://cami-cam.com/wp-content/uploads/2025/02/Audio-Guest-Book.mp4"
+      );
+    }
+    if (messageLower === 'ver_paquete_party') {
+      return await handlePackage(
+        from,
+        "PAQUETE PARTY",
+        "http://cami-cam.com/wp-content/uploads/2024/06/PARTY.jpg",
+        "✅ Cabina 360 (3 Horas)\n✅ 4 Letras Gigantes (5 horas)",
+        5100,
+        650,
+        "✅ Carrito de 100 Shots CON alcohol\n✅ 2 Chisperos de piso",
+        "http://cami-cam.com/wp-content/uploads/2025/02/Audio-Guest-Book.mp4"
+      );
+    }
+
+    // Si el usuario quiere reservar el paquete
+    if (messageLower === 'reservar') {
+      await sendWhatsAppMessage(from, '¡De acuerdo!\n\nPara separar solicitamos un anticipo de $500, el resto puede ser el día del evento.\n\n🗓️ Por favor dime tu fecha para revisar disponibilidad (formato: DD/MM/AAAA).');
+      context.estado = "esperando_fecha";
+      return true;
+    }
+
+    // Manejar la fecha ingresada por el usuario
+    if (context.estado === "esperando_fecha") {
+      const fechaUsuario = messageLower.trim();
+      if (!isValidDate(fechaUsuario)) {
+        await sendWhatsAppMessage(from, '⚠️ Formato de fecha incorrecto. Por favor, ingresa la fecha en el formato DD/MM/AAAA.');
+        return true;
+      }
+      if (!checkAvailability(fechaUsuario)) {
+        await sendWhatsAppMessage(from, `Lo siento, la fecha ${fechaUsuario} no está disponible. Por favor, elige otra fecha.`);
+        return true;
+      }
+      context.fecha = fechaUsuario;
+      await sendWhatsAppMessage(from, `✅ ¡Perfecto! La fecha ${fechaUsuario} está disponible.\n\nPara confirmar tu reserva, realiza el anticipo de $500 a la siguiente cuenta:\n\n💳 Banco: XYZ\n📌 CLABE: 123456789012345678\n👤 Titular: Camicam Photobooth`);
+      context.estado = "confirmando_pago";
+      return true;
+    }
+
+    // Si el usuario quiere armar su paquete de forma personalizada
+    if (messageLower === 'armar_paquete') {
+      await sendWhatsAppMessage(from, '🔗 Para armar tu paquete personalizado, visita nuestro cotizador en:\n🌐 www.cami-cam.com/cotizador/');
+      return true;
+    }
+
+    // Si el usuario solicita ver videos
+    if (messageLower === 'ver_videos') {
+      await sendWhatsAppMessage(from, 'Aquí tienes algunos videos de nuestros servicios:');
+      await sendWhatsAppVideo(from, 'http://cami-cam.com/wp-content/uploads/2025/02/Audio-Guest-Book.mp4', 'Audio Guest Book');
+      await sendWhatsAppVideo(from, 'http://cami-cam.com/wp-content/uploads/2025/02/LETRAS-GIGANTES-ILUMINADAS.mp4', 'Letras Gigantes');
+      await sendWhatsAppVideo(from, 'http://cami-cam.com/wp-content/uploads/2025/02/LLUVIA-DE-MARIPOSAS-2.0.mp4', 'Lluvia de Mariposas');
+      return true;
+    }
+
+    // Intentar manejar FAQs si el mensaje coincide
+    if (await handleFAQs(from, userMessage)) {
+      return true;
+    }
+
+    // Si ningún flujo se activa, se muestra un mensaje de sugerencia
+    console.log("❓ Mensaje no reconocido. Mostrando botón de Preguntas Frecuentes.");
+    await sendInteractiveMessage(from, "No estoy seguro de cómo responder a eso. ¿Quieres ver nuestras preguntas frecuentes?", [
+      { id: 'ver_faqs', title: 'Preg. Frecuentes' }
+    ]);
+    return true;
+  } catch (error) {
+    console.error("❌ Error en handleUserMessage:", error.message);
+    await sendWhatsAppMessage(from, "Lo siento, ocurrió un error.");
+    return false;
+  }
+}
+
+// Función para manejar la presentación de un paquete (flujo de ventas)
+export async function handlePackage(from, packageName, imageUrl, includes, price, discount, freeItems, videoUrl) {
+  await sendImageMessage(from, imageUrl, '');
+  await delay(2000);
+  await sendWhatsAppMessage(from, `El paquete que estamos promocionando es el\n${formatMessage(`"${packageName}"`, "bold")}`);
+  await delay(2000);
+  await sendMessageWithTyping(from, `${formatMessage("INCLUYE", "bold")}\n\n${includes}\n\nPor Sólo\n\n${formatMessage(`✨ ${formatPrice(price)} ✨`, "bold")}\n\n${formatMessage("Más flete, dependiendo de dónde sea el evento", "italic")} 📍`, 5000);
+  await sendMessageWithTyping(from, `Y llévate GRATIS la renta de:\n\n${freeItems}`, 9000);
+  await sendMessageWithTyping(from, `${formatMessage("¡¡ PERO ESPERA !! ✋", "bold")}`, 8000);
+  await sendMessageWithTyping(from, `¡Sólo durante éste mes disfruta de un descuento de ${formatPrice(discount)}!`, 5000);
+  await sendMessageWithTyping(from, `Paga únicamente\n\n${formatMessage(`✨ ${formatPrice(price - discount)} ✨`, "bold")}`, 5000);
+  await sendMessageWithTyping(from, `Y ESO NO ES TODO!!\n\n🎁 ${formatMessage("GRATIS", "bold")} el Servicio de:\n\n✅ Audio Guest Book\n\nSerá un recuerdo muy bonito de tu evento 😍`, 7000);
+  await sendWhatsAppVideo(from, videoUrl, '');
+  await delay(18000);
+  await sendMessageWithTyping(from, `¡Contrata TODO por tan sólo!\n\n${formatMessage(`✨ ${formatPrice(price - discount)} ✨`, "bold")}`, 5000);
+  await sendMessageWithTyping(from, `¡SI! ¡Leíste bien!\n\n${includes}\n\n🎁 ${formatMessage("DE REGALO", "bold")}\n${freeItems}\n✅ Un descuento de ${formatPrice(discount)}\n✅ Audio Guest Book\n\nTodo esto por tan sólo 😮\n\n${formatMessage(`✨ ${formatPrice(price - discount)} ✨`, "bold")}\n\n${formatMessage("Más flete, dependiendo de dónde sea tu evento", "italic")} 📍`, 18000);
+  await sendMessageWithTyping(from, `Recuerda que este paquete solo estará vigente durante el mes de Febrero\n\n🗓️ Separa hoy mismo y asegura tu paquete antes de que te ganen la fecha`, 15000);
+  await sendInteractiveMessage(from, '¿Te interesa? 🎊\n\nO prefieres armar tu paquete?\n', [
+    { id: 'reservar', title: 'SI, Me interesa 😍' },
+    { id: 'armar_paquete', title: '🛠 Armar mi paquete' }
+  ]);
+  return true;
+}
+
+// Función para enviar mensajes con indicador de "escribiendo"
+// Esta función reutiliza los servicios de envío y aplica delays y activación/desactivación del indicador
+export async function sendMessageWithTyping(from, message, delayTime) {
+  await sendWhatsAppMessage(from, message);
+  await activateTypingIndicator(from);
+  await delay(delayTime);
+  await deactivateTypingIndicator(from);
+}
