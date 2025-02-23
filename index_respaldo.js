@@ -1,3 +1,4 @@
+
 // Importar dependencias en modo ES Modules
 import dotenv from 'dotenv'; // Para cargar variables de entorno
 import express from 'express';
@@ -113,13 +114,50 @@ app.get('/test-interactive', async (req, res) => {
 
 // 📌 Webhook para manejar mensajes de WhatsApp
 app.post('/webhook', async (req, res) => {
-  console.log('📩 Webhook activado:', JSON.stringify(req.body, null, 2));
+  console.log("📩 Webhook activado:", JSON.stringify(req.body, null, 2));
 
   const message = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
   if (!message) return res.sendStatus(404);
 
   const from = message.from;
   const userMessage = message?.text?.body || '';
+  const plataforma = "WhatsApp"; // O "Messenger", si proviene de allí
+
+  console.log(`📩 Enviando mensaje de ${from} al CRM: ${userMessage}`);
+
+  try {
+    const response = await axios.post('https://camicam-crm-d78af2926170.herokuapp.com/recibir_mensaje', {
+      plataforma: plataforma,
+      remitente: from,
+      mensaje: userMessage
+    });
+    console.log("✅ Respuesta del CRM:", response.data);
+  } catch (error) {
+    console.error("❌ Error al enviar mensaje al CRM:", error.message);
+  }
+
+  // 📌 Endpoint para recibir mensajes desde el CRM y enviarlos a WhatsApp
+app.post('/enviar_mensaje', async (req, res) => {
+  try {
+    const { telefono, mensaje } = req.body;
+
+    if (!telefono || !mensaje) {
+      return res.status(400).json({ error: 'Faltan datos' });
+    }
+
+    console.log(`📩 Enviando mensaje desde el CRM a WhatsApp: ${telefono} -> ${mensaje}`);
+
+    await sendWhatsAppMessage(telefono, mensaje);
+
+    res.status(200).json({ mensaje: 'Mensaje enviado a WhatsApp correctamente' });
+  } catch (error) {
+    console.error('❌ Error al reenviar mensaje a WhatsApp:', error.message);
+    res.status(500).json({ error: 'Error al enviar mensaje a WhatsApp' });
+  }
+});
+
+
+
   const buttonReply = message?.interactive?.button_reply?.id || '';
   const listReply = message?.interactive?.list_reply?.id || '';
   const messageLower = buttonReply ? buttonReply.toLowerCase() : listReply ? listReply.toLowerCase() : userMessage.toLowerCase();
@@ -179,7 +217,24 @@ app.post('/webhook', async (req, res) => {
   res.sendStatus(200);
 });
 
-
+/*
+//Función para enviar datos al CRM
+async function sendToCRM(contactData) {
+  const crmUrl = 'http://127.0.0.1:5000/api/leads';
+  try {
+    console.log('Enviando datos al CRM:', contactData);
+    const response = await axios.post(crmUrl, contactData, {
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    console.log('Datos enviados al CRM:', response.data);
+  } catch (error) {
+    console.error('Error al enviar datos al CRM:', error.message);
+  } finally {
+    await new Promise(resolve => setTimeout(resolve, 500)); // Retardo de 500ms
+  }
+}*/
 
 // 📌 Función para enviar mensajes interactivos con botones
 async function sendInteractiveMessage(to, body, buttons) {
