@@ -203,14 +203,16 @@ export async function handleUserMessage(from, userMessage, buttonReply) {
   await delay(2000);
 
   // 3. Preparar y enviar el mensaje interactivo con las opciones
-  const interactiveText = 'Puedes ver videos de nuestros servicios. ▶️\n\n' +
-                            'Armar tu paquete con todo lo que necesites!! 😊\n\n' +
-                            `O ver el Paquete que hemos preparado para ${packageName} 👇`;
-  const buttons = [
-    { id: 'ver_videos', title: '▶️ Ver videos' },
-    { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
-    { id: `ver_paquete_${eventType}`, title: `🎉 Ver PAQUETE ${packageName.toUpperCase()}` }
-  ];
+  const options = {
+    message:'Puedes ver videos de nuestros servicios. ▶️\n\n' + 
+            'Armar tu paquete con todo lo que necesites!! 😊\n\n' +
+            `O ver el Paquete que hemos preparado para ${packageName} 👇`,
+    buttons: [
+      { id: 'ver_videos', title: '▶️ Ver videos' },
+      { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
+      { id: `ver_paquete_${eventType}`, title: `🎉 Ver PAQUETE ${packageName.toUpperCase()}` }
+    ]
+  };
   await sendInteractiveMessage(from, interactiveText, buttons);
   return true;
 }
