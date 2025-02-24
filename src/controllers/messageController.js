@@ -360,8 +360,14 @@ export async function handlePackage(from, packageName, imageUrl, includes, price
 // Función para enviar mensajes con indicador de "escribiendo"
 // Esta función reutiliza los servicios de envío y aplica delays y activación/desactivación del indicador
 export async function sendMessageWithTyping(from, message, delayTime) {
-  await sendWhatsAppMessage(from, message);
-  await activateTypingIndicator(from);
-  await delay(delayTime);
-  await deactivateTypingIndicator(from);
+  try {
+    await sendWhatsAppMessage(from, message);
+    await activateTypingIndicator(from);
+    await delay(delayTime);
+    await deactivateTypingIndicator(from);
+  } catch (error) {
+    console.error("Error en sendMessageWithTyping:", error.message);
+    throw error; // Propaga el error para que el flujo lo capture
+  }
 }
+
