@@ -157,6 +157,41 @@ export const enviarMensajeFromCRM = async (req, res) => {
 // ---------------------------------------------------------------------
 // Funciones para el manejo de flujos de conversación
 // ---------------------------------------------------------------------
+// Función para manejar la lógica de los paquetes
+async function handlePackage(from, packageName, imageUrl, includes, price, discount, freeItems, videoUrl) {
+  await sendImageMessage(from, imageUrl);
+  await delay(2000);
+
+  await sendMessageWithTyping(from, `El paquete que estamos promocionando es el\n${formatMessage(`"${packageName}"`, "bold")}`, 2000);
+
+  await sendMessageWithTyping(from, `${formatMessage("INCLUYE", "bold")}\n\n${includes}\n\nPor Sólo\n\n${formatMessage(`✨ ${formatPrice(price)} ✨`, "bold")}\n\n${formatMessage("Mas flete, dependiendo dónde sea el evento", "italic")} 📍`, 5000);
+
+  await sendMessageWithTyping(from, `Y llévate GRATIS la renta de:\n\n${freeItems}`, 9000);
+
+  await sendMessageWithTyping(from, `${formatMessage("¡¡ PERO ESPERA !! ✋", "bold")}`, 8000);
+
+  await sendMessageWithTyping(from, `¡Sólo durante éste mes disfruta de un descuento de ${formatPrice(discount)}!`, 5000);
+
+  await sendMessageWithTyping(from, `Paga únicamente\n\n${formatMessage(`✨ ${formatPrice(price - discount)} ✨`, "bold")}`, 5000);
+
+  await sendMessageWithTyping(from, `Y ESO NO ES TODO!!\n\n🎁 ${formatMessage("GRATIS", "bold")} el Servicio de:\n\n✅ Audio Guest Book\n\nSerá un recuerdo muy bonito de tu evento 😍`, 7000);
+
+  await sendWhatsAppVideo(from, videoUrl);
+  await delay(18000);
+
+  await sendMessageWithTyping(from, `¡Contrata TODO por tan sólo!\n\n${formatMessage(`✨ ${formatPrice(price - discount)} ✨`, "bold")}`, 5000);
+
+  await sendMessageWithTyping(from, `¡SI! ¡Leiste bien!\n\n${includes}\n\n🎁 ${formatMessage("DE REGALO", "bold")}\n${freeItems}\n✅ Un descuento de ${formatPrice(discount)}\n✅ Audio Guest Book\n\nTodo esto por tan sólo 😮\n\n${formatMessage(`✨ ${formatPrice(price - discount)} ✨`, "bold")}\n\n${formatMessage("Mas flete, dependiendo dónde sea tu evento", "italic")} 📍`, 18000);
+
+  await sendMessageWithTyping(from, `Recuerda que este paquete solo estará vigente durante el mes de Febrero\n\n🗓️ Separa hoy mismo y asegura tu paquete antes de que te ganen la fecha`, 15000);
+
+  await sendInteractiveMessage(from, 'Te interesa? 🎊\n\nO prefieres armar tu paquete?\n', [
+    { id: 'reservar', title: 'SI, Me interesa 😍' },
+    { id: 'armar_paquete', title: '🛠 Armar mi paquete' }
+  ]);
+
+  return true;
+}
 
 // Función para manejar el flujo e interacción con el usuario
 export async function handleUserMessage(from, userMessage, buttonReply) { 
@@ -189,30 +224,23 @@ export async function handleUserMessage(from, userMessage, buttonReply) {
     }
 
     // Función interna para manejar la selección de eventos
-    // Función para manejar la selección de eventos (por ejemplo, "XV Años")
-async function handleEventSelection(from, eventType, packageName) {
-  // 1. Enviar mensaje de bienvenida
-  await sendWhatsAppMessage(from, 'Conoce los servicios que ofrecemos en *Camicam Photobooth* 🎉');
-  await delay(2000);
-
-  // 2. Enviar imagen de servicios
-  const imageUrl = 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg';
-  await sendImageMessage(from, imageUrl, '');
-  await delay(2000);
-
-  // 3. Preparar y enviar mensaje interactivo con las opciones
-  const interactiveText = 'Puedes ver videos de nuestros servicios. ▶️\n\n' +
-                            'Armar tu paquete con todo lo que necesites!! 😊\n\n' +
-                            `O ver el Paquete que hemos preparado para ${packageName} 👇`;
-  const buttons = [
-    { id: 'ver_videos', title: '▶️ Ver videos' },
-    { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
-    { id: `ver_paquete_${eventType}`, title: `🎉 Ver PAQUETE ${packageName.toUpperCase()}` }
-  ];
-  await sendInteractiveMessage(from, interactiveText, buttons);
-  return true;
-}
-
+    async function handleEventSelection(from, eventType, packageName) {
+      const message = 'Conoce los servicios que ofrecemos en *Camicam Photobooth* 🎉';
+      const imageUrl = 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg';
+      const options = {
+        message:'Puedes ver videos de nuestros servicios. ▶️\n\n' + 
+                'Armar tu paquete con todo lo que necesites!! 😊\n\n' +
+                `O ver el Paquete que hemos preparado para ${packageName} 👇`,
+        buttons: [
+          { id: 'ver_videos', title: '▶️ Ver videos' },
+          { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
+          { id: `ver_paquete_${eventType}`, title: `🎉 Ver PAQUETE ${packageName.toUpperCase()}` }
+        ]
+      };
+    
+      await sendInteractiveMessageWithImage(from, message, imageUrl, options);
+      return true;
+    }
 
     // Manejo de selección de evento según el mensaje recibido
     if (messageLower === 'evento_xv') {
