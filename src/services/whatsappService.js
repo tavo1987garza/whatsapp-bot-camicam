@@ -24,19 +24,20 @@ async function sendWhatsAppRequest(data) {
 
 // Función para enviar un mensaje de texto
 export const sendWhatsAppMessage = async (to, message) => {
-  if (!message || message.trim() === "") {
-    console.error("No se envió mensaje porque el cuerpo está vacío");
-    return; // O lanza un error controlado
-  }
   const data = {
     messaging_product: 'whatsapp',
-    to,
+    to: to,
     type: 'text',
     text: { body: message }
-  };
-  return sendWhatsAppRequest(data);
 };
 
+await axios.post(url, data, {
+    headers: {
+        Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json'
+    }
+});
+};
 
 // Función para enviar un mensaje interactivo (botones)
 export const sendInteractiveMessage = async (to, body, buttons) => {
