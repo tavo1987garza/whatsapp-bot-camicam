@@ -24,6 +24,10 @@ async function sendWhatsAppRequest(data) {
 
 // Función para enviar un mensaje de texto
 export const sendWhatsAppMessage = async (to, message) => {
+  if (!message || message.trim() === "") {
+    console.error("No se envió mensaje porque el cuerpo está vacío");
+    return; // O lanza un error controlado
+  }
   const data = {
     messaging_product: 'whatsapp',
     to,
@@ -32,6 +36,7 @@ export const sendWhatsAppMessage = async (to, message) => {
   };
   return sendWhatsAppRequest(data);
 };
+
 
 // Función para enviar un mensaje interactivo (botones)
 export const sendInteractiveMessage = async (to, body, buttons) => {
