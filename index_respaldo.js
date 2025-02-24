@@ -78,7 +78,7 @@ app.get('/webhook', (req, res) => {
     console.error('Error en la verificación del webhook');
     res.sendStatus(403);
   }
-});
+}); 
 
 // Ruta para la raíz
 app.get('/', async (req, res) => {

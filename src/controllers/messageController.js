@@ -159,7 +159,7 @@ export const enviarMensajeFromCRM = async (req, res) => {
 // ---------------------------------------------------------------------
 
 // Función para manejar el flujo e interacción con el usuario
-export async function handleUserMessage(from, userMessage, buttonReply) {
+export async function handleUserMessage(from, userMessage, buttonReply) { 
   const messageLower = buttonReply ? buttonReply.toLowerCase() : userMessage.toLowerCase();
 
   // Inicializar el contexto del usuario si no existe
@@ -193,20 +193,17 @@ export async function handleUserMessage(from, userMessage, buttonReply) {
       const message = 'Conoce los servicios que ofrecemos en *Camicam Photobooth* 🎉';
       const imageUrl = 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg';
       const options = {
-        message: 'Puedes ver videos de nuestros servicios. ▶️\n\n' +
-                 'Armar tu paquete con todo lo que necesites!! 😊\n\n' +
-                 `O ver el Paquete que hemos preparado para ${packageName} 👇`,
+        message:'Puedes ver videos de nuestros servicios. ▶️\n\n' + 
+                'Armar tu paquete con todo lo que necesites!! 😊\n\n' +
+                `O ver el Paquete que hemos preparado para ${packageName} 👇`,
         buttons: [
           { id: 'ver_videos', title: '▶️ Ver videos' },
           { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
           { id: `ver_paquete_${eventType}`, title: `🎉 Ver PAQUETE ${packageName.toUpperCase()}` }
         ]
       };
-      await sendImageMessage(from, imageUrl, '');
-      await delay(2000);
-      await sendWhatsAppMessage(from, `El paquete que estamos promocionando es el\n${formatMessage(`"${packageName}"`, "bold")}`);
-      await delay(2000);
-      await sendInteractiveMessage(from, options.message, options.buttons);
+    
+      await sendInteractiveMessageWithImage(from, message, imageUrl, options);
       return true;
     }
 
