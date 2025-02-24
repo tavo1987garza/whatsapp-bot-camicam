@@ -146,16 +146,9 @@ import { delay } from '../utils/helpers.js';
  * @param {string} imageUrl - URL de la imagen.
  * @param {object} options - Objeto con la propiedad "message" (texto interactivo) y "buttons" (opciones).
  */
-export async function sendInteractiveMessageWithImage(to, text, imageUrl, options) {
-  try {
-    // Enviar imagen primero
-    await sendImageMessage(to, imageUrl, '');
-    await delay(2000); // Pausa para que la imagen se muestre
-
-    // Luego enviar el mensaje interactivo con las opciones
-    await sendInteractiveMessage(to, options.message, options.buttons);
-  } catch (error) {
-    console.error("Error en sendInteractiveMessageWithImage:", error.response?.data || error.message);
-    throw error;
-  }
+export async function sendInteractiveMessageWithImage(from, message, imageUrl, options) {
+  await sendMessageWithTyping(from, message, 3000);
+  await sendImageMessage(from, imageUrl);
+  await delay(10000);
+  await sendInteractiveMessage(from, options.message, options.buttons);
 }
