@@ -26,7 +26,7 @@ async function sendWhatsAppRequest(data) {
 export const sendWhatsAppMessage = async (to, message) => {
   const data = {
     messaging_product: 'whatsapp',
-    to: to,
+    to,
     type: 'text',
     text: { body: message }
   };
