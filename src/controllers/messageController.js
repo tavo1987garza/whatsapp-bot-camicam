@@ -189,23 +189,30 @@ export async function handleUserMessage(from, userMessage, buttonReply) {
     }
 
     // Función interna para manejar la selección de eventos
-    async function handleEventSelection(from, eventType, packageName) {
-      const message = 'Conoce los servicios que ofrecemos en *Camicam Photobooth* 🎉';
-      const imageUrl = 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg';
-      const options = {
-        message:'Puedes ver videos de nuestros servicios. ▶️\n\n' + 
-                'Armar tu paquete con todo lo que necesites!! 😊\n\n' +
-                `O ver el Paquete que hemos preparado para ${packageName} 👇`,
-        buttons: [
-          { id: 'ver_videos', title: '▶️ Ver videos' },
-          { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
-          { id: `ver_paquete_${eventType}`, title: `🎉 Ver PAQUETE ${packageName.toUpperCase()}` }
-        ]
-      };
-    
-      await sendInteractiveMessageWithImage(from, message, imageUrl, options);
-      return true;
-    }
+    // Función para manejar la selección de eventos (por ejemplo, "XV Años")
+async function handleEventSelection(from, eventType, packageName) {
+  // 1. Enviar mensaje de bienvenida
+  await sendWhatsAppMessage(from, 'Conoce los servicios que ofrecemos en *Camicam Photobooth* 🎉');
+  await delay(2000);
+
+  // 2. Enviar imagen de servicios
+  const imageUrl = 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg';
+  await sendImageMessage(from, imageUrl, '');
+  await delay(2000);
+
+  // 3. Preparar y enviar mensaje interactivo con las opciones
+  const interactiveText = 'Puedes ver videos de nuestros servicios. ▶️\n\n' +
+                            'Armar tu paquete con todo lo que necesites!! 😊\n\n' +
+                            `O ver el Paquete que hemos preparado para ${packageName} 👇`;
+  const buttons = [
+    { id: 'ver_videos', title: '▶️ Ver videos' },
+    { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
+    { id: `ver_paquete_${eventType}`, title: `🎉 Ver PAQUETE ${packageName.toUpperCase()}` }
+  ];
+  await sendInteractiveMessage(from, interactiveText, buttons);
+  return true;
+}
+
 
     // Manejo de selección de evento según el mensaje recibido
     if (messageLower === 'evento_xv') {
