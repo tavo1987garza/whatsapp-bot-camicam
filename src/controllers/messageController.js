@@ -322,40 +322,143 @@ export async function handleUserMessage(from, userMessage, buttonReply) {
 }
 
 // Función para manejar la presentación de un paquete (flujo de ventas)
+// Función para manejar la lógica de los paquetes
 export async function handlePackage(from, packageName, imageUrl, includes, price, discount, freeItems, videoUrl) {
-  await sendImageMessage(from, imageUrl);
-  await delay(2000);
+  // Validación básica de parámetros
+  if (!packageName || !imageUrl || !includes || !price || !discount || !freeItems || !videoUrl) {
+    console.error("handlePackage: Faltan parámetros obligatorios");
+    throw new Error("Parámetros incompletos en handlePackage");
+  }
 
-  await sendMessageWithTyping(from, `El paquete que estamos promocionando es el\n${formatMessage(`"${packageName}"`, "bold")}`, 2000);
+  // 1. Enviar imagen del paquete
+  try {
+    await sendImageMessage(from, imageUrl, '');
+    await delay(2000);
+  } catch (error) {
+    console.error("Error al enviar la imagen del paquete:", error.message);
+    throw error;
+  }
 
-  await sendMessageWithTyping(from, `${formatMessage("INCLUYE", "bold")}\n\n${includes}\n\nPor Sólo\n\n${formatMessage(`✨ ${formatPrice(price)} ✨`, "bold")}\n\n${formatMessage("Mas flete, dependiendo dónde sea el evento", "italic")} 📍`, 5000);
+  // 2. Enviar mensaje de promoción del paquete
+  const msgPackage = `El paquete que estamos promocionando es el\n${formatMessage(`"${packageName}"`, "bold")}`;
+  if (!msgPackage.trim()) {
+    console.error("Mensaje de paquete vacío");
+    throw new Error("Mensaje de paquete vacío");
+  }
+  try {
+    await sendMessageWithTyping(from, msgPackage, 2000);
+  } catch (error) {
+    console.error("Error al enviar mensaje del paquete:", error.message);
+    throw error;
+  }
 
-  await sendMessageWithTyping(from, `Y llévate GRATIS la renta de:\n\n${freeItems}`, 9000);
+  // 3. Enviar mensaje con los detalles e inclusión del paquete
+  const msgIncludes = `${formatMessage("INCLUYE", "bold")}\n\n${includes}\n\nPor Sólo\n\n${formatMessage(`✨ ${formatPrice(price)} ✨`, "bold")}\n\n${formatMessage("Más flete, dependiendo de dónde sea el evento", "italic")} 📍`;
+  if (!msgIncludes.trim()) {
+    console.error("Mensaje de INCLUYE vacío");
+    throw new Error("Mensaje de INCLUYE vacío");
+  }
+  try {
+    await sendMessageWithTyping(from, msgIncludes, 5000);
+  } catch (error) {
+    console.error("Error al enviar mensaje INCLUYE:", error.message);
+    throw error;
+  }
 
-  await sendMessageWithTyping(from, `${formatMessage("¡¡ PERO ESPERA !! ✋", "bold")}`, 8000);
+  // 4. Enviar mensaje sobre los beneficios adicionales
+  const msgFree = `Y llévate GRATIS la renta de:\n\n${freeItems}`;
+  try {
+    await sendMessageWithTyping(from, msgFree, 9000);
+  } catch (error) {
+    console.error("Error al enviar mensaje de gratis:", error.message);
+    throw error;
+  }
 
-  await sendMessageWithTyping(from, `¡Sólo durante éste mes disfruta de un descuento de ${formatPrice(discount)}!`, 5000);
+  // 5. Enviar mensaje de "¡Pero espera!"
+  try {
+    await sendMessageWithTyping(from, `${formatMessage("¡¡ PERO ESPERA !! ✋", "bold")}`, 8000);
+  } catch (error) {
+    console.error("Error al enviar mensaje de 'Pero espera':", error.message);
+    throw error;
+  }
 
-  await sendMessageWithTyping(from, `Paga únicamente\n\n${formatMessage(`✨ ${formatPrice(price - discount)} ✨`, "bold")}`, 5000);
+  // 6. Enviar mensaje sobre el descuento del mes
+  const msgDiscount = `¡Sólo durante éste mes disfruta de un descuento de ${formatPrice(discount)}!`;
+  try {
+    await sendMessageWithTyping(from, msgDiscount, 5000);
+  } catch (error) {
+    console.error("Error al enviar mensaje de descuento:", error.message);
+    throw error;
+  }
 
-  await sendMessageWithTyping(from, `Y ESO NO ES TODO!!\n\n🎁 ${formatMessage("GRATIS", "bold")} el Servicio de:\n\n✅ Audio Guest Book\n\nSerá un recuerdo muy bonito de tu evento 😍`, 7000);
+  // 7. Enviar mensaje sobre el pago final
+  const msgPayment = `Paga únicamente\n\n${formatMessage(`✨ ${formatPrice(price - discount)} ✨`, "bold")}`;
+  try {
+    await sendMessageWithTyping(from, msgPayment, 5000);
+  } catch (error) {
+    console.error("Error al enviar mensaje de pago:", error.message);
+    throw error;
+  }
 
-  await sendWhatsAppVideo(from, videoUrl);
-  await delay(18000);
+  // 8. Enviar mensaje extra con beneficios
+  const msgExtra = `Y ESO NO ES TODO!!\n\n🎁 ${formatMessage("GRATIS", "bold")} el Servicio de:\n\n✅ Audio Guest Book\n\nSerá un recuerdo muy bonito de tu evento 😍`;
+  try {
+    await sendMessageWithTyping(from, msgExtra, 7000);
+  } catch (error) {
+    console.error("Error al enviar mensaje extra:", error.message);
+    throw error;
+  }
 
-  await sendMessageWithTyping(from, `¡Contrata TODO por tan sólo!\n\n${formatMessage(`✨ ${formatPrice(price - discount)} ✨`, "bold")}`, 5000);
+  // 9. Enviar video promocional
+  try {
+    await sendWhatsAppVideo(from, videoUrl, '');
+    await delay(18000);
+  } catch (error) {
+    console.error("Error al enviar video:", error.message);
+    throw error;
+  }
 
-  await sendMessageWithTyping(from, `¡SI! ¡Leiste bien!\n\n${includes}\n\n🎁 ${formatMessage("DE REGALO", "bold")}\n${freeItems}\n✅ Un descuento de ${formatPrice(discount)}\n✅ Audio Guest Book\n\nTodo esto por tan sólo 😮\n\n${formatMessage(`✨ ${formatPrice(price - discount)} ✨`, "bold")}\n\n${formatMessage("Mas flete, dependiendo dónde sea tu evento", "italic")} 📍`, 18000);
+  // 10. Enviar mensaje de contratación
+  const msgContrata = `¡Contrata TODO por tan sólo!\n\n${formatMessage(`✨ ${formatPrice(price - discount)} ✨`, "bold")}`;
+  try {
+    await sendMessageWithTyping(from, msgContrata, 5000);
+  } catch (error) {
+    console.error("Error al enviar mensaje de contratación:", error.message);
+    throw error;
+  }
 
-  await sendMessageWithTyping(from, `Recuerda que este paquete solo estará vigente durante el mes de Febrero\n\n🗓️ Separa hoy mismo y asegura tu paquete antes de que te ganen la fecha`, 15000);
+  // 11. Enviar mensaje final detallado
+  const msgFinal = `¡SI! ¡Leíste bien!\n\n${includes}\n\n🎁 ${formatMessage("DE REGALO", "bold")}\n${freeItems}\n✅ Un descuento de ${formatPrice(discount)}\n✅ Audio Guest Book\n\nTodo esto por tan sólo 😮\n\n${formatMessage(`✨ ${formatPrice(price - discount)} ✨`, "bold")}\n\n${formatMessage("Más flete, dependiendo de dónde sea tu evento", "italic")} 📍`;
+  try {
+    await sendMessageWithTyping(from, msgFinal, 18000);
+  } catch (error) {
+    console.error("Error al enviar mensaje final:", error.message);
+    throw error;
+  }
 
-  await sendInteractiveMessage(from, 'Te interesa? 🎊\n\nO prefieres armar tu paquete?\n', [
-    { id: 'reservar', title: 'SI, Me interesa 😍' },
-    { id: 'armar_paquete', title: '🛠 Armar mi paquete' }
-  ]);
+  // 12. Enviar recordatorio de vigencia del paquete
+  const msgRecuerda = `Recuerda que este paquete solo estará vigente durante el mes de Febrero\n\n🗓️ Separa hoy mismo y asegura tu paquete antes de que te ganen la fecha`;
+  try {
+    await sendMessageWithTyping(from, msgRecuerda, 15000);
+  } catch (error) {
+    console.error("Error al enviar recordatorio:", error.message);
+    throw error;
+  }
+
+  // 13. Enviar mensaje interactivo final con opciones
+  try {
+    await sendInteractiveMessage(from, '¿Te interesa? 🎊\n\nO prefieres armar tu paquete?\n', [
+      { id: 'reservar', title: 'SI, Me interesa 😍' },
+      { id: 'armar_paquete', title: '🛠 Armar mi paquete' }
+    ]);
+  } catch (error) {
+    console.error("Error al enviar mensaje interactivo final:", error.message);
+    throw error;
+  }
 
   return true;
 }
+
 
 // Función para enviar mensajes con indicador de "escribiendo"
 // Esta función reutiliza los servicios de envío y aplica delays y activación/desactivación del indicador
