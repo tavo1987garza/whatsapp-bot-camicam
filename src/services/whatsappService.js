@@ -29,14 +29,8 @@ export const sendWhatsAppMessage = async (to, message) => {
     to: to,
     type: 'text',
     text: { body: message }
-};
-
-await axios.post(url, data, {
-    headers: {
-        Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-        'Content-Type': 'application/json'
-    }
-});
+  };
+  return sendWhatsAppRequest(data);
 };
 
 // Función para enviar un mensaje interactivo (botones)
