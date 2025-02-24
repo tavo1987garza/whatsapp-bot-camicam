@@ -6,11 +6,11 @@ import {
   sendWhatsAppList, 
   sendWhatsAppVideo, 
   sendImageMessage, 
-  activateTypingIndicator, 
+  activateTypingIndicator,
+  sendInteractiveMessageWithImage, 
   deactivateTypingIndicator 
 } from '../services/whatsappService.js';
 import { delay, isValidDate, checkAvailability, formatPrice, formatMessage } from '../utils/helpers.js';
-
 // Objeto para almacenar el contexto de cada usuario
 export const userContext = {};
 
@@ -204,16 +204,16 @@ export async function handleUserMessage(from, userMessage, buttonReply) {
 
   // 3. Preparar y enviar el mensaje interactivo con las opciones
   const options = {
-    message:'Puedes ver videos de nuestros servicios. ▶️\n\n' + 
-            'Armar tu paquete con todo lo que necesites!! 😊\n\n' +
-            `O ver el Paquete que hemos preparado para ${packageName} 👇`,
+    message: 'Puedes ver videos de nuestros servicios. ▶️\n\n' + 
+             'Armar tu paquete con todo lo que necesites!! 😊\n\n' +
+             `O ver el Paquete que hemos preparado para ${packageName} 👇`,
     buttons: [
       { id: 'ver_videos', title: '▶️ Ver videos' },
       { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
       { id: `ver_paquete_${eventType}`, title: `🎉 Ver PAQUETE ${packageName.toUpperCase()}` }
     ]
   };
-  await sendInteractiveMessage(from, interactiveText, buttons);
+  await sendInteractiveMessageWithImage(from, message, imageUrl, options);
   return true;
 }
 
