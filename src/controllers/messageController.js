@@ -191,31 +191,25 @@ export async function handleUserMessage(from, userMessage, buttonReply) {
 
     // Función interna para manejar la selección de eventos
    
-  async function handleEventSelection(from, eventType, packageName) {
-  // 1. Definir y enviar el mensaje de bienvenida
-  const message = 'Conoce los servicios que ofrecemos en *Camicam Photobooth* 🎉';
-  await sendWhatsAppMessage(from, message);
-  await delay(2000);
-
-  // 2. Enviar la imagen de servicios
-  const imageUrl = 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg';
-  await sendImageMessage(from, imageUrl, '');
-  await delay(2000);
-
-  // 3. Preparar y enviar el mensaje interactivo con las opciones
-  const options = {
-    message: 'Puedes ver videos de nuestros servicios. ▶️\n\n' + 
-             'Armar tu paquete con todo lo que necesites!! 😊\n\n' +
-             `O ver el Paquete que hemos preparado para ${packageName} 👇`,
-    buttons: [
-      { id: 'ver_videos', title: '▶️ Ver videos' },
-      { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
-      { id: `ver_paquete_${eventType}`, title: `🎉 Ver PAQUETE ${packageName.toUpperCase()}` }
-    ]
-  };
-  await sendInteractiveMessageWithImage(from, message, imageUrl, options);
-  return true;
-}
+    async function handleEventSelection(from, eventType, packageName) {
+      const message = 'Conoce los servicios que ofrecemos en *Camicam Photobooth* 🎉';
+      const imageUrl = 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg';
+    
+      const options = {
+        message: 'Puedes ver videos de nuestros servicios. ▶️\n\n' +
+                 'Armar tu paquete con todo lo que necesites!! 😊\n\n' +
+                 `O ver el Paquete que hemos preparado para ${packageName} 👇`,
+        buttons: [
+          { id: 'ver_videos', title: '▶️ Ver videos' },
+          { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
+          { id: `ver_paquete_${eventType}`, title: `🎉 Ver PAQUETE ${packageName.toUpperCase()}` }
+        ]
+      };
+    
+      // Llamar a la función corregida que envía el mensaje en el orden correcto
+      return await sendInteractiveMessageWithImage(from, message, imageUrl, options);
+    }
+    
 
     // Manejo de selección de evento según el mensaje recibido
     if (messageLower === 'evento_xv') {

@@ -2,7 +2,7 @@
 
 // Función para crear un retraso
 export const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
+import { delay } from '../utils/helpers.js';
 // Función para validar el formato de la fecha (DD/MM/AAAA)
 export function isValidDate(dateString) {
   const regex = /^\d{2}\/\d{2}\/\d{4}$/;

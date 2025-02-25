@@ -136,19 +136,18 @@ export const deactivateTypingIndicator = async (to) => {
 // Agrega esta función en src/services/whatsappService.js
 
 import { sendImageMessage, sendInteractiveMessage } from './whatsappService.js';
-import { delay } from '../utils/helpers.js';
 
-/**
- * Envía un mensaje interactivo con imagen.
- * Primero se envía la imagen y, luego, el mensaje interactivo.
- * @param {string} to - Número de destino.
- * @param {string} text - Mensaje de bienvenida (no se utiliza directamente en el envío, pero se mantiene para compatibilidad).
- * @param {string} imageUrl - URL de la imagen.
- * @param {object} options - Objeto con la propiedad "message" (texto interactivo) y "buttons" (opciones).
- */
+
+
 export async function sendInteractiveMessageWithImage(from, message, imageUrl, options) {
-  await sendMessageWithTyping(from, message, 3000);
-  await sendImageMessage(from, imageUrl);
-  await delay(10000);
+  // 1️⃣ Enviar primer mensaje
+  await sendWhatsAppMessage(from, message);
+  await delay(2000); // Espera 2 segundos
+
+  // 2️⃣ Enviar imagen
+  await sendImageMessage(from, imageUrl, '');
+  await delay(2000); // Espera 2 segundos más
+
+  // 3️⃣ Enviar menú interactivo
   await sendInteractiveMessage(from, options.message, options.buttons);
-} 
+}
