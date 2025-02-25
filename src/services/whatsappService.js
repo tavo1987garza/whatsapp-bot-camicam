@@ -144,3 +144,4 @@ export async function sendInteractiveMessageWithImage(from, message, imageUrl, o
   // 3️⃣ Enviar menú interactivo
   await sendInteractiveMessage(from, options.message, options.buttons);
 }
+

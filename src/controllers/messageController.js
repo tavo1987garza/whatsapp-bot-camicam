@@ -10,7 +10,7 @@ import {
   sendInteractiveMessageWithImage, 
   deactivateTypingIndicator 
 } from '../services/whatsappService.js';
-import { delay, isValidDate, checkAvailability, formatPrice, formatMessage } from '../utils/helpers.js';
+
 // Objeto para almacenar el contexto de cada usuario
 export const userContext = {};
 
@@ -206,9 +206,11 @@ export async function handleUserMessage(from, userMessage, buttonReply) {
         ]
       };
     
-      // Llamar a la función corregida que envía el mensaje en el orden correcto
+      console.log(`📩 Enviando opciones para el evento ${packageName}...`);
+    
       return await sendInteractiveMessageWithImage(from, message, imageUrl, options);
     }
+    
     
 
     // Manejo de selección de evento según el mensaje recibido

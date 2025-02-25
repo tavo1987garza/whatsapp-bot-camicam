@@ -1,9 +1,9 @@
 // src/utils/helpers.js Agrupa funciones utilitarias y de validación.
 
-// Función para crear un retraso
+// ✅ Función para crear un retraso
 export const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-import { delay } from '../utils/helpers.js';
-// Función para validar el formato de la fecha (DD/MM/AAAA)
+
+// ✅ Función para validar el formato de la fecha (DD/MM/AAAA)
 export function isValidDate(dateString) {
   const regex = /^\d{2}\/\d{2}\/\d{4}$/;
   if (!regex.test(dateString)) return false;
@@ -16,22 +16,20 @@ export function isValidDate(dateString) {
   ); 
 }
 
-// Función para verificar disponibilidad (simulada)
+// ✅ Función para verificar disponibilidad (simulada)
 export function checkAvailability(dateString) {
   const occupiedDates = ['15/02/2024', '20/02/2024'];
   return !occupiedDates.includes(dateString);
 }
 
-// Función para formatear precios (por ejemplo, $5,600)
+// ✅ Función para formatear precios (por ejemplo, $5,600)
 export function formatPrice(amount) {
   return `$${amount.toLocaleString('en-US')}`;
 }
 
-// Función para aplicar formato a un mensaje (cursiva, negrita, etc.)
+// ✅ Función para aplicar formato a un mensaje (cursiva, negrita, etc.)
 export function formatMessage(text, style = "normal") {
   if (style === "italic") return `_${text}_`;
   if (style === "bold") return `*${text}*`;
   return text;
 }
-
-
