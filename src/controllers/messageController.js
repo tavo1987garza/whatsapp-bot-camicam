@@ -114,8 +114,8 @@ export const processWebhook = async (req, res) => {
 
   // Ejemplo: reenviar el mensaje al CRM (verifica que el endpoint CRM esté configurado correctamente)
   try {
-    const response = await axios.post(process.env.CRM_ENDPOINT, {
-      plataforma,
+    const response = await axios.post('https://camicam-crm-d78af2926170.herokuapp.com/recibir_mensaje', {
+      plataforma: plataforma,
       remitente: from,
       mensaje: userMessage
     });
