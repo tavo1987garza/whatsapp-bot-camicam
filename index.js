@@ -20,5 +20,5 @@ app.listen(PORT, () => {
   console.log(`Servidor funcionando en http://localhost:${PORT}`);
 }).on('error', (err) => {
   console.error('Error al iniciar el servidor:', err);
-});
+}); 
  

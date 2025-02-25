@@ -13,7 +13,7 @@ export function isValidDate(dateString) {
     date.getFullYear() === year &&
     date.getMonth() + 1 === month &&
     date.getDate() === day
-  );
+  ); 
 }
 
 // Función para verificar disponibilidad (simulada)

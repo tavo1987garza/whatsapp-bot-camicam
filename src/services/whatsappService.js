@@ -151,4 +151,4 @@ export async function sendInteractiveMessageWithImage(from, message, imageUrl, o
   await sendImageMessage(from, imageUrl);
   await delay(10000);
   await sendInteractiveMessage(from, options.message, options.buttons);
-}
+} 
