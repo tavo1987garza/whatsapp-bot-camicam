@@ -132,13 +132,6 @@ export const deactivateTypingIndicator = async (to) => {
   return sendWhatsAppRequest(data);
 };
 
-
-// Agrega esta función en src/services/whatsappService.js
-
-import { sendImageMessage, sendInteractiveMessage } from './whatsappService.js';
-
-
-
 export async function sendInteractiveMessageWithImage(from, message, imageUrl, options) {
   // 1️⃣ Enviar primer mensaje
   await sendWhatsAppMessage(from, message);
