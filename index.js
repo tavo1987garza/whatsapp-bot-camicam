@@ -729,6 +729,8 @@ if (['info', 'costos', 'hola', 'precio', 'información'].some(word => messageLow
 
 ///-------------------------------------------------------------///
 
+
+
 // 📌 Función para enviar mensajes de texto
 async function sendWhatsAppMessage(to, message) {
   const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
@@ -740,13 +742,31 @@ async function sendWhatsAppMessage(to, message) {
       text: { body: message }
   };
 
-  await axios.post(url, data, {
-      headers: {
-          Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-          'Content-Type': 'application/json'
-      }
-  });
+  try {
+      const response = await axios.post(url, data, {
+          headers: {
+              Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+              'Content-Type': 'application/json'
+          }
+      });
+
+      console.log('✅ Mensaje enviado a WhatsApp:', response.data);
+
+      // 🔹 NUEVO: Reportar el mensaje enviado al CRM
+      await axios.post("https://camicam-crm-d78af2926170.herokuapp.com/recibir_mensaje", {
+          plataforma: "WhatsApp",
+          remitente: to,  // Número del usuario que recibe el mensaje
+          mensaje: message,
+          tipo: "enviado" // Indicar que este mensaje es "enviado"
+      });
+
+      console.log("✅ Mensaje reportado al CRM correctamente");
+
+  } catch (error) {
+      console.error('❌ Error al enviar mensaje:', error.response?.data || error.message);
+  }
 }
+
 
 
 // Iniciar el servidor
