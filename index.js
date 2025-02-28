@@ -755,7 +755,7 @@ async function sendWhatsAppMessage(to, message) {
       // 🔹 NUEVO: Reportar el mensaje enviado al CRM
       await axios.post("https://camicam-crm-d78af2926170.herokuapp.com/recibir_mensaje", {
           plataforma: "WhatsApp",
-          remitente: to,  // Número del usuario que recibe el mensaje
+          remitente: "CAMIBOT",  // Número del usuario que recibe el mensaje
           mensaje: message,
           tipo: "enviado" // Indicar que este mensaje es "enviado"
       });
