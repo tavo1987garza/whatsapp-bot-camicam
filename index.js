@@ -751,7 +751,7 @@ async function sendWhatsAppMessage(to, message) {
       console.log('✅ Mensaje enviado a WhatsApp:', response.data);
 
       // 🔹 NUEVO: Reportar el mensaje enviado al CRM
-      await axios.post("https://camicam-crm-d78af2926170.herokuapp.com/recibir_mensaje", {
+      await axios.post("https://camicam-crm-d78af2926170.herokuapp.com/enviar_mensaje", {
           plataforma: "WhatsApp",
           remitente: to,  // Número del usuario que recibe el mensaje
           mensaje: message,
