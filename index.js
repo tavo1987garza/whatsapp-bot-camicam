@@ -729,8 +729,6 @@ if (['info', 'costos', 'hola', 'precio', 'información'].some(word => messageLow
 
 ///-------------------------------------------------------------///
 
-
-
 // 📌 Función para enviar mensajes de texto
 async function sendWhatsAppMessage(to, message) {
   const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
@@ -755,7 +753,7 @@ async function sendWhatsAppMessage(to, message) {
       // 🔹 NUEVO: Reportar el mensaje enviado al CRM
       await axios.post("https://camicam-crm-d78af2926170.herokuapp.com/recibir_mensaje", {
           plataforma: "WhatsApp",
-          remitente: "CAMIBOT",  // Número del usuario que recibe el mensaje
+          remitente: to,  // Número del usuario que recibe el mensaje
           mensaje: message,
           tipo: "enviado" // Indicar que este mensaje es "enviado"
       });
@@ -765,7 +763,7 @@ async function sendWhatsAppMessage(to, message) {
   } catch (error) {
       console.error('❌ Error al enviar mensaje:', error.response?.data || error.message);
   }
-}  
+}
 
 
 
