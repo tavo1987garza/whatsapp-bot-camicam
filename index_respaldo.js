@@ -1,4 +1,5 @@
 
+
 // Importar dependencias en modo ES Modules
 import dotenv from 'dotenv'; // Para cargar variables de entorno
 import express from 'express';
