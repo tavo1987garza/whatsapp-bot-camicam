@@ -730,40 +730,72 @@ if (['info', 'costos', 'hola', 'precio', 'información'].some(word => messageLow
 ///-------------------------------------------------------------///
 
 // 📌 Función para enviar mensajes de texto
+
 async function sendWhatsAppMessage(to, message) {
-  const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+    // ✅ Validación de credenciales antes de ejecutar
+    if (!process.env.WHATSAPP_PHONE_NUMBER_ID || !process.env.WHATSAPP_ACCESS_TOKEN) {
+        console.error("❌ ERROR: Credenciales de WhatsApp no configuradas correctamente.");
+        return;
+    }
 
-  const data = {
-      messaging_product: 'whatsapp',
-      to: to,
-      type: 'text',
-      text: { body: message }
-  };
+    // ✅ Validación de parámetros antes de continuar
+    if (!to || !message) {
+        console.error("❌ ERROR: El número de destino y el mensaje son obligatorios.");
+        return;
+    }
 
-  try {
-      const response = await axios.post(url, data, {
-          headers: {
-              Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-              'Content-Type': 'application/json'
-          }
-      });
+    const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
 
-      console.log('✅ Mensaje enviado a WhatsApp:', response.data);
+    const data = {
+        messaging_product: 'whatsapp',
+        to: to,
+        type: 'text',
+        text: { body: message }
+    };
 
-      // 🔹 NUEVO: Reportar el mensaje enviado al CRM
-      await axios.post("https://camicam-crm-d78af2926170.herokuapp.com/recibir_mensaje", {
-          plataforma: "WhatsApp",
-          remitente: to,  // Número del usuario que recibe el mensaje
-          mensaje: message,
-          tipo: "enviado" // Indicar que este mensaje es "enviado"
-      });
+    try {
+        // ✅ Enviar mensaje a WhatsApp
+        const response = await axios.post(url, data, {
+            headers: {
+                Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+                'Content-Type': 'application/json'
+            },
+            timeout: 5000  // ⏳ Agregar un timeout de 5 segundos
+        });
 
-      console.log("✅ Mensaje reportado al CRM correctamente");
+        console.log('✅ Mensaje enviado a WhatsApp:', response.data);
 
-  } catch (error) {
-      console.error('❌ Error al enviar mensaje:', error.response?.data || error.message);
-  }
+        // ✅ Reportar mensaje al CRM en paralelo
+        const crmUrl = "https://camicam-crm-d78af2926170.herokuapp.com/recibir_mensaje";
+        const crmData = {
+            plataforma: "WhatsApp",
+            remitente: to,
+            mensaje: message,
+            tipo: "enviado"
+        };
+
+        const [crmResponse] = await Promise.allSettled([
+            axios.post(crmUrl, crmData, { timeout: 5000 })
+        ]);
+
+        if (crmResponse.status === "fulfilled") {
+            console.log("✅ Mensaje reportado al CRM correctamente");
+        } else {
+            console.error("❌ Error al reportar al CRM:", crmResponse.reason.response?.data || crmResponse.reason.message);
+        }
+
+    } catch (error) {
+        if (error.response) {
+            console.error('❌ Error en la respuesta de WhatsApp:', error.response.data);
+        } else if (error.request) {
+            console.error('❌ No se recibió respuesta de WhatsApp:', error.request);
+        } else {
+            console.error('❌ Error en la solicitud:', error.message);
+        }
+    }
 }
+
+
 
 
 
