@@ -405,67 +405,62 @@ async function handleFAQs(from, userMessage) {
   return false;
 }
 
-  // Función para crear un retraso
-  const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-  // Función para activar el indicador de "escribiendo"
-  async function activateTypingIndicator(to) {
-    const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
-    const headers = {
-      Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`, // Reemplaza con tu token de acceso
-      'Content-Type': 'application/json'
-    };
-    const data = {
-      messaging_product: 'whatsapp',
-      recipient_type: 'individual',
-      to: to,
-      type: 'text',
-      action: {
-        type: 'typing_on'
-      }
-    };
-  
-    try {
-      await axios.post(url, data, { headers });
-      console.log('Indicador de "escribiendo" activado');
-    } catch (error) {
-      console.error('Error al activar el indicador de "escribiendo":', error.response.data);
-    }
-  }
-  
-  // Función para desactivar el indicador de "escribiendo"
-  async function deactivateTypingIndicator(to) {
-    const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
-    const headers = {
-      Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`, // Reemplaza con tu token de acceso
-      'Content-Type': 'application/json'
-    };
-    const data = {
-      messaging_product: 'whatsapp',
-      recipient_type: 'individual',
-      to: to,
-      type: 'text',
-      action: {
-        type: 'typing_off'
-      }
-    };
-  
-    try {
-      await axios.post(url, data, { headers });
-      console.log('Indicador de "escribiendo" desactivado');
-    } catch (error) {
-      console.error('Error al desactivar el indicador de "escribiendo":', error.response.data);
-    }
-  }
+//////////////////////////////////////////////////////////
 
-
-//////////////////////////////////////////////////////////////////////
-// Función para enviar mensajes con indicador de escritura
+// 📌 Función para enviar mensajes con indicador de escritura
 async function sendMessageWithTyping(from, message, delayTime) {
-  await sendWhatsAppMessage(from, message);
-  await activateTypingIndicator(from);
-  await delay(delayTime);
-  await deactivateTypingIndicator(from);
+  await activateTypingIndicator(from); // ✅ Activar "escribiendo" primero
+  await delay(delayTime); // ⏳ Esperar un tiempo antes de enviar
+  await sendWhatsAppMessage(from, message); // ✅ Enviar mensaje después
+  await deactivateTypingIndicator(from); // ✅ Desactivar "escribiendo"
+}
+
+// 📌 Función para crear un retraso
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// 📌 Función para activar el indicador de "escribiendo"
+async function activateTypingIndicator(to) {
+    const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+    const headers = {
+        Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json'
+    };
+    const data = {
+        messaging_product: 'whatsapp',
+        to: to,
+        type: 'typing', // ✅ WhatsApp API reconoce "typing", no "text"
+        status: 'typing' // ✅ Correcto: Indica que el bot está escribiendo
+    };
+
+    try {
+        await axios.post(url, data, { headers });
+        console.log('✅ Indicador de "escribiendo" activado');
+    } catch (error) {
+        console.error('❌ Error al activar el indicador de "escribiendo":', error.response?.data || error.message);
+    }
+}
+
+// 📌 Función para desactivar el indicador de "escribiendo"
+async function deactivateTypingIndicator(to) {
+    const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+    const headers = {
+        Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json'
+    };
+    const data = {
+        messaging_product: 'whatsapp',
+        to: to,
+        type: 'typing', // ✅ Misma estructura
+        status: 'paused' // ✅ Correcto: Indica que el bot dejó de escribir
+    };
+
+    try {
+        await axios.post(url, data, { headers });
+        console.log('✅ Indicador de "escribiendo" desactivado');
+    } catch (error) {
+        console.error('❌ Error al desactivar el indicador de "escribiendo":', error.response?.data || error.message);
+    }
 }
 
 // Función para enviar mensajes con formato (cursiva, negrita, etc.)
@@ -730,23 +725,73 @@ if (['info', 'costos', 'hola', 'precio', 'información'].some(word => messageLow
 ///-------------------------------------------------------------///
 
 // 📌 Función para enviar mensajes de texto
+
 async function sendWhatsAppMessage(to, message) {
-  const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+    // ✅ Validación de credenciales antes de ejecutar
+    if (!process.env.WHATSAPP_PHONE_NUMBER_ID || !process.env.WHATSAPP_ACCESS_TOKEN) {
+        console.error("❌ ERROR: Credenciales de WhatsApp no configuradas correctamente.");
+        return;
+    }
 
-  const data = {
-      messaging_product: 'whatsapp',
-      to: to,
-      type: 'text',
-      text: { body: message }
-  };
+    // ✅ Validación de parámetros antes de continuar
+    if (!to || !message) {
+        console.error("❌ ERROR: El número de destino y el mensaje son obligatorios.");
+        return;
+    }
 
-  await axios.post(url, data, {
-      headers: {
-          Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-          'Content-Type': 'application/json'
-      }
-  });
+    const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+
+    const data = {
+        messaging_product: 'whatsapp',
+        to: to,
+        type: 'text',
+        text: { body: message }
+    };
+
+    try {
+        // ✅ Enviar mensaje a WhatsApp
+        const response = await axios.post(url, data, {
+            headers: {
+                Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+                'Content-Type': 'application/json'
+            },
+            timeout: 5000  // ⏳ Agregar un timeout de 5 segundos
+        });
+
+        console.log('✅ Mensaje enviado a WhatsApp:', response.data);
+
+        // ✅ Reportar mensaje al CRM en paralelo
+        const crmUrl = "https://camicam-crm-d78af2926170.herokuapp.com/recibir_mensaje";
+        const crmData = {
+            plataforma: "WhatsApp",
+            remitente: to,
+            mensaje: message,
+            tipo: "enviado"
+        };
+
+        const [crmResponse] = await Promise.allSettled([
+            axios.post(crmUrl, crmData, { timeout: 5000 })
+        ]);
+
+        if (crmResponse.status === "fulfilled") {
+            console.log("✅ Mensaje reportado al CRM correctamente");
+        } else {
+            console.error("❌ Error al reportar al CRM:", crmResponse.reason.response?.data || crmResponse.reason.message);
+        }
+
+    } catch (error) {
+        if (error.response) {
+            console.error('❌ Error en la respuesta de WhatsApp:', error.response.data);
+        } else if (error.request) {
+            console.error('❌ No se recibió respuesta de WhatsApp:', error.request);
+        } else {
+            console.error('❌ Error en la solicitud:', error.message);
+        }
+    }
 }
+
+
+
 
 
 // Iniciar el servidor
