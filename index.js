@@ -218,24 +218,7 @@ app.post('/enviar_mensaje', async (req, res) => {
   res.sendStatus(200);
 });
 
-/*
-//Función para enviar datos al CRM
-async function sendToCRM(contactData) {
-  const crmUrl = 'http://127.0.0.1:5000/api/leads';
-  try {
-    console.log('Enviando datos al CRM:', contactData);
-    const response = await axios.post(crmUrl, contactData, {
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-    console.log('Datos enviados al CRM:', response.data);
-  } catch (error) {
-    console.error('Error al enviar datos al CRM:', error.message);
-  } finally {
-    await new Promise(resolve => setTimeout(resolve, 500)); // Retardo de 500ms
-  }
-}*/
+
 
 // 📌 Función para enviar mensajes interactivos con botones
 async function sendInteractiveMessage(to, body, buttons) {
@@ -822,14 +805,38 @@ async function sendWhatsAppMessage(to, message) {
         }
 
     } catch (error) {
-        if (error.response) {
-            console.error('❌ Error en la respuesta de WhatsApp:', error.response.data);
-        } else if (error.request) {
-            console.error('❌ No se recibió respuesta de WhatsApp:', error.request);
-        } else {
-            console.error('❌ Error en la solicitud:', error.message);
-        }
-    }
+      if (error.response) {
+          const status = error.response.status;
+          console.error(`❌ Error en la respuesta de WhatsApp (${status}):`, error.response.data);
+  
+          switch (status) {
+              case 400:
+                  console.error("⚠️ Formato del número inválido o mensaje mal estructurado.");
+                  break;
+              case 401:
+                  console.error("🔑 Token de acceso inválido. Revisa las credenciales.");
+                  break;
+              case 403:
+                  console.error("⛔ Número bloqueado o sin permisos para enviar mensajes.");
+                  break;
+              case 429:
+                  console.error("🚨 Límite de mensajes excedido. Intentando nuevamente en 10 segundos...");
+                  setTimeout(() => sendWhatsAppMessage(to, message), 10000);
+                  return;
+              case 500:
+                  console.error("🔥 Error interno en los servidores de WhatsApp. Reintentando en 5 segundos...");
+                  setTimeout(() => sendWhatsAppMessage(to, message), 5000);
+                  return;
+              default:
+                  console.error("❌ Error inesperado en la API de WhatsApp.");
+          }
+      } else if (error.request) {
+          console.error("❌ No se recibió respuesta de WhatsApp. Verifica la conexión.");
+      } else {
+          console.error("❌ Error en la solicitud:", error.message);
+      }
+  }
+  
 }
 
 
