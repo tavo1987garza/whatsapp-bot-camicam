@@ -7,6 +7,7 @@ import bodyParser from 'body-parser';
 import axios from 'axios';
 import OpenAI from 'openai';
 
+
 // Cargar variables de entorno
 dotenv.config();
 
@@ -123,6 +124,8 @@ app.post('/webhook', async (req, res) => {
     console.error("❌ Error al enviar mensaje al CRM:", error.message);
   }
 
+  
+
   // 📌 Endpoint para recibir mensajes desde el CRM y enviarlos a WhatsApp
 app.post('/enviar_mensaje', async (req, res) => {
   try {
@@ -143,67 +146,54 @@ app.post('/enviar_mensaje', async (req, res) => {
   }
 });
 
+// 📌 Lista de preguntas frecuentes desde el boton
+const buttonReply = message?.interactive?.button_reply?.id || '';
+const listReply = message?.interactive?.list_reply?.id || '';
+const messageLower = buttonReply ? buttonReply.toLowerCase() : listReply ? listReply.toLowerCase() : userMessage.toLowerCase();
 
-
-  const buttonReply = message?.interactive?.button_reply?.id || '';
-  const listReply = message?.interactive?.list_reply?.id || '';
-  const messageLower = buttonReply ? buttonReply.toLowerCase() : listReply ? listReply.toLowerCase() : userMessage.toLowerCase();
-
-  console.log("📌 Mensaje recibido:", userMessage);
-  console.log("🔘 Botón presionado:", buttonReply);
-  console.log("📄 Lista seleccionada:", listReply);
-
-  try {
-    // 🟢 Detectar si el usuario hizo clic en "Preguntas Frecuentes"
-    if (buttonReply === 'ver_faqs') {
-      console.log("✅ Se detectó clic en el botón 'Preguntas Frecuentes'. Enviando lista...");
-     
-      await sendWhatsAppList(from, '📖 Preguntas Frecuentes', 'Selecciona una pregunta para obtener más información:', 'Ver preguntas', [
-        {
-          title: 'Preg Frecuentes',
-          rows: [
-            { id: 'faq_anticipo', title: '💰 Cómo separo mi fecha?', description: 'Separamos con $500. El resto el día del evento.' },
-            { id: 'faq_contrato', title: '📜 Hacen contrato?', description: 'Sí, se envía después del anticipo.' },
-            { id: 'faq_flete', title: 'Cuánto cobran de flete?', description: 'Depende de la ubicación. Pregunta para cotizar.' }
-          ]
-        }
-      ]);
-      return res.sendStatus(200);
-    }    
-
-    // 🟢 Detectar si el usuario seleccionó una pregunta de la lista
-    if (listReply) {
-      console.log("✅ Se detectó selección de lista:", listReply);
-      const faqAnswer = findFAQ(listReply);
-      if (faqAnswer) {
-        await sendWhatsAppMessage(from, faqAnswer);
-        return res.sendStatus(200);
+try {
+  if (buttonReply === 'ver_faqs') {
+    await sendWhatsAppList(from, '📖 Preguntas Frecuentes', 'Selecciona una pregunta para obtener más información:', 'Ver preguntas', [
+      {
+        title: 'Preg Frecuentes',
+        rows: [
+          { id: 'faq_anticipo', title: '💰 Cómo separo mi fecha?', description: 'Separamos con $500. El resto el día del evento.' },
+          { id: 'faq_contrato', title: '📜 Hacen contrato?', description: 'Sí, se envía después del anticipo.' },
+          { id: 'faq_flete', title: 'Cuánto cobran de flete?', description: 'Depende de la ubicación. Pregunta para cotizar.' }
+        ]
       }
-    }
+    ]);
+    return res.sendStatus(200);
+  }    
 
-    // 🟢 Verificamos si el mensaje coincide con una pregunta frecuente
-    if (await handleFAQs(from, userMessage)) {
+  if (listReply) {
+    console.log("✅ Se detectó selección de lista:", listReply);
+    const faqAnswer = findFAQ(listReply);
+    if (faqAnswer) {
+      await sendWhatsAppMessage(from, faqAnswer);
       return res.sendStatus(200);
     }
-
-    // 🟢 Pasamos a `handleUserMessage()`
-    const handled = await handleUserMessage(from, userMessage, buttonReply);
-    if (handled) return res.sendStatus(200);
-
-    // 🟢 Si `handleUserMessage()` tampoco maneja el mensaje, sugerimos ver la lista de preguntas frecuentes
-    console.log("❓ Mensaje no reconocido. Mostrando botón de Preguntas Frecuentes.");
-    await sendInteractiveMessage(from, "No estoy seguro de cómo responder a eso. ¿Quieres ver nuestras preguntas frecuentes?", [
-      { id: 'ver_faqs', title: 'Preg. Frecuentes' }
-    ]);
-
-  } catch (error) {
-    console.error("❌ Error al manejar el mensaje:", error.message);
-    await sendWhatsAppMessage(from, "Lo siento, ocurrió un error al procesar tu solicitud. Inténtalo nuevamente.");
   }
 
-  res.sendStatus(200);
-});
+  if (await handleFAQs(from, userMessage)) {
+    return res.sendStatus(200);
+  }
 
+  const handled = await handleUserMessage(from, userMessage, buttonReply);
+  if (handled) return res.sendStatus(200);
+
+  console.log("❓ Mensaje no reconocido. Mostrando botón de Preguntas Frecuentes.");
+  await sendInteractiveMessage(from, "No estoy seguro de cómo responder a eso. ¿Quieres ver nuestras preguntas frecuentes?", [
+    { id: 'ver_faqs', title: 'Preg. Frecuentes' }
+  ]);
+
+} catch (error) {
+  console.error("❌ Error al manejar el mensaje:", error.message);
+  await sendWhatsAppMessage(from, "Lo siento, ocurrió un error al procesar tu solicitud. Inténtalo nuevamente.");
+}
+
+res.sendStatus(200);
+});
 
 
 // 📌 Función para enviar mensajes interactivos con botones
@@ -474,6 +464,8 @@ function checkAvailability(dateString) {
   const occupiedDates = ['15/02/2024', '20/02/2024'];
   return !occupiedDates.includes(dateString);
 }
+
+
 
 ////////////////////////////////////////////////////////////////////
 
