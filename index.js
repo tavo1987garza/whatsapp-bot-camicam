@@ -96,21 +96,7 @@ app.get('/', async (req, res) => {
   }
 });
 
-// 📌 Ruta de prueba para mensajes interactivos
-app.get('/test-interactive', async (req, res) => {
-  const testNumber = "528133971595"; // Reemplázalo con tu número de prueba
-  console.log("➡ Enviando mensaje interactivo de prueba...");
 
-  try {
-    await sendInteractiveMessage(testNumber, "¿Quieres ver nuestras preguntas frecuentes?", [
-      { id: 'ver_faqs', title: 'Preguntas Frecuentes' }
-    ]);
-    res.send("✅ Mensaje interactivo enviado correctamente");
-  } catch (error) {
-    console.error("❌ Error al enviar mensaje interactivo:", error.message);
-    res.send("❌ Hubo un error al enviar el mensaje interactivo");
-  }
-});
 
 
 // 📌 Webhook para manejar mensajes de WhatsApp
@@ -258,47 +244,6 @@ async function sendInteractiveMessage(to, body, buttons) {
       }
   };
 
-  try {
-      // ✅ Enviar mensaje interactivo a WhatsApp
-      const response = await axios.post(url, data, {
-          headers: {
-              Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-              'Content-Type': 'application/json'
-          },
-          timeout: 5000  // ⏳ Agregar un timeout de 5 segundos
-      });
-
-      console.log('✅ Mensaje interactivo enviado a WhatsApp:', response.data);
-
-      // ✅ Reportar mensaje al CRM en paralelo
-      const crmUrl = "https://camicam-crm-d78af2926170.herokuapp.com/recibir_mensaje";
-      const crmData = {
-          plataforma: "WhatsApp",
-          remitente: to,
-          mensaje: body,
-          tipo: "enviado",
-          botones: buttons  // ✅ Incluir los botones en el reporte al CRM
-      };
-
-      const [crmResponse] = await Promise.allSettled([
-          axios.post(crmUrl, crmData, { timeout: 5000 })
-      ]);
-
-      if (crmResponse.status === "fulfilled") {
-          console.log("✅ Mensaje interactivo reportado al CRM correctamente");
-      } else {
-          console.error("❌ Error al reportar al CRM:", crmResponse.reason.response?.data || crmResponse.reason.message);
-      }
-
-  } catch (error) {
-      if (error.response) {
-          console.error('❌ Error en la respuesta de WhatsApp:', error.response.data);
-      } else if (error.request) {
-          console.error('❌ No se recibió respuesta de WhatsApp:', error.request);
-      } else {
-          console.error('❌ Error en la solicitud:', error.message);
-      }
-  }
 }
 
 
@@ -398,39 +343,6 @@ async function sendWhatsAppList(to, header, body, buttonText, sections) {
 }
 
 
-// 📌 Preguntas frecuentes corregidas y optimizadas
-const faqs = [
-  { question: /como separo mi fecha|anticipo/i, answer: 'Separamos fecha con $500. El resto puede ser el día del evento.' },
-  { question: /hacen contrato|contrato/i, answer: 'Sí, una vez acreditado tu anticipo, lleno tu contrato y te envío foto.' },
-  { question: /con cuanto tiempo separo mi fecha|separar/i, answer: 'Puedes separar en cualquier momento, siempre que la fecha esté disponible.' },
-  { question: /se puede separar para 2026|2026/i, answer: 'Sí, tenemos agenda abierta para 2025 y 2026.' },
-  { question: /cuánto se cobra de flete|flete/i, answer: 'Depende de la ubicación del evento. Contáctanos con tu dirección para calcularlo.' },
-  { question: /cómo reviso si tienen mi fecha disponible/i, answer: 'Dime, ¿para cuándo es tu evento? 😊' },
-  { question: /ubicación|dónde están|donde son|ubican|oficinas/i, answer: '📍 Estamos en la Colonia Independencia en Monterrey. Atendemos eventos hasta 25 km a la redonda.' },
-  { question: /pago|método de pago|tarjeta|efectivo/i, answer: 'Aceptamos transferencias bancarias, depósitos y pagos en efectivo.' }
-];
-
-// 📌 Función para buscar respuestas en preguntas frecuentes
-function findFAQ(userMessage) {
-  for (const faq of faqs) {
-    if (faq.question.test(userMessage)) {
-      return faq.answer;
-    }
-  }
-  return null;
-}
-
-// 📌 Función para manejar preguntas frecuentes antes de enviar el mensaje a OpenAI
-async function handleFAQs(from, userMessage) {
-  const faqAnswer = findFAQ(userMessage);
-  if (faqAnswer) {
-    await sendWhatsAppMessage(from, faqAnswer);
-    return true;
-  }
-  return false;
-}
-
-
 //////////////////////////////////////////////////////////
 
 // 📌 Función para enviar mensajes con indicador de escritura
@@ -499,6 +411,25 @@ function formatMessage(text, style = "normal") {
  function formatPrice(amount) {
   return `$${amount.toLocaleString('en-US')}`;
 }
+
+// Función para obtener respuesta de OpenAI
+async function getOpenAIResponse(userMessage) {
+  try {
+    const response = await openai.completions.create({
+      model: 'text-davinci-003',  // O el modelo más apropiado que estés utilizando
+      prompt: userMessage,
+      max_tokens: 100,
+      temperature: 0.7,
+    });
+
+    // Retornar la respuesta de OpenAI
+    return response.choices[0].text.trim();
+  } catch (error) {
+    console.error("Error al obtener respuesta de OpenAI:", error.message);
+    return null;  // Si ocurre un error, retornamos null
+  }
+}
+
 
 // Función para manejar la lógica de los paquetes
 async function handlePackage(from, packageName, imageUrl, includes, price, discount, freeItems, videoUrl) {
@@ -592,6 +523,80 @@ async function sendMessageWithTyping(from, message, delayTime) {
   await deactivateTypingIndicator(from);
 }
 
+// 📌 Función para manejar preguntas frecuentes
+async function handleFAQs(from, userMessage) {
+  const faqAnswer = findFAQ(userMessage);
+  if (faqAnswer) {
+    await sendWhatsAppMessage(from, faqAnswer);
+    return true; // Si encuentra una respuesta, la envía
+  }
+  return false; // Si no encontró respuesta en las FAQ
+}
+
+// 📌 Preguntas frecuentes corregidas y optimizadas
+const faqs = [
+  { question: /como separo mi fecha|anticipo/i, answer: 'Separamos fecha con $500. El resto puede ser el día del evento.' },
+  { question: /hacen contrato|contrato/i, answer: 'Sí, una vez acreditado tu anticipo, lleno tu contrato y te envío foto.' },
+  { question: /con cuanto tiempo separo mi fecha|separar/i, answer: 'Puedes separar en cualquier momento, siempre que la fecha esté disponible.' },
+  { question: /se puede separar para 2026|2026/i, answer: 'Sí, tenemos agenda abierta para 2025 y 2026.' },
+  { question: /cuánto se cobra de flete|flete/i, answer: 'Depende de la ubicación del evento. Contáctanos con tu dirección para calcularlo.' },
+  { question: /cómo reviso si tienen mi fecha disponible/i, answer: 'Dime, ¿para cuándo es tu evento? 😊' },
+  { question: /ubicación|dónde están|donde son|ubican|oficinas/i, answer: '📍 Estamos en la Colonia Independencia en Monterrey. Atendemos eventos hasta 25 km a la redonda.' },
+  { question: /pago|método de pago|tarjeta|efectivo/i, answer: 'Aceptamos transferencias bancarias, depósitos y pagos en efectivo.' }
+];
+
+// 📌 Función para buscar respuestas en preguntas frecuentes
+function findFAQ(userMessage) {
+  for (const faq of faqs) {
+    if (faq.question.test(userMessage)) {
+      return faq.answer;
+    }
+  }
+  return null;
+}
+
+// 🟢 Intentar con las preguntas frecuentes
+if (await handleFAQs(from, userMessage)) {
+  return true;  // Si la pregunta está en las FAQ, se termina el proceso
+}
+
+// 🟢 Si no está en las FAQ, intentar con OpenAI
+const aiResponse = await getOpenAIResponse(userMessage);
+
+if (aiResponse && aiResponse.trim() !== '') {
+  console.log("Respuesta de OpenAI:", aiResponse);
+  await sendWhatsAppMessage(from, aiResponse);
+  return true;
+} else {
+  // 🟢 Si OpenAI no puede responder, enviar mensaje al administrador
+  console.log("OpenAI no pudo generar una respuesta adecuada. Contactando al administrador.");
+  const adminPhone = '528133971595';  // Número del administrador
+  const adminMessage = `Nuevo mensaje no reconocido de ${from}: ${userMessage}\n\nPor favor, interven con el cliente.`;
+
+  // Enviar mensaje al administrador para intervención
+  await sendWhatsAppMessage(adminPhone, adminMessage);
+  await sendWhatsAppMessage(from, 'Lo siento, no puedo responder a tu pregunta en este momento. Un miembro de nuestro equipo te atenderá pronto.');
+  return true;
+}
+
+} catch (error) {
+console.error("Error en handleUserMessage:", error.message);
+await sendWhatsAppMessage(from, "Lo siento, ocurrió un error.");
+return false;
+}
+}
+
+// Función para obtener respuesta de OpenAI
+async function getOpenAIResponse(userMessage) {
+try {
+const response = await openai.completions.create({
+  model: 'text-davinci-003',  // O el modelo más apropiado que estés utilizando
+  prompt: userMessage,
+  max_tokens: 100,
+  temperature: 0.7,
+});
+
+
 // Función para enviar mensajes interactivos con imagen
 async function sendInteractiveMessageWithImage(from, message, imageUrl, options) {
   await sendMessageWithTyping(from, message, 3000);
@@ -612,6 +617,8 @@ if (['info', 'costos', 'hola', 'precio', 'información'].some(word => messageLow
   ]);
   return true;
 }
+
+
 
     // Función para manejar la selección de eventos
     async function handleEventSelection(from, eventType, packageName) {
@@ -785,51 +792,10 @@ async function sendWhatsAppMessage(to, message) {
 
         console.log('✅ Mensaje enviado a WhatsApp:', response.data);
 
-        // ✅ Reportar mensaje al CRM en paralelo
-        const crmUrl = "https://camicam-crm-d78af2926170.herokuapp.com/recibir_mensaje";
-        const crmData = {
-            plataforma: "WhatsApp",
-            remitente: to,
-            mensaje: message,
-            tipo: "enviado"
-        };
-
-        const [crmResponse] = await Promise.allSettled([
-            axios.post(crmUrl, crmData, { timeout: 5000 })
-        ]);
-
-        if (crmResponse.status === "fulfilled") {
-            console.log("✅ Mensaje reportado al CRM correctamente");
-        } else {
-            console.error("❌ Error al reportar al CRM:", crmResponse.reason.response?.data || crmResponse.reason.message);
-        }
-
     } catch (error) {
       if (error.response) {
           const status = error.response.status;
           console.error(`❌ Error en la respuesta de WhatsApp (${status}):`, error.response.data);
-  
-          switch (status) {
-              case 400:
-                  console.error("⚠️ Formato del número inválido o mensaje mal estructurado.");
-                  break;
-              case 401:
-                  console.error("🔑 Token de acceso inválido. Revisa las credenciales.");
-                  break;
-              case 403:
-                  console.error("⛔ Número bloqueado o sin permisos para enviar mensajes.");
-                  break;
-              case 429:
-                  console.error("🚨 Límite de mensajes excedido. Intentando nuevamente en 10 segundos...");
-                  setTimeout(() => sendWhatsAppMessage(to, message), 10000);
-                  return;
-              case 500:
-                  console.error("🔥 Error interno en los servidores de WhatsApp. Reintentando en 5 segundos...");
-                  setTimeout(() => sendWhatsAppMessage(to, message), 5000);
-                  return;
-              default:
-                  console.error("❌ Error inesperado en la API de WhatsApp.");
-          }
       } else if (error.request) {
           console.error("❌ No se recibió respuesta de WhatsApp. Verifica la conexión.");
       } else {
