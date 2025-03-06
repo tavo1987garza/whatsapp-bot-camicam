@@ -412,23 +412,7 @@ function formatMessage(text, style = "normal") {
   return `$${amount.toLocaleString('en-US')}`;
 }
 
-// Función para obtener respuesta de OpenAI
-async function getOpenAIResponse(userMessage) {
-  try {
-    const response = await openai.completions.create({
-      model: 'text-davinci-003',  // O el modelo más apropiado que estés utilizando
-      prompt: userMessage,
-      max_tokens: 100,
-      temperature: 0.7,
-    });
 
-    // Retornar la respuesta de OpenAI
-    return response.choices[0].text.trim();
-  } catch (error) {
-    console.error("Error al obtener respuesta de OpenAI:", error.message);
-    return null;  // Si ocurre un error, retornamos null
-  }
-}
 
 
 // Función para manejar la lógica de los paquetes
@@ -523,6 +507,28 @@ async function sendMessageWithTyping(from, message, delayTime) {
   await deactivateTypingIndicator(from);
 }
 
+// Función para enviar mensajes interactivos con imagen
+async function sendInteractiveMessageWithImage(from, message, imageUrl, options) {
+  await sendMessageWithTyping(from, message, 3000);
+  await sendImageMessage(from, imageUrl);
+  await delay(10000);
+  await sendInteractiveMessage(from, options.message, options.buttons);
+}
+
+   // 🟢 Flujos predefinidos (eventos, paquetes, etc.)
+if (['info', 'costos', 'hola', 'precio', 'información'].some(word => messageLower.includes(word))) {
+  await sendMessageWithTyping(from, '¡Hola 👋! Soy tu asistente virtual de *Camicam Photobooth*', 4000);
+  await sendMessageWithTyping(from, 'Para brindarte la mejor atención', 2500);
+  
+  await sendInteractiveMessage(from, 'Por favor selecciona el tipo de evento que tienes 👇', [
+    { id: 'evento_xv', title: '🎉 XV Años' },
+    { id: 'evento_boda', title: '💍 Boda' },
+    { id: 'evento_otro', title: '🎊 Otro Evento' }
+  ]);
+  return true;
+}
+
+
 // 📌 Función para manejar preguntas frecuentes
 async function handleFAQs(from, userMessage) {
   const faqAnswer = findFAQ(userMessage);
@@ -595,28 +601,6 @@ const response = await openai.completions.create({
   max_tokens: 100,
   temperature: 0.7,
 });
-
-
-// Función para enviar mensajes interactivos con imagen
-async function sendInteractiveMessageWithImage(from, message, imageUrl, options) {
-  await sendMessageWithTyping(from, message, 3000);
-  await sendImageMessage(from, imageUrl);
-  await delay(10000);
-  await sendInteractiveMessage(from, options.message, options.buttons);
-}
-
-   // 🟢 Flujos predefinidos (eventos, paquetes, etc.)
-if (['info', 'costos', 'hola', 'precio', 'información'].some(word => messageLower.includes(word))) {
-  await sendMessageWithTyping(from, '¡Hola 👋! Soy tu asistente virtual de *Camicam Photobooth*', 4000);
-  await sendMessageWithTyping(from, 'Para brindarte la mejor atención', 2500);
-  
-  await sendInteractiveMessage(from, 'Por favor selecciona el tipo de evento que tienes 👇', [
-    { id: 'evento_xv', title: '🎉 XV Años' },
-    { id: 'evento_boda', title: '💍 Boda' },
-    { id: 'evento_otro', title: '🎊 Otro Evento' }
-  ]);
-  return true;
-}
 
 
 
