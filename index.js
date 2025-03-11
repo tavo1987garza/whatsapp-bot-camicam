@@ -155,33 +155,6 @@ app.post('/webhook', async (req, res) => {
   console.log("📄 Lista seleccionada:", listReply);
 
   try {
-    // Ejemplo: manejo del botón "Preguntas Frecuentes"
-    if (buttonReply === 'ver_faqs') {
-      console.log("✅ Se detectó clic en el botón 'Preguntas Frecuentes'. Enviando lista...");
-     
-      await sendWhatsAppList(from, '📖 Preguntas Frecuentes', 'Selecciona una pregunta para obtener más información:', 'Ver preguntas', [
-        {
-          title: 'Preg Frecuentes',
-          rows: [
-            { id: 'faq_anticipo', title: '💰 Cómo separo mi fecha?', description: 'Separamos con $500. El resto el día del evento.' },
-            { id: 'faq_contrato', title: '📜 Hacen contrato?', description: 'Sí, se envía después del anticipo.' },
-            { id: 'faq_flete', title: 'Cuánto cobran de flete?', description: 'Depende de la ubicación. Pregunta para cotizar.' }
-          ]
-        }
-      ]);
-      return res.sendStatus(200);
-    }    
-
-    // Manejo de selección en listas interactivas
-    if (listReply) {
-      console.log("✅ Se detectó selección de lista:", listReply);
-      const faqAnswer = findFAQ(listReply);
-      if (faqAnswer) {
-        await sendWhatsAppMessage(from, faqAnswer);
-        return res.sendStatus(200);
-      }
-    }
-
     // Manejo de preguntas frecuentes
     if (await handleFAQs(from, userMessage)) {
       return res.sendStatus(200);
@@ -191,11 +164,6 @@ app.post('/webhook', async (req, res) => {
     const handled = await handleUserMessage(from, userMessage, buttonReply);
     if (handled) return res.sendStatus(200);
 
-    // Si no se reconoce el mensaje, sugerir la opción de preguntas frecuentes
-    console.log("❓ Mensaje no reconocido. Mostrando botón de Preguntas Frecuentes.");
-    await sendInteractiveMessage(from, "No estoy seguro de cómo responder a eso. ¿Quieres ver nuestras preguntas frecuentes?", [
-      { id: 'ver_faqs', title: 'Preg. Frecuentes' }
-    ]);
 
   } catch (error) {
     console.error("❌ Error al manejar el mensaje:", error.message);
@@ -204,6 +172,38 @@ app.post('/webhook', async (req, res) => {
 
   res.sendStatus(200);
 });
+
+// 📌 Preguntas frecuentes corregidas y optimizadas
+const faqs = [
+  { question: /como separo mi fecha|anticipo/i, answer: 'Separamos fecha con $500. El resto puede ser el día del evento.' },
+  { question: /hacen contrato|contrato/i, answer: 'Sí, una vez acreditado tu anticipo, lleno tu contrato y te envío foto.' },
+  { question: /con cuanto tiempo separo mi fecha|separar/i, answer: 'Puedes separar en cualquier momento, siempre que la fecha esté disponible.' },
+  { question: /se puede separar para 2026|2026/i, answer: 'Sí, tenemos agenda abierta para 2025 y 2026.' },
+  { question: /cuánto se cobra de flete|flete/i, answer: 'Depende de la ubicación del evento. Contáctanos con tu dirección para calcularlo.' },
+  { question: /cómo reviso si tienen mi fecha disponible/i, answer: 'Dime, ¿para cuándo es tu evento? 😊' },
+  { question: /ubicación|dónde están|donde son|ubican|oficinas/i, answer: '📍 Estamos en la Colonia Independencia en Monterrey. Atendemos eventos hasta 25 km a la redonda.' },
+  { question: /pago|método de pago|tarjeta|efectivo/i, answer: 'Aceptamos transferencias bancarias, depósitos y pagos en efectivo.' }
+];
+
+// 📌 Función para buscar respuestas en preguntas frecuentes
+function findFAQ(userMessage) {
+  for (const faq of faqs) {
+    if (faq.question.test(userMessage)) {
+      return faq.answer;
+    }
+  }
+  return null;
+}
+
+// 📌 Función para manejar preguntas frecuentes antes de enviar el mensaje a OpenAI
+async function handleFAQs(from, userMessage) {
+  const faqAnswer = findFAQ(userMessage);
+  if (faqAnswer) {
+    await sendWhatsAppMessage(from, faqAnswer);
+    return true;
+  }
+  return false;
+}
 
 
 
@@ -404,7 +404,7 @@ async function sendImageMessage(to, imageUrl, caption) {
 
 
 ////Funcion para enviar Listas Interactivas
-async function sendWhatsAppList(to, header, body, buttonText, sections) {
+/*async function sendWhatsAppList(to, header, body, buttonText, sections) {
   const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
 
   const data = {
@@ -450,40 +450,10 @@ async function sendWhatsAppList(to, header, body, buttonText, sections) {
   } catch (error) {
     console.error("❌ Error al enviar lista interactiva:", error.response?.data || error.message);
   }
-}
+} */
 
 
-// 📌 Preguntas frecuentes corregidas y optimizadas
-const faqs = [
-  { question: /como separo mi fecha|anticipo/i, answer: 'Separamos fecha con $500. El resto puede ser el día del evento.' },
-  { question: /hacen contrato|contrato/i, answer: 'Sí, una vez acreditado tu anticipo, lleno tu contrato y te envío foto.' },
-  { question: /con cuanto tiempo separo mi fecha|separar/i, answer: 'Puedes separar en cualquier momento, siempre que la fecha esté disponible.' },
-  { question: /se puede separar para 2026|2026/i, answer: 'Sí, tenemos agenda abierta para 2025 y 2026.' },
-  { question: /cuánto se cobra de flete|flete/i, answer: 'Depende de la ubicación del evento. Contáctanos con tu dirección para calcularlo.' },
-  { question: /cómo reviso si tienen mi fecha disponible/i, answer: 'Dime, ¿para cuándo es tu evento? 😊' },
-  { question: /ubicación|dónde están|donde son|ubican|oficinas/i, answer: '📍 Estamos en la Colonia Independencia en Monterrey. Atendemos eventos hasta 25 km a la redonda.' },
-  { question: /pago|método de pago|tarjeta|efectivo/i, answer: 'Aceptamos transferencias bancarias, depósitos y pagos en efectivo.' }
-];
 
-// 📌 Función para buscar respuestas en preguntas frecuentes
-function findFAQ(userMessage) {
-  for (const faq of faqs) {
-    if (faq.question.test(userMessage)) {
-      return faq.answer;
-    }
-  }
-  return null;
-}
-
-// 📌 Función para manejar preguntas frecuentes antes de enviar el mensaje a OpenAI
-async function handleFAQs(from, userMessage) {
-  const faqAnswer = findFAQ(userMessage);
-  if (faqAnswer) {
-    await sendWhatsAppMessage(from, faqAnswer);
-    return true;
-  }
-  return false;
-}
 
 
 //////////////////////////////////////////////////////////
