@@ -630,8 +630,8 @@ async function handleUserMessage(from, userMessage, buttonReply) {
       tipoEvento: null,
       nombre: null,
       fecha: null,
-      serviciosSeleccionados: [], // Para almacenar los servicios seleccionados
-      total: 0 // Para almacenar el costo total
+      serviciosSeleccionados: [],
+      total: 0
     };
   }
 
@@ -639,73 +639,75 @@ async function handleUserMessage(from, userMessage, buttonReply) {
   const context = userContext[from];
 
   try {
-    // Función para enviar mensajes con indicador de escritura
-async function sendMessageWithTyping(from, message, delayTime) {
-  await sendWhatsAppMessage(from, message);
-  await activateTypingIndicator(from);
-  await delay(delayTime);
-  await deactivateTypingIndicator(from);
-}
+    // Función para enviar mensajes con indicador de escritura y control de estado
+    async function sendMessageWithTypingWithState(from, message, delayTime, estadoEsperado) {
+      await activateTypingIndicator(from);
+      await delay(delayTime);
+      if (userContext[from].estado === estadoEsperado) {
+        await sendWhatsAppMessage(from, message);
+      }
+      await deactivateTypingIndicator(from);
+    }
 
-// Función para enviar mensajes interactivos con imagen
-async function sendInteractiveMessageWithImage(from, message, imageUrl, options) {
-  await sendMessageWithTyping(from, message, 3000);
-  await sendImageMessage(from, imageUrl);
-  await delay(10000);
-  await sendInteractiveMessage(from, options.message, options.buttons);
-}
+    // Función para enviar mensajes interactivos con imagen y control de estado
+    async function sendInteractiveMessageWithImageWithState(from, message, imageUrl, options, estadoEsperado) {
+      await sendMessageWithTypingWithState(from, message, 3000, estadoEsperado);
+      if (userContext[from].estado !== estadoEsperado) return; // Abortamos si el estado cambió
+      await sendImageMessage(from, imageUrl);
+      await delay(10000);
+      if (userContext[from].estado !== estadoEsperado) return;
+      await sendInteractiveMessage(from, options.message, options.buttons);
+    }
 
-   // 🟢 Flujos predefinidos (eventos, paquetes, etc.)
-if (['info', 'costos', 'hola', 'precio', 'información'].some(word => messageLower.includes(word))) {
-  await sendMessageWithTyping(from, '¡Hola 👋! Soy tu asistente virtual de *Camicam Photobooth*', 4000);
-  await sendMessageWithTyping(from, 'Para brindarte la mejor atención', 2500);
-  
-  await sendInteractiveMessage(from, 'Por favor selecciona el tipo de evento que tienes 👇', [
-    { id: 'evento_xv', title: '🎉 XV Años' },
-    { id: 'evento_boda', title: '💍 Boda' },
-    { id: 'evento_otro', title: '🎊 Otro Evento' }
-  ]);
-  return true;
-}
+    // ── Flujo inicial ──
+    if (['info', 'costos', 'hola', 'precio', 'información'].some(word => messageLower.includes(word))) {
+      userContext[from].estado = "inicio";
+      await sendMessageWithTypingWithState(from, '¡Hola 👋! Soy tu asistente virtual de *Camicam Photobooth*', 4000, "inicio");
+      await sendMessageWithTypingWithState(from, 'Para brindarte la mejor atención', 2500, "inicio");
+      await sendInteractiveMessage(from, 'Por favor selecciona el tipo de evento que tienes 👇', [
+        { id: 'evento_xv', title: '🎉 XV Años' },
+        { id: 'evento_boda', title: '💍 Boda' },
+        { id: 'evento_otro', title: '🎊 Otro Evento' }
+      ]);
+      return true;
+    }
 
-    // Función para manejar la selección de eventos
+    // ── Función para manejar la selección de eventos ──
     async function handleEventSelection(from, eventType, packageName) {
+      // Actualizamos el estado del usuario según la opción seleccionada
+      userContext[from].estado = `evento_${eventType}_seleccionado`;
+      const estadoEsperado = userContext[from].estado;
+
       const message = 'Conoce los servicios que ofrecemos en *Camicam Photobooth* 🎉';
       const imageUrl = 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg';
       const options = {
-        message:'Puedes ver videos de nuestros servicios. ▶️\n\n' + 
-                'Armar tu paquete con todo lo que necesites!! 😊\n\n' +
-                `O ver el Paquete que hemos preparado para ${packageName} 👇`,
+        message:
+          'Puedes ver videos de nuestros servicios. ▶️\n\n' +
+          'Armar tu paquete con todo lo que necesites!! 😊\n\n' +
+          `O ver el Paquete que hemos preparado para ${packageName} 👇`,
         buttons: [
           { id: 'ver_videos', title: '▶️ Ver videos' },
           { id: 'armar_paquete', title: '🛠 Armar mi paquete' },
           { id: `ver_paquete_${eventType}`, title: `🎉 Ver PAQUETE ${packageName.toUpperCase()}` }
         ]
       };
-    
-      await sendInteractiveMessageWithImage(from, message, imageUrl, options);
+
+      await sendInteractiveMessageWithImageWithState(from, message, imageUrl, options, estadoEsperado);
       return true;
     }
-    
-    // SELECCIÓN MIS XV
+
+    // ── Selección de evento ──
     if (messageLower === 'evento_xv') {
       return handleEventSelection(from, 'xv', 'Mis XV');
     }
-    
-    // SELECCIÓN WEDDING
     if (messageLower === 'evento_boda') {
       return handleEventSelection(from, 'wedding', 'Wedding');
     }
-    
-    // SELECCIÓN PARTY
     if (messageLower === 'evento_otro') {
       return handleEventSelection(from, 'party', 'Party');
     }
 
-
- // 🟢 Respuestas a los botones
-
-    // SELECCIÓN MIS XV
+    // ── Respuestas a botones de paquetes ──
     if (messageLower === 'ver_paquete_xv') {
       return handlePackage(
         from,
@@ -718,8 +720,6 @@ if (['info', 'costos', 'hola', 'precio', 'información'].some(word => messageLow
         "http://cami-cam.com/wp-content/uploads/2025/02/Audio-Guest-Book.mp4"
       );
     }
-
-    // SELECCIÓN WEDDING
     if (messageLower === 'ver_paquete_wedding') {
       return handlePackage(
         from,
@@ -732,8 +732,6 @@ if (['info', 'costos', 'hola', 'precio', 'información'].some(word => messageLow
         "http://cami-cam.com/wp-content/uploads/2025/02/Audio-Guest-Book.mp4"
       );
     }
-
-    // SELECCIÓN PARTY
     if (messageLower === 'ver_paquete_party') {
       return handlePackage(
         from,
@@ -747,53 +745,46 @@ if (['info', 'costos', 'hola', 'precio', 'información'].some(word => messageLow
       );
     }
 
-    // 🟢 Validar si al usuario le interesa el paquete
+    // ── Validar si al usuario le interesa el paquete ──
     if (messageLower === 'reservar') {
-      await sendWhatsAppMessage(from, '¡De acuerdo!\n\n Para separar solicitamos un anticipo de $500, el resto puede ser el día del evento.\n\n🗓️ Por favor dime tu fecha para revisar disponibilidad (formato: DD/MM/AAAA).');
-      userContext[from].estado = "esperando_fecha"; // Cambiar el estado del usuario
+      await sendWhatsAppMessage(from, '¡De acuerdo!\n\nPara separar solicitamos un anticipo de $500, el resto puede ser el día del evento.\n\n🗓️ Por favor dime tu fecha para revisar disponibilidad (formato: DD/MM/AAAA).');
+      userContext[from].estado = "esperando_fecha";
       return true;
     }
 
-    
-      // 🟢 Manejar la fecha proporcionada por el usuario
-      if (userContext[from].estado === "esperando_fecha") {
-        const fechaUsuario = messageLower.trim();
-  
-        // Validar el formato de la fecha
-        if (!isValidDate(fechaUsuario)) {
-          await sendWhatsAppMessage(from, '⚠️ Formato de fecha incorrecto. Por favor, ingresa la fecha en el formato DD/MM/AAAA.');
-          return true;
-        }
-  
-        // Verificar disponibilidad
-        if (!checkAvailability(fechaUsuario)) {
-          await sendWhatsAppMessage(from, `Lo siento, la fecha ${fechaUsuario} no está disponible. Por favor, elige otra fecha.`);
-          return true;
-        }
-  
-        // Si la fecha está disponible, confirmar la reserva
-        userContext[from].fecha = fechaUsuario; // Guardar la fecha en el contexto
-        await sendWhatsAppMessage(from, `✅ ¡Perfecto! La fecha ${fechaUsuario} está disponible.\n\nPara confirmar tu reserva, por favor realiza el anticipo de $500 a la siguiente cuenta:\n\n💳 Banco: XYZ\n📌 CLABE: 123456789012345678\n👤 Titular: Camicam Photobooth`);
-  
-        // Cambiar el estado del usuario a "confirmando_pago"
-        userContext[from].estado = "confirmando_pago";
+    // ── Manejar la fecha proporcionada ──
+    if (userContext[from].estado === "esperando_fecha") {
+      const fechaUsuario = messageLower.trim();
+      if (!isValidDate(fechaUsuario)) {
+        await sendWhatsAppMessage(from, '⚠️ Formato de fecha incorrecto. Por favor, ingresa la fecha en el formato DD/MM/AAAA.');
         return true;
       }
+      if (!checkAvailability(fechaUsuario)) {
+        await sendWhatsAppMessage(from, `Lo siento, la fecha ${fechaUsuario} no está disponible. Por favor, elige otra fecha.`);
+        return true;
+      }
+      userContext[from].fecha = fechaUsuario;
+      await sendWhatsAppMessage(from, `✅ ¡Perfecto! La fecha ${fechaUsuario} está disponible.\n\nPara confirmar tu reserva, realiza el anticipo de $500 a la siguiente cuenta:\n\n💳 Banco: XYZ\n📌 CLABE: 123456789012345678\n👤 Titular: Camicam Photobooth`);
+      userContext[from].estado = "confirmando_pago";
+      return true;
+    }
 
-    // 🟢 Validar si el usuario quiere "Armar mi paquete"
+    // ── Validar si el usuario quiere "Armar mi paquete" ──
     if (messageLower === 'armar_paquete') {
       await sendWhatsAppMessage(from, '🔗 Para armar tu paquete personalizado, visita nuestro cotizador en el siguiente enlace:\n🌐 www.cami-cam.com/cotizador/');
       return true;
     }
 
-      // 🟢 Manejar el botón "Ver videos"
-      if (messageLower === 'ver_videos') {
-        await sendWhatsAppMessage(from, 'Aquí tienes algunos videos de nuestros servicios:');
-        await sendWhatsAppVideo(from, 'http://cami-cam.com/wp-content/uploads/2025/02/Audio-Guest-Book.mp4', 'Audio Guest Book');
-        await sendWhatsAppVideo(from, 'http://cami-cam.com/wp-content/uploads/2025/02/LETRAS-GIGANTES-ILUMINADAS.mp4', 'Letras Gigantes');
-        await sendWhatsAppVideo(from, 'http://cami-cam.com/wp-content/uploads/2025/02/LLUVIA-DE-MARIPOSAS-2.0.mp4', 'Lluvia de Mariposas');
-        return true;
-      }
+    // ── Manejar el botón "Ver videos" ──
+    if (messageLower === 'ver_videos') {
+      await sendWhatsAppMessage(from, 'Aquí tienes algunos videos de nuestros servicios:');
+      await sendWhatsAppVideo(from, 'http://cami-cam.com/wp-content/uploads/2025/02/Audio-Guest-Book.mp4', 'Audio Guest Book');
+      await sendWhatsAppVideo(from, 'http://cami-cam.com/wp-content/uploads/2025/02/LETRAS-GIGANTES-ILUMINADAS.mp4', 'Letras Gigantes');
+      await sendWhatsAppVideo(from, 'http://cami-cam.com/wp-content/uploads/2025/02/LLUVIA-DE-MARIPOSAS-2.0.mp4', 'Lluvia de Mariposas');
+      return true;
+    }
+
+    // Aquí se pueden agregar más condiciones según el flujo
 
   } catch (error) {
     console.error("❌ Error en handleUserMessage:", error.message);
@@ -801,6 +792,7 @@ if (['info', 'costos', 'hola', 'precio', 'información'].some(word => messageLow
     return false;
   }
 }
+
 
 ///-------------------------------------------------------------///
 
