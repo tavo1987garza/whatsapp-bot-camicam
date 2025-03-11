@@ -351,10 +351,16 @@ async function sendWhatsAppVideo(to, videoUrl, caption) {
       }
     });
     console.log('✅ Video enviado:', response.data);
+
+    // Reportar al CRM con un resumen del video enviado.
+    const resumen = `Video enviado: ${videoUrl}\nCaption: ${caption}`;
+    await reportMessageToCRM(to, resumen, "enviado");
+
   } catch (error) {
     console.error('❌ Error al enviar el video:', error.response?.data || error.message);
   }
 }
+
 
 ///Fucion para enviar imagenes
 async function sendImageMessage(to, imageUrl, caption) {
@@ -378,10 +384,16 @@ async function sendImageMessage(to, imageUrl, caption) {
       },
     });
     console.log('Imagen enviada:', response.data);
+
+    // Reportar al CRM
+    const resumen = `Imagen enviada: ${imageUrl}\nCaption: ${caption}`;
+    await reportMessageToCRM(to, resumen, "enviado");
+
   } catch (error) {
     console.error('Error al enviar imagen:', error.response?.data || error.message);
   }
 }
+
 
 ////Funcion para enviar Listas Interactivas
 async function sendWhatsAppList(to, header, body, buttonText, sections) {
@@ -419,6 +431,14 @@ async function sendWhatsAppList(to, header, body, buttonText, sections) {
     });
 
     console.log("✅ Lista interactiva enviada:", response.data);
+
+    // Construir un resumen que incluya header, body, botón y las secciones
+    let resumen = `${header}\n${body}\nBotón: ${buttonText}\nSecciones: `;
+    resumen += sections.map(section => {
+      return `${section.title}: ${section.rows.map(row => row.title).join(', ')}`;
+    }).join(' | ');
+    await reportMessageToCRM(to, resumen, "enviado");
+
   } catch (error) {
     console.error("❌ Error al enviar lista interactiva:", error.response?.data || error.message);
   }
