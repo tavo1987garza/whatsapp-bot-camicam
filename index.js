@@ -340,14 +340,23 @@ async function sendWhatsAppVideo(to, videoUrl, caption) {
     });
     console.log('✅ Video enviado:', response.data);
 
-    // Reportar al CRM con un resumen del video enviado.
-    const resumen = `Video enviado: ${videoUrl}\nCaption: ${caption}`;
+    // Construir un resumen HTML que incluya el video y el caption (si existe)
+    const resumen = `
+      <div>
+        <video controls style="max-width:200px;">
+          <source src="${videoUrl}" type="video/mp4">
+          Tu navegador no soporta la etiqueta de video.
+        </video>
+        ${ caption ? `<p>Caption: ${caption}</p>` : '' }
+      </div>
+    `;
     await reportMessageToCRM(to, resumen, "enviado");
 
   } catch (error) {
     console.error('❌ Error al enviar el video:', error.response?.data || error.message);
   }
 }
+
 
 
 ///Fucion para enviar imagenes
@@ -376,7 +385,6 @@ async function sendImageMessage(to, imageUrl, caption) {
     // Construir un resumen HTML para reportar en el CRM
     const resumen = `
       <div>
-        <p>Imagen enviada:</p>
         <img src="${imageUrl}" alt="Imagen enviada" style="max-width:200px;">
         ${ caption ? `<p>Caption: ${caption}</p>` : '' }
       </div>
