@@ -224,14 +224,14 @@ async function reportMessageToCRM(to, message, tipo = "enviado") {
   }
 }
 
-
-// 📌 Función para enviar mensajes simples
 async function sendWhatsAppMessage(to, message) {
+  // Validar credenciales
   if (!process.env.WHATSAPP_PHONE_NUMBER_ID || !process.env.WHATSAPP_ACCESS_TOKEN) {
     console.error("❌ ERROR: Credenciales de WhatsApp no configuradas correctamente.");
     return;
   }
 
+  // Validar parámetros
   if (!to || !message) {
     console.error("❌ ERROR: El número de destino y el mensaje son obligatorios.");
     return;
@@ -246,6 +246,7 @@ async function sendWhatsAppMessage(to, message) {
   };
 
   try {
+    // Enviar mensaje a WhatsApp
     const response = await axios.post(url, data, {
       headers: {
         Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
@@ -255,9 +256,8 @@ async function sendWhatsAppMessage(to, message) {
     });
     console.log('✅ Mensaje enviado a WhatsApp:', response.data);
 
-    // Convertir el mensaje a HTML (aquí lo envolvemos en un párrafo)
-    const mensajeHTML = `<p>${message}</p>`;
-    await reportMessageToCRM(to, mensajeHTML, "enviado");
+    // Reportar mensaje al CRM de forma paralela
+    await reportMessageToCRM(to, message, "enviado");
 
   } catch (error) {
     if (error.response) {
@@ -270,7 +270,6 @@ async function sendWhatsAppMessage(to, message) {
   }
 }
 
-
 // 📌 Función para enviar mensajes interactivos con botones
 async function sendInteractiveMessage(to, body, buttons) {
   const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
@@ -282,7 +281,9 @@ async function sendInteractiveMessage(to, body, buttons) {
     type: 'interactive',
     interactive: {
       type: 'button',
-      body: { text: body },
+      body: {
+        text: body
+      },
       action: {
         buttons: buttons.map(button => ({
           type: 'reply',
@@ -304,22 +305,15 @@ async function sendInteractiveMessage(to, body, buttons) {
     });
     console.log('Mensaje interactivo enviado:', response.data);
 
-    // Construir un resumen HTML que incluya el body y los títulos de los botones
-    const resumen = `
-      <div>
-        <p>${body}</p>
-        <ul>
-          ${buttons.map(b => `<li>${b.title}</li>`).join('')}
-        </ul>
-      </div>
-    `;
-    await reportMessageToCRM(to, resumen, "enviado");
+     // Generar un resumen para reportar: incluir el body y los títulos de los botones.
+     const resumen = `${body}\nOpciones: ${buttons.map(b => b.title).join(', ')}`;
+     await reportMessageToCRM(to, resumen, "enviado");
+
 
   } catch (error) {
     console.error('Error al enviar mensaje interactivo:', error.response?.data || error.message);
   }
 }
-
 
 
 
@@ -804,7 +798,71 @@ if (['info', 'costos', 'hola', 'precio', 'información'].some(word => messageLow
 
 ///-------------------------------------------------------------///
 
+// 📌 Función para enviar mensajes de texto
 
+/*async function sendWhatsAppMessage(to, message) {
+    // ✅ Validación de credenciales antes de ejecutar
+    if (!process.env.WHATSAPP_PHONE_NUMBER_ID || !process.env.WHATSAPP_ACCESS_TOKEN) {
+        console.error("❌ ERROR: Credenciales de WhatsApp no configuradas correctamente.");
+        return;
+    }
+
+    // ✅ Validación de parámetros antes de continuar
+    if (!to || !message) {
+        console.error("❌ ERROR: El número de destino y el mensaje son obligatorios.");
+        return;
+    }
+
+    const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+
+    const data = {
+        messaging_product: 'whatsapp',
+        to: to,
+        type: 'text',
+        text: { body: message }
+    };
+
+    try {
+        // ✅ Enviar mensaje a WhatsApp
+        const response = await axios.post(url, data, {
+            headers: {
+                Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+                'Content-Type': 'application/json'
+            },
+            timeout: 5000  // ⏳ Agregar un timeout de 5 segundos
+        });
+
+        console.log('✅ Mensaje enviado a WhatsApp:', response.data);
+
+        // ✅ Reportar mensaje al CRM en paralelo
+        const crmUrl = "https://camicam-crm-d78af2926170.herokuapp.com/recibir_mensaje";
+        const crmData = {
+            plataforma: "WhatsApp",
+            remitente: to,
+            mensaje: message,
+            tipo: "enviado"
+        };
+
+        const [crmResponse] = await Promise.allSettled([
+            axios.post(crmUrl, crmData, { timeout: 5000 })
+        ]);
+
+        if (crmResponse.status === "fulfilled") {
+            console.log("✅ Mensaje reportado al CRM correctamente");
+        } else {
+            console.error("❌ Error al reportar al CRM:", crmResponse.reason.response?.data || crmResponse.reason.message);
+        }
+
+    } catch (error) {
+        if (error.response) {
+            console.error('❌ Error en la respuesta de WhatsApp:', error.response.data);
+        } else if (error.request) {
+            console.error('❌ No se recibió respuesta de WhatsApp:', error.request);
+        } else {
+            console.error('❌ Error en la solicitud:', error.message);
+        }
+    }
+}*/
 
 
 
