@@ -623,10 +623,10 @@ function checkAvailability(dateString) {
 async function handleUserMessage(from, userMessage, buttonReply) {
   const messageLower = buttonReply ? buttonReply.toLowerCase() : userMessage.toLowerCase();
 
-  // Inicializar el contexto del usuario si no existe
+  // Inicializar el contexto del usuario si no existe, asumiendo "Contacto Inicial" para nuevos leads.
   if (!userContext[from]) {
     userContext[from] = {
-      estado: "inicio", // Estado inicial
+      estado: "Contacto Inicial", // Estado inicial para nuevos clientes
       tipoEvento: null,
       nombre: null,
       fecha: null,
@@ -635,11 +635,10 @@ async function handleUserMessage(from, userMessage, buttonReply) {
     };
   }
 
-  // Obtener el contexto actual del usuario
   const context = userContext[from];
 
   try {
-    // Función para enviar mensajes con indicador de escritura y control de estado
+    // Función que envía mensajes con indicador de escritura y verifica que el estado no cambie.
     async function sendMessageWithTypingWithState(from, message, delayTime, estadoEsperado) {
       await activateTypingIndicator(from);
       await delay(delayTime);
@@ -649,21 +648,49 @@ async function handleUserMessage(from, userMessage, buttonReply) {
       await deactivateTypingIndicator(from);
     }
 
-    // Función para enviar mensajes interactivos con imagen y control de estado
+    // Función para enviar mensajes interactivos con imagen y control de estado.
     async function sendInteractiveMessageWithImageWithState(from, message, imageUrl, options, estadoEsperado) {
       await sendMessageWithTypingWithState(from, message, 3000, estadoEsperado);
-      if (userContext[from].estado !== estadoEsperado) return; // Abortamos si el estado cambió
+      if (userContext[from].estado !== estadoEsperado) return;
       await sendImageMessage(from, imageUrl);
       await delay(10000);
       if (userContext[from].estado !== estadoEsperado) return;
       await sendInteractiveMessage(from, options.message, options.buttons);
     }
 
-    // ── Flujo inicial ──
+    // Función para intentar obtener respuesta con OpenAI.
+    async function handleOpenAIResponse(from, userMessage) {
+      try {
+        const response = await openai.chat.completions.create({
+          model: "gpt-3.5-turbo",
+          messages: [
+            { role: "system", content: "Eres un asistente de CRM que responde de forma profesional y concisa. Si no puedes responder, indica que se requiere intervención humana." },
+            { role: "user", content: userMessage }
+          ],
+          temperature: 0.7,
+          max_tokens: 150,
+        });
+        const answer = response.choices[0].message.content;
+        if (!answer || answer.trim() === "") {
+          throw new Error("Respuesta vacía");
+        }
+        await sendWhatsAppMessage(from, answer);
+      } catch (error) {
+        console.error("Error de OpenAI:", error.message);
+        // Notificar al administrador para intervención.
+        const adminMessage = `El cliente ${from} dijo: "${userMessage}" y OpenAI no pudo responder. Se requiere intervención humana.`;
+        await sendWhatsAppMessage(process.env.ADMIN_WHATSAPP_NUMBER, adminMessage);
+        // Notificar al cliente.
+        await sendWhatsAppMessage(from, "Tu consulta requiere intervención de un agente. Pronto nos pondremos en contacto contigo.");
+      }
+    }
+
+    // ── Flujo automatizado para clientes nuevos (Contacto Inicial) ──
     if (['info', 'costos', 'hola', 'precio', 'información'].some(word => messageLower.includes(word))) {
-      userContext[from].estado = "inicio";
-      await sendMessageWithTypingWithState(from, '¡Hola 👋! Soy tu asistente virtual de *Camicam Photobooth*', 4000, "inicio");
-      await sendMessageWithTypingWithState(from, 'Para brindarte la mejor atención', 2500, "inicio");
+      // Si el cliente es nuevo, forzamos el estado "Contacto Inicial"
+      userContext[from].estado = "Contacto Inicial";
+      await sendMessageWithTypingWithState(from, '¡Hola 👋! Soy tu asistente virtual de *Camicam Photobooth*', 4000, "Contacto Inicial");
+      await sendMessageWithTypingWithState(from, 'Para brindarte la mejor atención', 2500, "Contacto Inicial");
       await sendInteractiveMessage(from, 'Por favor selecciona el tipo de evento que tienes 👇', [
         { id: 'evento_xv', title: '🎉 XV Años' },
         { id: 'evento_boda', title: '💍 Boda' },
@@ -674,10 +701,8 @@ async function handleUserMessage(from, userMessage, buttonReply) {
 
     // ── Función para manejar la selección de eventos ──
     async function handleEventSelection(from, eventType, packageName) {
-      // Actualizamos el estado del usuario según la opción seleccionada
       userContext[from].estado = `evento_${eventType}_seleccionado`;
       const estadoEsperado = userContext[from].estado;
-
       const message = 'Conoce los servicios que ofrecemos en *Camicam Photobooth* 🎉';
       const imageUrl = 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg';
       const options = {
@@ -691,7 +716,6 @@ async function handleUserMessage(from, userMessage, buttonReply) {
           { id: `ver_paquete_${eventType}`, title: `🎉 Ver PAQUETE ${packageName.toUpperCase()}` }
         ]
       };
-
       await sendInteractiveMessageWithImageWithState(from, message, imageUrl, options, estadoEsperado);
       return true;
     }
@@ -784,7 +808,18 @@ async function handleUserMessage(from, userMessage, buttonReply) {
       return true;
     }
 
-    // Aquí se pueden agregar más condiciones según el flujo
+    // ── Caso en que el mensaje no sea reconocido ──
+    if (userContext[from].estado === "Contacto Inicial") {
+      // Para nuevos clientes se mantiene el flujo automatizado (por ejemplo, mostrando preguntas frecuentes)
+      console.log("❓ Mensaje no reconocido. Mostrando opción de Preguntas Frecuentes.");
+      await sendInteractiveMessage(from, "No estoy seguro de cómo responder a eso. ¿Quieres ver nuestras preguntas frecuentes?", [
+        { id: 'ver_faqs', title: 'Preg. Frecuentes' }
+      ]);
+    } else {
+      // Para clientes que ya no son nuevos, se intenta responder con OpenAI
+      console.log("❓ Mensaje no reconocido. Intentando respuesta con OpenAI.");
+      await handleOpenAIResponse(from, userMessage);
+    }
 
   } catch (error) {
     console.error("❌ Error en handleUserMessage:", error.message);
@@ -792,6 +827,7 @@ async function handleUserMessage(from, userMessage, buttonReply) {
     return false;
   }
 }
+
 
 
 ///-------------------------------------------------------------///
