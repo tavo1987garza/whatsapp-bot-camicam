@@ -218,24 +218,69 @@ app.post('/enviar_mensaje', async (req, res) => {
   res.sendStatus(200);
 });
 
-/*
-//Función para enviar datos al CRM
-async function sendToCRM(contactData) {
-  const crmUrl = 'http://127.0.0.1:5000/api/leads';
+
+async function reportMessageToCRM(to, message, tipo = "enviado") {
+  const crmUrl = "https://camicam-crm-d78af2926170.herokuapp.com/recibir_mensaje";
+  const crmData = {
+    plataforma: "WhatsApp",
+    remitente: to,
+    mensaje: message,
+    tipo: tipo
+  };
+
   try {
-    console.log('Enviando datos al CRM:', contactData);
-    const response = await axios.post(crmUrl, contactData, {
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-    console.log('Datos enviados al CRM:', response.data);
+    const response = await axios.post(crmUrl, crmData, { timeout: 5000 });
+    console.log("✅ Reporte al CRM exitoso:", response.data);
   } catch (error) {
-    console.error('Error al enviar datos al CRM:', error.message);
-  } finally {
-    await new Promise(resolve => setTimeout(resolve, 500)); // Retardo de 500ms
+    console.error("❌ Error al reportar al CRM:", error.response?.data || error.message);
   }
-}*/
+}
+
+async function sendWhatsAppMessage(to, message) {
+  // Validar credenciales
+  if (!process.env.WHATSAPP_PHONE_NUMBER_ID || !process.env.WHATSAPP_ACCESS_TOKEN) {
+    console.error("❌ ERROR: Credenciales de WhatsApp no configuradas correctamente.");
+    return;
+  }
+
+  // Validar parámetros
+  if (!to || !message) {
+    console.error("❌ ERROR: El número de destino y el mensaje son obligatorios.");
+    return;
+  }
+
+  const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+  const data = {
+    messaging_product: 'whatsapp',
+    to: to,
+    type: 'text',
+    text: { body: message }
+  };
+
+  try {
+    // Enviar mensaje a WhatsApp
+    const response = await axios.post(url, data, {
+      headers: {
+        Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      timeout: 5000
+    });
+    console.log('✅ Mensaje enviado a WhatsApp:', response.data);
+
+    // Reportar mensaje al CRM de forma paralela
+    await reportMessageToCRM(to, message, "enviado");
+
+  } catch (error) {
+    if (error.response) {
+      console.error('❌ Error en la respuesta de WhatsApp:', error.response.data);
+    } else if (error.request) {
+      console.error('❌ No se recibió respuesta de WhatsApp:', error.request);
+    } else {
+      console.error('❌ Error en la solicitud:', error.message);
+    }
+  }
+}
 
 // 📌 Función para enviar mensajes interactivos con botones
 async function sendInteractiveMessage(to, body, buttons) {
@@ -271,10 +316,17 @@ async function sendInteractiveMessage(to, body, buttons) {
       },
     });
     console.log('Mensaje interactivo enviado:', response.data);
+
+     // Generar un resumen para reportar: incluir el body y los títulos de los botones.
+     const resumen = `${body}\nOpciones: ${buttons.map(b => b.title).join(', ')}`;
+     await reportMessageToCRM(to, resumen, "enviado");
+
+
   } catch (error) {
     console.error('Error al enviar mensaje interactivo:', error.response?.data || error.message);
   }
 }
+
 
 
 // 📌 Función para enviar videos
@@ -726,7 +778,7 @@ if (['info', 'costos', 'hola', 'precio', 'información'].some(word => messageLow
 
 // 📌 Función para enviar mensajes de texto
 
-async function sendWhatsAppMessage(to, message) {
+/*async function sendWhatsAppMessage(to, message) {
     // ✅ Validación de credenciales antes de ejecutar
     if (!process.env.WHATSAPP_PHONE_NUMBER_ID || !process.env.WHATSAPP_ACCESS_TOKEN) {
         console.error("❌ ERROR: Credenciales de WhatsApp no configuradas correctamente.");
@@ -788,7 +840,7 @@ async function sendWhatsAppMessage(to, message) {
             console.error('❌ Error en la solicitud:', error.message);
         }
     }
-}
+}*/
 
 
 
