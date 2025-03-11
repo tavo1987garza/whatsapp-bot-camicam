@@ -114,7 +114,7 @@ app.get('/test-interactive', async (req, res) => {
 
 
 // 📌 Webhook para manejar mensajes de WhatsApp
-app.post('/webhook', async (req, res) => {
+/*app.post('/webhook', async (req, res) => {
   console.log("📩 Webhook activado:", JSON.stringify(req.body, null, 2));
 
   const message = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
@@ -216,7 +216,98 @@ app.post('/enviar_mensaje', async (req, res) => {
   }
 
   res.sendStatus(200);
+});*/
+app.post('/webhook', async (req, res) => {
+  console.log("📩 Webhook activado:", JSON.stringify(req.body, null, 2));
+
+  const message = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+  if (!message) return res.sendStatus(404);
+
+  const from = message.from;
+  let userMessage = "";
+  if (message.text && message.text.body) {
+    userMessage = message.text.body;
+  } else if (message.interactive && message.interactive.button_reply) {
+    // Extraemos el título del botón; si no está, se usa el id
+    userMessage = message.interactive.button_reply.title || message.interactive.button_reply.id;
+  } else if (message.interactive && message.interactive.list_reply) {
+    userMessage = message.interactive.list_reply.title || message.interactive.list_reply.id;
+  }
+  const plataforma = "WhatsApp";
+
+  console.log(`📩 Enviando mensaje de ${from} al CRM: ${userMessage}`);
+
+  try {
+    const response = await axios.post('https://camicam-crm-d78af2926170.herokuapp.com/recibir_mensaje', {
+      plataforma: plataforma,
+      remitente: from,
+      mensaje: userMessage
+    });
+    console.log("✅ Respuesta del CRM:", response.data);
+  } catch (error) {
+    console.error("❌ Error al enviar mensaje al CRM:", error.message);
+  }
+
+  // Los logs adicionales para depuración
+  const buttonReply = message?.interactive?.button_reply?.id || '';
+  const listReply = message?.interactive?.list_reply?.id || '';
+  const messageLower = buttonReply ? buttonReply.toLowerCase() : listReply ? listReply.toLowerCase() : userMessage.toLowerCase();
+
+  console.log("📌 Mensaje recibido:", userMessage);
+  console.log("🔘 Botón presionado:", buttonReply);
+  console.log("📄 Lista seleccionada:", listReply);
+
+  try {
+    // Ejemplo: manejo del botón "Preguntas Frecuentes"
+    if (buttonReply === 'ver_faqs') {
+      console.log("✅ Se detectó clic en el botón 'Preguntas Frecuentes'. Enviando lista...");
+     
+      await sendWhatsAppList(from, '📖 Preguntas Frecuentes', 'Selecciona una pregunta para obtener más información:', 'Ver preguntas', [
+        {
+          title: 'Preg Frecuentes',
+          rows: [
+            { id: 'faq_anticipo', title: '💰 Cómo separo mi fecha?', description: 'Separamos con $500. El resto el día del evento.' },
+            { id: 'faq_contrato', title: '📜 Hacen contrato?', description: 'Sí, se envía después del anticipo.' },
+            { id: 'faq_flete', title: 'Cuánto cobran de flete?', description: 'Depende de la ubicación. Pregunta para cotizar.' }
+          ]
+        }
+      ]);
+      return res.sendStatus(200);
+    }    
+
+    // Manejo de selección en listas interactivas
+    if (listReply) {
+      console.log("✅ Se detectó selección de lista:", listReply);
+      const faqAnswer = findFAQ(listReply);
+      if (faqAnswer) {
+        await sendWhatsAppMessage(from, faqAnswer);
+        return res.sendStatus(200);
+      }
+    }
+
+    // Manejo de preguntas frecuentes
+    if (await handleFAQs(from, userMessage)) {
+      return res.sendStatus(200);
+    }
+
+    // Pasar a handleUserMessage para otros casos
+    const handled = await handleUserMessage(from, userMessage, buttonReply);
+    if (handled) return res.sendStatus(200);
+
+    // Si no se reconoce el mensaje, sugerir la opción de preguntas frecuentes
+    console.log("❓ Mensaje no reconocido. Mostrando botón de Preguntas Frecuentes.");
+    await sendInteractiveMessage(from, "No estoy seguro de cómo responder a eso. ¿Quieres ver nuestras preguntas frecuentes?", [
+      { id: 'ver_faqs', title: 'Preg. Frecuentes' }
+    ]);
+
+  } catch (error) {
+    console.error("❌ Error al manejar el mensaje:", error.message);
+    await sendWhatsAppMessage(from, "Lo siento, ocurrió un error al procesar tu solicitud. Inténtalo nuevamente.");
+  }
+
+  res.sendStatus(200);
 });
+
 
 
 async function reportMessageToCRM(to, message, tipo = "enviado") {
