@@ -411,12 +411,12 @@ async function sendImageMessage(to, imageUrl, caption) {
 
 //oooooooooooooooooo   FUNCIONES PARA CALCULAR DISTANCIA Y FLETE   oooooooooooooooo//
 
-
-/**
+/*
+/** 
  * Geocodifica una dirección usando la API de Geocoding de Google.
  * @param {string} address - Dirección del evento.
  * @returns {Promise<{lat: number, lng: number}>} - Coordenadas del lugar.
- */
+ 
 async function geocodeAddress(address) {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
   const encodedAddress = encodeURIComponent(address);
@@ -443,7 +443,7 @@ async function geocodeAddress(address) {
  * @param {{lat: number, lng: number}} origin - Coordenadas de origen (empresa).
  * @param {{lat: number, lng: number}} destination - Coordenadas del destino (evento).
  * @returns {Promise<number>} - Distancia en kilómetros.
- */
+ 
 async function getRouteDistance(origin, destination) {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
   const url = 'https://routes.googleapis.com/directions/v2:computeRoutes';
@@ -492,7 +492,7 @@ async function getRouteDistance(origin, destination) {
  * @param {number} params.numberOfServices - Número de servicios solicitados.
  * @param {number} params.distance - Distancia en kilómetros.
  * @returns {number} - Costo del flete.
- */
+ 
 function calcularFlete({ isPackage = false, numberOfServices = 1, distance }) {
   const tarifa = 20; // $20 por km
   // Caso: paquete o más de 4 servicios y distancia <=15 km, flete gratuito.
@@ -507,7 +507,7 @@ function calcularFlete({ isPackage = false, numberOfServices = 1, distance }) {
  * Maneja la dirección del evento: geocodifica, calcula la distancia real y determina el costo de flete.
  * @param {string} from - Número del cliente.
  * @param {string} direccion - Dirección del evento proporcionada por el cliente.
- */
+ 
 async function manejarDireccionEvento(from, direccion) {
   try {
     // Coordenadas de la empresa (ejemplo: centro de Monterrey)
@@ -536,7 +536,7 @@ async function manejarDireccionEvento(from, direccion) {
     throw error;
   }
 }
-
+*/
 
 
 
