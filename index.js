@@ -424,6 +424,7 @@ async function geocodeAddress(address) {
 
   try {
     const response = await axios.get(url);
+    console.log("Respuesta de Geocoding:", JSON.stringify(response.data, null, 2));
     if (response.data.status === 'OK' && response.data.results.length > 0) {
       const location = response.data.results[0].geometry.location;
       return location; // { lat, lng }
@@ -435,6 +436,7 @@ async function geocodeAddress(address) {
     throw error;
   }
 }
+
 
 /**
  * Obtiene la distancia real (en km) entre dos puntos usando la Routes API de Google.
@@ -461,7 +463,8 @@ async function getRouteDistance(origin, destination) {
         "Content-Type": "application/json"
       }
     });
-    // Opcional: log para verificar la respuesta completa
+    console.log("Respuesta completa de Routes API:", JSON.stringify(response.data, null, 2));
+    
     // console.log("Respuesta completa de Routes API:", JSON.stringify(response.data, null, 2));
     if (
       response.data.routes &&
