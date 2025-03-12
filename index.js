@@ -408,6 +408,121 @@ async function sendImageMessage(to, imageUrl, caption) {
 }
 
 
+
+/**
+ * Función para geocodificar una dirección utilizando la API de Geocoding de Google.
+ * @param {string} address - Dirección del evento.
+ * @returns {Promise<{lat: number, lng: number}>} - Coordenadas del lugar.
+ */
+async function geocodeAddress(address) {
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  const encodedAddress = encodeURIComponent(address);
+  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${apiKey}`;
+
+  try {
+    const response = await axios.get(url);
+    if (response.data.status === 'OK' && response.data.results.length > 0) {
+      const location = response.data.results[0].geometry.location;
+      return location; // { lat, lng }
+    } else {
+      throw new Error("No se pudo geocodificar la dirección");
+    }
+  } catch (error) {
+    console.error("Error en geocoding:", error.message);
+    throw error;
+  }
+}
+
+/**
+ * Función para obtener la distancia real (en km) entre dos puntos usando la Routes API de Google.
+ * @param {{lat: number, lng: number}} origin - Coordenadas de origen (por ejemplo, la empresa).
+ * @param {{lat: number, lng: number}} destination - Coordenadas del destino (evento).
+ * @returns {Promise<number>} - Distancia en kilómetros.
+ */
+async function getRouteDistance(origin, destination) {
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  const url = 'https://routes.googleapis.com/directions/v2:computeRoutes';
+
+  const body = {
+    origin: { location: { latLng: { latitude: origin.lat, longitude: origin.lng } } },
+    destination: { location: { latLng: { latitude: destination.lat, longitude: destination.lng } } },
+    routingPreference: "TRAFFIC_AWARE", // OTRA opción: "TRAFFIC_AWARE_OPTIMAL"
+    travelMode: "DRIVE",
+    units: "METRIC"
+  };
+
+  try {
+    const response = await axios.post(`${url}?key=${apiKey}`, body);
+    if (response.data.routes && response.data.routes.length > 0) {
+      // Se asume que usamos la primera ruta y su primer tramo (leg)
+      const distanceMeters = response.data.routes[0].legs[0].distanceMeters;
+      const distanceKm = distanceMeters / 1000;
+      return distanceKm;
+    } else {
+      throw new Error("No se encontró ruta");
+    }
+  } catch (error) {
+    console.error("Error en Routes API:", error.response?.data || error.message);
+    throw error;
+  }
+}
+
+/**
+ * Función para calcular el costo del flete según la cantidad de servicios y la distancia.
+ * @param {Object} params
+ * @param {boolean} params.isPackage - Indica si se trata de un paquete (o si se solicitan más de 4 servicios).
+ * @param {number} params.numberOfServices - Número de servicios solicitados.
+ * @param {number} params.distance - Distancia en kilómetros.
+ * @returns {number} - Costo del flete.
+ */
+function calcularFlete({ isPackage = false, numberOfServices = 1, distance }) {
+  const tarifa = 20; // $20 por km
+  
+  // Caso 2: Si es un paquete (o más de 4 servicios) y la distancia es hasta 15 km, el flete es gratuito.
+  if ((isPackage || numberOfServices > 4) && distance <= 15) {
+    return 0;
+  }
+  // En los demás casos se cobra $20 por km.
+  return distance * tarifa;
+}
+
+/**
+ * Función para manejar la dirección del evento.
+ * Toma la dirección proporcionada por el cliente, obtiene sus coordenadas,
+ * calcula la distancia real desde la ubicación de la empresa y determina el costo de flete.
+ * @param {string} from - Número del cliente.
+ * @param {string} direccion - Dirección del evento enviada por el cliente.
+ */
+async function manejarDireccionEvento(from, direccion) {
+  try {
+    // Coordenadas de la empresa (por ejemplo, centro de Monterrey)
+    const coordsEmpresa = { lat: 25.686614, lng: -100.316113 };
+    
+    // Obtener las coordenadas del evento usando la API de Geocoding
+    const coordsEvento = await geocodeAddress(direccion);
+    console.log("Coordenadas del evento:", coordsEvento);
+
+    // Calcular la distancia real usando la Routes API
+    const distanciaKm = await getRouteDistance(coordsEmpresa, coordsEvento);
+    console.log(`La distancia calculada es: ${distanciaKm.toFixed(2)} km`);
+
+    // Determinar si se trata de un paquete o un servicio único.
+    // Esta información se puede almacenar en el userContext, según el flujo de tu bot.
+    const isPackage = userContext[from]?.isPackage || false;
+    const numberOfServices = userContext[from]?.numberOfServices || 1;
+
+    // Calcular el costo del flete según la lógica definida.
+    const flete = calcularFlete({ isPackage, numberOfServices, distance: distanciaKm });
+    console.log(`Costo de flete: $${flete}`);
+
+    // Enviar el costo al cliente.
+    await sendWhatsAppMessage(from, `El costo de flete para tu evento es: $${flete}`);
+  } catch (error) {
+    console.error("Error en manejarDireccionEvento:", error.message);
+    throw error;
+  }
+}
+
 //////////////////////////////////////////////////////////
 
 // 📌 Función para enviar mensajes con indicador de escritura
@@ -593,7 +708,9 @@ const responseCache = new NodeCache({ stdTTL: 3600 });
 // Función para construir el contexto a partir de tus objetos
 function construirContexto() {
   let contexto = 'Información de Servicios y Paquetes de Camicam Photobooth:\n\n';
-  
+ 
+  contexto += "Estamos ubicados en el centro de Monterrey, Nuevo León, México y atendemos eventos hasta 25 km a la redonda.\n\n";
+  contexto += "Cobramos flete, cuando .\n\n";
   contexto += 'Precios de Servicios:\n';
   contexto += `- Cabina de Fotos: $${preciosServicios.cabina_fotos}\n`;
   contexto += `- Cabina 360: $${preciosServicios.cabina_360}\n`;
@@ -662,17 +779,29 @@ Responde de forma profesional y concisa, basándote en la información anterior.
   return answer;
 }
 
+
 async function handleOpenAIResponse(from, userMessage) {
   try {
     const answer = await getResponseFromOpenAI(userMessage);
+    
+    // Envía la respuesta al cliente
     await sendWhatsAppMessage(from, answer);
+
+    // Verifica si la respuesta indica que no hay suficiente información
+    if (answer.includes("Lamentablemente, la información proporcionada no incluye detalles")) {
+      const adminMessage = `El cliente ${from} preguntó: "${userMessage}" y la respuesta fue: "${answer}". Se requiere intervención humana para proporcionar más detalles.`;
+      await sendWhatsAppMessage(process.env.ADMIN_WHATSAPP_NUMBER, adminMessage);
+    }
+    
   } catch (error) {
     console.error("Error de OpenAI:", error.message);
+    // En caso de error, notificar al administrador y al cliente.
     const adminMessage = `El cliente ${from} preguntó: "${userMessage}" y OpenAI no pudo responder. Se requiere intervención humana.`;
     await sendWhatsAppMessage(process.env.ADMIN_WHATSAPP_NUMBER, adminMessage);
     await sendWhatsAppMessage(from, "Tu consulta requiere intervención de un agente. Pronto nos pondremos en contacto contigo.");
   }
 }
+
 
 
 
@@ -783,6 +912,20 @@ async function handleOpenAIResponse(from, userMessage) {
       userContext[from].estado = "confirmando_pago";
       return true;
     }
+
+     // Detectar si el mensaje incluye una dirección (esto es solo un ejemplo; puedes ajustar la lógica de detección)
+  if (messageLower.includes("salón") || messageLower.includes("evento en") || messageLower.includes("en la quinta") || messageLower.includes("ubicado en")) {
+    try {
+      // Aquí se asume que el mensaje contiene la dirección del evento.
+      // Llama a la función que maneja la dirección y calcula el flete.
+      await manejarDireccionEvento(from, userMessage);
+      return true;
+    } catch (error) {
+      console.error("Error al manejar la dirección:", error.message);
+      await sendWhatsAppMessage(from, "Hubo un error al procesar la ubicación de tu evento. Por favor, inténtalo de nuevo.");
+      return true;
+    }
+  }
 
     // ── Validar si el usuario quiere "Armar mi paquete" ──
     if (messageLower === 'armar_paquete') {
