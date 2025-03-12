@@ -6,6 +6,8 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import axios from 'axios';
 import OpenAI from 'openai';
+import NodeCache from 'node-cache';
+
 
 // Cargar variables de entorno
 dotenv.config();
@@ -585,7 +587,6 @@ async function handleUserMessage(from, userMessage, buttonReply) {
     }
 
 
-    const NodeCache = require('node-cache');
 // Configuramos el caché para que las entradas expiren en 1 hora (3600 segundos)
 const responseCache = new NodeCache({ stdTTL: 3600 });
 
