@@ -409,8 +409,11 @@ async function sendImageMessage(to, imageUrl, caption) {
 
 
 
+//oooooooooooooooooo   FUNCIONES PARA CALCULAR DISTANCIA Y FLETE   oooooooooooooooo//
+
+
 /**
- * Función para geocodificar una dirección utilizando la API de Geocoding de Google.
+ * Geocodifica una dirección usando la API de Geocoding de Google.
  * @param {string} address - Dirección del evento.
  * @returns {Promise<{lat: number, lng: number}>} - Coordenadas del lugar.
  */
@@ -434,8 +437,8 @@ async function geocodeAddress(address) {
 }
 
 /**
- * Función para obtener la distancia real (en km) entre dos puntos usando la Routes API de Google.
- * @param {{lat: number, lng: number}} origin - Coordenadas de origen (por ejemplo, la empresa).
+ * Obtiene la distancia real (en km) entre dos puntos usando la Routes API de Google.
+ * @param {{lat: number, lng: number}} origin - Coordenadas de origen (empresa).
  * @param {{lat: number, lng: number}} destination - Coordenadas del destino (evento).
  * @returns {Promise<number>} - Distancia en kilómetros.
  */
@@ -446,19 +449,31 @@ async function getRouteDistance(origin, destination) {
   const body = {
     origin: { location: { latLng: { latitude: origin.lat, longitude: origin.lng } } },
     destination: { location: { latLng: { latitude: destination.lat, longitude: destination.lng } } },
-    routingPreference: "TRAFFIC_AWARE", // OTRA opción: "TRAFFIC_AWARE_OPTIMAL"
+    routingPreference: "TRAFFIC_AWARE",
     travelMode: "DRIVE",
     units: "METRIC"
   };
 
   try {
-    const response = await axios.post(`${url}?key=${apiKey}`, body);
-    if (response.data.routes && response.data.routes.length > 0) {
-      // Se asume que usamos la primera ruta y su primer tramo (leg)
+    const response = await axios.post(`${url}?key=${apiKey}`, body, {
+      headers: {
+        "X-Goog-FieldMask": "routes.distanceMeters,routes.duration",
+        "Content-Type": "application/json"
+      }
+    });
+    // Opcional: log para verificar la respuesta completa
+    // console.log("Respuesta completa de Routes API:", JSON.stringify(response.data, null, 2));
+    if (
+      response.data.routes &&
+      response.data.routes.length > 0 &&
+      response.data.routes[0].legs &&
+      response.data.routes[0].legs.length > 0
+    ) {
       const distanceMeters = response.data.routes[0].legs[0].distanceMeters;
       const distanceKm = distanceMeters / 1000;
       return distanceKm;
     } else {
+      console.error("Respuesta de Routes API incompleta:", JSON.stringify(response.data, null, 2));
       throw new Error("No se encontró ruta");
     }
   } catch (error) {
@@ -468,37 +483,34 @@ async function getRouteDistance(origin, destination) {
 }
 
 /**
- * Función para calcular el costo del flete según la cantidad de servicios y la distancia.
+ * Calcula el costo del flete según la cantidad de servicios y la distancia.
  * @param {Object} params
- * @param {boolean} params.isPackage - Indica si se trata de un paquete (o si se solicitan más de 4 servicios).
+ * @param {boolean} params.isPackage - Indica si es un paquete (o si se solicitan más de 4 servicios).
  * @param {number} params.numberOfServices - Número de servicios solicitados.
  * @param {number} params.distance - Distancia en kilómetros.
  * @returns {number} - Costo del flete.
  */
 function calcularFlete({ isPackage = false, numberOfServices = 1, distance }) {
   const tarifa = 20; // $20 por km
-  
-  // Caso 2: Si es un paquete (o más de 4 servicios) y la distancia es hasta 15 km, el flete es gratuito.
+  // Caso: paquete o más de 4 servicios y distancia <=15 km, flete gratuito.
   if ((isPackage || numberOfServices > 4) && distance <= 15) {
     return 0;
   }
-  // En los demás casos se cobra $20 por km.
+  // En otros casos, se cobra $20 por km.
   return distance * tarifa;
 }
 
 /**
- * Función para manejar la dirección del evento.
- * Toma la dirección proporcionada por el cliente, obtiene sus coordenadas,
- * calcula la distancia real desde la ubicación de la empresa y determina el costo de flete.
+ * Maneja la dirección del evento: geocodifica, calcula la distancia real y determina el costo de flete.
  * @param {string} from - Número del cliente.
- * @param {string} direccion - Dirección del evento enviada por el cliente.
+ * @param {string} direccion - Dirección del evento proporcionada por el cliente.
  */
 async function manejarDireccionEvento(from, direccion) {
   try {
-    // Coordenadas de la empresa (por ejemplo, centro de Monterrey)
+    // Coordenadas de la empresa (ejemplo: centro de Monterrey)
     const coordsEmpresa = { lat: 25.686614, lng: -100.316113 };
     
-    // Obtener las coordenadas del evento usando la API de Geocoding
+    // Geocodificar la dirección del evento
     const coordsEvento = await geocodeAddress(direccion);
     console.log("Coordenadas del evento:", coordsEvento);
 
@@ -506,22 +518,46 @@ async function manejarDireccionEvento(from, direccion) {
     const distanciaKm = await getRouteDistance(coordsEmpresa, coordsEvento);
     console.log(`La distancia calculada es: ${distanciaKm.toFixed(2)} km`);
 
-    // Determinar si se trata de un paquete o un servicio único.
-    // Esta información se puede almacenar en el userContext, según el flujo de tu bot.
+    // Determinar si es paquete o servicio único (esta info la podrías tener en tu userContext)
     const isPackage = userContext[from]?.isPackage || false;
     const numberOfServices = userContext[from]?.numberOfServices || 1;
 
-    // Calcular el costo del flete según la lógica definida.
+    // Calcular el costo del flete
     const flete = calcularFlete({ isPackage, numberOfServices, distance: distanciaKm });
     console.log(`Costo de flete: $${flete}`);
 
-    // Enviar el costo al cliente.
+    // Enviar el costo al cliente
     await sendWhatsAppMessage(from, `El costo de flete para tu evento es: $${flete}`);
   } catch (error) {
     console.error("Error en manejarDireccionEvento:", error.message);
     throw error;
   }
 }
+
+// Ejemplo de función para enviar mensajes de WhatsApp (debes implementar la lógica real en tu proyecto)
+async function sendWhatsAppMessage(to, message) {
+  // Aquí iría la lógica para enviar un mensaje vía la API de WhatsApp.
+  console.log(`Enviando mensaje a ${to}: ${message}`);
+}
+
+
+// Función principal de prueba
+async function main() {
+  try {
+    // En producción, 'direccionEvento' se extraería del mensaje del cliente.
+    const direccionEvento = "salón Espacio Fundidora, Monterrey, Nuevo León, México";
+    // Llamamos a manejarDireccionEvento con el número del cliente y la dirección proporcionada.
+    await manejarDireccionEvento("5218133971595", direccionEvento);
+  } catch (error) {
+    console.error("Error en el flujo:", error.message);
+  }
+}
+
+main();
+
+
+//oooooooooooooooooooooooooooooooo          oooooooooooooooooooooooooooooooooooo//
+
 
 //////////////////////////////////////////////////////////
 
