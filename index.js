@@ -538,19 +538,7 @@ async function manejarDireccionEvento(from, direccion) {
 }
 
 
-// Función principal de prueba
-async function main() {
-  try {
-    // En producción, 'direccionEvento' se extraería del mensaje del cliente.
-    const direccionEvento = "salón Espacio Fundidora, Monterrey, Nuevo León, México";
-    // Llamamos a manejarDireccionEvento con el número del cliente y la dirección proporcionada.
-    await manejarDireccionEvento("5218133971595", direccionEvento);
-  } catch (error) {
-    console.error("Error en el flujo:", error.message);
-  }
-}
 
-main();
 
 
 //oooooooooooooooooooooooooooooooo          oooooooooooooooooooooooooooooooooooo//
