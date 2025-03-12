@@ -207,6 +207,7 @@ async function handleFAQs(from, userMessage) {
 
 
 
+
 async function reportMessageToCRM(to, message, tipo = "enviado") {
   const crmUrl = "https://camicam-crm-d78af2926170.herokuapp.com/recibir_mensaje";
   const crmData = {
@@ -215,14 +216,16 @@ async function reportMessageToCRM(to, message, tipo = "enviado") {
     mensaje: message,
     tipo: tipo
   };
-
+  console.log("Enviando al CRM:", crmData);
   try {
     const response = await axios.post(crmUrl, crmData, { timeout: 5000 });
     console.log("✅ Reporte al CRM exitoso:", response.data);
   } catch (error) {
     console.error("❌ Error al reportar al CRM:", error.response?.data || error.message);
+    throw error;
   }
 }
+
 
 
 // 📌 Función para enviar mensajes simples
