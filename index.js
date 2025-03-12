@@ -534,12 +534,6 @@ async function manejarDireccionEvento(from, direccion) {
   }
 }
 
-// Ejemplo de función para enviar mensajes de WhatsApp (debes implementar la lógica real en tu proyecto)
-async function sendWhatsAppMessage(to, message) {
-  // Aquí iría la lógica para enviar un mensaje vía la API de WhatsApp.
-  console.log(`Enviando mensaje a ${to}: ${message}`);
-}
-
 
 // Función principal de prueba
 async function main() {
