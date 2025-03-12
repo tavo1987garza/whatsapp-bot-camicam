@@ -556,14 +556,20 @@ async function handleUserMessage(from, userMessage, buttonReply) {
 
   try {
     // Función que envía mensajes con indicador de escritura y verifica que el estado no cambie.
-    async function sendMessageWithTypingWithState(from, message, delayTime, estadoEsperado) {
+        async function sendMessageWithTypingWithState(from, message, delayTime, estadoEsperado) {
+      console.log(`Iniciando sendMessageWithTypingWithState para ${from} con estado esperado: ${estadoEsperado}`);
       await activateTypingIndicator(from);
       await delay(delayTime);
+      console.log(`Estado actual de ${from}: ${userContext[from].estado}`);
       if (userContext[from].estado === estadoEsperado) {
+        console.log(`Enviando mensaje: "${message}" a ${from}`);
         await sendWhatsAppMessage(from, message);
+      } else {
+        console.log(`No se envía mensaje porque el estado no coincide.`);
       }
       await deactivateTypingIndicator(from);
     }
+    
 
     // Función para enviar mensajes interactivos con imagen y control de estado.
     async function sendInteractiveMessageWithImageWithState(from, message, imageUrl, options, estadoEsperado) {
