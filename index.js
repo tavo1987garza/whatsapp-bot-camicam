@@ -403,59 +403,6 @@ async function sendImageMessage(to, imageUrl, caption) {
 }
 
 
-////Funcion para enviar Listas Interactivas
-/*async function sendWhatsAppList(to, header, body, buttonText, sections) {
-  const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
-
-  const data = {
-    messaging_product: "whatsapp",
-    recipient_type: "individual",
-    to: to,
-    type: "interactive",
-    interactive: {
-      type: "list",
-      header: { type: "text", text: header },
-      body: { text: body },
-      action: {
-        button: buttonText,
-        sections: sections.map(section => ({
-          title: section.title,
-          rows: section.rows.map(row => ({
-            id: row.id,
-            title: row.title,
-            description: row.description || ""
-          }))
-        }))
-      }
-    }
-  };
-
-  try {
-    const response = await axios.post(url, data, {
-      headers: {
-        Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-        "Content-Type": "application/json"
-      }
-    });
-
-    console.log("✅ Lista interactiva enviada:", response.data);
-
-    // Construir un resumen que incluya header, body, botón y las secciones
-    let resumen = `${header}\n${body}\nBotón: ${buttonText}\nSecciones: `;
-    resumen += sections.map(section => {
-      return `${section.title}: ${section.rows.map(row => row.title).join(', ')}`;
-    }).join(' | ');
-    await reportMessageToCRM(to, resumen, "enviado");
-
-  } catch (error) {
-    console.error("❌ Error al enviar lista interactiva:", error.response?.data || error.message);
-  }
-} */
-
-
-
-
-
 //////////////////////////////////////////////////////////
 
 // 📌 Función para enviar mensajes con indicador de escritura
@@ -628,32 +575,96 @@ async function handleUserMessage(from, userMessage, buttonReply) {
       await sendInteractiveMessage(from, options.message, options.buttons);
     }
 
-    // Función para intentar obtener respuesta con OpenAI.
-    async function handleOpenAIResponse(from, userMessage) {
-      try {
-        const response = await openai.chat.completions.create({
-          model: "gpt-3.5-turbo",
-          messages: [
-            { role: "system", content: "Eres un asistente de CRM que responde de forma profesional y concisa. Si no puedes responder, indica que se requiere intervención humana." },
-            { role: "user", content: userMessage }
-          ],
-          temperature: 0.7,
-          max_tokens: 150,
-        });
-        const answer = response.choices[0].message.content;
-        if (!answer || answer.trim() === "") {
-          throw new Error("Respuesta vacía");
-        }
-        await sendWhatsAppMessage(from, answer);
-      } catch (error) {
-        console.error("Error de OpenAI:", error.message);
-        // Notificar al administrador para intervención.
-        const adminMessage = `El cliente ${from} dijo: "${userMessage}" y OpenAI no pudo responder. Se requiere intervención humana.`;
-        await sendWhatsAppMessage(process.env.ADMIN_WHATSAPP_NUMBER, adminMessage);
-        // Notificar al cliente.
-        await sendWhatsAppMessage(from, "Tu consulta requiere intervención de un agente. Pronto nos pondremos en contacto contigo.");
-      }
-    }
+
+    const NodeCache = require('node-cache');
+// Configuramos el caché para que las entradas expiren en 1 hora (3600 segundos)
+const responseCache = new NodeCache({ stdTTL: 3600 });
+
+// Función para construir el contexto a partir de tus objetos
+function construirContexto() {
+  let contexto = 'Información de Servicios y Paquetes de Camicam Photobooth:\n\n';
+  
+  contexto += 'Precios de Servicios:\n';
+  contexto += `- Cabina de Fotos: $${preciosServicios.cabina_fotos}\n`;
+  contexto += `- Cabina 360: $${preciosServicios.cabina_360}\n`;
+  contexto += `- Letras Gigantes: $${preciosServicios.letras_gigantes}\n`;
+  contexto += `- Carrito de Shots (con alcohol): $${preciosServicios.carrito_shots_alcohol}\n`;
+  contexto += `- Carrito de Shots (sin alcohol): $${preciosServicios.carrito_shots_sin_alcohol}\n`;
+  contexto += `- Lluvia de Mariposas: $${preciosServicios.lluvia_mariposas}\n`;
+  contexto += `- Lluvia Metálica: $${preciosServicios.lluvia_metálica}\n`;
+  contexto += `- Chisperos a Mano: $${preciosServicios.chisperos_mano}\n`;
+  contexto += `- Chisperos de Piso: $${preciosServicios.chisperos_piso}\n`;
+  contexto += `- Scrapbook: $${preciosServicios.scrapbook}\n`;
+  contexto += `- Niebla en Piso: $${preciosServicios.niebla_piso}\n`;
+  contexto += `- Audio Guest Book: $${preciosServicios.audio_guest_book}\n\n`;
+
+  contexto += 'Paquetes Sugeridos:\n';
+  contexto += `- Paquete Mis XV: Incluye ${paquetesSugeridos.paquete_xv.servicios.join(', ')}. Precio: $${paquetesSugeridos.paquete_xv.precio}. Descuento: ${paquetesSugeridos.paquete_xv.descuento}. Bono: ${paquetesSugeridos.paquete_xv.bono}.\n`;
+  contexto += `- Paquete WEDDING: Incluye ${paquetesSugeridos.paquete_wedding.servicios.join(', ')}. Precio: $${paquetesSugeridos.paquete_wedding.precio}. Descuento: ${paquetesSugeridos.paquete_wedding.descuento}.\n`;
+  contexto += `- Paquete Party: Incluye ${paquetesSugeridos.paquete_party.servicios.join(', ')}. Precio: $${paquetesSugeridos.paquete_party.precio}.\n`;
+
+  return contexto;
+}
+
+
+// Función para generar la clave de caché
+function getCacheKey(query) {
+  return query.toLowerCase();
+}
+
+async function getResponseFromOpenAI(query) {
+  // Construir el contexto completo
+  const contextoPaquetes = construirContexto();
+  
+  // Concatena el contexto y la consulta del usuario
+  const fullQuery = `
+${contextoPaquetes}
+
+El cliente pregunta: "${query}"
+Responde de forma profesional y concisa, basándote en la información anterior.
+  `;
+  
+  const key = getCacheKey(fullQuery);
+  // Verificar si existe respuesta en caché
+  const cachedResponse = responseCache.get(key);
+  if (cachedResponse) {
+    console.log("Usando respuesta en caché para la consulta:", fullQuery);
+    return cachedResponse;
+  }
+  
+  // Si no está en caché, realiza la llamada a OpenAI
+  const response = await openai.chat.completions.create({
+    model: "gpt-3.5-turbo",
+    messages: [
+      { role: "system", content: "Eres un asistente de CRM que responde de forma profesional y concisa." },
+      { role: "user", content: fullQuery }
+    ],
+    temperature: 0.7,
+    max_tokens: 150,
+  });
+  
+  const answer = response.choices[0].message.content;
+  if (!answer || answer.trim() === "") {
+    throw new Error("Respuesta vacía");
+  }
+  // Guardar la respuesta en caché
+  responseCache.set(key, answer);
+  return answer;
+}
+
+async function handleOpenAIResponse(from, userMessage) {
+  try {
+    const answer = await getResponseFromOpenAI(userMessage);
+    await sendWhatsAppMessage(from, answer);
+  } catch (error) {
+    console.error("Error de OpenAI:", error.message);
+    const adminMessage = `El cliente ${from} preguntó: "${userMessage}" y OpenAI no pudo responder. Se requiere intervención humana.`;
+    await sendWhatsAppMessage(process.env.ADMIN_WHATSAPP_NUMBER, adminMessage);
+    await sendWhatsAppMessage(from, "Tu consulta requiere intervención de un agente. Pronto nos pondremos en contacto contigo.");
+  }
+}
+
+
 
     // ── Flujo automatizado para clientes nuevos (Contacto Inicial) ──
     if (['info', 'costos', 'hola', 'precio', 'información'].some(word => messageLower.includes(word))) {

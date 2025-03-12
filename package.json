@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
-     },
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -16,6 +16,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "langchain": "^0.3.12",
+    "node-cache": "^5.1.2",
     "openai": "^4.80.1"
   }
 }
