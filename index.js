@@ -1,13 +1,9 @@
-
-
 // Importar dependencias en modo ES Modules
 import dotenv from 'dotenv'; // Para cargar variables de entorno
 import express from 'express';
-import bodyParser from 'body-parser';
 import axios from 'axios';
 import OpenAI from 'openai';
 import NodeCache from 'node-cache';
-
 
 // Cargar variables de entorno
 dotenv.config();
@@ -21,11 +17,28 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Middleware para manejar JSON
-app.use(bodyParser.json());
+// Middleware para manejar JSON (usando express.json() en lugar de body-parser)
+app.use(express.json());
 
 // Objeto para almacenar el contexto de cada usuario
 const userContext = {};
+
+// Función para construir el contexto para OpenAI
+function construirContexto() {
+  return `
+Eres un agente de ventas de "Camicam Photobooth". 
+Nos dedicamos a la renta de servicios para eventos sociales, con especialización en bodas y XV años. 
+Ofrecemos los siguientes servicios:
+  - Cabina de fotos: $3,500
+  - Cabina 360: $3,500
+  - Lluvia de mariposas: $2,500
+  - Carrito de shots con alcohol: $2,800
+  - Letras gigantes: $400 cada una
+  
+Atendemos el centro de Monterrey, Nuevo León y el área metropolitana hasta 25 km a la redonda. 
+Responde de forma profesional, clara, concisa y persuasiva, como un vendedor experto en nuestros servicios.
+  `;
+}
 
 // Ruta para la verificación inicial del webhook
 app.get('/webhook', (req, res) => {
@@ -112,7 +125,6 @@ app.post('/webhook', async (req, res) => {
     const handled = await handleUserMessage(from, userMessage, buttonReply);
     if (handled) return res.sendStatus(200);
 
-
   } catch (error) {
     console.error("❌ Error al manejar el mensaje:", error.message);
     await sendWhatsAppMessage(from, "Lo siento, ocurrió un error al procesar tu solicitud. Inténtalo nuevamente.");
@@ -153,9 +165,6 @@ async function handleFAQs(from, userMessage) {
   return false;
 }
 
-
-
-
 async function reportMessageToCRM(to, message, tipo = "enviado") {
   const crmUrl = "https://camicam-crm-d78af2926170.herokuapp.com/recibir_mensaje";
   const crmData = {
@@ -173,8 +182,6 @@ async function reportMessageToCRM(to, message, tipo = "enviado") {
     throw error;
   }
 }
-
-
 
 // 📌 Función para enviar mensajes simples
 async function sendWhatsAppMessage(to, message) {
@@ -220,7 +227,6 @@ async function sendWhatsAppMessage(to, message) {
     }
   }
 }
-
 
 // 📌 Función para enviar mensajes interactivos con botones
 async function sendInteractiveMessage(to, body, buttons) {
@@ -271,9 +277,6 @@ async function sendInteractiveMessage(to, body, buttons) {
   }
 }
 
-
-
-
 // 📌 Función para enviar videos
 async function sendWhatsAppVideo(to, videoUrl, caption) {
   const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
@@ -314,9 +317,7 @@ async function sendWhatsAppVideo(to, videoUrl, caption) {
   }
 }
 
-
-
-///Fucion para enviar imagenes
+// 📌 Función para enviar imágenes
 async function sendImageMessage(to, imageUrl, caption) {
   const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
 
@@ -353,16 +354,12 @@ async function sendImageMessage(to, imageUrl, caption) {
   }
 }
 
-
-
-//////////////////////////////////////////////////////////
-
 // 📌 Función para enviar mensajes con indicador de escritura
 async function sendMessageWithTyping(from, message, delayTime) {
-  await activateTypingIndicator(from); // ✅ Activar "escribiendo" primero
-  await delay(delayTime); // ⏳ Esperar un tiempo antes de enviar
-  await sendWhatsAppMessage(from, message); // ✅ Enviar mensaje después
-  await deactivateTypingIndicator(from); // ✅ Desactivar "escribiendo"
+  await activateTypingIndicator(from); // Activar "escribiendo"
+  await delay(delayTime); // Esperar un tiempo antes de enviar
+  await sendWhatsAppMessage(from, message); // Enviar mensaje
+  await deactivateTypingIndicator(from); // Desactivar "escribiendo"
 }
 
 // 📌 Función para crear un retraso
@@ -370,46 +367,46 @@ const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // 📌 Función para activar el indicador de "escribiendo"
 async function activateTypingIndicator(to) {
-    const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
-    const headers = {
-        Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-        'Content-Type': 'application/json'
-    };
-    const data = {
-        messaging_product: 'whatsapp',
-        to: to,
-        type: 'typing', // ✅ WhatsApp API reconoce "typing", no "text"
-        status: 'typing' // ✅ Correcto: Indica que el bot está escribiendo
-    };
+  const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+  const headers = {
+    Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+    'Content-Type': 'application/json'
+  };
+  const data = {
+    messaging_product: 'whatsapp',
+    to: to,
+    type: 'typing',
+    status: 'typing'
+  };
 
-    try {
-        await axios.post(url, data, { headers });
-        console.log('✅ Indicador de "escribiendo" activado');
-    } catch (error) {
-        console.error('❌ Error al activar el indicador de "escribiendo":', error.response?.data || error.message);
-    }
+  try {
+    await axios.post(url, data, { headers });
+    console.log('✅ Indicador de "escribiendo" activado');
+  } catch (error) {
+    console.error('❌ Error al activar el indicador de "escribiendo":', error.response?.data || error.message);
+  }
 }
 
 // 📌 Función para desactivar el indicador de "escribiendo"
 async function deactivateTypingIndicator(to) {
-    const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
-    const headers = {
-        Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-        'Content-Type': 'application/json'
-    };
-    const data = {
-        messaging_product: 'whatsapp',
-        to: to,
-        type: 'typing', // ✅ Misma estructura
-        status: 'paused' // ✅ Correcto: Indica que el bot dejó de escribir
-    };
+  const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+  const headers = {
+    Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+    'Content-Type': 'application/json'
+  };
+  const data = {
+    messaging_product: 'whatsapp',
+    to: to,
+    type: 'typing',
+    status: 'paused'
+  };
 
-    try {
-        await axios.post(url, data, { headers });
-        console.log('✅ Indicador de "escribiendo" desactivado');
-    } catch (error) {
-        console.error('❌ Error al desactivar el indicador de "escribiendo":', error.response?.data || error.message);
-    }
+  try {
+    await axios.post(url, data, { headers });
+    console.log('✅ Indicador de "escribiendo" desactivado');
+  } catch (error) {
+    console.error('❌ Error al desactivar el indicador de "escribiendo":', error.response?.data || error.message);
+  }
 }
 
 // Función para validar el formato de la fecha (DD/MM/AAAA)
@@ -418,9 +415,8 @@ function isValidDate(dateString) {
   if (!regex.test(dateString)) return false;
 
   const [day, month, year] = dateString.split('/').map(Number);
-  const date = new Date(year, month - 1, day); // Meses en JavaScript son 0-indexados
+  const date = new Date(year, month - 1, day);
 
-  // Verificar si la fecha es válida
   return (
     date.getFullYear() === year &&
     date.getMonth() + 1 === month &&
@@ -430,24 +426,19 @@ function isValidDate(dateString) {
 
 // Función para verificar disponibilidad (simulada)
 function checkAvailability(dateString) {
-  // Aquí puedes conectar con una base de datos o API para verificar disponibilidad real
-  // Por ahora, simulamos que las fechas ocupadas son el 15/02/2024 y el 20/02/2024
+  // Fechas ocupadas simuladas
   const occupiedDates = ['15/02/2024', '20/02/2024'];
   return !occupiedDates.includes(dateString);
 }
-
-////////////////////////////////////////////////////////////////////
-
-///-------------------------------------------------------------///
 
 // 📌 Función para manejar los mensajes del usuario
 async function handleUserMessage(from, userMessage, buttonReply) {
   const messageLower = buttonReply ? buttonReply.toLowerCase() : userMessage.toLowerCase();
 
-  // Inicializar el contexto del usuario si no existe, asumiendo "Contacto Inicial" para nuevos leads.
+  // Inicializar el contexto del usuario si no existe
   if (!userContext[from]) {
     userContext[from] = {
-      estado: "Contacto Inicial", // Estado inicial para nuevos clientes
+      estado: "Contacto Inicial",
       tipoEvento: null,
       nombre: null,
       fecha: null,
@@ -459,8 +450,8 @@ async function handleUserMessage(from, userMessage, buttonReply) {
   const context = userContext[from];
 
   try {
-    // Función que envía mensajes con indicador de escritura y verifica que el estado no cambie.
-        async function sendMessageWithTypingWithState(from, message, delayTime, estadoEsperado) {
+    // Función interna para enviar mensajes con indicador de escritura y control de estado
+    async function sendMessageWithTypingWithState(from, message, delayTime, estadoEsperado) {
       console.log(`Iniciando sendMessageWithTypingWithState para ${from} con estado esperado: ${estadoEsperado}`);
       await activateTypingIndicator(from);
       await delay(delayTime);
@@ -474,7 +465,6 @@ async function handleUserMessage(from, userMessage, buttonReply) {
       await deactivateTypingIndicator(from);
     }
     
-
     // Función para enviar mensajes interactivos con imagen y control de estado.
     async function sendInteractiveMessageWithImageWithState(from, message, imageUrl, options, estadoEsperado) {
       await sendMessageWithTypingWithState(from, message, 3000, estadoEsperado);
@@ -485,79 +475,76 @@ async function handleUserMessage(from, userMessage, buttonReply) {
       await sendInteractiveMessage(from, options.message, options.buttons);
     }
 
+    // Configuramos el caché para respuestas de OpenAI (1 hora de TTL)
+    const responseCache = new NodeCache({ stdTTL: 3600 });
 
-// Configuramos el caché para que las entradas expiren en 1 hora (3600 segundos)
-const responseCache = new NodeCache({ stdTTL: 3600 });
+    // Función para generar la clave de caché
+    function getCacheKey(query) {
+      return query.toLowerCase();
+    }
 
-// Función para generar la clave de caché
-function getCacheKey(query) {
-  return query.toLowerCase();
-}
-
-async function getResponseFromOpenAI(query) {
-  // Construir el contexto completo
-  const contextoPaquetes = construirContexto();
-  
-  // Concatena el contexto y la consulta del usuario
-  const fullQuery = `
+    async function getResponseFromOpenAI(query) {
+      // Construir el contexto completo con los detalles de Camicam Photobooth
+      const contextoPaquetes = construirContexto();
+      
+      // Concatena el contexto y la consulta del usuario
+      const fullQuery = `
 ${contextoPaquetes}
 
 El cliente pregunta: "${query}"
-Responde de forma profesional y concisa, basándote en la información anterior.
-  `;
-  
-  const key = getCacheKey(fullQuery);
-  // Verificar si existe respuesta en caché
-  const cachedResponse = responseCache.get(key);
-  if (cachedResponse) {
-    console.log("Usando respuesta en caché para la consulta:", fullQuery);
-    return cachedResponse;
-  }
-  
-  // Si no está en caché, realiza la llamada a OpenAI
-  const response = await openai.chat.completions.create({
-    model: "gpt-3.5-turbo",
-    messages: [
-      { role: "system", content: "Eres un agente de ventas de servicios para eventos que responde de forma profesional y concisa. Nuestros Servicios son: Cabina de fotos, cabina 360, carrito de shots, puede ser con alcohol o sin alcohol" },
-      { role: "user", content: fullQuery }
-    ],
-    temperature: 0.7,
-    max_tokens: 150,
-  });
-  
-  const answer = response.choices[0].message.content;
-  if (!answer || answer.trim() === "") {
-    throw new Error("Respuesta vacía");
-  }
-  // Guardar la respuesta en caché
-  responseCache.set(key, answer);
-  return answer;
-}
-
-
-async function handleOpenAIResponse(from, userMessage) {
-  try {
-    const answer = await getResponseFromOpenAI(userMessage);
-    
-    // Envía la respuesta al cliente
-    await sendWhatsAppMessage(from, answer);
-
-    // Verifica si la respuesta indica que no hay suficiente información
-    if (answer.includes("Lamentablemente, la información proporcionada no incluye detalles")) {
-      const adminMessage = `El cliente ${from} preguntó: "${userMessage}" y la respuesta fue: "${answer}". Se requiere intervención humana para proporcionar más detalles.`;
-      await sendWhatsAppMessage(process.env.ADMIN_WHATSAPP_NUMBER, adminMessage);
+Responde de forma profesional, clara y concisa, utilizando el contexto proporcionado.
+      `;
+      
+      const key = getCacheKey(fullQuery);
+      // Verificar si existe respuesta en caché
+      const cachedResponse = responseCache.get(key);
+      if (cachedResponse) {
+        console.log("Usando respuesta en caché para la consulta:", fullQuery);
+        return cachedResponse;
+      }
+      
+      // Llamada a OpenAI
+      const response = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [
+          { role: "system", content: "Eres un agente de ventas de servicios para eventos que responde de forma profesional y concisa. Nuestros Servicios son: Cabina de fotos, Cabina 360, Lluvia de mariposas, Carrito de shots con alcohol, y Letras gigantes." },
+          { role: "user", content: fullQuery }
+        ],
+        temperature: 0.7,
+        max_tokens: 150,
+      });
+      
+      const answer = response.choices[0].message.content;
+      if (!answer || answer.trim() === "") {
+        throw new Error("Respuesta vacía");
+      }
+      // Guardar la respuesta en caché
+      responseCache.set(key, answer);
+      return answer;
     }
-    
-  } catch (error) {
-    console.error("Error de OpenAI:", error.message);
-    // En caso de error, notificar al administrador y al cliente.
-    const adminMessage = `El cliente ${from} preguntó: "${userMessage}" y OpenAI no pudo responder. Se requiere intervención humana.`;
-    await sendWhatsAppMessage(process.env.ADMIN_WHATSAPP_NUMBER, adminMessage);
-    await sendWhatsAppMessage(from, "Tu consulta requiere intervención de un agente. Pronto nos pondremos en contacto contigo.");
-  }
-}
 
-   
+    async function handleOpenAIResponse(from, userMessage) {
+      try {
+        const answer = await getResponseFromOpenAI(userMessage);
+        await sendWhatsAppMessage(from, answer);
+
+        // Si la respuesta indica falta de información, notificar al administrador
+        if (answer.includes("Lamentablemente, la información proporcionada no incluye detalles")) {
+          const adminMessage = `El cliente ${from} preguntó: "${userMessage}" y la respuesta fue: "${answer}". Se requiere intervención humana para proporcionar más detalles.`;
+          await sendWhatsAppMessage(process.env.ADMIN_WHATSAPP_NUMBER, adminMessage);
+        }
+        
+      } catch (error) {
+        console.error("Error de OpenAI:", error.message);
+        const adminMessage = `El cliente ${from} preguntó: "${userMessage}" y OpenAI no pudo responder. Se requiere intervención humana.`;
+        await sendWhatsAppMessage(process.env.ADMIN_WHATSAPP_NUMBER, adminMessage);
+        await sendWhatsAppMessage(from, "Tu consulta requiere intervención de un agente. Pronto nos pondremos en contacto contigo.");
+      }
+    }
+
+    // Aquí se puede integrar el manejo de OpenAI según el estado del usuario o lógica adicional.
+    await handleOpenAIResponse(from, userMessage);
+
   } catch (error) {
     console.error("❌ Error en handleUserMessage:", error.message);
     await sendWhatsAppMessage(from, "Lo siento, ocurrió un error.");
@@ -565,22 +552,9 @@ async function handleOpenAIResponse(from, userMessage) {
   }
 }
 
-
-
-///-------------------------------------------------------------///
-
-
-
-
-
-
-
 // Iniciar el servidor
 app.listen(PORT, () => {
   console.log(`Servidor funcionando en http://localhost:${PORT}`);
 }).on('error', (err) => {
   console.error('Error al iniciar el servidor:', err);
 });
-
-
-
