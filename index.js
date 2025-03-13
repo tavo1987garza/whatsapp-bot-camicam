@@ -411,12 +411,7 @@ async function sendImageMessage(to, imageUrl, caption) {
 
 //oooooooooooooooooo   FUNCIONES PARA CALCULAR DISTANCIA Y FLETE   oooooooooooooooo//
 
-/*
-/** 
- * Geocodifica una dirección usando la API de Geocoding de Google.
- * @param {string} address - Dirección del evento.
- * @returns {Promise<{lat: number, lng: number}>} - Coordenadas del lugar.
- 
+// Función para geocodificar la dirección
 async function geocodeAddress(address) {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
   const encodedAddress = encodeURIComponent(address);
@@ -424,11 +419,12 @@ async function geocodeAddress(address) {
 
   try {
     const response = await axios.get(url);
-    console.log("Respuesta de Geocoding:", JSON.stringify(response.data, null, 2));
+    console.log("Respuesta de Geocoding:", response.data); // Log de respuesta completa
+
     if (response.data.status === 'OK' && response.data.results.length > 0) {
-      const location = response.data.results[0].geometry.location;
-      return location; // { lat, lng }
+      return response.data.results[0].geometry.location;
     } else {
+      console.error("Geocoding falló con estado:", response.data.status, "y resultados:", response.data.results);
       throw new Error("No se pudo geocodificar la dirección");
     }
   } catch (error) {
@@ -437,13 +433,7 @@ async function geocodeAddress(address) {
   }
 }
 
-
-/**
- * Obtiene la distancia real (en km) entre dos puntos usando la Routes API de Google.
- * @param {{lat: number, lng: number}} origin - Coordenadas de origen (empresa).
- * @param {{lat: number, lng: number}} destination - Coordenadas del destino (evento).
- * @returns {Promise<number>} - Distancia en kilómetros.
- 
+// Función para obtener la distancia usando Routes API (con FieldMask)
 async function getRouteDistance(origin, destination) {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
   const url = 'https://routes.googleapis.com/directions/v2:computeRoutes';
@@ -463,9 +453,8 @@ async function getRouteDistance(origin, destination) {
         "Content-Type": "application/json"
       }
     });
-    console.log("Respuesta completa de Routes API:", JSON.stringify(response.data, null, 2));
-    
-    // console.log("Respuesta completa de Routes API:", JSON.stringify(response.data, null, 2));
+    console.log("Respuesta de Routes API:", response.data); // Log de respuesta completa
+
     if (
       response.data.routes &&
       response.data.routes.length > 0 &&
@@ -473,10 +462,9 @@ async function getRouteDistance(origin, destination) {
       response.data.routes[0].legs.length > 0
     ) {
       const distanceMeters = response.data.routes[0].legs[0].distanceMeters;
-      const distanceKm = distanceMeters / 1000;
-      return distanceKm;
+      return distanceMeters / 1000;
     } else {
-      console.error("Respuesta de Routes API incompleta:", JSON.stringify(response.data, null, 2));
+      console.error("No se encontró ruta en la respuesta:", response.data);
       throw new Error("No se encontró ruta");
     }
   } catch (error) {
@@ -485,58 +473,50 @@ async function getRouteDistance(origin, destination) {
   }
 }
 
-/**
- * Calcula el costo del flete según la cantidad de servicios y la distancia.
- * @param {Object} params
- * @param {boolean} params.isPackage - Indica si es un paquete (o si se solicitan más de 4 servicios).
- * @param {number} params.numberOfServices - Número de servicios solicitados.
- * @param {number} params.distance - Distancia en kilómetros.
- * @returns {number} - Costo del flete.
- 
+// Función para calcular el flete
 function calcularFlete({ isPackage = false, numberOfServices = 1, distance }) {
   const tarifa = 20; // $20 por km
-  // Caso: paquete o más de 4 servicios y distancia <=15 km, flete gratuito.
   if ((isPackage || numberOfServices > 4) && distance <= 15) {
     return 0;
   }
-  // En otros casos, se cobra $20 por km.
   return distance * tarifa;
 }
 
-/**
- * Maneja la dirección del evento: geocodifica, calcula la distancia real y determina el costo de flete.
- * @param {string} from - Número del cliente.
- * @param {string} direccion - Dirección del evento proporcionada por el cliente.
- 
+// Función para manejar la dirección del evento
 async function manejarDireccionEvento(from, direccion) {
   try {
-    // Coordenadas de la empresa (ejemplo: centro de Monterrey)
+    console.log(`Iniciando proceso para el número ${from} con dirección: ${direccion}`);
     const coordsEmpresa = { lat: 25.686614, lng: -100.316113 };
     
-    // Geocodificar la dirección del evento
     const coordsEvento = await geocodeAddress(direccion);
     console.log("Coordenadas del evento:", coordsEvento);
 
-    // Calcular la distancia real usando la Routes API
     const distanciaKm = await getRouteDistance(coordsEmpresa, coordsEvento);
     console.log(`La distancia calculada es: ${distanciaKm.toFixed(2)} km`);
 
-    // Determinar si es paquete o servicio único (esta info la podrías tener en tu userContext)
     const isPackage = userContext[from]?.isPackage || false;
     const numberOfServices = userContext[from]?.numberOfServices || 1;
 
-    // Calcular el costo del flete
     const flete = calcularFlete({ isPackage, numberOfServices, distance: distanciaKm });
     console.log(`Costo de flete: $${flete}`);
 
-    // Enviar el costo al cliente
     await sendWhatsAppMessage(from, `El costo de flete para tu evento es: $${flete}`);
   } catch (error) {
     console.error("Error en manejarDireccionEvento:", error.message);
+    // Aquí podrías enviar un mensaje de error específico a WhatsApp si lo consideras necesario
     throw error;
   }
 }
-*/
+
+
+// Función principal de prueba
+async function main() {
+  const direccionEvento = "salón Espacio Fundidora, Monterrey, Nuevo León, México";
+  await manejarDireccionEvento("5218133971595", direccionEvento);
+}
+
+main();
+
 
 
 
@@ -1002,5 +982,4 @@ app.listen(PORT, () => {
 
 
 
-};
 
