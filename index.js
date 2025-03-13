@@ -143,7 +143,7 @@ const faqs = [
   { question: /cómo reviso si tienen mi fecha disponible/i, answer: 'Dime, ¿para cuándo es tu evento? 😊' },
   { question: /ubicación|dónde están|donde son|ubican|oficinas/i, answer: '📍 Estamos en la Colonia Independencia en Monterrey. Atendemos eventos hasta 25 km a la redonda.' },
   { question: /pago|método de pago|tarjeta|efectivo/i, answer: 'Aceptamos transferencias bancarias, depósitos y pagos en efectivo.' },
-  { question: /que servicios manejas|/i, answer: 'Estos son los servicios que manejamos:', 
+  { question: /que servicios manejas|servicios/i, answer: 'Estos son los servicios que manejamos:', 
     imageUrl: 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg' },
   { question: /que incluye la cabina de fotos|cabina de fotos/i, answer: 'La cabina de fotos incluye un sistema de iluminación profesional, fondo personalizado, accesorios temáticos y mucho más. Revisa las imágenes y el video a continuación para más detalles.',
     images: ['http://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-1.jpg',
@@ -164,11 +164,12 @@ const faqs = [
 function findFAQ(userMessage) {
   for (const faq of faqs) {
     if (faq.question.test(userMessage)) {
-      return faq.answer;
+      return faq; 
     }
   }
   return null;
 }
+
 
 // Función para manejar preguntas frecuentes antes de enviar el mensaje a OpenAI
 async function handleFAQs(from, userMessage) {
