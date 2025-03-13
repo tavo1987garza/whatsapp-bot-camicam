@@ -142,7 +142,22 @@ const faqs = [
   { question: /cuánto se cobra de flete|flete/i, answer: 'Depende de la ubicación del evento. Contáctanos con tu dirección para calcularlo.' },
   { question: /cómo reviso si tienen mi fecha disponible/i, answer: 'Dime, ¿para cuándo es tu evento? 😊' },
   { question: /ubicación|dónde están|donde son|ubican|oficinas/i, answer: '📍 Estamos en la Colonia Independencia en Monterrey. Atendemos eventos hasta 25 km a la redonda.' },
-  { question: /pago|método de pago|tarjeta|efectivo/i, answer: 'Aceptamos transferencias bancarias, depósitos y pagos en efectivo.' }
+  { question: /pago|método de pago|tarjeta|efectivo/i, answer: 'Aceptamos transferencias bancarias, depósitos y pagos en efectivo.' },
+  { question: /que servicios manejas|/i, answer: 'Estos son los servicios que manejamos:', 
+    imageUrl: 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg' },
+  { question: /que incluye la cabina de fotos|cabina de fotos/i, answer: 'La cabina de fotos incluye un sistema de iluminación profesional, fondo personalizado, accesorios temáticos y mucho más. Revisa las imágenes y el video a continuación para más detalles.',
+    images: ['http://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-1.jpg',
+             'http://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-2.jpg',
+             'http://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-3.jpg',
+             'http://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-4.jpg',
+             'http://cami-cam.com/wp-content/uploads/2025/03/Cabina-multicolor-2.jpeg'
+            ], 
+    videos: [
+              'http://cami-cam.com/wp-content/uploads/2025/03/Cabina-Blanca.mp4', 
+              'http://cami-cam.com/wp-content/uploads/2025/03/Cabina-Rosa.mp4', 
+              'http://cami-cam.com/wp-content/uploads/2025/03/cabina-multicolor.mp4'  
+            ]
+   }
 ];
 
 // Función para buscar respuestas en preguntas frecuentes
@@ -157,13 +172,35 @@ function findFAQ(userMessage) {
 
 // Función para manejar preguntas frecuentes antes de enviar el mensaje a OpenAI
 async function handleFAQs(from, userMessage) {
-  const faqAnswer = findFAQ(userMessage);
-  if (faqAnswer) {
-    await sendWhatsAppMessage(from, faqAnswer);
+  const faqEntry = findFAQ(userMessage);
+  if (faqEntry) {
+    // Enviar respuesta de texto
+    await sendWhatsAppMessage(from, faqEntry.answer);
+    // Enviar imagen si existe
+    if (faqEntry.imageUrl) {
+      await sendImageMessage(from, faqEntry.imageUrl, "Nuestros servicios");
+    }
+    // Enviar múltiples imágenes si existen
+    if (faqEntry.images && Array.isArray(faqEntry.images)) {
+      for (const imageUrl of faqEntry.images) {
+        await sendImageMessage(from, imageUrl, "Detalle de la cabina");
+      }
+    }
+    // Enviar un video si existe videoUrl
+    if (faqEntry.videoUrl) {
+      await sendWhatsAppVideo(from, faqEntry.videoUrl, "Mira este video para conocer más sobre la cabina de fotos");
+    }
+    // Enviar múltiples videos si existen
+    if (faqEntry.videos && Array.isArray(faqEntry.videos)) {
+      for (const videoUrl of faqEntry.videos) {
+        await sendWhatsAppVideo(from, videoUrl, "Video informativo sobre la cabina de fotos");
+      }
+    }
     return true;
   }
   return false;
 }
+
 
 async function reportMessageToCRM(to, message, tipo = "enviado") {
   const crmUrl = "https://camicam-crm-d78af2926170.herokuapp.com/recibir_mensaje";
@@ -476,7 +513,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
     await sendInteractiveMessageWithImageWithState(
       from,
       "¡Bienvenido a Camicam Photobooth! Para brindarte una experiencia personalizada, por favor indícanos el tipo de evento que tienes. Puedes seleccionar una opción a continuación.",
-      "https://example.com/servicios.jpg",
+      "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg",
       {
         message: "Selecciona el tipo de evento:",
         buttons: [
@@ -606,16 +643,17 @@ Responde de forma profesional, clara y concisa, utilizando el contexto proporcio
         console.log("Usando respuesta en caché para la consulta:", fullQuery);
         return cachedResponse;
       }
-      
+
       const response = await openai.chat.completions.create({
         model: "gpt-3.5-turbo",
         messages: [
-          { role: "system", content: "Eres un agente de ventas de servicios para eventos que responde de forma profesional y concisa. Nuestros Servicios son: Cabina de fotos, Cabina 360, Lluvia de mariposas, Carrito de shots con alcohol, y Letras gigantes." },
+          { role: "system", content: "Eres un agente de ventas de servicios para eventos. Responde de forma breve, clara y concisa." },
           { role: "user", content: fullQuery }
         ],
         temperature: 0.7,
-        max_tokens: 150,
+        max_tokens: 80, 
       });
+      
       
       const answer = response.choices[0].message.content;
       if (!answer || answer.trim() === "") {
