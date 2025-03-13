@@ -66,7 +66,7 @@ app.get('/', async (req, res) => {
   // Prueba para enviar mensaje usando sendWhatsAppMessage
   try {
     console.log('Enviando mensaje de prueba a WhatsApp...');
-    await sendWhatsAppMessage('528133971595', 'hello_world', 'en_US');
+    await sendWhatsAppMessage('528133971595', 'hello_world');
     console.log('Mensaje de prueba enviado exitosamente.');
   } catch (error) {
     console.error('Error al enviar mensaje de prueba:', error.message);
@@ -106,7 +106,7 @@ app.post('/webhook', async (req, res) => {
     console.error("❌ Error al enviar mensaje al CRM:", error.message);
   }
 
-  // Los logs adicionales para depuración
+  // Logs adicionales para depuración
   const buttonReply = message?.interactive?.button_reply?.id || '';
   const listReply = message?.interactive?.list_reply?.id || '';
   const messageLower = buttonReply ? buttonReply.toLowerCase() : listReply ? listReply.toLowerCase() : userMessage.toLowerCase();
@@ -121,9 +121,9 @@ app.post('/webhook', async (req, res) => {
       return res.sendStatus(200);
     }
 
-    // Pasar a handleUserMessage para otros casos
-    const handled = await handleUserMessage(from, userMessage, buttonReply);
-    if (handled) return res.sendStatus(200);
+    // Manejo del flujo de inicio y selección de paquete
+    const handledFlow = await handleUserMessage(from, userMessage, messageLower);
+    if (handledFlow) return res.sendStatus(200);
 
   } catch (error) {
     console.error("❌ Error al manejar el mensaje:", error.message);
@@ -145,7 +145,7 @@ const faqs = [
   { question: /pago|método de pago|tarjeta|efectivo/i, answer: 'Aceptamos transferencias bancarias, depósitos y pagos en efectivo.' }
 ];
 
-// 📌 Función para buscar respuestas en preguntas frecuentes
+// Función para buscar respuestas en preguntas frecuentes
 function findFAQ(userMessage) {
   for (const faq of faqs) {
     if (faq.question.test(userMessage)) {
@@ -155,7 +155,7 @@ function findFAQ(userMessage) {
   return null;
 }
 
-// 📌 Función para manejar preguntas frecuentes antes de enviar el mensaje a OpenAI
+// Función para manejar preguntas frecuentes antes de enviar el mensaje a OpenAI
 async function handleFAQs(from, userMessage) {
   const faqAnswer = findFAQ(userMessage);
   if (faqAnswer) {
@@ -183,7 +183,7 @@ async function reportMessageToCRM(to, message, tipo = "enviado") {
   }
 }
 
-// 📌 Función para enviar mensajes simples
+// Función para enviar mensajes simples
 async function sendWhatsAppMessage(to, message) {
   if (!process.env.WHATSAPP_PHONE_NUMBER_ID || !process.env.WHATSAPP_ACCESS_TOKEN) {
     console.error("❌ ERROR: Credenciales de WhatsApp no configuradas correctamente.");
@@ -213,7 +213,7 @@ async function sendWhatsAppMessage(to, message) {
     });
     console.log('✅ Mensaje enviado a WhatsApp:', response.data);
 
-    // Convertir el mensaje a HTML (aquí lo envolvemos en un párrafo)
+    // Convertir el mensaje a HTML (envolviendo en un párrafo)
     const mensajeHTML = `<p>${message}</p>`;
     await reportMessageToCRM(to, mensajeHTML, "enviado");
 
@@ -228,7 +228,7 @@ async function sendWhatsAppMessage(to, message) {
   }
 }
 
-// 📌 Función para enviar mensajes interactivos con botones
+// Función para enviar mensajes interactivos con botones
 async function sendInteractiveMessage(to, body, buttons) {
   const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
 
@@ -261,7 +261,7 @@ async function sendInteractiveMessage(to, body, buttons) {
     });
     console.log('Mensaje interactivo enviado:', response.data);
 
-    // Construir un resumen HTML que incluya el body y los títulos de los botones
+    // Resumen HTML con el body y los títulos de los botones
     const resumen = `
       <div>
         <p>${body}</p>
@@ -277,7 +277,17 @@ async function sendInteractiveMessage(to, body, buttons) {
   }
 }
 
-// 📌 Función para enviar videos
+// Función para enviar mensajes interactivos con imagen y control de estado
+async function sendInteractiveMessageWithImageWithState(from, message, imageUrl, options, estadoEsperado) {
+  await sendMessageWithTypingWithState(from, message, 3000, estadoEsperado);
+  if (userContext[from].estado !== estadoEsperado) return;
+  await sendImageMessage(from, imageUrl);
+  await delay(10000);
+  if (userContext[from].estado !== estadoEsperado) return;
+  await sendInteractiveMessage(from, options.message, options.buttons);
+}
+
+// Función para enviar videos
 async function sendWhatsAppVideo(to, videoUrl, caption) {
   const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
 
@@ -300,7 +310,6 @@ async function sendWhatsAppVideo(to, videoUrl, caption) {
     });
     console.log('✅ Video enviado:', response.data);
 
-    // Construir un resumen HTML que incluya el video y el caption (si existe)
     const resumen = `
       <div>
         <video controls style="max-width:200px;">
@@ -317,7 +326,7 @@ async function sendWhatsAppVideo(to, videoUrl, caption) {
   }
 }
 
-// 📌 Función para enviar imágenes
+// Función para enviar imágenes
 async function sendImageMessage(to, imageUrl, caption) {
   const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
 
@@ -340,7 +349,6 @@ async function sendImageMessage(to, imageUrl, caption) {
     });
     console.log('Imagen enviada:', response.data);
 
-    // Construir un resumen HTML para reportar en el CRM
     const resumen = `
       <div>
         <img src="${imageUrl}" alt="Imagen enviada" style="max-width:200px;">
@@ -354,18 +362,33 @@ async function sendImageMessage(to, imageUrl, caption) {
   }
 }
 
-// 📌 Función para enviar mensajes con indicador de escritura
+// Función para enviar mensajes con indicador de escritura
 async function sendMessageWithTyping(from, message, delayTime) {
-  await activateTypingIndicator(from); // Activar "escribiendo"
-  await delay(delayTime); // Esperar un tiempo antes de enviar
-  await sendWhatsAppMessage(from, message); // Enviar mensaje
-  await deactivateTypingIndicator(from); // Desactivar "escribiendo"
+  await activateTypingIndicator(from);
+  await delay(delayTime);
+  await sendWhatsAppMessage(from, message);
+  await deactivateTypingIndicator(from);
 }
 
-// 📌 Función para crear un retraso
+// Función interna para enviar mensajes con indicador de escritura y control de estado
+async function sendMessageWithTypingWithState(from, message, delayTime, estadoEsperado) {
+  console.log(`Iniciando sendMessageWithTypingWithState para ${from} con estado esperado: ${estadoEsperado}`);
+  await activateTypingIndicator(from);
+  await delay(delayTime);
+  console.log(`Estado actual de ${from}: ${userContext[from].estado}`);
+  if (userContext[from].estado === estadoEsperado) {
+    console.log(`Enviando mensaje: "${message}" a ${from}`);
+    await sendWhatsAppMessage(from, message);
+  } else {
+    console.log(`No se envía mensaje porque el estado no coincide.`);
+  }
+  await deactivateTypingIndicator(from);
+}
+
+// Función para crear un retraso
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// 📌 Función para activar el indicador de "escribiendo"
+// Función para activar el indicador de "escribiendo"
 async function activateTypingIndicator(to) {
   const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
   const headers = {
@@ -387,7 +410,7 @@ async function activateTypingIndicator(to) {
   }
 }
 
-// 📌 Función para desactivar el indicador de "escribiendo"
+// Función para desactivar el indicador de "escribiendo"
 async function deactivateTypingIndicator(to) {
   const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
   const headers = {
@@ -431,14 +454,12 @@ function checkAvailability(dateString) {
   return !occupiedDates.includes(dateString);
 }
 
-// 📌 Función para manejar los mensajes del usuario
-async function handleUserMessage(from, userMessage, buttonReply) {
-  const messageLower = buttonReply ? buttonReply.toLowerCase() : userMessage.toLowerCase();
-
+// Función para manejar los mensajes del usuario y el flujo inicial
+async function handleUserMessage(from, userMessage, messageLower) {
   // Inicializar el contexto del usuario si no existe
   if (!userContext[from]) {
     userContext[from] = {
-      estado: "Contacto Inicial",
+      estado: "Contacto Inicial", // Estado inicial
       tipoEvento: null,
       nombre: null,
       fecha: null,
@@ -446,48 +467,78 @@ async function handleUserMessage(from, userMessage, buttonReply) {
       total: 0
     };
   }
-
   const context = userContext[from];
 
-  try {
-    // Función interna para enviar mensajes con indicador de escritura y control de estado
-    async function sendMessageWithTypingWithState(from, message, delayTime, estadoEsperado) {
-      console.log(`Iniciando sendMessageWithTypingWithState para ${from} con estado esperado: ${estadoEsperado}`);
-      await activateTypingIndicator(from);
-      await delay(delayTime);
-      console.log(`Estado actual de ${from}: ${userContext[from].estado}`);
-      if (userContext[from].estado === estadoEsperado) {
-        console.log(`Enviando mensaje: "${message}" a ${from}`);
-        await sendWhatsAppMessage(from, message);
-      } else {
-        console.log(`No se envía mensaje porque el estado no coincide.`);
-      }
-      await deactivateTypingIndicator(from);
-    }
-    
-    // Función para enviar mensajes interactivos con imagen y control de estado.
-    async function sendInteractiveMessageWithImageWithState(from, message, imageUrl, options, estadoEsperado) {
-      await sendMessageWithTypingWithState(from, message, 3000, estadoEsperado);
-      if (userContext[from].estado !== estadoEsperado) return;
-      await sendImageMessage(from, imageUrl);
-      await delay(10000);
-      if (userContext[from].estado !== estadoEsperado) return;
-      await sendInteractiveMessage(from, options.message, options.buttons);
-    }
+  // Flujo inicial: preguntar el tipo de evento y ofrecer opciones
+  if (context.estado === "Contacto Inicial") {
+    // Enviar mensaje interactivo con imagen para preguntar el tipo de evento
+    // Reemplaza la URL de la imagen por la correspondiente a tus servicios
+    await sendInteractiveMessageWithImageWithState(
+      from,
+      "¡Bienvenido a Camicam Photobooth! Para brindarte una experiencia personalizada, por favor indícanos el tipo de evento que tienes. Puedes seleccionar una opción a continuación.",
+      "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg",
+      {
+        message: "Selecciona el tipo de evento:",
+        buttons: [
+          { id: "evento_boda", title: "Boda" },
+          { id: "evento_xv", title: "XV Años" },
+          { id: "evento_otro", title: "Otro" }
+        ]
+      },
+      "Contacto Inicial"
+    );
+    context.estado = "EsperandoTipoEvento";
+    return true;
+  }
 
+  if (context.estado === "EsperandoTipoEvento") {
+    // Determinar el tipo de evento según la respuesta del usuario
+    if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
+      context.tipoEvento = "Boda";
+    } else if (messageLower.includes("xv") || messageLower.includes("quince")) {
+      context.tipoEvento = "XV";
+    } else {
+      context.tipoEvento = "Otro";
+    }
+    const promptOpciones = `Has seleccionado: ${context.tipoEvento}. ¿Cómo deseas proceder?`;
+    await sendInteractiveMessage(from, promptOpciones, [
+      { id: "armar_paquete", title: "Armar mi paquete" },
+      { id: "paquete_sugerido", title: "Ver paquete sugerido" }
+    ]);
+    context.estado = "OpcionesSeleccionadas";
+    return true;
+  }
+
+  if (context.estado === "OpcionesSeleccionadas") {
+    if (messageLower.includes("armar")) {
+      await sendWhatsAppMessage(from, "Perfecto, por favor indícanos los servicios que deseas incluir en tu paquete.");
+      context.estado = "ArmandoPaquete";
+    } else if (messageLower.includes("sugerido") || messageLower.includes("paquete_sugerido")) {
+      if (context.tipoEvento === "Boda") {
+        await sendWhatsAppMessage(from, "Te recomendamos el 'Paquete Wedding': Incluye Cabina 360, iniciales (por ejemplo, A&A y un corazón), 2 chisperos y un carrito de shots con alcohol, todo por $4,450.");
+      } else if (context.tipoEvento === "XV") {
+        await sendWhatsAppMessage(from, "Te recomendamos el 'Paquete Mis XV': Incluye 6 letras gigantes, Cabina de fotos, Lluvia de mariposas y 2 chisperos, todo por $5,600.");
+      } else {
+        await sendWhatsAppMessage(from, "Te recomendamos el 'Paquete Party': Incluye Cabina de fotos, 4 letras gigantes y un carrito de shots con alcohol, todo por $4,450.");
+      }
+      context.estado = "Finalizado";
+    } else {
+      await sendWhatsAppMessage(from, "No entendí tu respuesta. Por favor selecciona una de las opciones: 'Armar mi paquete' o 'Ver paquete sugerido'.");
+    }
+    return true;
+  }
+
+  // Si ya pasó el flujo inicial, continuar con el resto del manejo (por ejemplo, integración con OpenAI)
+  try {
     // Configuramos el caché para respuestas de OpenAI (1 hora de TTL)
     const responseCache = new NodeCache({ stdTTL: 3600 });
 
-    // Función para generar la clave de caché
     function getCacheKey(query) {
       return query.toLowerCase();
     }
 
     async function getResponseFromOpenAI(query) {
-      // Construir el contexto completo con los detalles de Camicam Photobooth
       const contextoPaquetes = construirContexto();
-      
-      // Concatena el contexto y la consulta del usuario
       const fullQuery = `
 ${contextoPaquetes}
 
@@ -496,14 +547,12 @@ Responde de forma profesional, clara y concisa, utilizando el contexto proporcio
       `;
       
       const key = getCacheKey(fullQuery);
-      // Verificar si existe respuesta en caché
       const cachedResponse = responseCache.get(key);
       if (cachedResponse) {
         console.log("Usando respuesta en caché para la consulta:", fullQuery);
         return cachedResponse;
       }
       
-      // Llamada a OpenAI
       const response = await openai.chat.completions.create({
         model: "gpt-3.5-turbo",
         messages: [
@@ -518,7 +567,6 @@ Responde de forma profesional, clara y concisa, utilizando el contexto proporcio
       if (!answer || answer.trim() === "") {
         throw new Error("Respuesta vacía");
       }
-      // Guardar la respuesta en caché
       responseCache.set(key, answer);
       return answer;
     }
@@ -528,12 +576,10 @@ Responde de forma profesional, clara y concisa, utilizando el contexto proporcio
         const answer = await getResponseFromOpenAI(userMessage);
         await sendWhatsAppMessage(from, answer);
 
-        // Si la respuesta indica falta de información, notificar al administrador
         if (answer.includes("Lamentablemente, la información proporcionada no incluye detalles")) {
           const adminMessage = `El cliente ${from} preguntó: "${userMessage}" y la respuesta fue: "${answer}". Se requiere intervención humana para proporcionar más detalles.`;
           await sendWhatsAppMessage(process.env.ADMIN_WHATSAPP_NUMBER, adminMessage);
         }
-        
       } catch (error) {
         console.error("Error de OpenAI:", error.message);
         const adminMessage = `El cliente ${from} preguntó: "${userMessage}" y OpenAI no pudo responder. Se requiere intervención humana.`;
@@ -542,8 +588,8 @@ Responde de forma profesional, clara y concisa, utilizando el contexto proporcio
       }
     }
 
-    // Aquí se puede integrar el manejo de OpenAI según el estado del usuario o lógica adicional.
     await handleOpenAIResponse(from, userMessage);
+    return true;
 
   } catch (error) {
     console.error("❌ Error en handleUserMessage:", error.message);
