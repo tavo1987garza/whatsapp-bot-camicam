@@ -614,16 +614,11 @@ function calcularFlete(ubicacionEvento, cantidadServicios) {
     return cantidadServicios <= 3 ? 400 : 200;
   }
 
-  // Si la ubicación no coincide con las anteriores, por defecto no se cobra flete.
+  // Si la ubicación no coincide, por defecto no se cobra flete.
   return 0;
 }
 
-function construirContexto(ubicacionEvento, cantidadServicios, distanciaKm) {
-  // Verificar si la distancia está dentro del área de servicio (hasta 25 km)
-  if (distanciaKm > 25) {
-    return 'Lo siento, no damos servicio en esa ubicación, ya que se encuentra fuera de nuestra área de cobertura (25 km a la redonda del centro de Monterrey).';
-  }
-
+function construirContexto(ubicacionEvento, cantidadServicios) {
   // Calcular el costo de flete usando la función definida
   const costoFlete = calcularFlete(ubicacionEvento, cantidadServicios);
 
@@ -659,16 +654,7 @@ function construirContexto(ubicacionEvento, cantidadServicios, distanciaKm) {
   return contexto;
 }
 
-// Ejemplo de uso:
-// Supongamos que el evento es en "San Nicolás de los Garza", el cliente requiere 2 servicios y la distancia es de 20 km.
-const ubicacionEvento = 'San Nicolás de los Garza';
-const cantidadServicios = 2;
-const distanciaKm = 20;
-console.log(construirContexto(ubicacionEvento, cantidadServicios, distanciaKm));
 
-// Ejemplo de evento fuera de cobertura (distancia mayor a 25 km)
-const distanciaFuera = 30;
-console.log(construirContexto(ubicacionEvento, cantidadServicios, distanciaFuera));
 
 
 
@@ -905,5 +891,4 @@ app.listen(PORT, () => {
 });
 
 
-};
 
