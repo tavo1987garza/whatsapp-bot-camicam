@@ -513,10 +513,10 @@ async function handleUserMessage(from, userMessage, messageLower) {
     // Reemplaza la URL de la imagen por la correspondiente a tus servicios
     await sendInteractiveMessageWithImageWithState(
       from,
-      "¡Bienvenido a Camicam Photobooth! Para brindarte una experiencia personalizada, por favor indícanos el tipo de evento que tienes. Puedes seleccionar una opción a continuación.",
+      "¡Bienvenido a Camicam Photobooth! Conoce los Servicios que ofrecemos",
       "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg",
       {
-        message: "Selecciona el tipo de evento:",
+        message: "Por favor selecciona el tipo de evento que tienes:",
         buttons: [
           { id: "evento_boda", title: "Boda" },
           { id: "evento_xv", title: "XV Años" },
