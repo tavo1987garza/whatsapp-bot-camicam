@@ -121,7 +121,7 @@ app.post('/webhook', async (req, res) => {
       return res.sendStatus(200);
     }
 
-    // Manejo del flujo de inicio y selección de paquete
+    // Manejo del flujo de mensajes del usuario
     const handledFlow = await handleUserMessage(from, userMessage, messageLower);
     if (handledFlow) return res.sendStatus(200);
 
@@ -439,7 +439,6 @@ function isValidDate(dateString) {
 
   const [day, month, year] = dateString.split('/').map(Number);
   const date = new Date(year, month - 1, day);
-
   return (
     date.getFullYear() === year &&
     date.getMonth() + 1 === month &&
@@ -463,6 +462,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
       tipoEvento: null,
       nombre: null,
       fecha: null,
+      lugar: null,
       serviciosSeleccionados: [],
       total: 0
     };
@@ -476,7 +476,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
     await sendInteractiveMessageWithImageWithState(
       from,
       "¡Bienvenido a Camicam Photobooth! Para brindarte una experiencia personalizada, por favor indícanos el tipo de evento que tienes. Puedes seleccionar una opción a continuación.",
-      "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg",
+      "https://example.com/servicios.jpg",
       {
         message: "Selecciona el tipo de evento:",
         buttons: [
@@ -500,6 +500,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
     } else {
       context.tipoEvento = "Otro";
     }
+    // Ofrecer opciones de paquete
     const promptOpciones = `Has seleccionado: ${context.tipoEvento}. ¿Cómo deseas proceder?`;
     await sendInteractiveMessage(from, promptOpciones, [
       { id: "armar_paquete", title: "Armar mi paquete" },
@@ -512,7 +513,6 @@ async function handleUserMessage(from, userMessage, messageLower) {
   if (context.estado === "OpcionesSeleccionadas") {
     if (messageLower.includes("armar")) {
       await sendWhatsAppMessage(from, "Perfecto, por favor indícanos los servicios que deseas incluir en tu paquete.");
-      context.estado = "ArmandoPaquete";
     } else if (messageLower.includes("sugerido") || messageLower.includes("paquete_sugerido")) {
       if (context.tipoEvento === "Boda") {
         await sendWhatsAppMessage(from, "Te recomendamos el 'Paquete Wedding': Incluye Cabina 360, iniciales (por ejemplo, A&A y un corazón), 2 chisperos y un carrito de shots con alcohol, todo por $4,450.");
@@ -521,14 +521,44 @@ async function handleUserMessage(from, userMessage, messageLower) {
       } else {
         await sendWhatsAppMessage(from, "Te recomendamos el 'Paquete Party': Incluye Cabina de fotos, 4 letras gigantes y un carrito de shots con alcohol, todo por $4,450.");
       }
-      context.estado = "Finalizado";
     } else {
       await sendWhatsAppMessage(from, "No entendí tu respuesta. Por favor selecciona una de las opciones: 'Armar mi paquete' o 'Ver paquete sugerido'.");
+      return true;
     }
+    // Luego de elegir paquete (o armarlo), se pregunta la fecha del evento
+    await sendWhatsAppMessage(from, "Para continuar, por favor indícanos la fecha de tu evento (Formato DD/MM/AAAA).");
+    context.estado = "EsperandoFecha";
     return true;
   }
 
-  // Si ya pasó el flujo inicial, continuar con el resto del manejo (por ejemplo, integración con OpenAI)
+  if (context.estado === "EsperandoFecha") {
+    // Validar el formato de la fecha
+    if (!isValidDate(userMessage)) {
+      await sendWhatsAppMessage(from, "El formato de la fecha es incorrecto. Por favor, usa el formato DD/MM/AAAA.");
+      return true;
+    }
+    // Verificar la disponibilidad de la fecha
+    if (!checkAvailability(userMessage)) {
+      await sendWhatsAppMessage(from, "Lo siento, la fecha seleccionada no está disponible. Por favor, elige otra fecha o contáctanos para más detalles.");
+      context.estado = "Finalizado";
+      return true;
+    }
+    // Fecha válida y disponible; se guarda y se pregunta por la ubicación
+    context.fecha = userMessage;
+    await sendWhatsAppMessage(from, "¡Genial! La fecha está disponible. Ahora, ¿podrías indicarnos en dónde se realizará tu evento?");
+    context.estado = "EsperandoLugar";
+    return true;
+  }
+
+  if (context.estado === "EsperandoLugar") {
+    // Guardar la ubicación y concluir el flujo
+    context.lugar = userMessage;
+    await sendWhatsAppMessage(from, "¡Perfecto! Hemos registrado la fecha y el lugar de tu evento. Un agente se pondrá en contacto contigo para afinar los detalles. ¡Gracias por elegir Camicam Photobooth!");
+    context.estado = "Finalizado";
+    return true;
+  }
+
+  // Si ya pasó el flujo inicial, se continúa con el manejo (por ejemplo, integración con OpenAI)
   try {
     // Configuramos el caché para respuestas de OpenAI (1 hora de TTL)
     const responseCache = new NodeCache({ stdTTL: 3600 });
