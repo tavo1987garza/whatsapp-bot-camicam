@@ -558,7 +558,31 @@ async function handleUserMessage(from, userMessage, messageLower) {
     return true;
   }
 
-  // Si ya pasó el flujo inicial, se continúa con el manejo (por ejemplo, integración con OpenAI)
+  // Nueva rama: si el mensaje menciona "letras gigantes" y aún no se ha solicitado la cantidad
+  if (!["Contacto Inicial", "EsperandoTipoEvento", "OpcionesSeleccionadas", "EsperandoFecha", "EsperandoLugar", "EsperandoCantidadLetras"].includes(context.estado)) {
+    if (messageLower.includes("letras gigantes")) {
+      await sendWhatsAppMessage(from, "¿Cuántas letras ocupas?");
+      context.estado = "EsperandoCantidadLetras";
+      return true;
+    }
+  }
+
+  // Procesar respuesta en estado de "EsperandoCantidadLetras"
+  if (context.estado === "EsperandoCantidadLetras") {
+    // Extraer solo las letras del mensaje (ignorando espacios y símbolos)
+    const soloLetras = userMessage.replace(/[^a-zA-Z]/g, '');
+    const cantidad = soloLetras.length;
+    if (cantidad === 0) {
+      await sendWhatsAppMessage(from, "No pude identificar ninguna letra en tu respuesta. Por favor, indícame el nombre o cuántas letras necesitas.");
+      return true;
+    }
+    const precioTotal = cantidad * 400;
+    await sendWhatsAppMessage(from, `El precio para ${cantidad} letra(s) es $${precioTotal}.`);
+    context.estado = "Finalizado";
+    return true;
+  }
+
+  // Si ya pasó el flujo inicial, continuar con el resto del manejo (por ejemplo, integración con OpenAI)
   try {
     // Configuramos el caché para respuestas de OpenAI (1 hora de TTL)
     const responseCache = new NodeCache({ stdTTL: 3600 });
