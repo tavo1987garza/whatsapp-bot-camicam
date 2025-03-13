@@ -145,7 +145,7 @@ const faqs = [
   { question: /pago|método de pago|tarjeta|efectivo/i, answer: 'Aceptamos transferencias bancarias, depósitos y pagos en efectivo.' },
   { question: /que servicios manejas|servicios/i, answer: 'Estos son los servicios que manejamos:', 
     imageUrl: 'http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg' },
-  { question: /que incluye la cabina de fotos|cabina de fotos/i, answer: 'La cabina de fotos incluye un sistema de iluminación profesional, fondo personalizado, accesorios temáticos y mucho más. Revisa las imágenes y el video a continuación para más detalles.',
+  { question: /que incluye la cabina de fotos|cabina de fotos/i, answer: 'CABINA DE FOTOS precio Regular: $3,500 servicio por 3 horas',
     images: ['http://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-1.jpg',
              'http://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-2.jpg',
              'http://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-3.jpg',
@@ -179,22 +179,22 @@ async function handleFAQs(from, userMessage) {
     await sendWhatsAppMessage(from, faqEntry.answer);
     // Enviar imagen si existe
     if (faqEntry.imageUrl) {
-      await sendImageMessage(from, faqEntry.imageUrl, "Nuestros servicios");
+      await sendImageMessage(from, faqEntry.imageUrl);
     }
     // Enviar múltiples imágenes si existen
     if (faqEntry.images && Array.isArray(faqEntry.images)) {
       for (const imageUrl of faqEntry.images) {
-        await sendImageMessage(from, imageUrl, "Detalle de la cabina");
+        await sendImageMessage(from, imageUrl);
       }
     }
     // Enviar un video si existe videoUrl
     if (faqEntry.videoUrl) {
-      await sendWhatsAppVideo(from, faqEntry.videoUrl, "Mira este video para conocer más sobre la cabina de fotos");
+      await sendWhatsAppVideo(from, faqEntry.videoUrl);
     }
     // Enviar múltiples videos si existen
     if (faqEntry.videos && Array.isArray(faqEntry.videos)) {
       for (const videoUrl of faqEntry.videos) {
-        await sendWhatsAppVideo(from, videoUrl, "Video informativo sobre la cabina de fotos");
+        await sendWhatsAppVideo(from, videoUrl);
       }
     }
     return true;
