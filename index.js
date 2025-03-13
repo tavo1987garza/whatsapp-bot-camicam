@@ -409,121 +409,6 @@ async function sendImageMessage(to, imageUrl, caption) {
 
 
 
-//oooooooooooooooooo   FUNCIONES PARA CALCULAR DISTANCIA Y FLETE   oooooooooooooooo//
-
-// Función para geocodificar la dirección
-async function geocodeAddress(address) {
-  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
-  const encodedAddress = encodeURIComponent(address);
-  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${apiKey}`;
-
-  try {
-    const response = await axios.get(url);
-    console.log("Respuesta de Geocoding:", response.data); // Log de respuesta completa
-
-    if (response.data.status === 'OK' && response.data.results.length > 0) {
-      return response.data.results[0].geometry.location;
-    } else {
-      console.error("Geocoding falló con estado:", response.data.status, "y resultados:", response.data.results);
-      throw new Error("No se pudo geocodificar la dirección");
-    }
-  } catch (error) {
-    console.error("Error en geocoding:", error.message);
-    throw error;
-  }
-}
-
-// Función para obtener la distancia usando Routes API (con FieldMask)
-async function getRouteDistance(origin, destination) {
-  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
-  const url = 'https://routes.googleapis.com/directions/v2:computeRoutes';
-
-  const body = {
-    origin: { location: { latLng: { latitude: origin.lat, longitude: origin.lng } } },
-    destination: { location: { latLng: { latitude: destination.lat, longitude: destination.lng } } },
-    routingPreference: "TRAFFIC_AWARE",
-    travelMode: "DRIVE",
-    units: "METRIC"
-  };
-
-  try {
-    const response = await axios.post(`${url}?key=${apiKey}`, body, {
-      headers: {
-        "X-Goog-FieldMask": "routes.distanceMeters,routes.duration",
-        "Content-Type": "application/json"
-      }
-    });
-    console.log("Respuesta de Routes API:", response.data); // Log de respuesta completa
-
-    if (
-      response.data.routes &&
-      response.data.routes.length > 0 &&
-      response.data.routes[0].legs &&
-      response.data.routes[0].legs.length > 0
-    ) {
-      const distanceMeters = response.data.routes[0].legs[0].distanceMeters;
-      return distanceMeters / 1000;
-    } else {
-      console.error("No se encontró ruta en la respuesta:", response.data);
-      throw new Error("No se encontró ruta");
-    }
-  } catch (error) {
-    console.error("Error en Routes API:", error.response?.data || error.message);
-    throw error;
-  }
-}
-
-// Función para calcular el flete
-function calcularFlete({ isPackage = false, numberOfServices = 1, distance }) {
-  const tarifa = 20; // $20 por km
-  if ((isPackage || numberOfServices > 4) && distance <= 15) {
-    return 0;
-  }
-  return distance * tarifa;
-}
-
-// Función para manejar la dirección del evento
-async function manejarDireccionEvento(from, direccion) {
-  try {
-    console.log(`Iniciando proceso para el número ${from} con dirección: ${direccion}`);
-    const coordsEmpresa = { lat: 25.686614, lng: -100.316113 };
-    
-    const coordsEvento = await geocodeAddress(direccion);
-    console.log("Coordenadas del evento:", coordsEvento);
-
-    const distanciaKm = await getRouteDistance(coordsEmpresa, coordsEvento);
-    console.log(`La distancia calculada es: ${distanciaKm.toFixed(2)} km`);
-
-    const isPackage = userContext[from]?.isPackage || false;
-    const numberOfServices = userContext[from]?.numberOfServices || 1;
-
-    const flete = calcularFlete({ isPackage, numberOfServices, distance: distanciaKm });
-    console.log(`Costo de flete: $${flete}`);
-
-    await sendWhatsAppMessage(from, `El costo de flete para tu evento es: $${flete}`);
-  } catch (error) {
-    console.error("Error en manejarDireccionEvento:", error.message);
-    // Aquí podrías enviar un mensaje de error específico a WhatsApp si lo consideras necesario
-    throw error;
-  }
-}
-
-
-// Función principal de prueba
-async function main() {
-  const direccionEvento = "salón Espacio Fundidora, Monterrey, Nuevo León, México";
-  await manejarDireccionEvento("5218133971595", direccionEvento);
-}
-
-main();
-
-
-
-
-
-//oooooooooooooooooooooooooooooooo          oooooooooooooooooooooooooooooooooooo//
-
-
 //////////////////////////////////////////////////////////
 
 // 📌 Función para enviar mensajes con indicador de escritura
@@ -707,11 +592,51 @@ async function handleUserMessage(from, userMessage, buttonReply) {
 const responseCache = new NodeCache({ stdTTL: 3600 });
 
 // Función para construir el contexto a partir de tus objetos
-function construirContexto() {
+// Función para calcular el costo de flete
+function calcularFlete(ubicacionEvento, cantidadServicios) {
+  // Convertir la ubicación a minúsculas para evitar problemas de mayúsculas/minúsculas
+  const loc = ubicacionEvento.toLowerCase().trim();
+
+  // 1. Centro de Monterrey: sin costo de flete si se requiere al menos 1 servicio
+  if (loc === 'centro de monterrey') {
+    return 0;
+  }
+
+  // 2. Monterrey, san nicolas de los garza, guadalupe, san pedro garza garcia:
+  //    - Si se requieren 2 o menos servicios: $200, si son 3 o más: sin costo
+  if (loc === 'monterrey' || loc === 'san nicolas de los garza' || loc === 'guadalupe' || loc === 'san pedro garza garcia') {
+    return cantidadServicios <= 2 ? 200 : 0;
+  }
+
+  // 3. Santa Catarina, Escobedo, Juarez:
+  //    - Si se requieren 3 o menos servicios: $400, si son 4 o más: $200
+  if (loc === 'santa catarina' || loc === 'escobedo' || loc === 'juarez') {
+    return cantidadServicios <= 3 ? 400 : 200;
+  }
+
+  // Si la ubicación no coincide con las anteriores, por defecto no se cobra flete.
+  return 0;
+}
+
+function construirContexto(ubicacionEvento, cantidadServicios, distanciaKm) {
+  // Verificar si la distancia está dentro del área de servicio (hasta 25 km)
+  if (distanciaKm > 25) {
+    return 'Lo siento, no damos servicio en esa ubicación, ya que se encuentra fuera de nuestra área de cobertura (25 km a la redonda del centro de Monterrey).';
+  }
+
+  // Calcular el costo de flete usando la función definida
+  const costoFlete = calcularFlete(ubicacionEvento, cantidadServicios);
+
   let contexto = 'Información de Servicios y Paquetes de Camicam Photobooth:\n\n';
- 
   contexto += "Estamos ubicados en el centro de Monterrey, Nuevo León, México y atendemos eventos hasta 25 km a la redonda.\n\n";
-  contexto += "Cobramos flete, cuando .\n\n";
+  
+  // Incluir la lógica de flete en el contexto
+  if (costoFlete === 0) {
+    contexto += "Flete: Sin costo de flete.\n\n";
+  } else {
+    contexto += `Flete: $${costoFlete}.\n\n`;
+  }
+
   contexto += 'Precios de Servicios:\n';
   contexto += `- Cabina de Fotos: $${preciosServicios.cabina_fotos}\n`;
   contexto += `- Cabina 360: $${preciosServicios.cabina_360}\n`;
@@ -733,6 +658,18 @@ function construirContexto() {
 
   return contexto;
 }
+
+// Ejemplo de uso:
+// Supongamos que el evento es en "San Nicolás de los Garza", el cliente requiere 2 servicios y la distancia es de 20 km.
+const ubicacionEvento = 'San Nicolás de los Garza';
+const cantidadServicios = 2;
+const distanciaKm = 20;
+console.log(construirContexto(ubicacionEvento, cantidadServicios, distanciaKm));
+
+// Ejemplo de evento fuera de cobertura (distancia mayor a 25 km)
+const distanciaFuera = 30;
+console.log(construirContexto(ubicacionEvento, cantidadServicios, distanciaFuera));
+
 
 
 // Función para generar la clave de caché
@@ -914,20 +851,7 @@ async function handleOpenAIResponse(from, userMessage) {
       return true;
     }
 
-     // Detectar si el mensaje incluye una dirección (esto es solo un ejemplo; puedes ajustar la lógica de detección)
-  if (messageLower.includes("salón") || messageLower.includes("evento en") || messageLower.includes("en la quinta") || messageLower.includes("ubicado en")) {
-    try {
-      // Aquí se asume que el mensaje contiene la dirección del evento.
-      // Llama a la función que maneja la dirección y calcula el flete.
-      await manejarDireccionEvento(from, userMessage);
-      return true;
-    } catch (error) {
-      console.error("Error al manejar la dirección:", error.message);
-      await sendWhatsAppMessage(from, "Hubo un error al procesar la ubicación de tu evento. Por favor, inténtalo de nuevo.");
-      return true;
-    }
-  }
-
+   
     // ── Validar si el usuario quiere "Armar mi paquete" ──
     if (messageLower === 'armar_paquete') {
       await sendWhatsAppMessage(from, '🔗 Para armar tu paquete personalizado, visita nuestro cotizador en el siguiente enlace:\n🌐 www.cami-cam.com/cotizador/');
