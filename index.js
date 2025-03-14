@@ -159,7 +159,22 @@ function calculateQuotation(servicesText) {
         servicesRecognized.push("chisperos");
       }
     } else if (service.includes("letras gigantes")) {
-      details.push("Letras gigantes: se cotiza por letra (ver flujo específico)");
+      // Extraer la cantidad de letras (si se especifica)
+      const match = service.match(/letras gigantes\s*(\d+)/);
+      if (match) {
+        const qty = parseInt(match[1]);
+        const precioLetras = qty * prices["letras gigantes"];
+        subtotal += precioLetras;
+        serviceCount++;
+        details.push(`Letras gigantes (${qty} unidades): $${precioLetras}`);
+        servicesRecognized.push("letras gigantes");
+      } else {
+        // Si no se especifica la cantidad, se asume 1 letra
+        subtotal += prices["letras gigantes"];
+        serviceCount++;
+        details.push(`Letras gigantes (1 unidad): $${prices["letras gigantes"]}`);
+        servicesRecognized.push("letras gigantes");
+      }
     } else if (prices[service] !== undefined) {
       subtotal += prices[service];
       serviceCount++;
@@ -680,11 +695,11 @@ if (context.estado === "Contacto Inicial") {
   await delay(3000); // Retraso de 3 segundos antes de enviar los botones
   await sendInteractiveMessage(
     from,
-    "Para una mejor experiencia, por favor interactúa con los botones que te mostraré a continuación.\n\n😊 Selecciona el tipo de evento que tienes:",
+    "Para una mejor experiencia, por favor interactúa con los botones que te mostraré a continuación 😊\n\nSelecciona el tipo de evento que tienes: 👇",
     [
-      { id: "evento_boda", title: "Boda" },
-      { id: "evento_xv", title: "XV Años" },
-      { id: "evento_otro", title: "Otro" }
+      { id: "evento_boda", title: "💍 Boda" },
+      { id: "evento_xv", title: "🎉 XV Años" },
+      { id: "evento_otro", title: "🎊 Otro" }
     ]
   );
 
@@ -703,7 +718,7 @@ if (context.estado === "Contacto Inicial") {
     context.tipoEvento = "Otro";
   }
   // Enviar botones para elegir entre paquete sugerido o armar paquete
-  await sendInteractiveMessage(from, `¡Qué emoción! 😊 Ahora, ¿qué te gustaría hacer?`, [
+  await sendInteractiveMessage(from, `¡Qué emoción! 😊 Muchas felicidades por tu celebración ✨ \n\nAhora, ¿qué te gustaría hacer?`, [
     { id: "paquete_sugerido", title: "Ver paquete sugerido" },
     { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
   ]);
@@ -719,7 +734,7 @@ if (context.estado === "OpcionesSeleccionadas") {
     // Mensaje con retraso para simular interacción humana
     await sendMessageWithTypingWithState(
       from,
-      "¡Genial! 😃 Vamos a armar tu paquete personalizado. Por favor, indícanos los servicios que deseas incluir. (Ejemplo: cabina de fotos, niebla de piso, scrapbook, chisperos 4)",
+      "¡Genial! 😃 Vamos a armar tu paquete personalizado. Por favor, indícame los servicios que deseas incluir. (Escribe separado por comas Ejemplo: cabina de fotos, niebla de piso, scrapbook, chisperos 4, letras gigantes 4)",
       2000, // Retraso de 2 segundos
       "OpcionesSeleccionadas"
     );
