@@ -17,11 +17,70 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Middleware para manejar JSON (usando express.json())
+// Middleware para manejar JSON
 app.use(express.json());
 
 // Objeto para almacenar el contexto de cada usuario
 const userContext = {};
+
+// Objeto para asociar servicios a medios (imágenes y videos)
+const mediaMapping = {
+  "cabina de fotos": {
+    images: [
+      "http://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-1.jpg",
+      "http://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-2.jpg"
+    ],
+    videos: [
+      "http://cami-cam.com/wp-content/uploads/2025/03/Cabina-Blanca.mp4"
+    ]
+  },
+  "cabina 360": {
+    images: [
+      "http://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-1.jpg"
+    ],
+    videos: [
+      "http://cami-cam.com/wp-content/uploads/2025/03/Cabina-Rosa.mp4"
+    ]
+  },
+  "lluvia de mariposas": {
+    images: [
+      "http://cami-cam.com/wp-content/uploads/2023/07/lluvia1.jpg"
+    ],
+    videos: []
+  },
+  "carrito de shots con alcohol": {
+    images: [
+      "http://cami-cam.com/wp-content/uploads/2023/07/carrito1.jpg"
+    ],
+    videos: []
+  },
+  "niebla de piso": {
+    images: [
+      "http://cami-cam.com/wp-content/uploads/2023/07/niebla1.jpg"
+    ],
+    videos: []
+  },
+  "scrapbook": {
+    images: [
+      "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-4.jpeg"
+    ],
+    videos: [
+      "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook.mp4"
+    ]
+  },
+  "audio guest book": {
+    images: [
+      "http://cami-cam.com/wp-content/uploads/2023/07/audio1.jpg"
+    ],
+    videos: []
+  },
+  "chisperos": {
+    images: [
+      "http://cami-cam.com/wp-content/uploads/2023/07/chisperos1.jpg"
+    ],
+    videos: []
+  }
+};
 
 // Función para construir el contexto para OpenAI
 function construirContexto() {
@@ -38,7 +97,7 @@ Ofrecemos los siguientes servicios:
   - Lluvia matalica: $2,000
   - Scrapbook: $1,300
   - Audio Guest Book: $2,000
-  - Chisperos (por pares):  
+  - Chisperos (por pares):
        • 2 chisperos = $1,000  
        • 4 chisperos = $1,500  
        • 6 chisperos = $2,000  
@@ -50,9 +109,9 @@ Responde de forma profesional, clara, concisa y persuasiva, como un vendedor exp
   `;
 }
 
-// Función para calcular la cotización según los servicios ingresados
+// Función para calcular la cotización y retornar los servicios reconocidos
 function calculateQuotation(servicesText) {
-  // Diccionario de servicios y precios
+  // Diccionario de precios
   const prices = {
     "cabina de fotos": 3500,
     "cabina 360": 3500,
@@ -73,12 +132,13 @@ function calculateQuotation(servicesText) {
     10: 3000
   };
 
-  // Se asume que los servicios se ingresan separados por comas
+  // Separar servicios (se asume que están separados por comas)
   const servicesArr = servicesText.split(',').map(s => s.trim().toLowerCase()).filter(s => s.length > 0);
   
   let subtotal = 0;
-  let serviceCount = 0; // cantidad de servicios (para aplicar descuento)
+  let serviceCount = 0; // para descuentos
   let details = [];
+  let servicesRecognized = []; // servicios que se reconocieron y para los que se enviarán medios
 
   for (const service of servicesArr) {
     if (service.includes("chisperos")) {
@@ -87,27 +147,32 @@ function calculateQuotation(servicesText) {
         const qty = parseInt(match[1]);
         if (chisperosPrices[qty]) {
           subtotal += chisperosPrices[qty];
-          serviceCount++; // contar como 1 servicio
+          serviceCount++;
           details.push(`Chisperos (${qty} unidades): $${chisperosPrices[qty]}`);
+          servicesRecognized.push("chisperos");
         } else {
           details.push(`Chisperos: cantidad inválida (${service})`);
         }
       } else {
         subtotal += chisperosPrices[2];
         details.push(`Chisperos (2 unidades): $${chisperosPrices[2]}`);
+        // Si es solo 2 chisperos, no se aplica descuento, pero lo agregamos si se desea
+        servicesRecognized.push("chisperos");
       }
     } else if (service.includes("letras gigantes")) {
+      // Este flujo se maneja por separado
       details.push("Letras gigantes: se cotiza por letra (ver flujo específico)");
     } else if (prices[service] !== undefined) {
       subtotal += prices[service];
       serviceCount++;
       details.push(`${service.charAt(0).toUpperCase() + service.slice(1)}: $${prices[service]}`);
+      servicesRecognized.push(service);
     } else {
       details.push(`${service}: servicio no reconocido`);
     }
   }
   
-  // Aplicar descuento según la cantidad de servicios (con excepciones)
+  // Aplicar descuento según cantidad de servicios (con excepciones)
   let discountPercent = 0;
   if (serviceCount === 1) {
     if (servicesArr.length === 1 && servicesArr[0].includes("letras gigantes")) {
@@ -131,19 +196,18 @@ function calculateQuotation(servicesText) {
     discountPercent,
     discountAmount,
     total,
-    details
+    details,
+    servicesRecognized
   };
 }
 
-// Ruta para la verificación inicial del webhook
+// Rutas (webhook, raíz, etc.)
 app.get('/webhook', (req, res) => {
   const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
-
   console.log(`Webhook recibido: mode=${mode}, token=${token}`);
-
   if (mode === 'subscribe' && token === VERIFY_TOKEN) {
     console.log('Webhook verificado');
     res.status(200).send(challenge);
@@ -153,11 +217,9 @@ app.get('/webhook', (req, res) => {
   }
 }); 
 
-// Ruta raíz
 app.get('/', async (req, res) => {
   res.send('¡Servidor funcionando correctamente! 🚀');
   console.log("Ruta '/' accedida correctamente.");
-
   try {
     console.log('Enviando mensaje de prueba a WhatsApp...');
     await sendWhatsAppMessage('528133971595', 'hello_world');
@@ -172,7 +234,6 @@ app.post('/webhook', async (req, res) => {
   console.log("📩 Webhook activado:", JSON.stringify(req.body, null, 2));
   const message = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
   if (!message) return res.sendStatus(404);
-
   const from = message.from;
   let userMessage = "";
   if (message.text && message.text.body) {
@@ -183,7 +244,6 @@ app.post('/webhook', async (req, res) => {
     userMessage = message.interactive.list_reply.title || message.interactive.list_reply.id;
   }
   const plataforma = "WhatsApp";
-
   console.log(`📩 Mensaje de ${from} al CRM: ${userMessage}`);
   try {
     await axios.post('https://camicam-crm-d78af2926170.herokuapp.com/recibir_mensaje', {
@@ -195,21 +255,18 @@ app.post('/webhook', async (req, res) => {
   } catch (error) {
     console.error("❌ Error al enviar mensaje al CRM:", error.message);
   }
-
   const buttonReply = message?.interactive?.button_reply?.id || '';
   const listReply = message?.interactive?.list_reply?.id || '';
   const messageLower = buttonReply ? buttonReply.toLowerCase() : listReply ? listReply.toLowerCase() : userMessage.toLowerCase();
-
   console.log("📌 Mensaje recibido:", userMessage);
   console.log("🔘 Botón presionado:", buttonReply);
   console.log("📄 Lista seleccionada:", listReply);
-
-  // Si el usuario ya está en un flujo específico (por ejemplo, armando su paquete), omitimos FAQs.
-  if (!userContext[from] || 
-      !["EsperandoServicios", "EsperandoFecha", "EsperandoLugar", "EsperandoCantidadLetras"].includes(userContext[from].estado)) {
+  
+  // Si el usuario ya está en un flujo específico (p.ej., armando su paquete), se omite el chequeo de FAQs
+  if (!userContext[from] || !["EsperandoServicios", "EsperandoFecha", "EsperandoLugar", "EsperandoCantidadLetras"].includes(userContext[from].estado)) {
     if (await handleFAQs(from, userMessage)) return res.sendStatus(200);
   }
-
+  
   try {
     const handledFlow = await handleUserMessage(from, userMessage, messageLower);
     if (handledFlow) return res.sendStatus(200);
@@ -647,7 +704,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
     }
   }
 
-  // 4. Estado EsperandoServicios: guardar servicios y calcular cotización
+  // 4. Estado EsperandoServicios: guardar servicios, calcular cotización y enviar medios de los servicios cotizados
   if (context.estado === "EsperandoServicios") {
     context.serviciosSeleccionados = userMessage;
     const cotizacion = calculateQuotation(userMessage);
@@ -657,6 +714,27 @@ async function handleUserMessage(from, userMessage, messageLower) {
     mensajeCotizacion += `Total a pagar: $${cotizacion.total.toFixed(2)}\n\n`;
     mensajeCotizacion += "Detalle:\n" + cotizacion.details.join("\n");
     await sendWhatsAppMessage(from, mensajeCotizacion + "\n\n¡Gracias por tu interés! Ahora, por favor indícanos la fecha de tu evento (Formato DD/MM/AAAA) 📆.");
+    
+    // Enviar medios (imágenes y videos) de los servicios cotizados
+    if (cotizacion.servicesRecognized && cotizacion.servicesRecognized.length > 0) {
+      for (const service of cotizacion.servicesRecognized) {
+        if (mediaMapping[service]) {
+          // Enviar imágenes
+          if (mediaMapping[service].images && mediaMapping[service].images.length > 0) {
+            for (const img of mediaMapping[service].images) {
+              await sendImageMessage(from, img, `${service} - imagen`);
+            }
+          }
+          // Enviar videos
+          if (mediaMapping[service].videos && mediaMapping[service].videos.length > 0) {
+            for (const vid of mediaMapping[service].videos) {
+              await sendWhatsAppVideo(from, vid, `${service} - video`);
+            }
+          }
+        }
+      }
+    }
+    
     context.estado = "EsperandoFecha";
     return true;
   }
