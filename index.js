@@ -652,7 +652,7 @@ if (context.estado === "Contacto Inicial") {
 
   // Enviar la imagen de servicios con un retraso
   await delay(2000); // Retraso de 2 segundos antes de enviar la imagen
-  await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg", "Nuestros servicios 📸");
+  await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
 
   // Enviar los botones con otro retraso
   await delay(3000); // Retraso de 3 segundos antes de enviar los botones
@@ -671,62 +671,105 @@ if (context.estado === "Contacto Inicial") {
   return true;
 }
 
-
   // 2. Capturar el tipo de evento
-  if (context.estado === "EsperandoTipoEvento") {
-    if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
-      context.tipoEvento = "Boda";
-    } else if (messageLower.includes("xv") || messageLower.includes("quince")) {
-      context.tipoEvento = "XV";
+if (context.estado === "EsperandoTipoEvento") {
+  if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
+    context.tipoEvento = "Boda";
+  } else if (messageLower.includes("xv") || messageLower.includes("quince")) {
+    context.tipoEvento = "XV";
+  } else {
+    context.tipoEvento = "Otro";
+  }
+
+  // Mensaje más amigable y con emojis
+  await sendMessageWithTypingWithState(
+    from,
+    `¡Perfecto! 🎉 Has seleccionado: *${context.tipoEvento}*. ¡Qué emoción! 😊 Ahora, ¿qué te gustaría hacer?`,
+    2000, // Retraso de 2 segundos
+    "EsperandoTipoEvento"
+  );
+
+  // Enviar botones con emojis y un retraso
+  await delay(2000); // Retraso de 2 segundos antes de enviar los botones
+  await sendInteractiveMessage(
+    from,
+    "Elige una opción para continuar:",
+    [
+      { id: "paquete_sugerido", title: "📦 Ver paquete sugerido" }, // Emoji de caja
+      { id: "armar_paquete", title: "✨ Armar mi paquete" } // Emoji de estrella
+    ]
+  );
+
+  // Actualizar el estado del contexto
+  context.estado = "OpcionesSeleccionadas";
+  return true;
+}
+
+ // 3. Opciones: paquete sugerido o armar paquete
+if (context.estado === "OpcionesSeleccionadas") {
+  console.log("Valor recibido en OpcionesSeleccionadas:", messageLower);
+
+  if (messageLower === "armar_paquete") {
+    // Mensaje con retraso para simular interacción humana
+    await sendMessageWithTypingWithState(
+      from,
+      "¡Genial! 😃 Vamos a armar tu paquete personalizado. Por favor, indícanos los servicios que deseas incluir. (Ejemplo: cabina de fotos, niebla de piso, scrapbook, chisperos 4)",
+      2000, // Retraso de 2 segundos
+      "OpcionesSeleccionadas"
+    );
+    context.estado = "EsperandoServicios";
+    return true;
+  } else if (messageLower === "paquete_sugerido") {
+    // Determinar el paquete sugerido según el tipo de evento
+    let paqueteSugerido;
+    if (context.tipoEvento === "Boda") {
+      paqueteSugerido = "🎉 *Paquete Wedding*: Incluye Cabina 360, iniciales decorativas, 2 chisperos y un carrito de shots con alcohol, todo por *$4,450*.";
+    } else if (context.tipoEvento === "XV") {
+      paqueteSugerido = "🎂 *Paquete Mis XV*: Incluye 6 letras gigantes, Cabina de fotos, Lluvia de mariposas y 2 chisperos, todo por *$5,600*.";
     } else {
-      context.tipoEvento = "Otro";
+      paqueteSugerido = "🎈 *Paquete Party*: Incluye Cabina de fotos, 4 letras gigantes y un carrito de shots con alcohol, todo por *$4,450*.";
     }
-    // Enviar botones para elegir entre paquete sugerido o armar paquete
-    await sendInteractiveMessage(from, `¡Perfecto! Has seleccionado: ${context.tipoEvento} 👍. ¿Qué deseas hacer?`, [
-      { id: "armar_paquete", title: "Armar mi paquete" },
-      { id: "paquete_sugerido", title: "Ver paquete sugerido" }
-    ]);
-    context.estado = "OpcionesSeleccionadas";
+
+    // Enviar mensaje con el paquete sugerido
+    await sendMessageWithTypingWithState(
+      from,
+      `¡Perfecto! 🎊 Has seleccionado el paquete sugerido para *${context.tipoEvento}*: ${paqueteSugerido}`,
+      2000, // Retraso de 2 segundos
+      "OpcionesSeleccionadas"
+    );
+
+    // Solicitar la fecha del evento
+    await sendMessageWithTypingWithState(
+      from,
+      "Para continuar, por favor indícame la fecha de tu evento (Formato DD/MM/AAAA) 📆.",
+      2000, // Retraso de 2 segundos
+      "OpcionesSeleccionadas"
+    );
+
+    context.estado = "EsperandoFecha";
+    return true;
+  } else {
+    // Mensaje de error si no se selecciona una opción válida
+    await sendMessageWithTypingWithState(
+      from,
+      "😕 No entendí tu respuesta. Por favor, selecciona una opción válida utilizando los botones:",
+      2000, // Retraso de 2 segundos
+      "OpcionesSeleccionadas"
+    );
+
+    // Reenviar los botones para que el usuario seleccione nuevamente
+    await sendInteractiveMessage(
+      from,
+      "Elige una opción para continuar:",
+      [
+        { id: "armar_paquete", title: "✨ Armar mi paquete" },
+        { id: "paquete_sugerido", title: "📦 Ver paquete sugerido" }
+      ]
+    );
+
     return true;
   }
-
-  // 3. Opciones: paquete sugerido o armar paquete
-  if (context.estado === "OpcionesSeleccionadas") {
-    console.log("Valor recibido en OpcionesSeleccionadas:", messageLower);
-    if (messageLower === "armar_paquete") {
-      await sendWhatsAppMessage(
-        from,
-        "¡Genial! 😃 Por favor indícanos los servicios que deseas incluir en tu paquete. (Ejemplo: cabina de fotos, niebla de piso, scrapbook, chisperos 4)"
-      );
-      context.estado = "EsperandoServicios";
-      return true;
-    } else if (messageLower === "paquete_sugerido") {
-      if (context.tipoEvento === "Boda") {
-        context.serviciosSeleccionados = "Paquete Wedding: Incluye Cabina 360, iniciales decorativas, 2 chisperos y un carrito de shots con alcohol, todo por $4,450.";
-      } else if (context.tipoEvento === "XV") {
-        context.serviciosSeleccionados = "Paquete Mis XV: Incluye 6 letras gigantes, Cabina de fotos, Lluvia de mariposas y 2 chisperos, todo por $5,600.";
-      } else {
-        context.serviciosSeleccionados = "Paquete Party: Incluye Cabina de fotos, 4 letras gigantes y un carrito de shots con alcohol, todo por $4,450.";
-      }
-      await sendWhatsAppMessage(
-        from,
-        `👍 Has seleccionado el paquete sugerido para ${context.tipoEvento}: ${context.serviciosSeleccionados}`
-      );
-      await sendWhatsAppMessage(
-        from,
-        "Para continuar, por favor indícame la fecha de tu evento (Formato DD/MM/AAAA) 📆."
-      );
-      context.estado = "EsperandoFecha";
-      return true;
-    } else {
-      await sendWhatsAppMessage(
-        from,
-        "😕 No entendí tu respuesta. Por favor selecciona 'paquete sugerido' o 'armar mi paquete' utilizando los botones."
-      );
-      return true;
-    }
-  }
-
+}
   // 4. Estado EsperandoServicios: procesar servicios, calcular cotización y enviar mensajes en orden
   if (context.estado === "EsperandoServicios") {
     context.serviciosSeleccionados = userMessage;
