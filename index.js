@@ -17,7 +17,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Middleware para manejar JSON (usando express.json() en lugar de body-parser)
+// Middleware para manejar JSON (usando express.json())
 app.use(express.json());
 
 // Objeto para almacenar el contexto de cada usuario
@@ -82,7 +82,6 @@ function calculateQuotation(servicesText) {
 
   for (const service of servicesArr) {
     if (service.includes("chisperos")) {
-      // Buscar cantidad, ejemplo: "chisperos 4"
       const match = service.match(/chisperos\s*(\d+)/);
       if (match) {
         const qty = parseInt(match[1]);
@@ -94,12 +93,10 @@ function calculateQuotation(servicesText) {
           details.push(`Chisperos: cantidad inválida (${service})`);
         }
       } else {
-        // Sin cantidad, asumimos 2 chisperos (sin descuento)
         subtotal += chisperosPrices[2];
         details.push(`Chisperos (2 unidades): $${chisperosPrices[2]}`);
       }
     } else if (service.includes("letras gigantes")) {
-      // Se maneja en otro flujo
       details.push("Letras gigantes: se cotiza por letra (ver flujo específico)");
     } else if (prices[service] !== undefined) {
       subtotal += prices[service];
@@ -110,7 +107,7 @@ function calculateQuotation(servicesText) {
     }
   }
   
-  // Aplicar descuento según la cantidad de servicios (con excepción de "letras gigantes" o 2 chisperos)
+  // Aplicar descuento según la cantidad de servicios (con excepciones)
   let discountPercent = 0;
   if (serviceCount === 1) {
     if (servicesArr.length === 1 && servicesArr[0].includes("letras gigantes")) {
@@ -207,8 +204,13 @@ app.post('/webhook', async (req, res) => {
   console.log("🔘 Botón presionado:", buttonReply);
   console.log("📄 Lista seleccionada:", listReply);
 
-  try {
+  // Si el usuario ya está en un flujo específico (por ejemplo, armando su paquete), omitimos FAQs.
+  if (!userContext[from] || 
+      !["EsperandoServicios", "EsperandoFecha", "EsperandoLugar", "EsperandoCantidadLetras"].includes(userContext[from].estado)) {
     if (await handleFAQs(from, userMessage)) return res.sendStatus(200);
+  }
+
+  try {
     const handledFlow = await handleUserMessage(from, userMessage, messageLower);
     if (handledFlow) return res.sendStatus(200);
   } catch (error) {
