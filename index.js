@@ -157,6 +157,18 @@ const faqs = [
               'http://cami-cam.com/wp-content/uploads/2025/03/Cabina-Rosa.mp4', 
               'http://cami-cam.com/wp-content/uploads/2025/03/cabina-multicolor.mp4'  
             ]
+   },
+  { question: /que es el scrapbook|scrapbook/i, answer: 'El Scrapbook es un álbum que ponemos afuera de la cabina de fotos Sus invitados entran a la cabina se toman su foto y se imprimen dos tiras de Fotos. Una tira se la llevan ellos de recuerdo y la otra tira la pegan en el Scrapbook y le escriben un lindo mensaje a la quinceañera. Al finalizar el evento le entregamos a usted el Scrapbook con todas las fotos que se hayan pegado',
+    images: ['http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-4.jpeg',
+             'http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-3.jpeg',
+             'http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-2.jpeg',
+             'http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-5.jpeg',
+             'http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-7.jpeg',
+             'http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-6.jpeg'
+            ], 
+    videos: [
+              'http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook.mp4'  
+            ]
    }
 ];
 
