@@ -719,64 +719,44 @@ async function handleUserMessage(from, userMessage, messageLower) {
     }
   }
 
-// 4. Estado EsperandoServicios: procesar servicios, calcular cotización y enviar mensajes en orden
-if (context.estado === "EsperandoServicios") {
-  context.serviciosSeleccionados = userMessage;
-  // Detectamos si el usuario incluyó "letras gigantes" o "necesito letras"
-  const mensajeLower = userMessage.toLowerCase();
-  const incluyeLetras = mensajeLower.includes("letras gigantes") || mensajeLower.includes("necesito letras");
-
-  // Si se incluye "letras gigantes", quitamos esa parte para calcular la cotización de los demás servicios
-  let servicesForQuotation = userMessage;
-  if (incluyeLetras) {
-    servicesForQuotation = userMessage
-      .split(',')
-      .filter(s => !s.trim().toLowerCase().includes("letras gigantes") && !s.trim().toLowerCase().includes("necesito letras"))
-      .join(', ');
-  }
-
-  // Calcular la cotización con los servicios que ya tienen precio definido
-  const cotizacion = calculateQuotation(servicesForQuotation);
-  
-  // Enviar cotización: título y detalles
-  const mensajeCotizacion = "💰 *Tu cotización:*\nDetalle:\n" + cotizacion.details.join("\n");
-  await sendWhatsAppMessage(from, mensajeCotizacion);
-  
-  // Enviar resumen: subtotal, descuento y total
-  const mensajeResumen = `Subtotal: $${cotizacion.subtotal.toFixed(2)}\nDescuento (${cotizacion.discountPercent}%): -$${cotizacion.discountAmount.toFixed(2)}\nTotal a pagar: $${cotizacion.total.toFixed(2)}`;
-  await sendWhatsAppMessage(from, mensajeResumen);
-  
-  // Enviar imágenes y videos asociados a los servicios reconocidos (excluyendo letras, pues se procesarán aparte)
-  if (cotizacion.servicesRecognized && cotizacion.servicesRecognized.length > 0) {
-    for (const service of cotizacion.servicesRecognized) {
-      if (mediaMapping[service]) {
-        if (mediaMapping[service].images && mediaMapping[service].images.length > 0) {
-          for (const img of mediaMapping[service].images) {
-            await sendImageMessage(from, img, `${service} - imagen`);
+  // 4. Estado EsperandoServicios: procesar servicios, calcular cotización y enviar mensajes en orden
+  if (context.estado === "EsperandoServicios") {
+    context.serviciosSeleccionados = userMessage;
+    const cotizacion = calculateQuotation(userMessage);
+    
+    // Enviar cotización: título y detalles
+    const mensajeCotizacion = "💰 *Tu cotización:*\nDetalle:\n" + cotizacion.details.join("\n");
+    await sendWhatsAppMessage(from, mensajeCotizacion);
+    
+    // Enviar resumen: subtotal, descuento y total
+    const mensajeResumen = `Subtotal: $${cotizacion.subtotal.toFixed(2)}\nDescuento (${cotizacion.discountPercent}%): -$${cotizacion.discountAmount.toFixed(2)}\nTotal a pagar: $${cotizacion.total.toFixed(2)}`;
+    await sendWhatsAppMessage(from, mensajeResumen);
+    
+    // Enviar imágenes y videos asociados a los servicios reconocidos
+    if (cotizacion.servicesRecognized && cotizacion.servicesRecognized.length > 0) {
+      for (const service of cotizacion.servicesRecognized) {
+        if (mediaMapping[service]) {
+          // Enviar imágenes
+          if (mediaMapping[service].images && mediaMapping[service].images.length > 0) {
+            for (const img of mediaMapping[service].images) {
+              await sendImageMessage(from, img, `${service} - imagen`);
+            }
           }
-        }
-        if (mediaMapping[service].videos && mediaMapping[service].videos.length > 0) {
-          for (const vid of mediaMapping[service].videos) {
-            await sendWhatsAppVideo(from, vid, `${service} - video`);
+          // Enviar videos
+          if (mediaMapping[service].videos && mediaMapping[service].videos.length > 0) {
+            for (const vid of mediaMapping[service].videos) {
+              await sendWhatsAppVideo(from, vid, `${service} - video`);
+            }
           }
         }
       }
     }
-  }
-  
-  // Si se detectó que se desea incluir "letras gigantes", preguntamos cuántas letras ocupa o qué nombre necesita
-  if (incluyeLetras) {
-    await sendWhatsAppMessage(from, "Parece que deseas incluir 'letras gigantes'. ¿Cuántas letras ocupas o qué nombre necesitas? 🔠");
-    context.estado = "EsperandoCantidadLetras";
-    return true;
-  } else {
-    // Si no se incluye, continuamos preguntando si desea agregar algo más o tiene dudas
+    
+    // Preguntar si desea agregar algo más o si tiene dudas
     await sendWhatsAppMessage(from, "¿Deseas agregar algo más o tienes alguna duda?");
     context.estado = "EsperandoDudas";
     return true;
   }
-}
-
 
 // 5. Estado EsperandoDudas: manejar las preguntas adicionales o agregar servicios
 if (context.estado === "EsperandoDudas") {
@@ -863,50 +843,36 @@ if (context.estado === "EsperandoDudas") {
 
   // Rama para "letras gigantes" en otros flujos (si aplica)
   if (!["Contacto Inicial", "EsperandoTipoEvento", "OpcionesSeleccionadas", "EsperandoFecha", "EsperandoLugar", "EsperandoCantidadLetras"].includes(context.estado)) {
-    if (messageLower.includes("letras gigantes")|| /necesito\s+letras/.test(messageLower)) {
+    if (messageLower.includes("letras gigantes")) {
       await sendWhatsAppMessage(from, "¿Cuántas letras necesitas? 🔠");
       context.estado = "EsperandoCantidadLetras";
       return true;
     }
   }
 
-// Si el estado actual NO es "EsperandoCantidadLetras" y el mensaje indica la necesidad de letras,
-// se envía la pregunta y se cambia el estado.
-if (context.estado !== "EsperandoCantidadLetras" && 
-  (messageLower.includes("letras gigantes") || /necesito\s+letras/.test(messageLower))) {
-await sendWhatsAppMessage(from, "¿Cuántas letras ocupas o qué nombre necesitas? 🔠");
-context.estado = "EsperandoCantidadLetras";
-return true;
-}
-
-// Procesamiento cuando el bot está esperando la cantidad o el nombre para letras gigantes
-if (context.estado === "EsperandoCantidadLetras") {
-// Intentamos extraer el nombre si el mensaje incluye la frase "nombre de"
-let nombre = "";
-const regex = /nombre de\s+([a-zA-Z]+)/i;
-const match = userMessage.match(regex);
-if (match && match[1]) {
-  nombre = match[1];
-} else {
-  // Si no se detecta el patrón, asumimos que el mensaje completo es el nombre o la cantidad
-  nombre = userMessage;
-}
-// Eliminamos cualquier carácter que no sea una letra
-const soloLetras = nombre.replace(/[^a-zA-Z]/g, '');
-const cantidad = soloLetras.length;
-if (cantidad === 0) {
-  await sendWhatsAppMessage(from, "No pude identificar ninguna letra. Por favor, indícame el nombre o la cantidad de letras que deseas.");
+  if (context.estado === "EsperandoCantidadLetras") {
+  // Intentamos extraer el nombre si el mensaje incluye la frase "nombre de"
+  let nombre = "";
+  const regex = /nombre de\s+([a-zA-Z]+)/i;
+  const match = userMessage.match(regex);
+  if (match && match[1]) {
+    nombre = match[1];
+  } else {
+    // Si no se detecta el patrón, asumimos que el mensaje completo es el nombre o la cantidad
+    nombre = userMessage;
+  }
+  // Eliminamos cualquier carácter que no sea letra
+  const soloLetras = nombre.replace(/[^a-zA-Z]/g, '');
+  const cantidad = soloLetras.length;
+  if (cantidad === 0) {
+    await sendWhatsAppMessage(from, "No pude identificar ninguna letra. Por favor, indícame el nombre o la cantidad de letras que deseas.");
+    return true;
+  }
+  const precioTotal = cantidad * 400;
+  await sendWhatsAppMessage(from, `El precio para ${cantidad} letra(s) es de $${precioTotal} 💸.`);
+  context.estado = "Finalizado";
   return true;
 }
-const precioTotal = cantidad * 400;
-await sendWhatsAppMessage(from, `El precio para ${cantidad} letra(s) es de $${precioTotal} 💸.`);
-context.estado = "Finalizado";
-return true;
-}
-
-
-
-
 
 
   // Otros casos: enviar consulta a OpenAI para respuestas adicionales
