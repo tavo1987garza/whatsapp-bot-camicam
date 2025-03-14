@@ -1,5 +1,3 @@
-
-
 // Importar dependencias en modo ES Modules
 import dotenv from 'dotenv'; // Para cargar variables de entorno
 import express from 'express';
@@ -46,11 +44,9 @@ const mediaMapping = {
   },
   "lluvia de mariposas": {
     images: [
-      "http://cami-cam.com/wp-content/uploads/2024/06/LLUVIA-MARIPOSAS.jpg"
+      "http://cami-cam.com/wp-content/uploads/2023/07/lluvia1.jpg"
     ],
-    videos: [
-      "http://cami-cam.com/wp-content/uploads/2025/02/LLUVIA-DE-MARIPOSAS-2.0.mp4"
-    ]
+    videos: []
   },
   "carrito de shots con alcohol": {
     images: [
@@ -66,10 +62,7 @@ const mediaMapping = {
   },
   "scrapbook": {
     images: [
-      "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-4.jpeg",
-      "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-1.jpeg",
-      "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-6.jpeg",
-      "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-7.jpeg"
+      "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-4.jpeg"
     ],
     videos: [
       "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook.mp4"
@@ -262,14 +255,13 @@ app.post('/webhook', async (req, res) => {
   }
   const buttonReply = message?.interactive?.button_reply?.id || '';
   const listReply = message?.interactive?.list_reply?.id || '';
-  // Se utiliza el id del botón o el título de la lista; se convierte a minúsculas para normalizar
   const messageLower = buttonReply ? buttonReply.toLowerCase() : listReply ? listReply.toLowerCase() : userMessage.toLowerCase();
   console.log("📌 Mensaje recibido:", userMessage);
   console.log("🔘 Botón presionado:", buttonReply);
   console.log("📄 Lista seleccionada:", listReply);
   
-  // Si el usuario ya está en un flujo específico, se omite el chequeo de FAQs
-  if (!userContext[from] || !["EsperandoServicios", "EsperandoFecha", "EsperandoLugar", "EsperandoCantidadLetras"].includes(userContext[from].estado)) {
+  // Si el usuario ya está en un flujo específico, se omite el chequeo de FAQs (excepto en dudas)
+  if (!userContext[from] || !["EsperandoServicios", "EsperandoFecha", "EsperandoLugar", "EsperandoCantidadLetras", "EsperandoDudas"].includes(userContext[from].estado)) {
     if (await handleFAQs(from, userMessage)) return res.sendStatus(200);
   }
   
@@ -474,7 +466,6 @@ async function sendInteractiveMessageWithImageWithState(from, message, imageUrl,
   await sendMessageWithTypingWithState(from, message, 3000, estadoEsperado);
   if (userContext[from].estado !== estadoEsperado) return;
   await sendImageMessage(from, imageUrl);
-  // Se reduce el delay a 2 segundos para mayor continuidad
   await delay(2000); 
   if (userContext[from].estado !== estadoEsperado) return;
   await sendInteractiveMessage(from, options.message, options.buttons);
@@ -634,7 +625,7 @@ function checkAvailability(dateString) {
   return !occupiedDates.includes(dateString);
 }
 
-// Función para manejar el flujo de mensajes del usuario con un tono más natural y humano
+// Función para manejar el flujo de mensajes del usuario con tono natural
 async function handleUserMessage(from, userMessage, messageLower) {
   if (!userContext[from]) {
     userContext[from] = {
@@ -678,20 +669,27 @@ async function handleUserMessage(from, userMessage, messageLower) {
     } else {
       context.tipoEvento = "Otro";
     }
-    // Ofrecer opción de paquete sugerido o armado a medida
-    await sendInteractiveMessage(from, `¡Perfecto! Veo que tu evento es de tipo ${context.tipoEvento}. ¿Cómo prefieres continuar?`, [
-      { id: "armar_paquete", title: "Armar mi paquete" },
-      { id: "paquete_sugerido", title: "Ver paquete sugerido" }
-    ]);
+    // Enviar botones para elegir entre paquete sugerido o armar paquete
+    await sendInteractiveMessage(
+      from,
+      `¡Perfecto! Veo que tu evento es de tipo ${context.tipoEvento}. ¿Cómo prefieres continuar?`,
+      [
+        { id: "armar_paquete", title: "Quiero armar mi paquete" },
+        { id: "paquete_sugerido", title: "Ver paquete sugerido" }
+      ]
+    );
     context.estado = "OpcionesSeleccionadas";
     return true;
   }
 
-  // 3. Opciones: paquete sugerido o armar
+  // 3. Opciones: paquete sugerido o armar paquete
   if (context.estado === "OpcionesSeleccionadas") {
     console.log("Valor recibido en OpcionesSeleccionadas:", messageLower);
     if (messageLower === "armar_paquete") {
-      await sendWhatsAppMessage(from, "¡Genial! 😃 Por favor indícanos los servicios que deseas incluir en tu paquete. (Ejemplo: cabina de fotos, niebla de piso, scrapbook, chisperos 4)");
+      await sendWhatsAppMessage(
+        from,
+        "¡Genial! 😃 Por favor indícanos los servicios que deseas incluir en tu paquete. (Ejemplo: cabina de fotos, niebla de piso, scrapbook, chisperos 4)"
+      );
       context.estado = "EsperandoServicios";
       return true;
     } else if (messageLower === "paquete_sugerido") {
@@ -702,27 +700,39 @@ async function handleUserMessage(from, userMessage, messageLower) {
       } else {
         context.serviciosSeleccionados = "Paquete Party: Incluye Cabina de fotos, 4 letras gigantes y un carrito de shots con alcohol, todo por $4,450.";
       }
-      await sendWhatsAppMessage(from, `👍 Has seleccionado el paquete sugerido para ${context.tipoEvento}: ${context.serviciosSeleccionados}`);
-      await sendWhatsAppMessage(from, "Para continuar, por favor indícame la fecha de tu evento (Formato DD/MM/AAAA) 📆.");
+      await sendWhatsAppMessage(
+        from,
+        `👍 Has seleccionado el paquete sugerido para ${context.tipoEvento}: ${context.serviciosSeleccionados}`
+      );
+      await sendWhatsAppMessage(
+        from,
+        "Para continuar, por favor indícame la fecha de tu evento (Formato DD/MM/AAAA) 📆."
+      );
       context.estado = "EsperandoFecha";
       return true;
     } else {
-      await sendWhatsAppMessage(from, "😕 No entendí tu respuesta. Por favor selecciona 'paquete sugerido' o 'armar mi paquete' utilizando los botones.");
+      await sendWhatsAppMessage(
+        from,
+        "😕 No entendí tu respuesta. Por favor selecciona 'paquete sugerido' o 'armar mi paquete' utilizando los botones."
+      );
       return true;
     }
   }
 
-  // 4. Estado EsperandoServicios: guardar servicios, calcular cotización y enviar medios de los servicios cotizados
+  // 4. Estado EsperandoServicios: procesar servicios, calcular cotización y enviar mensajes en orden
   if (context.estado === "EsperandoServicios") {
     context.serviciosSeleccionados = userMessage;
     const cotizacion = calculateQuotation(userMessage);
-    let mensajeCotizacion = "💰 *Tu cotización:* \n";
-    mensajeCotizacion += "Detalle:\n" + cotizacion.details.join("\n");
-    mensajeCotizacion += `Subtotal: $${cotizacion.subtotal.toFixed(2)}\n`;
-    mensajeCotizacion += `Descuento (${cotizacion.discountPercent}%): -$${cotizacion.discountAmount.toFixed(2)}\n`;
-    mensajeCotizacion += `Total a pagar: $${cotizacion.total.toFixed(2)}\n\n`;
-
-    // Enviar medios (imágenes y videos) de los servicios cotizados
+    
+    // Enviar cotización: título y detalles
+    const mensajeCotizacion = "💰 *Tu cotización:*\nDetalle:\n" + cotizacion.details.join("\n");
+    await sendWhatsAppMessage(from, mensajeCotizacion);
+    
+    // Enviar resumen: subtotal, descuento y total
+    const mensajeResumen = `Subtotal: $${cotizacion.subtotal.toFixed(2)}\nDescuento (${cotizacion.discountPercent}%): -$${cotizacion.discountAmount.toFixed(2)}\nTotal a pagar: $${cotizacion.total.toFixed(2)}`;
+    await sendWhatsAppMessage(from, mensajeResumen);
+    
+    // Enviar imágenes y videos asociados a los servicios reconocidos
     if (cotizacion.servicesRecognized && cotizacion.servicesRecognized.length > 0) {
       for (const service of cotizacion.servicesRecognized) {
         if (mediaMapping[service]) {
@@ -741,15 +751,29 @@ async function handleUserMessage(from, userMessage, messageLower) {
         }
       }
     }
-    ///Preguntar por la fecha
-    await sendWhatsAppMessage(from, mensajeCotizacion + "\n\n¡Muchas gracias por tu interés! Ahora, indícame la fecha de tu evento (Formato DD/MM/AAAA) 📆.");
-
     
-    context.estado = "EsperandoFecha";
+    // Preguntar si desea agregar algo más o si tiene dudas
+    await sendWhatsAppMessage(from, "¿Deseas agregar algo más o tienes alguna duda?");
+    context.estado = "EsperandoDudas";
     return true;
   }
 
-  // 5. Procesar la fecha del evento
+  // 5. Estado EsperandoDudas: manejar las preguntas adicionales
+  if (context.estado === "EsperandoDudas") {
+    // Si el mensaje menciona "flete", preguntamos por fecha y lugar
+    if (messageLower.includes("flete")) {
+      await sendWhatsAppMessage(from, "Para cotizar el flete, por favor indícame la fecha de tu evento y en qué lugar se realizará.");
+      context.estado = "EsperandoFecha";
+      return true;
+    }
+    // Intentar manejar FAQs (como "¿Cómo separo mi fecha?", "¿Con cuánto separo?" o "¿Piden anticipo?")
+    if (await handleFAQs(from, userMessage)) return true;
+    // Si no se activa ninguna FAQ, pedir mayor precisión
+    await sendWhatsAppMessage(from, "¿Podrías especificar tu duda o si deseas agregar algún servicio adicional?");
+    return true;
+  }
+
+  // 6. Procesar la fecha del evento
   if (context.estado === "EsperandoFecha") {
     if (!isValidDate(userMessage)) {
       await sendWhatsAppMessage(from, "😕 El formato de la fecha es incorrecto. Por favor utiliza el formato DD/MM/AAAA.");
@@ -766,7 +790,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
     return true;
   }
 
-  // 6. Procesar la ubicación del evento
+  // 7. Procesar la ubicación del evento
   if (context.estado === "EsperandoLugar") {
     context.lugar = userMessage;
     await sendWhatsAppMessage(from, "¡Genial! Ya tenemos la fecha y el lugar. Un agente se pondrá en contacto contigo para ultimar los detalles. ¡Gracias por confiar en Camicam Photobooth! 🎉");
@@ -861,5 +885,3 @@ app.listen(PORT, () => {
 }).on('error', (err) => {
   console.error('Error al iniciar el servidor:', err);
 });
-
-
