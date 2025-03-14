@@ -1,3 +1,5 @@
+
+
 // Importar dependencias en modo ES Modules
 import dotenv from 'dotenv'; // Para cargar variables de entorno
 import express from 'express';
@@ -44,9 +46,11 @@ const mediaMapping = {
   },
   "lluvia de mariposas": {
     images: [
-      "http://cami-cam.com/wp-content/uploads/2023/07/lluvia1.jpg"
+      "http://cami-cam.com/wp-content/uploads/2024/06/LLUVIA-MARIPOSAS.jpg"
     ],
-    videos: []
+    videos: [
+      "http://cami-cam.com/wp-content/uploads/2025/02/LLUVIA-DE-MARIPOSAS-2.0.mp4"
+    ]
   },
   "carrito de shots con alcohol": {
     images: [
@@ -62,7 +66,10 @@ const mediaMapping = {
   },
   "scrapbook": {
     images: [
-      "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-4.jpeg"
+      "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-4.jpeg",
+      "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-1.jpeg",
+      "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-6.jpeg",
+      "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-7.jpeg"
     ],
     videos: [
       "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook.mp4"
@@ -710,12 +717,11 @@ async function handleUserMessage(from, userMessage, messageLower) {
     context.serviciosSeleccionados = userMessage;
     const cotizacion = calculateQuotation(userMessage);
     let mensajeCotizacion = "💰 *Tu cotización:* \n";
+    mensajeCotizacion += "Detalle:\n" + cotizacion.details.join("\n");
     mensajeCotizacion += `Subtotal: $${cotizacion.subtotal.toFixed(2)}\n`;
     mensajeCotizacion += `Descuento (${cotizacion.discountPercent}%): -$${cotizacion.discountAmount.toFixed(2)}\n`;
     mensajeCotizacion += `Total a pagar: $${cotizacion.total.toFixed(2)}\n\n`;
-    mensajeCotizacion += "Detalle:\n" + cotizacion.details.join("\n");
-    await sendWhatsAppMessage(from, mensajeCotizacion + "\n\n¡Muchas gracias por tu interés! Ahora, indícame la fecha de tu evento (Formato DD/MM/AAAA) 📆.");
-    
+
     // Enviar medios (imágenes y videos) de los servicios cotizados
     if (cotizacion.servicesRecognized && cotizacion.servicesRecognized.length > 0) {
       for (const service of cotizacion.servicesRecognized) {
@@ -735,6 +741,9 @@ async function handleUserMessage(from, userMessage, messageLower) {
         }
       }
     }
+    ///Preguntar por la fecha
+    await sendWhatsAppMessage(from, mensajeCotizacion + "\n\n¡Muchas gracias por tu interés! Ahora, indícame la fecha de tu evento (Formato DD/MM/AAAA) 📆.");
+
     
     context.estado = "EsperandoFecha";
     return true;
@@ -852,3 +861,5 @@ app.listen(PORT, () => {
 }).on('error', (err) => {
   console.error('Error al iniciar el servidor:', err);
 });
+
+
