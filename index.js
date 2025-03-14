@@ -645,13 +645,13 @@ if (context.estado === "Contacto Inicial") {
   // Mensaje inicial explicando que es un asistente virtual
   await sendMessageWithTypingWithState(
     from,
-    "¡Hola! 👋 Soy tu asistente virtual de Camicam Photobooth. Estoy aquí para ayudarte a planificar tu evento. Para una mejor experiencia, por favor interactúa con los botones que te mostraré a continuación. 😊",
+    "¡Hola! 👋 Soy tu asistente virtual de Camicam Photobooth. \n\nEstoy aquí para ayudarte a planificar tu evento. \n\nPara una mejor experiencia, por favor interactúa con los botones que te mostraré a continuación. 😊",
     3000, // Retraso de 3 segundos
     "Contacto Inicial"
   );
 
   // Enviar la imagen de servicios con un retraso
-  await delay(2000); // Retraso de 2 segundos antes de enviar la imagen
+  await delay(4000); // Retraso de 2 segundos antes de enviar la imagen
   await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
 
   // Enviar los botones con otro retraso
@@ -671,8 +671,8 @@ if (context.estado === "Contacto Inicial") {
   return true;
 }
 
-  // 2. Capturar el tipo de evento
-if (context.estado === "EsperandoTipoEvento") {
+ // 2. Capturar el tipo de evento
+ if (context.estado === "EsperandoTipoEvento") {
   if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
     context.tipoEvento = "Boda";
   } else if (messageLower.includes("xv") || messageLower.includes("quince")) {
@@ -680,27 +680,11 @@ if (context.estado === "EsperandoTipoEvento") {
   } else {
     context.tipoEvento = "Otro";
   }
-
-  // Mensaje más amigable y con emojis
-  await sendMessageWithTypingWithState(
-    from,
-    `¡Perfecto! 🎉 Has seleccionado: *${context.tipoEvento}*. ¡Qué emoción! 😊 Ahora, ¿qué te gustaría hacer?`,
-    2000, // Retraso de 2 segundos
-    "EsperandoTipoEvento"
-  );
-
-  // Enviar botones con emojis y un retraso
-  await delay(2000); // Retraso de 2 segundos antes de enviar los botones
-  await sendInteractiveMessage(
-    from,
-    "Elige una opción para continuar:",
-    [
-      { id: "paquete_sugerido", title: "📦 Ver paquete sugerido" }, // Emoji de caja
-      { id: "armar_paquete", title: "✨ Armar mi paquete" } // Emoji de estrella
-    ]
-  );
-
-  // Actualizar el estado del contexto
+  // Enviar botones para elegir entre paquete sugerido o armar paquete
+  await sendInteractiveMessage(from, `¡Qué emoción! 😊 Ahora, ¿qué te gustaría hacer?`, [
+    { id: "paquete_sugerido", title: "📦 Ver paquete sugerido" },
+    { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
+  ]);
   context.estado = "OpcionesSeleccionadas";
   return true;
 }
