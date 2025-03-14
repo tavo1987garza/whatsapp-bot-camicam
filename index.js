@@ -843,14 +843,25 @@ if (context.estado === "EsperandoDudas") {
 
   // Rama para "letras gigantes" en otros flujos (si aplica)
   if (!["Contacto Inicial", "EsperandoTipoEvento", "OpcionesSeleccionadas", "EsperandoFecha", "EsperandoLugar", "EsperandoCantidadLetras"].includes(context.estado)) {
-    if (messageLower.includes("letras gigantes")) {
+    if (messageLower.includes("letras gigantes")|| /necesito\s+letras/.test(messageLower)) {
       await sendWhatsAppMessage(from, "¿Cuántas letras necesitas? 🔠");
       context.estado = "EsperandoCantidadLetras";
       return true;
     }
   }
 
-  if (context.estado === "EsperandoCantidadLetras") {
+// Parte del flujo en handleUserMessage: verificación para "letras gigantes" o "necesito letras"
+if (context.estado !== "EsperandoCantidadLetras") {
+  // Detectamos si el mensaje indica la necesidad de letras
+  if (messageLower.includes("letras gigantes") || /necesito\s+letras/.test(messageLower)) {
+    await sendWhatsAppMessage(from, "¿Cuántas letras ocupas o qué nombre necesitas? 🔠");
+    context.estado = "EsperandoCantidadLetras";
+    return true;
+  }
+}
+
+// Procesamiento cuando el bot está esperando la cantidad o el nombre para letras gigantes
+if (context.estado === "EsperandoCantidadLetras") {
   // Intentamos extraer el nombre si el mensaje incluye la frase "nombre de"
   let nombre = "";
   const regex = /nombre de\s+([a-zA-Z]+)/i;
@@ -861,7 +872,7 @@ if (context.estado === "EsperandoDudas") {
     // Si no se detecta el patrón, asumimos que el mensaje completo es el nombre o la cantidad
     nombre = userMessage;
   }
-  // Eliminamos cualquier carácter que no sea letra
+  // Eliminamos cualquier carácter que no sea una letra
   const soloLetras = nombre.replace(/[^a-zA-Z]/g, '');
   const cantidad = soloLetras.length;
   if (cantidad === 0) {
@@ -873,6 +884,9 @@ if (context.estado === "EsperandoDudas") {
   context.estado = "Finalizado";
   return true;
 }
+
+
+
 
 
   // Otros casos: enviar consulta a OpenAI para respuestas adicionales
