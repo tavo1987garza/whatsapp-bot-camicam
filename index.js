@@ -673,7 +673,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
     }
     // Ofrecer opción de paquete sugerido o armado a medida
     await sendInteractiveMessage(from, `¡Perfecto! Veo que tu evento es de tipo ${context.tipoEvento}. ¿Cómo prefieres continuar?`, [
-      { id: "armar_paquete", title: "Quiero armar mi paquete" },
+      { id: "armar_paquete", title: "Armar mi paquete" },
       { id: "paquete_sugerido", title: "Ver paquete sugerido" }
     ]);
     context.estado = "OpcionesSeleccionadas";
