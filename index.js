@@ -758,20 +758,63 @@ async function handleUserMessage(from, userMessage, messageLower) {
     return true;
   }
 
-  // 5. Estado EsperandoDudas: manejar las preguntas adicionales
-  if (context.estado === "EsperandoDudas") {
-    // Si el mensaje menciona "flete", preguntamos por fecha y lugar
-    if (messageLower.includes("flete")) {
-      await sendWhatsAppMessage(from, "Para cotizar el flete, por favor indícame la fecha de tu evento y en qué lugar se realizará.");
-      context.estado = "EsperandoFecha";
-      return true;
-    }
-    // Intentar manejar FAQs (como "¿Cómo separo mi fecha?", "¿Con cuánto separo?" o "¿Piden anticipo?")
-    if (await handleFAQs(from, userMessage)) return true;
-    // Si no se activa ninguna FAQ, pedir mayor precisión
-    await sendWhatsAppMessage(from, "¿Podrías especificar tu duda o si deseas agregar algún servicio adicional?");
+// 5. Estado EsperandoDudas: manejar las preguntas adicionales o agregar servicios
+if (context.estado === "EsperandoDudas") {
+  // Si el mensaje menciona "flete", preguntamos por fecha y lugar
+  if (messageLower.includes("flete")) {
+    await sendWhatsAppMessage(from, "Para cotizar el flete, por favor indícame la fecha de tu evento y en qué lugar se realizará.");
+    context.estado = "EsperandoFecha";
     return true;
   }
+  
+  // Verificar si el cliente quiere agregar un servicio adicional
+  const serviceKeywords = ["scrapbook", "cabina de fotos", "cabina 360", "lluvia de mariposas", "carrito de shots", "niebla de piso", "audio guest book", "chisperos", "letras gigantes"];
+  let foundService = false;
+  let newService = "";
+  
+  for (const keyword of serviceKeywords) {
+    if (messageLower.includes(keyword)) {
+      foundService = true;
+      newService = keyword; // Guardamos el servicio encontrado
+      // Si el servicio aún no estaba incluido, lo agregamos
+      if (!context.serviciosSeleccionados.toLowerCase().includes(keyword)) {
+        context.serviciosSeleccionados += `, ${keyword}`;
+      }
+      // Recalcular la cotización con el nuevo servicio agregado
+      const newQuotation = calculateQuotation(context.serviciosSeleccionados);
+      await sendWhatsAppMessage(from, "Actualicemos tu cotización:");
+      await sendWhatsAppMessage(from, "💰 *Tu nueva cotización:*\nDetalle:\n" + newQuotation.details.join("\n"));
+      await sendWhatsAppMessage(from, `Subtotal: $${newQuotation.subtotal.toFixed(2)}\nDescuento (${newQuotation.discountPercent}%): -$${newQuotation.discountAmount.toFixed(2)}\nTotal a pagar: $${newQuotation.total.toFixed(2)}`);
+      
+      // Enviar solo las imágenes y videos correspondientes al nuevo servicio agregado
+      if (mediaMapping[newService]) {
+        if (mediaMapping[newService].images && mediaMapping[newService].images.length > 0) {
+          for (const img of mediaMapping[newService].images) {
+            await sendImageMessage(from, img, `${newService} - imagen`);
+          }
+        }
+        if (mediaMapping[newService].videos && mediaMapping[newService].videos.length > 0) {
+          for (const vid of mediaMapping[newService].videos) {
+            await sendWhatsAppVideo(from, vid, `${newService} - video`);
+          }
+        }
+      }
+      
+      await sendWhatsAppMessage(from, "¿Deseas agregar algo más o tienes alguna duda?");
+      break;
+    }
+  }
+  
+  if (foundService) return true;
+  
+  // Intentar manejar FAQs (por ejemplo: "¿Cómo separo mi fecha?", "¿Con cuánto separo?" o "¿Piden anticipo?")
+  if (await handleFAQs(from, userMessage)) return true;
+  
+  // Si no se activa ninguna FAQ, pedir mayor precisión
+  await sendWhatsAppMessage(from, "¿Podrías especificar tu duda o si deseas agregar algún servicio adicional?");
+  return true;
+}
+
 
   // 6. Procesar la fecha del evento
   if (context.estado === "EsperandoFecha") {
