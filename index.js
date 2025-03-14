@@ -667,7 +667,7 @@ if (context.estado === "Contacto Inicial") {
   // Mensaje inicial explicando que es un asistente virtual
   await sendMessageWithTypingWithState(
     from,
-    "¡Hola! 👋 Soy tu asistente virtual de Camicam Photobooth. \n\nEstoy aquí para ayudarte a planificar tu evento. \n\nPara una mejor experiencia, por favor interactúa con los botones que te mostraré a continuación. 😊",
+    "¡Hola! 👋 Soy tu asistente virtual de *Camicam Photobooth*. \n\nConoce los Servicios que ofrecemos",
     3000, // Retraso de 3 segundos
     "Contacto Inicial"
   );
@@ -680,7 +680,7 @@ if (context.estado === "Contacto Inicial") {
   await delay(3000); // Retraso de 3 segundos antes de enviar los botones
   await sendInteractiveMessage(
     from,
-    "Por favor selecciona el tipo de evento que tienes:",
+    "Para una mejor experiencia, por favor interactúa con los botones que te mostraré a continuación.\n\n😊 Selecciona el tipo de evento que tienes:",
     [
       { id: "evento_boda", title: "Boda" },
       { id: "evento_xv", title: "XV Años" },
