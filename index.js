@@ -550,7 +550,10 @@ async function handleUserMessage(from, userMessage, messageLower) {
 
   if (context.estado === "OpcionesSeleccionadas") {
     if (messageLower.includes("armar")) {
+      // Preguntar por los servicios que desea incluir
       await sendWhatsAppMessage(from, "Perfecto, por favor indícanos los servicios que deseas incluir en tu paquete.");
+      context.estado = "EsperandoServicios";
+      return true;
     } else if (messageLower.includes("sugerido") || messageLower.includes("paquete_sugerido")) {
       if (context.tipoEvento === "Boda") {
         await sendWhatsAppMessage(from, "Te recomendamos el 'Paquete Wedding': Incluye Cabina 360, iniciales (por ejemplo, A&A y un corazón), 2 chisperos y un carrito de shots con alcohol, todo por $4,450.");
@@ -559,29 +562,34 @@ async function handleUserMessage(from, userMessage, messageLower) {
       } else {
         await sendWhatsAppMessage(from, "Te recomendamos el 'Paquete Party': Incluye Cabina de fotos, 4 letras gigantes y un carrito de shots con alcohol, todo por $4,450.");
       }
+      await sendWhatsAppMessage(from, "Para continuar, por favor indícanos la fecha de tu evento (Formato DD/MM/AAAA).");
+      context.estado = "EsperandoFecha";
+      return true;
     } else {
       await sendWhatsAppMessage(from, "No entendí tu respuesta. Por favor selecciona una de las opciones: 'Armar mi paquete' o 'Ver paquete sugerido'.");
       return true;
     }
-    // Luego de elegir paquete (o armarlo), se pregunta la fecha del evento
+  }
+
+  if (context.estado === "EsperandoServicios") {
+    // Guardar los servicios que desea el cliente
+    context.serviciosSeleccionados = userMessage;
+    await sendWhatsAppMessage(from, "Perfecto, has seleccionado: " + userMessage);
     await sendWhatsAppMessage(from, "Para continuar, por favor indícanos la fecha de tu evento (Formato DD/MM/AAAA).");
     context.estado = "EsperandoFecha";
     return true;
   }
 
   if (context.estado === "EsperandoFecha") {
-    // Validar el formato de la fecha
     if (!isValidDate(userMessage)) {
       await sendWhatsAppMessage(from, "El formato de la fecha es incorrecto. Por favor, usa el formato DD/MM/AAAA.");
       return true;
     }
-    // Verificar la disponibilidad de la fecha
     if (!checkAvailability(userMessage)) {
       await sendWhatsAppMessage(from, "Lo siento, la fecha seleccionada no está disponible. Por favor, elige otra fecha o contáctanos para más detalles.");
       context.estado = "Finalizado";
       return true;
     }
-    // Fecha válida y disponible; se guarda y se pregunta por la ubicación
     context.fecha = userMessage;
     await sendWhatsAppMessage(from, "¡Genial! La fecha está disponible. Ahora, ¿podrías indicarnos en dónde se realizará tu evento?");
     context.estado = "EsperandoLugar";
@@ -589,14 +597,13 @@ async function handleUserMessage(from, userMessage, messageLower) {
   }
 
   if (context.estado === "EsperandoLugar") {
-    // Guardar la ubicación y concluir el flujo
     context.lugar = userMessage;
     await sendWhatsAppMessage(from, "¡Perfecto! Hemos registrado la fecha y el lugar de tu evento. Un agente se pondrá en contacto contigo para afinar los detalles. ¡Gracias por elegir Camicam Photobooth!");
     context.estado = "Finalizado";
     return true;
   }
 
-  // Nueva rama: si el mensaje menciona "letras gigantes" y aún no se ha solicitado la cantidad
+  // Nueva rama para "letras gigantes"
   if (!["Contacto Inicial", "EsperandoTipoEvento", "OpcionesSeleccionadas", "EsperandoFecha", "EsperandoLugar", "EsperandoCantidadLetras"].includes(context.estado)) {
     if (messageLower.includes("letras gigantes")) {
       await sendWhatsAppMessage(from, "¿Cuántas letras ocupas?");
@@ -605,9 +612,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
     }
   }
 
-  // Procesar respuesta en estado de "EsperandoCantidadLetras"
   if (context.estado === "EsperandoCantidadLetras") {
-    // Extraer solo las letras del mensaje (ignorando espacios y símbolos)
     const soloLetras = userMessage.replace(/[^a-zA-Z]/g, '');
     const cantidad = soloLetras.length;
     if (cantidad === 0) {
@@ -620,15 +625,12 @@ async function handleUserMessage(from, userMessage, messageLower) {
     return true;
   }
 
-  // Si ya pasó el flujo inicial, continuar con el resto del manejo (por ejemplo, integración con OpenAI)
+  // Integración con OpenAI para otros casos
   try {
-    // Configuramos el caché para respuestas de OpenAI (1 hora de TTL)
     const responseCache = new NodeCache({ stdTTL: 3600 });
-
     function getCacheKey(query) {
       return query.toLowerCase();
     }
-
     async function getResponseFromOpenAI(query) {
       const contextoPaquetes = construirContexto();
       const fullQuery = `
@@ -637,14 +639,12 @@ ${contextoPaquetes}
 El cliente pregunta: "${query}"
 Responde de forma profesional, clara y concisa, utilizando el contexto proporcionado.
       `;
-      
       const key = getCacheKey(fullQuery);
       const cachedResponse = responseCache.get(key);
       if (cachedResponse) {
         console.log("Usando respuesta en caché para la consulta:", fullQuery);
         return cachedResponse;
       }
-
       const response = await openai.chat.completions.create({
         model: "gpt-3.5-turbo",
         messages: [
@@ -652,10 +652,8 @@ Responde de forma profesional, clara y concisa, utilizando el contexto proporcio
           { role: "user", content: fullQuery }
         ],
         temperature: 0.7,
-        max_tokens: 80, 
+        max_tokens: 80,
       });
-      
-      
       const answer = response.choices[0].message.content;
       if (!answer || answer.trim() === "") {
         throw new Error("Respuesta vacía");
@@ -663,12 +661,10 @@ Responde de forma profesional, clara y concisa, utilizando el contexto proporcio
       responseCache.set(key, answer);
       return answer;
     }
-
     async function handleOpenAIResponse(from, userMessage) {
       try {
         const answer = await getResponseFromOpenAI(userMessage);
         await sendWhatsAppMessage(from, answer);
-
         if (answer.includes("Lamentablemente, la información proporcionada no incluye detalles")) {
           const adminMessage = `El cliente ${from} preguntó: "${userMessage}" y la respuesta fue: "${answer}". Se requiere intervención humana para proporcionar más detalles.`;
           await sendWhatsAppMessage(process.env.ADMIN_WHATSAPP_NUMBER, adminMessage);
@@ -680,10 +676,8 @@ Responde de forma profesional, clara y concisa, utilizando el contexto proporcio
         await sendWhatsAppMessage(from, "Tu consulta requiere intervención de un agente. Pronto nos pondremos en contacto contigo.");
       }
     }
-
     await handleOpenAIResponse(from, userMessage);
     return true;
-
   } catch (error) {
     console.error("❌ Error en handleUserMessage:", error.message);
     await sendWhatsAppMessage(from, "Lo siento, ocurrió un error.");
