@@ -651,7 +651,7 @@ if (context.estado === "Contacto Inicial") {
   );
 
   // Enviar la imagen de servicios con un retraso
-  await delay(4000); // Retraso de 2 segundos antes de enviar la imagen
+  await delay(5000); // Retraso de 2 segundos antes de enviar la imagen
   await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
 
   // Enviar los botones con otro retraso
@@ -682,7 +682,7 @@ if (context.estado === "Contacto Inicial") {
   }
   // Enviar botones para elegir entre paquete sugerido o armar paquete
   await sendInteractiveMessage(from, `¡Qué emoción! 😊 Ahora, ¿qué te gustaría hacer?`, [
-    { id: "paquete_sugerido", title: "📦 Ver paquete sugerido" },
+    { id: "paquete_sugerido", title: "Ver paquete sugerido" },
     { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
   ]);
   context.estado = "OpcionesSeleccionadas";
