@@ -640,25 +640,37 @@ async function handleUserMessage(from, userMessage, messageLower) {
   }
   const context = userContext[from];
 
-  // 1. Inicio: dar la bienvenida y mostrar opciones con imagen
-  if (context.estado === "Contacto Inicial") {
-    await sendInteractiveMessageWithImageWithState(
-      from,
-      "¡Bienvenido a Camicam Photobooth! 😃 Conoce nuestros servicios:",
-      "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg",
-      {
-        message: "Por favor selecciona el tipo de evento que tienes:",
-        buttons: [
-          { id: "evento_boda", title: "Boda" },
-          { id: "evento_xv", title: "XV Años" },
-          { id: "evento_otro", title: "Otro" }
-        ]
-      },
-      "Contacto Inicial"
-    );
-    context.estado = "EsperandoTipoEvento";
-    return true;
-  }
+// 1. Inicio: dar la bienvenida y mostrar opciones con imagen
+if (context.estado === "Contacto Inicial") {
+  // Mensaje inicial explicando que es un asistente virtual
+  await sendMessageWithTypingWithState(
+    from,
+    "¡Hola! 👋 Soy tu asistente virtual de Camicam Photobooth. Estoy aquí para ayudarte a planificar tu evento. Para una mejor experiencia, por favor interactúa con los botones que te mostraré a continuación. 😊",
+    3000, // Retraso de 3 segundos
+    "Contacto Inicial"
+  );
+
+  // Enviar la imagen de servicios con un retraso
+  await delay(2000); // Retraso de 2 segundos antes de enviar la imagen
+  await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg", "Nuestros servicios 📸");
+
+  // Enviar los botones con otro retraso
+  await delay(3000); // Retraso de 3 segundos antes de enviar los botones
+  await sendInteractiveMessage(
+    from,
+    "Por favor selecciona el tipo de evento que tienes:",
+    [
+      { id: "evento_boda", title: "Boda" },
+      { id: "evento_xv", title: "XV Años" },
+      { id: "evento_otro", title: "Otro" }
+    ]
+  );
+
+  // Actualizar el estado del contexto
+  context.estado = "EsperandoTipoEvento";
+  return true;
+}
+
 
   // 2. Capturar el tipo de evento
   if (context.estado === "EsperandoTipoEvento") {
