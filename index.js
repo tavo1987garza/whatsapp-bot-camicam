@@ -849,18 +849,31 @@ if (context.estado === "EsperandoDudas") {
       return true;
     }
   }
+
   if (context.estado === "EsperandoCantidadLetras") {
-    const soloLetras = userMessage.replace(/[^a-zA-Z]/g, '');
-    const cantidad = soloLetras.length;
-    if (cantidad === 0) {
-      await sendWhatsAppMessage(from, "No pude identificar ninguna letra. Por favor, indícame el nombre o la cantidad de letras que deseas.");
-      return true;
-    }
-    const precioTotal = cantidad * 400;
-    await sendWhatsAppMessage(from, `El precio para ${cantidad} letra(s) es de $${precioTotal} 💸.`);
-    context.estado = "Finalizado";
+  // Intentamos extraer el nombre si el mensaje incluye la frase "nombre de"
+  let nombre = "";
+  const regex = /nombre de\s+([a-zA-Z]+)/i;
+  const match = userMessage.match(regex);
+  if (match && match[1]) {
+    nombre = match[1];
+  } else {
+    // Si no se detecta el patrón, asumimos que el mensaje completo es el nombre o la cantidad
+    nombre = userMessage;
+  }
+  // Eliminamos cualquier carácter que no sea letra
+  const soloLetras = nombre.replace(/[^a-zA-Z]/g, '');
+  const cantidad = soloLetras.length;
+  if (cantidad === 0) {
+    await sendWhatsAppMessage(from, "No pude identificar ninguna letra. Por favor, indícame el nombre o la cantidad de letras que deseas.");
     return true;
   }
+  const precioTotal = cantidad * 400;
+  await sendWhatsAppMessage(from, `El precio para ${cantidad} letra(s) es de $${precioTotal} 💸.`);
+  context.estado = "Finalizado";
+  return true;
+}
+
 
   // Otros casos: enviar consulta a OpenAI para respuestas adicionales
   try {
