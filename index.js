@@ -82,12 +82,12 @@ const mediaMapping = {
   }
 };
 
-// Función para construir el contexto para OpenAI (ajustado para sonar más humano)
+// Función para construir el contexto para OpenAI
 function construirContexto() {
   return `
-Eres un asesor de ventas muy amigable de "Camicam Photobooth" 😃. 
-Nos especializamos en hacer de cada evento una experiencia única, ya sea una boda, XV años u otra celebración especial. 
-Aquí tienes nuestros servicios:
+Eres un agente de ventas de "Camicam Photobooth" 😃. 
+Nos dedicamos a la renta de servicios para eventos sociales, con especialización en bodas y XV años. 
+Ofrecemos los siguientes servicios:
   - Cabina de fotos: $3,500
   - Cabina 360: $3,500
   - Lluvia de mariposas: $2,500
@@ -105,7 +105,7 @@ Aquí tienes nuestros servicios:
        • 10 chisperos = $3,000
   
 Atendemos el centro de Monterrey, Nuevo León y el área metropolitana hasta 25 km a la redonda. 
-Responde siempre de forma profesional, pero cercana y natural, como si estuvieras conversando con un amigo que te ayuda a organizar un evento inolvidable.
+Responde de forma profesional, clara, concisa y persuasiva, como un vendedor experto en nuestros servicios.
   `;
 }
 
@@ -156,9 +156,11 @@ function calculateQuotation(servicesText) {
       } else {
         subtotal += chisperosPrices[2];
         details.push(`Chisperos (2 unidades): $${chisperosPrices[2]}`);
+        // Si es solo 2 chisperos, no se aplica descuento, pero lo agregamos si se desea
         servicesRecognized.push("chisperos");
       }
     } else if (service.includes("letras gigantes")) {
+      // Este flujo se maneja por separado
       details.push("Letras gigantes: se cotiza por letra (ver flujo específico)");
     } else if (prices[service] !== undefined) {
       subtotal += prices[service];
@@ -260,7 +262,7 @@ app.post('/webhook', async (req, res) => {
   console.log("🔘 Botón presionado:", buttonReply);
   console.log("📄 Lista seleccionada:", listReply);
   
-  // Si el usuario ya está en un flujo específico, se omite el chequeo de FAQs
+  // Si el usuario ya está en un flujo específico (p.ej., armando su paquete), se omite el chequeo de FAQs
   if (!userContext[from] || !["EsperandoServicios", "EsperandoFecha", "EsperandoLugar", "EsperandoCantidadLetras"].includes(userContext[from].estado)) {
     if (await handleFAQs(from, userMessage)) return res.sendStatus(200);
   }
@@ -270,29 +272,29 @@ app.post('/webhook', async (req, res) => {
     if (handledFlow) return res.sendStatus(200);
   } catch (error) {
     console.error("❌ Error al manejar el mensaje:", error.message);
-    await sendWhatsAppMessage(from, "😔 Perdona, hubo un problema al procesar tu solicitud. ¿Podrías intentarlo de nuevo?");
+    await sendWhatsAppMessage(from, "😔 Lo siento, ocurrió un error al procesar tu solicitud. Inténtalo nuevamente.");
   }
   res.sendStatus(200);
 });
 
 // FAQs con emojis y nuevos servicios
 const faqs = [
-  { question: /como separo mi fecha|anticipo/i, answer: "💡 Para reservar tu fecha se requiere un anticipo de $500. ¡Así nos aseguramos de ofrecerte lo mejor!" },
-  { question: /hacen contrato|contrato/i, answer: "📄 ¡Sí! Una vez que se acredite el anticipo, preparamos el contrato y te enviamos una copia." },
-  { question: /con cuanto tiempo separo mi fecha|separar/i, answer: "⏰ Puedes separar tu fecha en cualquier momento, siempre y cuando esté disponible." },
-  { question: /se puede separar para 2026|2026/i, answer: "📆 Claro, tenemos agenda para 2025 y 2026. ¡Consulta sin compromiso!" },
-  { question: /cuánto se cobra de flete|flete/i, answer: "🚚 El flete varía según la ubicación. Contáctanos y lo calculamos juntos." },
-  { question: /cómo reviso si tienen mi fecha disponible/i, answer: "🔎 Cuéntame, ¿para cuándo es tu evento? Así reviso la disponibilidad." },
-  { question: /ubicación|dónde están|donde son|ubican|oficinas/i, answer: "📍 Nos encontramos en la Colonia Independencia en Monterrey. Cubrimos hasta 25 km a la redonda." },
-  { question: /pago|método de pago|tarjeta|efectivo/i, answer: "💳 Aceptamos transferencias, depósitos y pagos en efectivo. ¡Lo que te resulte más cómodo!" },
+  { question: /como separo mi fecha|anticipo/i, answer: "💡 Separamos fecha con $500. El resto puede ser el día del evento." },
+  { question: /hacen contrato|contrato/i, answer: "📄 Sí, una vez acreditado tu anticipo, llenamos tu contrato y te enviamos una foto." },
+  { question: /con cuanto tiempo separo mi fecha|separar/i, answer: "⏰ Puedes separar en cualquier momento, siempre que la fecha esté disponible." },
+  { question: /se puede separar para 2026|2026/i, answer: "📆 Sí, tenemos agenda abierta para 2025 y 2026." },
+  { question: /cuánto se cobra de flete|flete/i, answer: "🚚 Depende de la ubicación del evento. Contáctanos para calcularlo." },
+  { question: /cómo reviso si tienen mi fecha disponible/i, answer: "🔎 Dime, ¿para cuándo es tu evento? 😊" },
+  { question: /ubicación|dónde están|donde son|ubican|oficinas/i, answer: "📍 Estamos en la Colonia Independencia en Monterrey. Atendemos eventos hasta 25 km a la redonda." },
+  { question: /pago|método de pago|tarjeta|efectivo/i, answer: "💳 Aceptamos transferencias, depósitos y pagos en efectivo." },
   { 
     question: /que servicios manejas|servicios/i, 
-    answer: "🎉 Aquí tienes nuestros servicios:",
+    answer: "🎉 Estos son los servicios que manejamos:", 
     imageUrl: "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg" 
   },
   { 
     question: /que incluye la cabina de fotos|cabina de fotos/i, 
-    answer: "📸 La CABINA DE FOTOS incluye 3 horas de servicio, iluminación profesional, fondo personalizado, accesorios temáticos y más.",
+    answer: "📸 CABINA DE FOTOS: $3,500 (3 horas). Incluye iluminación profesional, fondo personalizado, accesorios temáticos y más.",
     images: [
       "http://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-1.jpg",
       "http://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-2.jpg",
@@ -308,7 +310,7 @@ const faqs = [
   },
   { 
     question: /que es el scrapbook|scrapbook/i, 
-    answer: "📚 El Scrapbook es un álbum interactivo donde tus invitados se toman fotos y dejan mensajes para que recuerdes cada detalle.",
+    answer: "📚 El Scrapbook es un álbum interactivo donde tus invitados se toman fotos y dejan mensajes. ¡Un recuerdo único!",
     images: [
       "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-4.jpeg",
       "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-3.jpeg",
@@ -339,19 +341,19 @@ async function handleFAQs(from, userMessage) {
   if (faqEntry) {
     await sendWhatsAppMessage(from, faqEntry.answer + " 😊");
     if (faqEntry.imageUrl) {
-      await sendImageMessage(from, faqEntry.imageUrl, "¡Mira nuestros servicios!");
+      await sendImageMessage(from, faqEntry.imageUrl, "Nuestros servicios 📸");
     }
     if (faqEntry.images && Array.isArray(faqEntry.images)) {
       for (const imageUrl of faqEntry.images) {
-        await sendImageMessage(from, imageUrl, "Detalle visual");
+        await sendImageMessage(from, imageUrl, "Detalle visual 🎨");
       }
     }
     if (faqEntry.videoUrl) {
-      await sendWhatsAppVideo(from, faqEntry.videoUrl, "Revisa este video");
+      await sendWhatsAppVideo(from, faqEntry.videoUrl, "Mira este video 🎥");
     }
     if (faqEntry.videos && Array.isArray(faqEntry.videos)) {
       for (const videoUrl of faqEntry.videos) {
-        await sendWhatsAppVideo(from, videoUrl, "Video informativo");
+        await sendWhatsAppVideo(from, videoUrl, "Video informativo 🎥");
       }
     }
     return true;
@@ -625,7 +627,7 @@ function checkAvailability(dateString) {
   return !occupiedDates.includes(dateString);
 }
 
-// Función para manejar el flujo de mensajes del usuario con un tono más natural y humano
+// Función para manejar el flujo de mensajes del usuario
 async function handleUserMessage(from, userMessage, messageLower) {
   if (!userContext[from]) {
     userContext[from] = {
@@ -640,14 +642,14 @@ async function handleUserMessage(from, userMessage, messageLower) {
   }
   const context = userContext[from];
 
-  // 1. Inicio: dar la bienvenida y mostrar opciones con imagen
+  // 1. Inicio: preguntar el tipo de evento y mostrar imagen de servicios
   if (context.estado === "Contacto Inicial") {
     await sendInteractiveMessageWithImageWithState(
       from,
-      "¡Hola! Soy tu asesor en Camicam Photobooth 😃. Te invito a conocer nuestros servicios:",
+      "¡Bienvenido a Camicam Photobooth! 😃 Conoce nuestros servicios:",
       "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg",
       {
-        message: "¿Qué tipo de evento tienes?",
+        message: "Por favor selecciona el tipo de evento que tienes:",
         buttons: [
           { id: "evento_boda", title: "Boda" },
           { id: "evento_xv", title: "XV Años" },
@@ -669,9 +671,9 @@ async function handleUserMessage(from, userMessage, messageLower) {
     } else {
       context.tipoEvento = "Otro";
     }
-    // Ofrecer opción de paquete sugerido o armado a medida
-    await sendInteractiveMessage(from, `¡Perfecto! Veo que tu evento es de tipo ${context.tipoEvento}. ¿Cómo prefieres continuar?`, [
-      { id: "armar_paquete", title: "Quiero armar mi paquete" },
+    // Enviar opciones con botones para elegir entre paquete sugerido o armar
+    await sendInteractiveMessage(from, `¡Perfecto! Has seleccionado: ${context.tipoEvento} 👍. ¿Qué deseas hacer?`, [
+      { id: "armar_paquete", title: "Armar mi paquete" },
       { id: "paquete_sugerido", title: "Ver paquete sugerido" }
     ]);
     context.estado = "OpcionesSeleccionadas";
@@ -681,23 +683,23 @@ async function handleUserMessage(from, userMessage, messageLower) {
   // 3. Opciones: paquete sugerido o armar
   if (context.estado === "OpcionesSeleccionadas") {
     if (messageLower.includes("armar")) {
-      await sendWhatsAppMessage(from, "¡Excelente! Cuéntame, ¿qué servicios te gustaría incluir? (Ejemplo: cabina de fotos, niebla de piso, scrapbook, chisperos 4)");
+      await sendWhatsAppMessage(from, "¡Genial! 😃 Por favor indícanos los servicios que deseas incluir en tu paquete. (Ejemplo: cabina de fotos, niebla de piso, Scrapbook, chisperos 4)");
       context.estado = "EsperandoServicios";
       return true;
     } else if (messageLower.includes("paquete")) {
       if (context.tipoEvento === "Boda") {
-        context.serviciosSeleccionados = "Paquete Wedding: Incluye Cabina 360, iniciales decorativas, 2 chisperos y un carrito de shots con alcohol, todo por $4,450.";
+        context.serviciosSeleccionados = "Paquete Wedding: Incluye Cabina 360, iniciales (ej. A&A y un corazón), 2 chisperos y un carrito de shots con alcohol, todo por $4,450.";
       } else if (context.tipoEvento === "XV") {
         context.serviciosSeleccionados = "Paquete Mis XV: Incluye 6 letras gigantes, Cabina de fotos, Lluvia de mariposas y 2 chisperos, todo por $5,600.";
       } else {
         context.serviciosSeleccionados = "Paquete Party: Incluye Cabina de fotos, 4 letras gigantes y un carrito de shots con alcohol, todo por $4,450.";
       }
-      await sendWhatsAppMessage(from, `👍 ¡Genial! Has seleccionado el paquete sugerido para ${context.tipoEvento}: ${context.serviciosSeleccionados}`);
-      await sendWhatsAppMessage(from, "Ahora, por favor indícame la fecha de tu evento (Formato DD/MM/AAAA) 📆.");
+      await sendWhatsAppMessage(from, `👍 Has seleccionado el paquete sugerido para ${context.tipoEvento}: ${context.serviciosSeleccionados}`);
+      await sendWhatsAppMessage(from, "Para continuar, por favor indícanos la fecha de tu evento (Formato DD/MM/AAAA) 📆.");
       context.estado = "EsperandoFecha";
       return true;
     } else {
-      await sendWhatsAppMessage(from, "😕 No entendí tu respuesta. Por favor selecciona 'paquete sugerido' o 'armar mi paquete' utilizando los botones.");
+      await sendWhatsAppMessage(from, "😕 No entendí tu respuesta. Por favor selecciona 'paquete' o 'armar' utilizando los botones.");
       return true;
     }
   }
@@ -711,7 +713,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
     mensajeCotizacion += `Descuento (${cotizacion.discountPercent}%): -$${cotizacion.discountAmount.toFixed(2)}\n`;
     mensajeCotizacion += `Total a pagar: $${cotizacion.total.toFixed(2)}\n\n`;
     mensajeCotizacion += "Detalle:\n" + cotizacion.details.join("\n");
-    await sendWhatsAppMessage(from, mensajeCotizacion + "\n\n¡Muchas gracias por tu interés! Ahora, indícame la fecha de tu evento (Formato DD/MM/AAAA) 📆.");
+    await sendWhatsAppMessage(from, mensajeCotizacion + "\n\n¡Gracias por tu interés! Ahora, por favor indícanos la fecha de tu evento (Formato DD/MM/AAAA) 📆.");
     
     // Enviar medios (imágenes y videos) de los servicios cotizados
     if (cotizacion.servicesRecognized && cotizacion.servicesRecognized.length > 0) {
@@ -740,16 +742,16 @@ async function handleUserMessage(from, userMessage, messageLower) {
   // 5. Procesar la fecha del evento
   if (context.estado === "EsperandoFecha") {
     if (!isValidDate(userMessage)) {
-      await sendWhatsAppMessage(from, "😕 El formato de la fecha es incorrecto. Por favor utiliza el formato DD/MM/AAAA.");
+      await sendWhatsAppMessage(from, "😕 El formato de la fecha es incorrecto. Usa el formato DD/MM/AAAA.");
       return true;
     }
     if (!checkAvailability(userMessage)) {
-      await sendWhatsAppMessage(from, "😔 Lo siento, esa fecha ya está reservada. Prueba con otra o contáctanos para más detalles.");
+      await sendWhatsAppMessage(from, "😔 Lo siento, la fecha seleccionada no está disponible. Elige otra o contáctanos para más detalles.");
       context.estado = "Finalizado";
       return true;
     }
     context.fecha = userMessage;
-    await sendWhatsAppMessage(from, "¡Perfecto! La fecha está disponible. Ahora, ¿podrías decirme en qué lugar se realizará tu evento? 🏢");
+    await sendWhatsAppMessage(from, "¡Genial! La fecha está disponible. Ahora, ¿podrías indicarnos en dónde se realizará tu evento? 🏢");
     context.estado = "EsperandoLugar";
     return true;
   }
@@ -757,7 +759,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
   // 6. Procesar la ubicación del evento
   if (context.estado === "EsperandoLugar") {
     context.lugar = userMessage;
-    await sendWhatsAppMessage(from, "¡Genial! Ya tenemos la fecha y el lugar. Un agente se pondrá en contacto contigo para ultimar los detalles. ¡Gracias por confiar en Camicam Photobooth! 🎉");
+    await sendWhatsAppMessage(from, "¡Perfecto! Hemos registrado la fecha y el lugar de tu evento. Un agente se pondrá en contacto contigo para afinar los detalles. ¡Gracias por elegir Camicam Photobooth! 🎉");
     context.estado = "Finalizado";
     return true;
   }
@@ -765,7 +767,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
   // Rama para "letras gigantes" en otros flujos (si aplica)
   if (!["Contacto Inicial", "EsperandoTipoEvento", "OpcionesSeleccionadas", "EsperandoFecha", "EsperandoLugar", "EsperandoCantidadLetras"].includes(context.estado)) {
     if (messageLower.includes("letras gigantes")) {
-      await sendWhatsAppMessage(from, "¿Cuántas letras necesitas? 🔠");
+      await sendWhatsAppMessage(from, "¿Cuántas letras ocupas? 🔠");
       context.estado = "EsperandoCantidadLetras";
       return true;
     }
@@ -774,16 +776,16 @@ async function handleUserMessage(from, userMessage, messageLower) {
     const soloLetras = userMessage.replace(/[^a-zA-Z]/g, '');
     const cantidad = soloLetras.length;
     if (cantidad === 0) {
-      await sendWhatsAppMessage(from, "No pude identificar ninguna letra. Por favor, indícame el nombre o la cantidad de letras que deseas.");
+      await sendWhatsAppMessage(from, "No pude identificar ninguna letra. Indícame el nombre o cuántas letras necesitas.");
       return true;
     }
     const precioTotal = cantidad * 400;
-    await sendWhatsAppMessage(from, `El precio para ${cantidad} letra(s) es de $${precioTotal} 💸.`);
+    await sendWhatsAppMessage(from, `El precio para ${cantidad} letra(s) es $${precioTotal} 💸.`);
     context.estado = "Finalizado";
     return true;
   }
 
-  // Otros casos: enviar consulta a OpenAI para respuestas adicionales
+  // Otros casos: enviar consulta a OpenAI
   try {
     const responseCache = new NodeCache({ stdTTL: 3600 });
     function getCacheKey(query) {
@@ -794,8 +796,8 @@ async function handleUserMessage(from, userMessage, messageLower) {
       const fullQuery = `
 ${contextoPaquetes}
 
-El cliente dice: "${query}"
-Responde de forma clara, profesional y cercana, utilizando el contexto proporcionado.
+El cliente pregunta: "${query}"
+Responde de forma profesional, clara y concisa, utilizando el contexto proporcionado.
       `;
       const key = getCacheKey(fullQuery);
       const cachedResponse = responseCache.get(key);
@@ -806,7 +808,7 @@ Responde de forma clara, profesional y cercana, utilizando el contexto proporcio
       const response = await openai.chat.completions.create({
         model: "gpt-3.5-turbo",
         messages: [
-          { role: "system", content: "Eres un asesor de ventas amigable y cercano en servicios para eventos. Responde de forma breve, clara y natural." },
+          { role: "system", content: "Eres un agente de ventas de servicios para eventos. Responde de forma breve, clara y concisa." },
           { role: "user", content: fullQuery }
         ],
         temperature: 0.7,
@@ -831,14 +833,14 @@ Responde de forma clara, profesional y cercana, utilizando el contexto proporcio
         console.error("Error de OpenAI:", error.message);
         const adminMessage = `El cliente ${from} preguntó: "${userMessage}" y OpenAI no pudo responder. Se requiere intervención humana.`;
         await sendWhatsAppMessage(process.env.ADMIN_WHATSAPP_NUMBER, adminMessage);
-        await sendWhatsAppMessage(from, "Tu consulta requiere la intervención de un agente. Pronto nos pondremos en contacto contigo.");
+        await sendWhatsAppMessage(from, "Tu consulta requiere intervención de un agente. Pronto nos pondremos en contacto contigo.");
       }
     }
     await handleOpenAIResponse(from, userMessage);
     return true;
   } catch (error) {
     console.error("❌ Error en handleUserMessage:", error.message);
-    await sendWhatsAppMessage(from, "😔 Perdona, ocurrió un error inesperado. Por favor, inténtalo de nuevo.");
+    await sendWhatsAppMessage(from, "😔 Lo siento, ocurrió un error.");
     return false;
   }
 }
