@@ -85,9 +85,9 @@ const mediaMapping = {
 // Función para construir el contexto para OpenAI (ajustado para sonar más humano)
 function construirContexto() {
   return `
-Eres un asesor de ventas muy amigable de "Camicam Photobooth" 😃. 
-Nos especializamos en hacer de cada evento una experiencia única, ya sea una boda, XV años u otra celebración especial. 
-Aquí tienes nuestros servicios:
+Eres un agente de ventas de "Camicam Photobooth" 😃. 
+Nos dedicamos a la renta de servicios para eventos sociales, con especialización en bodas y XV años. 
+Ofrecemos los siguientes servicios:
   - Cabina de fotos: $3,500
   - Cabina 360: $3,500
   - Lluvia de mariposas: $2,500
@@ -105,7 +105,7 @@ Aquí tienes nuestros servicios:
        • 10 chisperos = $3,000
   
 Atendemos el centro de Monterrey, Nuevo León y el área metropolitana hasta 25 km a la redonda. 
-Responde siempre de forma profesional, pero cercana y natural, como si conversaras con un amigo que te ayuda a organizar un evento inolvidable.
+Responde de forma profesional, clara, concisa y persuasiva, como un vendedor experto en nuestros servicios.
   `;
 }
 
@@ -220,7 +220,7 @@ app.get('/', async (req, res) => {
   console.log("Ruta '/' accedida correctamente.");
   try {
     console.log('Enviando mensaje de prueba a WhatsApp...');
-    await sendWhatsAppMessage('528133971595', 'hello_world');
+    await sendWhatsAppMessage('528133971595', 'Hola, ¿en qué puedo ayudarte hoy? 😊');
     console.log('Mensaje de prueba enviado exitosamente.');
   } catch (error) {
     console.error('Error al enviar mensaje de prueba:', error.message);
@@ -644,10 +644,10 @@ async function handleUserMessage(from, userMessage, messageLower) {
   if (context.estado === "Contacto Inicial") {
     await sendInteractiveMessageWithImageWithState(
       from,
-      "¡Hola! Soy tu asesor en Camicam Photobooth 😃. Te invito a conocer nuestros servicios:",
+      "¡Bienvenido a Camicam Photobooth! 😃 Conoce nuestros servicios:",
       "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg",
       {
-        message: "¿Qué tipo de evento tienes?",
+        message: "Por favor selecciona el tipo de evento que tienes:",
         buttons: [
           { id: "evento_boda", title: "Boda" },
           { id: "evento_xv", title: "XV Años" },
@@ -670,14 +670,10 @@ async function handleUserMessage(from, userMessage, messageLower) {
       context.tipoEvento = "Otro";
     }
     // Enviar botones para elegir entre paquete sugerido o armar paquete
-    await sendInteractiveMessage(
-      from,
-      `¡Perfecto! Veo que tu evento es de tipo ${context.tipoEvento}. ¿Cómo prefieres continuar?`,
-      [
-        { id: "armar_paquete", title: "Armar mi paquete" },
-        { id: "paquete_sugerido", title: "Ver paquete sugerido" }
-      ]
-    );
+    await sendInteractiveMessage(from, `¡Perfecto! Has seleccionado: ${context.tipoEvento} 👍. ¿Qué deseas hacer?`, [
+      { id: "armar_paquete", title: "Armar mi paquete" },
+      { id: "paquete_sugerido", title: "Ver paquete sugerido" }
+    ]);
     context.estado = "OpcionesSeleccionadas";
     return true;
   }
