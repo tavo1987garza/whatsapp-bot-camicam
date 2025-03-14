@@ -592,6 +592,16 @@ async function handleUserMessage(from, userMessage, messageLower) {
     return true;
   }
 
+   // 4. Si el usuario está armando su paquete, esperar los servicios
+   if (context.estado === "EsperandoServicios") {
+    context.serviciosSeleccionados = userMessage;
+    await sendWhatsAppMessage(from, `Has indicado los siguientes servicios: ${userMessage}`);
+    await sendWhatsAppMessage(from, "Para continuar, por favor indícanos la fecha de tu evento (Formato DD/MM/AAAA).");
+    context.estado = "EsperandoFecha";
+    return true;
+  }
+
+  // 5. Procesar la fecha del evento
   if (context.estado === "EsperandoFecha") {
     if (!isValidDate(userMessage)) {
       await sendWhatsAppMessage(from, "El formato de la fecha es incorrecto. Por favor, usa el formato DD/MM/AAAA.");
@@ -608,6 +618,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
     return true;
   }
 
+  // 6. Procesar la ubicación del evento
   if (context.estado === "EsperandoLugar") {
     context.lugar = userMessage;
     await sendWhatsAppMessage(from, "¡Perfecto! Hemos registrado la fecha y el lugar de tu evento. Un agente se pondrá en contacto contigo para afinar los detalles. ¡Gracias por elegir Camicam Photobooth!");
@@ -615,7 +626,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
     return true;
   }
 
-  // Nueva rama para "letras gigantes"
+  // Rama para "letras gigantes" (si se menciona en otro flujo)
   if (!["Contacto Inicial", "EsperandoTipoEvento", "OpcionesSeleccionadas", "EsperandoFecha", "EsperandoLugar", "EsperandoCantidadLetras"].includes(context.estado)) {
     if (messageLower.includes("letras gigantes")) {
       await sendWhatsAppMessage(from, "¿Cuántas letras ocupas?");
@@ -637,7 +648,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
     return true;
   }
 
-  // Integración con OpenAI para otros casos
+  // Si no se activa ningún flujo específico, se pasa a OpenAI
   try {
     const responseCache = new NodeCache({ stdTTL: 3600 });
     function getCacheKey(query) {
