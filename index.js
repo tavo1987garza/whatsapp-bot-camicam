@@ -139,6 +139,7 @@ function calculateQuotation(servicesText) {
   let serviceCount = 0; // para descuentos
   let details = [];
   let servicesRecognized = []; // servicios reconocidos y para enviar medios
+  let letrasGigantesCount = 0; // Contador de letras gigantes
 
   for (const service of servicesArr) {
     if (service.includes("chisperos")) {
@@ -168,12 +169,14 @@ function calculateQuotation(servicesText) {
         serviceCount++;
         details.push(`Letras gigantes (${qty} unidades): $${precioLetras}`);
         servicesRecognized.push("letras gigantes");
+        letrasGigantesCount = qty; // Guardar la cantidad de letras
       } else {
         // Si no se especifica la cantidad, se asume 1 letra
         subtotal += prices["letras gigantes"];
         serviceCount++;
         details.push(`Letras gigantes (1 unidad): $${prices["letras gigantes"]}`);
         servicesRecognized.push("letras gigantes");
+        letrasGigantesCount = 1; // Guardar la cantidad de letras
       }
     } else if (prices[service] !== undefined) {
       subtotal += prices[service];
@@ -185,13 +188,17 @@ function calculateQuotation(servicesText) {
     }
   }
   
-  // Aplicar descuento según cantidad de servicios (con excepciones)
+  // Aplicar descuento según cantidad de servicios y reglas específicas
   let discountPercent = 0;
-  if (serviceCount === 1) {
+
+  // Regla especial para letras gigantes
+  if (letrasGigantesCount >= 2) {
+    discountPercent = 10; // 10% de descuento si se piden 2 o más letras
+  } else if (serviceCount === 1) {
     if (servicesArr.length === 1 && servicesArr[0].includes("letras gigantes")) {
-      discountPercent = 0;
+      discountPercent = 0; // No hay descuento para una sola letra
     } else {
-      discountPercent = 10;
+      discountPercent = 10; // 10% de descuento para un solo servicio (excepto letras gigantes)
     }
   } else if (serviceCount === 2) {
     discountPercent = 25;
