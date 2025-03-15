@@ -832,7 +832,7 @@ if (context.estado === "OpcionesSeleccionadas") {
           // Enviar videos
           if (mediaMapping[service].videos && mediaMapping[service].videos.length > 0) {
             for (const vid of mediaMapping[service].videos) {
-              await sendWhatsAppVideo(from, vid, `${service} - video`);
+              await sendWhatsAppVideo(from, vid);
             }
           }
         }
@@ -840,6 +840,7 @@ if (context.estado === "OpcionesSeleccionadas") {
     }
     
     // Preguntar si desea agregar algo más o si tiene dudas
+    await delay(5000);
     await sendWhatsAppMessage(from, "¿Deseas agregar algo más o tienes alguna duda?");
     context.estado = "EsperandoDudas";
     return true;
