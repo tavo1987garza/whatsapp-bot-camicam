@@ -688,11 +688,11 @@ if (context.estado === "Contacto Inicial") {
   );
 
   // Enviar la imagen de servicios con un retraso
-  await delay(5000); // Retraso de 2 segundos antes de enviar la imagen
+  await delay(5000); // Retraso de 5 segundos antes de enviar la imagen
   await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
 
   // Enviar los botones con otro retraso
-  await delay(3000); // Retraso de 3 segundos antes de enviar los botones
+  await delay(5000); // Retraso de 5 segundos antes de enviar los botones
   await sendInteractiveMessage(
     from,
     "Para una mejor experiencia, por favor interactúa con los botones que te mostraré a continuación 😊\n\nSelecciona el tipo de evento que tienes: 👇",
@@ -718,7 +718,7 @@ if (context.estado === "Contacto Inicial") {
     context.tipoEvento = "Otro";
   }
   // Enviar botones para elegir entre paquete sugerido o armar paquete
-  await sendInteractiveMessage(from, `¡Qué emoción! 😊 Muchas felicidades por tu celebración ✨ \n\nAhora, ¿qué te gustaría hacer?`, [
+  await sendInteractiveMessage(from, `¡Qué emoción! 😊\n\n¡Muchas felicidades por tu celebración! ✨ \n\nAhora, ¿qué te gustaría hacer?`, [
     { id: "paquete_sugerido", title: "Ver paquete sugerido" },
     { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
   ]);
@@ -734,7 +734,7 @@ if (context.estado === "OpcionesSeleccionadas") {
     // Mensaje con retraso para simular interacción humana
     await sendMessageWithTypingWithState(
       from,
-      "¡Genial! 😃 Vamos a armar tu paquete personalizado. Por favor, indícame los servicios que deseas incluir. (Escribe separado por comas Ejemplo: cabina de fotos, niebla de piso, scrapbook, chisperos 4, letras gigantes 4)",
+      "¡Genial! 😃 Vamos a armar tu paquete personalizado.\n\nPor favor, indícame los servicios que deseas incluir.\n\nEscribe separado por comas Por Ejemplo: cabina de fotos, niebla de piso, scrapbook, chisperos 4, letras gigantes 4",
       2000, // Retraso de 2 segundos
       "OpcionesSeleccionadas"
     );
