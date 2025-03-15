@@ -175,14 +175,14 @@ function calculateQuotation(servicesText) {
         const precioLetras = qty * prices["letras gigantes"];
         subtotal += precioLetras;
         serviceCount++;
-        details.push(`Letras gigantes (${qty} unidades): $${precioLetras}`);
+        details.push(`${qty} Letras gigantes  : $${precioLetras}`);
         servicesRecognized.push("letras gigantes");
         letrasGigantesCount = qty; // Guardar la cantidad de letras
       } else {
         // Si no se especifica la cantidad, se asume 1 letra
         subtotal += prices["letras gigantes"];
         serviceCount++;
-        details.push(`Letras gigantes (1 unidad): $${prices["letras gigantes"]}`);
+        details.push(`1 Letras gigante: $${prices["letras gigantes"]}`);
         servicesRecognized.push("letras gigantes");
         letrasGigantesCount = 1; // Guardar la cantidad de letras
       }
@@ -813,7 +813,7 @@ if (context.estado === "EsperandoServicios") {
   const cotizacion = calculateQuotation(userMessage);
 
   // Enviar cotización: título y detalles con retraso
-  const mensajeCotizacion = "💰 *Tu cotización:*\nDetalle:\n" + cotizacion.details.join("\n");
+  const mensajeCotizacion = "💰 *Tu cotización:*\n\n" + cotizacion.details.join("\n");
   await sendMessageWithTypingWithState(
     from,
     mensajeCotizacion,
@@ -840,15 +840,15 @@ if (context.estado === "EsperandoServicios") {
         // Enviar imágenes
         if (mediaMapping[service].images && mediaMapping[service].images.length > 0) {
           for (const img of mediaMapping[service].images) {
-            await sendImageMessage(from, img, `${service} - imagen`);
-            await delay(1000); // Retraso de 1 segundo entre imágenes
+            await sendImageMessage(from, img);
+            await delay(3000); // Retraso de 1 segundo entre imágenes
           }
         }
         // Enviar videos
         if (mediaMapping[service].videos && mediaMapping[service].videos.length > 0) {
           for (const vid of mediaMapping[service].videos) {
-            await sendWhatsAppVideo(from, vid, `${service} - video`);
-            await delay(1000); // Retraso de 1 segundo entre videos
+            await sendWhatsAppVideo(from, vid);
+            await delay(3000); // Retraso de 1 segundo entre videos
           }
         }
       }
@@ -861,7 +861,7 @@ if (context.estado === "EsperandoServicios") {
   // Preguntar si desea agregar algo más o si tiene dudas
   await sendMessageWithTypingWithState(
     from,
-    "¿Deseas agregar algo más o tienes alguna duda? 😊 Si todo está bien, por favor indícanos la fecha de tu evento (Formato DD/MM/AAAA) 📆.",
+    "¿Deseas agregar algo más o tienes alguna duda? 😊",
     2000, // Retraso de 2 segundos para simular "escribiendo"
     "EsperandoServicios"
   );
