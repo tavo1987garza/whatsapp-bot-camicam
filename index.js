@@ -807,45 +807,44 @@ if (context.estado === "OpcionesSeleccionadas") {
   }
 }
   // 4. Estado EsperandoServicios: procesar servicios, calcular cotización y enviar mensajes en orden
-if (context.estado === "EsperandoServicios") {
-  context.serviciosSeleccionados = userMessage;
-  const cotizacion = calculateQuotation(userMessage);
-  
-  // Enviar cotización: título y detalles
-  const mensajeCotizacion = "💰 *Tu cotización:*\nDetalle:\n" + cotizacion.details.join("\n");
-  await sendWhatsAppMessage(from, mensajeCotizacion);
-  
-  // Enviar resumen: subtotal, descuento y total
-  const mensajeResumen = `Subtotal: $${cotizacion.subtotal.toFixed(2)}\nDescuento (${cotizacion.discountPercent}%): -$${cotizacion.discountAmount.toFixed(2)}\nTotal a pagar: $${cotizacion.total.toFixed(2)}`;
-  await sendWhatsAppMessage(from, mensajeResumen);
-  
-  // Enviar imágenes y videos asociados a los servicios reconocidos con un retraso de 4 segundos entre cada uno
-  if (cotizacion.servicesRecognized && cotizacion.servicesRecognized.length > 0) {
-    for (const service of cotizacion.servicesRecognized) {
-      if (mediaMapping[service]) {
-        // Enviar imágenes
-        if (mediaMapping[service].images && mediaMapping[service].images.length > 0) {
-          for (const img of mediaMapping[service].images) {
-            await delay(4000); // Retraso de 4 segundos
-            await sendImageMessage(from, img, `${service} - imagen`);
+  if (context.estado === "EsperandoServicios") {
+    context.serviciosSeleccionados = userMessage;
+    const cotizacion = calculateQuotation(userMessage);
+    
+    // Enviar cotización: título y detalles
+    const mensajeCotizacion = "💰 *Tu cotización:*\nDetalle:\n" + cotizacion.details.join("\n");
+    await sendWhatsAppMessage(from, mensajeCotizacion);
+    
+    // Enviar resumen: subtotal, descuento y total
+    const mensajeResumen = `Subtotal: $${cotizacion.subtotal.toFixed(2)}\nDescuento (${cotizacion.discountPercent}%): -$${cotizacion.discountAmount.toFixed(2)}\nTotal a pagar: $${cotizacion.total.toFixed(2)}`;
+    await sendWhatsAppMessage(from, mensajeResumen);
+    
+    // Enviar imágenes y videos asociados a los servicios reconocidos
+    if (cotizacion.servicesRecognized && cotizacion.servicesRecognized.length > 0) {
+      for (const service of cotizacion.servicesRecognized) {
+        if (mediaMapping[service]) {
+          // Enviar imágenes
+          if (mediaMapping[service].images && mediaMapping[service].images.length > 0) {
+            for (const img of mediaMapping[service].images) {
+              await sendImageMessage(from, img, `${service} - imagen`);
+            }
           }
-        }
-        // Enviar videos
-        if (mediaMapping[service].videos && mediaMapping[service].videos.length > 0) {
-          for (const vid of mediaMapping[service].videos) {
-            await delay(4000); // Retraso de 4 segundos
-            await sendWhatsAppVideo(from, vid, `${service} - video`);
+          // Enviar videos
+          if (mediaMapping[service].videos && mediaMapping[service].videos.length > 0) {
+            for (const vid of mediaMapping[service].videos) {
+              await sendWhatsAppVideo(from, vid, `${service} - video`);
+            }
           }
         }
       }
     }
+    
+    // Preguntar si desea agregar algo más o si tiene dudas
+    await sendWhatsAppMessage(from, "¿Deseas agregar algo más o tienes alguna duda?");
+    context.estado = "EsperandoDudas";
+    return true;
   }
-  
-  // Preguntar si desea agregar algo más o si tiene dudas
-  await sendWhatsAppMessage(from, "¿Deseas agregar algo más o tienes alguna duda?");
-  context.estado = "EsperandoDudas";
-  return true;
-}
+
 
 // 5. Estado EsperandoDudas: manejar las preguntas adicionales o agregar servicios
 if (context.estado === "EsperandoDudas") {
