@@ -826,7 +826,7 @@ if (context.estado === "OpcionesSeleccionadas") {
           // Enviar imágenes
           if (mediaMapping[service].images && mediaMapping[service].images.length > 0) {
             for (const img of mediaMapping[service].images) {
-              await sendImageMessage(from, img, `${service} - imagen`);
+              await sendImageMessage(from, img);
             }
           }
           // Enviar videos
