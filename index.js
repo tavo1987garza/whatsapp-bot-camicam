@@ -74,6 +74,14 @@ const mediaMapping = {
     ],
     videos: []
   },
+  "letras gigantes": {
+    images: [
+      "http://cami-cam.com/wp-content/uploads/2025/03/Letras-Gigantes.jpeg"
+    ],
+    videos: [
+      "http://cami-cam.com/wp-content/uploads/2025/02/LETRAS-GIGANTES-ILUMINADAS.mp4"
+    ]
+  },
   "chisperos": {
     images: [
       "http://cami-cam.com/wp-content/uploads/2023/07/chisperos1.jpg"
