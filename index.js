@@ -175,14 +175,14 @@ function calculateQuotation(servicesText) {
         const precioLetras = qty * prices["letras gigantes"];
         subtotal += precioLetras;
         serviceCount++;
-        details.push(`${qty} Letras gigantes  : $${precioLetras}`);
+        details.push(`Letras gigantes (${qty} unidades): $${precioLetras}`);
         servicesRecognized.push("letras gigantes");
         letrasGigantesCount = qty; // Guardar la cantidad de letras
       } else {
         // Si no se especifica la cantidad, se asume 1 letra
         subtotal += prices["letras gigantes"];
         serviceCount++;
-        details.push(`1 Letras gigante: $${prices["letras gigantes"]}`);
+        details.push(`Letras gigantes (1 unidad): $${prices["letras gigantes"]}`);
         servicesRecognized.push("letras gigantes");
         letrasGigantesCount = 1; // Guardar la cantidad de letras
       }
@@ -806,67 +806,43 @@ if (context.estado === "OpcionesSeleccionadas") {
     return true;
   }
 }
-  
   // 4. Estado EsperandoServicios: procesar servicios, calcular cotización y enviar mensajes en orden
 if (context.estado === "EsperandoServicios") {
   context.serviciosSeleccionados = userMessage;
   const cotizacion = calculateQuotation(userMessage);
-
-  // Enviar cotización: título y detalles con retraso
-  const mensajeCotizacion = "💰 *Tu cotización:*\n\n" + cotizacion.details.join("\n");
-  await sendMessageWithTypingWithState(
-    from,
-    mensajeCotizacion,
-    2000, // Retraso de 2 segundos para simular "escribiendo"
-    "EsperandoServicios"
-  );
-
-  // Enviar resumen: subtotal, descuento y total con retraso
+  
+  // Enviar cotización: título y detalles
+  const mensajeCotizacion = "💰 *Tu cotización:*\nDetalle:\n" + cotizacion.details.join("\n");
+  await sendWhatsAppMessage(from, mensajeCotizacion);
+  
+  // Enviar resumen: subtotal, descuento y total
   const mensajeResumen = `Subtotal: $${cotizacion.subtotal.toFixed(2)}\nDescuento (${cotizacion.discountPercent}%): -$${cotizacion.discountAmount.toFixed(2)}\nTotal a pagar: $${cotizacion.total.toFixed(2)}`;
-  await sendMessageWithTypingWithState(
-    from,
-    mensajeResumen,
-    2000, // Retraso de 2 segundos para simular "escribiendo"
-    "EsperandoServicios"
-  );
-
-  // Retraso de 4 segundos antes de enviar imágenes y videos
-  await delay(4000);
-
-  // Enviar imágenes y videos asociados a los servicios reconocidos
+  await sendWhatsAppMessage(from, mensajeResumen);
+  
+  // Enviar imágenes y videos asociados a los servicios reconocidos con un retraso de 4 segundos entre cada uno
   if (cotizacion.servicesRecognized && cotizacion.servicesRecognized.length > 0) {
     for (const service of cotizacion.servicesRecognized) {
       if (mediaMapping[service]) {
         // Enviar imágenes
         if (mediaMapping[service].images && mediaMapping[service].images.length > 0) {
           for (const img of mediaMapping[service].images) {
-            await sendImageMessage(from, img);
-            await delay(3000); // Retraso de 1 segundo entre imágenes
+            await delay(4000); // Retraso de 4 segundos
+            await sendImageMessage(from, img, `${service} - imagen`);
           }
         }
         // Enviar videos
         if (mediaMapping[service].videos && mediaMapping[service].videos.length > 0) {
           for (const vid of mediaMapping[service].videos) {
-            await sendWhatsAppVideo(from, vid);
-            await delay(3000); // Retraso de 1 segundo entre videos
+            await delay(4000); // Retraso de 4 segundos
+            await sendWhatsAppVideo(from, vid, `${service} - video`);
           }
         }
       }
     }
   }
-
-  // Retraso adicional antes de enviar el mensaje final
-  await delay(2000);
-
+  
   // Preguntar si desea agregar algo más o si tiene dudas
-  await sendMessageWithTypingWithState(
-    from,
-    "¿Deseas agregar algo más o tienes alguna duda? 😊",
-    2000, // Retraso de 2 segundos para simular "escribiendo"
-    "EsperandoServicios"
-  );
-
-  // Actualizar el estado
+  await sendWhatsAppMessage(from, "¿Deseas agregar algo más o tienes alguna duda?");
   context.estado = "EsperandoDudas";
   return true;
 }
