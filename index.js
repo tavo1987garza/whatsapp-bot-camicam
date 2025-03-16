@@ -157,15 +157,23 @@ function calculateQuotation(servicesText) {
         if (chisperosPrices[qty]) {
           subtotal += chisperosPrices[qty];
           serviceCount++;
-          details.push(`Chisperos (${qty} unidades): $${chisperosPrices[qty]}`);
+          details.push(`🔸 *${qty} Chisperos*: $${chisperosPrices[qty]}`); // Formato con emoji
           servicesRecognized.push("chisperos");
         } else {
-          details.push(`Chisperos: cantidad inválida (${service})`);
+          details.push(`🔸 Chisperos: cantidad inválida (${service})`);
         }
       } else {
-        subtotal += chisperosPrices[2];
-        details.push(`Chisperos (2 unidades): $${chisperosPrices[2]}`);
-        servicesRecognized.push("chisperos");
+        // Si no se especifica la cantidad, pedir al usuario que la indique
+        context.estado = "EsperandoCantidadChisperos";
+        context.servicioPendiente = "chisperos"; // Guardar el servicio pendiente
+        return {
+          subtotal: 0,
+          discountPercent: 0,
+          discountAmount: 0,
+          total: 0,
+          details: ["🔸 *Chisperos*: Por favor, indícanos cuántos chisperos necesitas."],
+          servicesRecognized: []
+        };
       }
     } else if (service.includes("letras gigantes")) {
       // Extraer la cantidad de letras (si se especifica)
@@ -175,24 +183,29 @@ function calculateQuotation(servicesText) {
         const precioLetras = qty * prices["letras gigantes"];
         subtotal += precioLetras;
         serviceCount++;
-        details.push(`Letras gigantes (${qty} unidades): $${precioLetras}`);
+        details.push(`🔸 *${qty} Letras Gigantes*: $${precioLetras}`); // Formato con emoji
         servicesRecognized.push("letras gigantes");
         letrasGigantesCount = qty; // Guardar la cantidad de letras
       } else {
-        // Si no se especifica la cantidad, se asume 1 letra
-        subtotal += prices["letras gigantes"];
-        serviceCount++;
-        details.push(`Letras gigantes (1 unidad): $${prices["letras gigantes"]}`);
-        servicesRecognized.push("letras gigantes");
-        letrasGigantesCount = 1; // Guardar la cantidad de letras
+        // Si no se especifica la cantidad, pedir al usuario que la indique
+        context.estado = "EsperandoCantidadLetras";
+        context.servicioPendiente = "letras gigantes"; // Guardar el servicio pendiente
+        return {
+          subtotal: 0,
+          discountPercent: 0,
+          discountAmount: 0,
+          total: 0,
+          details: ["🔸 *Letras Gigantes*: Por favor, indícanos cuántas letras necesitas."],
+          servicesRecognized: []
+        };
       }
     } else if (prices[service] !== undefined) {
       subtotal += prices[service];
       serviceCount++;
-      details.push(`${service.charAt(0).toUpperCase() + service.slice(1)}: $${prices[service]}`);
+      details.push(`🔸 *${service.charAt(0).toUpperCase() + service.slice(1)}*: $${prices[service]}`); // Formato con emoji
       servicesRecognized.push(service);
     } else {
-      details.push(`${service}: servicio no reconocido`);
+      details.push(`🔸 ${service}: servicio no reconocido`);
     }
   }
   
@@ -228,6 +241,8 @@ function calculateQuotation(servicesText) {
     servicesRecognized
   };
 }
+
+
 
 // Rutas (webhook, raíz, etc.)
 app.get('/webhook', (req, res) => {
