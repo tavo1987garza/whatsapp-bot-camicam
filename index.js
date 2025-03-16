@@ -898,32 +898,50 @@ if (context.estado === "EsperandoDudas") {
     return true;
   }
 
-  // Verificar si el cliente quiere quitar un servicio (letras gigantes o chisperos)
+  // Verificar si el cliente quiere quitar un servicio
   if (messageLower.includes("quitar") || messageLower.includes("quitame")) {
-    if (messageLower.includes("letras")) {
-      // Eliminar letras gigantes de la cotización
-      context.serviciosSeleccionados = context.serviciosSeleccionados.replace(/,?\s*letras gigantes\s*\d+/i, "").trim();
-      await sendWhatsAppMessage(from, "✅ Letras gigantes eliminadas de tu cotización.");
-    } else if (messageLower.includes("chisperos")) {
-      // Eliminar chisperos de la cotización
-      context.serviciosSeleccionados = context.serviciosSeleccionados.replace(/,?\s*chisperos\s*\d+/i, "").trim();
-      await sendWhatsAppMessage(from, "✅ Chisperos eliminados de tu cotización.");
-    } else {
-      await sendWhatsAppMessage(from, "No entendí qué servicio deseas quitar. Por favor, especifica si son letras gigantes o chisperos.");
-      return true;
+    // Lista de servicios disponibles
+    const serviciosDisponibles = [
+      "cabina de fotos", "cabina 360", "lluvia de mariposas", "carrito de shots",
+      "niebla de piso", "lluvia matalica", "scrapbook", "audio guest book",
+      "letras gigantes", "chisperos"
+    ];
+
+    // Buscar el servicio que el cliente desea quitar
+    let servicioAQuitar = null;
+    for (const servicio of serviciosDisponibles) {
+      if (messageLower.includes(servicio)) {
+        servicioAQuitar = servicio;
+        break;
+      }
     }
 
-    // Recalcular la cotización sin el servicio eliminado
-    const newQuotation = calculateQuotation(context.serviciosSeleccionados);
+    if (servicioAQuitar) {
+      // Eliminar el servicio de la cotización
+      context.serviciosSeleccionados = context.serviciosSeleccionados
+        .split(",")
+        .map(s => s.trim())
+        .filter(s => !s.toLowerCase().includes(servicioAQuitar))
+        .join(", ");
 
-    // Enviar la nueva cotización al usuario
-    await sendWhatsAppMessage(from, "¡Perfecto! Hemos actualizado tu cotización:");
-    await sendWhatsAppMessage(from, "💰 *Tu nueva cotización:*\nDetalle:\n" + newQuotation.details.join("\n"));
-    await sendWhatsAppMessage(from, `Subtotal: $${newQuotation.subtotal.toFixed(2)}\nDescuento (${newQuotation.discountPercent}%): -$${newQuotation.discountAmount.toFixed(2)}\nTotal a pagar: $${newQuotation.total.toFixed(2)}`);
+      await sendWhatsAppMessage(from, `✅ ${servicioAQuitar.charAt(0).toUpperCase() + servicioAQuitar.slice(1)} eliminado(s) de tu cotización.`);
 
-    // Preguntar si desea agregar algo más o si tiene dudas
-    await sendWhatsAppMessage(from, "¿Deseas agregar algo más o tienes alguna duda? 😊");
-    return true;
+      // Recalcular la cotización sin el servicio eliminado
+      const newQuotation = calculateQuotation(context.serviciosSeleccionados);
+
+      // Enviar la nueva cotización al usuario
+      await sendWhatsAppMessage(from, "¡Perfecto! Hemos actualizado tu cotización:");
+      await sendWhatsAppMessage(from, "💰 *Tu nueva cotización:*\nDetalle:\n" + newQuotation.details.join("\n"));
+      await sendWhatsAppMessage(from, `Subtotal: $${newQuotation.subtotal.toFixed(2)}\nDescuento (${newQuotation.discountPercent}%): -$${newQuotation.discountAmount.toFixed(2)}\nTotal a pagar: $${newQuotation.total.toFixed(2)}`);
+
+      // Preguntar si desea agregar algo más o si tiene dudas
+      await sendWhatsAppMessage(from, "¿Deseas agregar algo más o tienes alguna duda? 😊");
+      return true;
+    } else {
+      // Si no se encontró el servicio a quitar
+      await sendWhatsAppMessage(from, "No entendí qué servicio deseas quitar. Por favor, especifica el servicio que deseas eliminar.");
+      return true;
+    }
   }
 
   // Verificar si el cliente quiere agregar o cambiar la cantidad de letras gigantes
@@ -1094,7 +1112,6 @@ if (context.estado === "EsperandoDudas") {
   await sendWhatsAppMessage(from, "¿Podrías especificar tu duda o si deseas agregar algún servicio adicional?");
   return true;
 }
-
   // 6. Procesar la fecha del evento
   if (context.estado === "EsperandoFecha") {
     if (!isValidDate(userMessage)) {
