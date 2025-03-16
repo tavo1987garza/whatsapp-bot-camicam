@@ -889,7 +889,6 @@ if (context.estado === "EsperandoServicios") {
   return true;
 }
 
-
 // 5. Estado EsperandoDudas: manejar las preguntas adicionales o agregar servicios
 if (context.estado === "EsperandoDudas") {
   // Si el mensaje menciona "flete", preguntamos por fecha y lugar
@@ -982,7 +981,7 @@ if (context.estado === "EsperandoDudas") {
     // Buscar el servicio que el cliente desea agregar
     let servicioAAgregar = null;
     for (const servicio of serviciosDisponibles) {
-      if (messageLower.includes(servicio) || (servicio === "letras gigantes" && messageLower.includes("letras")) || (servicio === "chisperos" && messageLower.includes("chispero"))) {
+      if (messageLower.includes(servicio)) {
         servicioAAgregar = servicio;
         break;
       }
@@ -991,18 +990,7 @@ if (context.estado === "EsperandoDudas") {
     if (servicioAAgregar) {
       // Verificar si el cliente especificó una cantidad para agregar
       const matchCantidad = userMessage.match(/(?:agregar|añadir)\s*(\d+)\s*/i);
-      const cantidadAAgregar = matchCantidad ? parseInt(matchCantidad[1]) : null;
-
-      if (cantidadAAgregar === null && (servicioAAgregar === "letras gigantes" || servicioAAgregar === "chisperos")) {
-        // Preguntar la cantidad si no se especificó
-        context.estado = "EsperandoCantidad";
-        context.servicioPendiente = servicioAAgregar; // Guardar el servicio pendiente
-        await sendWhatsAppMessage(from, `¿Cuántos ${servicioAAgregar} necesitas?`);
-        return true;
-      }
-
-      // Si se especificó la cantidad o no es necesario (servicios que no requieren cantidad)
-      const cantidadFinal = cantidadAAgregar || 1;
+      const cantidadAAgregar = matchCantidad ? parseInt(matchCantidad[1]) : 1;
 
       // Agregar el servicio a la cotización
       if (context.serviciosSeleccionados.toLowerCase().includes(servicioAAgregar)) {
@@ -1010,7 +998,7 @@ if (context.estado === "EsperandoDudas") {
         const matchCantidadActual = context.serviciosSeleccionados.match(new RegExp(`${servicioAAgregar}\\s*(\\d+)`, "i"));
         let cantidadActual = matchCantidadActual ? parseInt(matchCantidadActual[1]) : 1;
 
-        const nuevaCantidad = cantidadActual + cantidadFinal;
+        const nuevaCantidad = cantidadActual + cantidadAAgregar;
 
         context.serviciosSeleccionados = context.serviciosSeleccionados.replace(
           new RegExp(`${servicioAAgregar}\\s*\\d+`, "i"),
@@ -1018,7 +1006,7 @@ if (context.estado === "EsperandoDudas") {
         );
       } else {
         // Si no existe el servicio, agregarlo
-        context.serviciosSeleccionados += `, ${servicioAAgregar} ${cantidadFinal}`;
+        context.serviciosSeleccionados += `, ${servicioAAgregar} ${cantidadAAgregar}`;
       }
 
       // Recalcular la cotización con el nuevo servicio agregado
@@ -1060,78 +1048,6 @@ if (context.estado === "EsperandoDudas") {
     }
   }
 
-// Si el cliente está en el estado "EsperandoCantidad", preguntar la cantidad
-if (context.estado === "EsperandoCantidad" && context.servicioPendiente) {
-  const cantidad = parseInt(userMessage);
-  if (isNaN(cantidad)) {
-    await sendWhatsAppMessage(from, "Por favor, ingresa un número válido.");
-    return true;
-  }
-
-  // Verificar el servicio pendiente
-  if (context.servicioPendiente === "letras gigantes" || context.servicioPendiente === "chisperos") {
-    // Agregar el servicio con la cantidad especificada
-    if (context.serviciosSeleccionados.toLowerCase().includes(context.servicioPendiente)) {
-      // Si ya existe el servicio, actualizar la cantidad
-      const matchCantidadActual = context.serviciosSeleccionados.match(new RegExp(`${context.servicioPendiente}\\s*(\\d+)`, "i"));
-      let cantidadActual = matchCantidadActual ? parseInt(matchCantidadActual[1]) : 0;
-
-      const nuevaCantidad = cantidadActual + cantidad;
-
-      context.serviciosSeleccionados = context.serviciosSeleccionados.replace(
-        new RegExp(`${context.servicioPendiente}\\s*\\d+`, "i"),
-        `${context.servicioPendiente} ${nuevaCantidad}`
-      );
-    } else {
-      // Si no existe el servicio, agregarlo
-      context.serviciosSeleccionados += `, ${context.servicioPendiente} ${cantidad}`;
-    }
-
-    // Recalcular la cotización con el nuevo servicio agregado
-    const newQuotation = calculateQuotation(context.serviciosSeleccionados);
-
-    // Enviar la nueva cotización al usuario
-    await sendWhatsAppMessage(from, "¡Perfecto! Hemos actualizado tu cotización:");
-    await sendWhatsAppMessage(from, "💰 *Tu nueva cotización:*\nDetalle:\n" + newQuotation.details.join("\n"));
-    await sendWhatsAppMessage(from, `Subtotal: $${newQuotation.subtotal.toFixed(2)}\nDescuento (${newQuotation.discountPercent}%): -$${newQuotation.discountAmount.toFixed(2)}\nTotal a pagar: $${newQuotation.total.toFixed(2)}`);
-
-    // Verificar si ya se enviaron medios para este servicio
-    if (!context.mediosEnviados) context.mediosEnviados = new Set(); // Inicializar si no existe
-    if (!context.mediosEnviados.has(context.servicioPendiente)) {
-      // Enviar imágenes y videos correspondientes al nuevo servicio agregado
-      if (mediaMapping[context.servicioPendiente]) {
-        if (mediaMapping[context.servicioPendiente].images && mediaMapping[context.servicioPendiente].images.length > 0) {
-          for (const img of mediaMapping[context.servicioPendiente].images) {
-            await sendImageMessage(from, img, `${context.servicioPendiente} - imagen`);
-            await delay(1000); // Retraso de 1 segundo entre imágenes
-          }
-        }
-        if (mediaMapping[context.servicioPendiente].videos && mediaMapping[context.servicioPendiente].videos.length > 0) {
-          for (const vid of mediaMapping[context.servicioPendiente].videos) {
-            await sendWhatsAppVideo(from, vid, `${context.servicioPendiente} - video`);
-            await delay(1000); // Retraso de 1 segundo entre videos
-          }
-        }
-      }
-      context.mediosEnviados.add(context.servicioPendiente); // Marcar como enviado
-    }
-
-    // Preguntar si desea agregar algo más o si tiene dudas
-    await sendWhatsAppMessage(from, "¿Deseas agregar algo más o tienes alguna duda? 😊\n\nSi deseas agregar algo más, escribe *Agregar* y lo que necesites.\nSi deseas quitar algo, escribe *Quitar* y lo que necesites quitar.");
-
-    // Reiniciar el estado y el servicio pendiente
-    context.estado = "EsperandoDudas";
-    context.servicioPendiente = null;
-    return true;
-  } else {
-    // Si el servicio pendiente no es reconocido
-    await sendWhatsAppMessage(from, "Hubo un error al procesar tu solicitud. Por favor, intenta nuevamente.");
-    context.estado = "EsperandoDudas";
-    context.servicioPendiente = null;
-    return true;
-  }
-}
-
   // Si no se encontró un servicio adicional, intentar manejar FAQs
   if (await handleFAQs(from, userMessage)) return true;
 
@@ -1139,6 +1055,7 @@ if (context.estado === "EsperandoCantidad" && context.servicioPendiente) {
   await sendWhatsAppMessage(from, "¿Podrías especificar tu duda o si deseas agregar algún servicio adicional? 😊\n\nSi deseas agregar algo más, escribe *Agregar* y lo que necesites.\nSi deseas quitar algo, escribe *Quitar* y lo que necesites quitar.");
   return true;
 }
+
 
   // 6. Procesar la fecha del evento
   if (context.estado === "EsperandoFecha") {
