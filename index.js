@@ -712,7 +712,7 @@ if (context.estado === "Contacto Inicial") {
   // Mensaje inicial explicando que es un asistente virtual
   await sendMessageWithTypingWithState(
     from,
-    "¡Hola! 👋 Te damos la Bienvenida a *Camicam Photobooth*. \n\n📍Atendemos el Centro de Monterrey y hasta 30 km a la redonda \n\nConoce los Servicios que ofrecemos🤩",
+    "¡Hola! 👋 Te damos la Bienvenida a *Camicam Photobooth*. \n\n📍Atendemos el Centro de Monterrey y hasta 30 km a la redonda \n\nConoce los Servicios que ofrecemos 🤩",
     3000, // Retraso de 3 segundos
     "Contacto Inicial"
   );
@@ -927,18 +927,25 @@ if (context.estado === "EsperandoDudas") {
     await sendWhatsAppMessage(from, "💰 *Tu nueva cotización:*\nDetalle:\n" + newQuotation.details.join("\n"));
     await sendWhatsAppMessage(from, `Subtotal: $${newQuotation.subtotal.toFixed(2)}\nDescuento (${newQuotation.discountPercent}%): -$${newQuotation.discountAmount.toFixed(2)}\nTotal a pagar: $${newQuotation.total.toFixed(2)}`);
 
-    // Enviar imágenes y videos correspondientes a las letras gigantes
-    if (mediaMapping["letras gigantes"]) {
-      if (mediaMapping["letras gigantes"].images && mediaMapping["letras gigantes"].images.length > 0) {
-        for (const img of mediaMapping["letras gigantes"].images) {
-          await sendImageMessage(from, img, "Letras Gigantes - imagen");
+    // Verificar si ya se enviaron medios para "letras gigantes"
+    if (!context.mediosEnviados) context.mediosEnviados = new Set(); // Inicializar si no existe
+    if (!context.mediosEnviados.has("letras gigantes")) {
+      // Enviar imágenes y videos correspondientes a las letras gigantes
+      if (mediaMapping["letras gigantes"]) {
+        if (mediaMapping["letras gigantes"].images && mediaMapping["letras gigantes"].images.length > 0) {
+          for (const img of mediaMapping["letras gigantes"].images) {
+            await sendImageMessage(from, img, "Letras Gigantes - imagen");
+            await delay(1000); // Retraso de 1 segundo entre imágenes
+          }
+        }
+        if (mediaMapping["letras gigantes"].videos && mediaMapping["letras gigantes"].videos.length > 0) {
+          for (const vid of mediaMapping["letras gigantes"].videos) {
+            await sendWhatsAppVideo(from, vid, "Letras Gigantes - video");
+            await delay(1000); // Retraso de 1 segundo entre videos
+          }
         }
       }
-      if (mediaMapping["letras gigantes"].videos && mediaMapping["letras gigantes"].videos.length > 0) {
-        for (const vid of mediaMapping["letras gigantes"].videos) {
-          await sendWhatsAppVideo(from, vid, "Letras Gigantes - video");
-        }
-      }
+      context.mediosEnviados.add("letras gigantes"); // Marcar como enviado
     }
 
     // Preguntar si desea agregar algo más o si tiene dudas
@@ -988,18 +995,25 @@ if (context.estado === "EsperandoDudas") {
     await sendWhatsAppMessage(from, "💰 *Tu nueva cotización:*\nDetalle:\n" + newQuotation.details.join("\n"));
     await sendWhatsAppMessage(from, `Subtotal: $${newQuotation.subtotal.toFixed(2)}\nDescuento (${newQuotation.discountPercent}%): -$${newQuotation.discountAmount.toFixed(2)}\nTotal a pagar: $${newQuotation.total.toFixed(2)}`);
 
-    // Enviar imágenes y videos correspondientes a los chisperos
-    if (mediaMapping["chisperos"]) {
-      if (mediaMapping["chisperos"].images && mediaMapping["chisperos"].images.length > 0) {
-        for (const img of mediaMapping["chisperos"].images) {
-          await sendImageMessage(from, img, "Chisperos - imagen");
+    // Verificar si ya se enviaron medios para "chisperos"
+    if (!context.mediosEnviados) context.mediosEnviados = new Set(); // Inicializar si no existe
+    if (!context.mediosEnviados.has("chisperos")) {
+      // Enviar imágenes y videos correspondientes a los chisperos
+      if (mediaMapping["chisperos"]) {
+        if (mediaMapping["chisperos"].images && mediaMapping["chisperos"].images.length > 0) {
+          for (const img of mediaMapping["chisperos"].images) {
+            await sendImageMessage(from, img, "Chisperos - imagen");
+            await delay(1000); // Retraso de 1 segundo entre imágenes
+          }
+        }
+        if (mediaMapping["chisperos"].videos && mediaMapping["chisperos"].videos.length > 0) {
+          for (const vid of mediaMapping["chisperos"].videos) {
+            await sendWhatsAppVideo(from, vid, "Chisperos - video");
+            await delay(1000); // Retraso de 1 segundo entre videos
+          }
         }
       }
-      if (mediaMapping["chisperos"].videos && mediaMapping["chisperos"].videos.length > 0) {
-        for (const vid of mediaMapping["chisperos"].videos) {
-          await sendWhatsAppVideo(from, vid, "Chisperos - video");
-        }
-      }
+      context.mediosEnviados.add("chisperos"); // Marcar como enviado
     }
 
     // Preguntar si desea agregar algo más o si tiene dudas
@@ -1034,18 +1048,25 @@ if (context.estado === "EsperandoDudas") {
       await sendWhatsAppMessage(from, "💰 *Tu nueva cotización:*\nDetalle:\n" + newQuotation.details.join("\n"));
       await sendWhatsAppMessage(from, `Subtotal: $${newQuotation.subtotal.toFixed(2)}\nDescuento (${newQuotation.discountPercent}%): -$${newQuotation.discountAmount.toFixed(2)}\nTotal a pagar: $${newQuotation.total.toFixed(2)}`);
 
-      // Enviar imágenes y videos correspondientes al nuevo servicio agregado
-      if (mediaMapping[newService]) {
-        if (mediaMapping[newService].images && mediaMapping[newService].images.length > 0) {
-          for (const img of mediaMapping[newService].images) {
-            await sendImageMessage(from, img, `${newService} - imagen`);
+      // Verificar si ya se enviaron medios para este servicio
+      if (!context.mediosEnviados) context.mediosEnviados = new Set(); // Inicializar si no existe
+      if (!context.mediosEnviados.has(newService)) {
+        // Enviar imágenes y videos correspondientes al nuevo servicio agregado
+        if (mediaMapping[newService]) {
+          if (mediaMapping[newService].images && mediaMapping[newService].images.length > 0) {
+            for (const img of mediaMapping[newService].images) {
+              await sendImageMessage(from, img, `${newService} - imagen`);
+              await delay(1000); // Retraso de 1 segundo entre imágenes
+            }
+          }
+          if (mediaMapping[newService].videos && mediaMapping[newService].videos.length > 0) {
+            for (const vid of mediaMapping[newService].videos) {
+              await sendWhatsAppVideo(from, vid, `${newService} - video`);
+              await delay(1000); // Retraso de 1 segundo entre videos
+            }
           }
         }
-        if (mediaMapping[newService].videos && mediaMapping[newService].videos.length > 0) {
-          for (const vid of mediaMapping[newService].videos) {
-            await sendWhatsAppVideo(from, vid, `${newService} - video`);
-          }
-        }
+        context.mediosEnviados.add(newService); // Marcar como enviado
       }
 
       // Preguntar si desea agregar algo más o si tiene dudas
