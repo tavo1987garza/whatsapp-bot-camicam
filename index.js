@@ -147,25 +147,26 @@ function calculateQuotation(servicesText) {
   let serviceCount = 0; // para descuentos
   let details = [];
   let servicesRecognized = []; // servicios reconocidos y para enviar medios
-  let letrasGigantesCount = 0; // Contador de letras gigantes
+  let letrasCount = 0; // contador para letras
 
   for (const service of servicesArr) {
-    if (service.includes("chisperos")) {
-      const match = service.match(/chisperos\s*(\d+)/);
-      if (match) {
+    // Si el servicio es chisperos (o chispero)
+    if (/chispero[s]?\b/.test(service)) {
+      const match = service.match(/chispero[s]?\s*(\d+)/);
+      if (match && match[1]) {
         const qty = parseInt(match[1]);
         if (chisperosPrices[qty]) {
           subtotal += chisperosPrices[qty];
           serviceCount++;
-          details.push(`🔸 *${qty} Chisperos*: $${chisperosPrices[qty]}`); // Formato con emoji
+          details.push(`🔸 *${qty} Chisperos*: $${chisperosPrices[qty]}`);
           servicesRecognized.push("chisperos");
         } else {
           details.push(`🔸 Chisperos: cantidad inválida (${service})`);
         }
       } else {
-        // Si no se especifica la cantidad, pedir al usuario que la indique
+        // Si no se especifica la cantidad, se solicita
         context.estado = "EsperandoCantidadChisperos";
-        context.servicioPendiente = "chisperos"; // Guardar el servicio pendiente
+        context.servicioPendiente = "chisperos";
         return {
           subtotal: 0,
           discountPercent: 0,
@@ -175,34 +176,37 @@ function calculateQuotation(servicesText) {
           servicesRecognized: []
         };
       }
-    } else if (service.includes("letras gigantes")) {
-      // Extraer la cantidad de letras (si se especifica)
-      const match = service.match(/letras gigantes\s*(\d+)/);
-      if (match) {
+    }
+    // Si el servicio es letras o letras gigantes
+    else if (/letras(?:\s*gigantes)?\b/.test(service)) {
+      const match = service.match(/letras(?:\s*gigantes)?\s*(\d+)/);
+      if (match && match[1]) {
         const qty = parseInt(match[1]);
         const precioLetras = qty * prices["letras gigantes"];
         subtotal += precioLetras;
         serviceCount++;
-        details.push(`🔸 *${qty} Letras Gigantes*: $${precioLetras}`); // Formato con emoji
+        details.push(`🔸 *${qty} Letras*: $${precioLetras}`);
         servicesRecognized.push("letras gigantes");
-        letrasGigantesCount = qty; // Guardar la cantidad de letras
+        letrasCount = qty;
       } else {
-        // Si no se especifica la cantidad, pedir al usuario que la indique
+        // Si no se especifica la cantidad, se solicita
         context.estado = "EsperandoCantidadLetras";
-        context.servicioPendiente = "letras gigantes"; // Guardar el servicio pendiente
+        context.servicioPendiente = "letras gigantes";
         return {
           subtotal: 0,
           discountPercent: 0,
           discountAmount: 0,
           total: 0,
-          details: ["🔸 *Letras Gigantes*: Por favor, indícanos cuántas letras necesitas."],
+          details: ["🔸 *Letras*: Por favor, indícanos cuántas letras ocupas."],
           servicesRecognized: []
         };
       }
-    } else if (prices[service] !== undefined) {
+    }
+    // Otros servicios definidos en el diccionario de precios
+    else if (prices[service] !== undefined) {
       subtotal += prices[service];
       serviceCount++;
-      details.push(`🔸 *${service.charAt(0).toUpperCase() + service.slice(1)}*: $${prices[service]}`); // Formato con emoji
+      details.push(`🔸 *${service.charAt(0).toUpperCase() + service.slice(1)}*: $${prices[service]}`);
       servicesRecognized.push(service);
     } else {
       details.push(`🔸 ${service}: servicio no reconocido`);
@@ -211,15 +215,13 @@ function calculateQuotation(servicesText) {
   
   // Aplicar descuento según cantidad de servicios y reglas específicas
   let discountPercent = 0;
-
-  // Regla especial para letras gigantes
-  if (letrasGigantesCount >= 2) {
-    discountPercent = 10; // 10% de descuento si se piden 2 o más letras
+  if (letrasCount >= 2) {
+    discountPercent = 10;
   } else if (serviceCount === 1) {
-    if (servicesArr.length === 1 && servicesArr[0].includes("letras gigantes")) {
-      discountPercent = 0; // No hay descuento para una sola letra
+    if (servicesArr.length === 1 && /letras(?:\s*gigantes)?\b/.test(servicesArr[0])) {
+      discountPercent = 0;
     } else {
-      discountPercent = 10; // 10% de descuento para un solo servicio (excepto letras gigantes)
+      discountPercent = 10;
     }
   } else if (serviceCount === 2) {
     discountPercent = 25;
@@ -241,6 +243,7 @@ function calculateQuotation(servicesText) {
     servicesRecognized
   };
 }
+
 
 
 
@@ -907,10 +910,16 @@ if (context.estado === "EsperandoDudas") {
       "letras gigantes", "chisperos"
     ];
 
-    // Buscar el servicio que el cliente desea quitar
+    // Buscar el servicio que el cliente desea quitar, considerando alias
     let servicioAQuitar = null;
     for (const servicio of serviciosDisponibles) {
-      if (messageLower.includes(servicio)) {
+      if (servicio === "letras gigantes" && messageLower.includes("letras")) {
+        servicioAQuitar = "letras gigantes";
+        break;
+      } else if (servicio === "chisperos" && (messageLower.includes("chispero") || messageLower.includes("chisperos"))) {
+        servicioAQuitar = "chisperos";
+        break;
+      } else if (messageLower.includes(servicio)) {
         servicioAQuitar = servicio;
         break;
       }
@@ -960,7 +969,7 @@ if (context.estado === "EsperandoDudas") {
       await sendWhatsAppMessage(from, `Subtotal: $${newQuotation.subtotal.toFixed(2)}\nDescuento (${newQuotation.discountPercent}%): -$${newQuotation.discountAmount.toFixed(2)}\nTotal a pagar: $${newQuotation.total.toFixed(2)}`);
 
       // Preguntar si desea agregar algo más o si tiene dudas
-      await sendWhatsAppMessage(from, "¿Deseas agregar algo más o tienes alguna duda? 😊\n\nSi deseas agregar algo más, escribe *Agregar* y lo que necesites.\nSi deseas quitar algo, escribe *Quitar* y lo que necesites quitar.");
+      await sendWhatsAppMessage(from, "¿Deseas agregar algo más o tienes alguna duda? 😊\n\nSi deseas agregar algo, escribe *Agregar* y lo que necesites.\nSi deseas quitar algo, escribe *Quitar* y lo que necesites quitar.");
       return true;
     } else {
       // Si no se encontró el servicio a quitar
@@ -978,10 +987,16 @@ if (context.estado === "EsperandoDudas") {
       "letras gigantes", "chisperos"
     ];
 
-    // Buscar el servicio que el cliente desea agregar
+    // Buscar el servicio que el cliente desea agregar, considerando alias
     let servicioAAgregar = null;
     for (const servicio of serviciosDisponibles) {
-      if (messageLower.includes(servicio)) {
+      if (servicio === "letras gigantes" && messageLower.includes("letras")) {
+        servicioAAgregar = "letras gigantes";
+        break;
+      } else if (servicio === "chisperos" && (messageLower.includes("chispero") || messageLower.includes("chisperos"))) {
+        servicioAAgregar = "chisperos";
+        break;
+      } else if (messageLower.includes(servicio)) {
         servicioAAgregar = servicio;
         break;
       }
@@ -1018,28 +1033,28 @@ if (context.estado === "EsperandoDudas") {
       await sendWhatsAppMessage(from, `Subtotal: $${newQuotation.subtotal.toFixed(2)}\nDescuento (${newQuotation.discountPercent}%): -$${newQuotation.discountAmount.toFixed(2)}\nTotal a pagar: $${newQuotation.total.toFixed(2)}`);
 
       // Verificar si ya se enviaron medios para este servicio
-      if (!context.mediosEnviados) context.mediosEnviados = new Set(); // Inicializar si no existe
+      if (!context.mediosEnviados) context.mediosEnviados = new Set();
       if (!context.mediosEnviados.has(servicioAAgregar)) {
         // Enviar imágenes y videos correspondientes al nuevo servicio agregado
         if (mediaMapping[servicioAAgregar]) {
           if (mediaMapping[servicioAAgregar].images && mediaMapping[servicioAAgregar].images.length > 0) {
             for (const img of mediaMapping[servicioAAgregar].images) {
               await sendImageMessage(from, img, `${servicioAAgregar} - imagen`);
-              await delay(1000); // Retraso de 1 segundo entre imágenes
+              await delay(1000);
             }
           }
           if (mediaMapping[servicioAAgregar].videos && mediaMapping[servicioAAgregar].videos.length > 0) {
             for (const vid of mediaMapping[servicioAAgregar].videos) {
               await sendWhatsAppVideo(from, vid, `${servicioAAgregar} - video`);
-              await delay(1000); // Retraso de 1 segundo entre videos
+              await delay(1000);
             }
           }
         }
-        context.mediosEnviados.add(servicioAAgregar); // Marcar como enviado
+        context.mediosEnviados.add(servicioAAgregar);
       }
 
       // Preguntar si desea agregar algo más o si tiene dudas
-      await sendWhatsAppMessage(from, "¿Deseas agregar algo más o tienes alguna duda? 😊\n\nSi deseas agregar algo más, escribe *Agregar* y lo que necesites.\nSi deseas quitar algo, escribe *Quitar* y lo que necesites quitar.");
+      await sendWhatsAppMessage(from, "¿Deseas agregar algo más o tienes alguna duda? 😊\n\nSi deseas agregar algo, escribe *Agregar* y lo que necesites.\nSi deseas quitar algo, escribe *Quitar* y lo que necesites quitar.");
       return true;
     } else {
       // Si no se encontró el servicio a agregar
@@ -1052,10 +1067,9 @@ if (context.estado === "EsperandoDudas") {
   if (await handleFAQs(from, userMessage)) return true;
 
   // Si no se activa ninguna FAQ, pedir mayor precisión
-  await sendWhatsAppMessage(from, "¿Podrías especificar tu duda o si deseas agregar algún servicio adicional? 😊\n\nSi deseas agregar algo más, escribe *Agregar* y lo que necesites.\nSi deseas quitar algo, escribe *Quitar* y lo que necesites quitar.");
+  await sendWhatsAppMessage(from, "¿Podrías especificar tu duda o si deseas agregar algún servicio adicional? 😊\n\nSi deseas agregar algo, escribe *Agregar* y lo que necesites.\nSi deseas quitar algo, escribe *Quitar* y lo que necesites quitar.");
   return true;
 }
-
 
   // 6. Procesar la fecha del evento
   if (context.estado === "EsperandoFecha") {
@@ -1091,27 +1105,40 @@ if (context.estado === "EsperandoDudas") {
     }
   }
 
+  // Bloque para letras
   if (context.estado === "EsperandoCantidadLetras") {
-  // Intentamos extraer el nombre si el mensaje incluye la frase "nombre de"
-  let nombre = "";
-  const regex = /nombre de\s+([a-zA-Z]+)/i;
-  const match = userMessage.match(regex);
-  if (match && match[1]) {
-    nombre = match[1];
-  } else {
-    // Si no se detecta el patrón, asumimos que el mensaje completo es el nombre o la cantidad
-    nombre = userMessage;
-  }
-  // Eliminamos cualquier carácter que no sea letra
-  const soloLetras = nombre.replace(/[^a-zA-Z]/g, '');
-  const cantidad = soloLetras.length;
-  if (cantidad === 0) {
-    await sendWhatsAppMessage(from, "No pude identificar ninguna letra. Por favor, indícame el nombre o la cantidad de letras que deseas.");
+    const cantidad = parseInt(userMessage);
+    if (!isNaN(cantidad) && cantidad > 0) {
+      const precioTotal = cantidad * 400; // 400 por cada letra
+      await sendWhatsAppMessage(from, `El precio para ${cantidad} letra(s) es de $${precioTotal} 💸.`);
+      context.estado = "Finalizado";
+    } else {
+      await sendWhatsAppMessage(from, "Por favor, ingresa un número válido para la cantidad de letras.");
+    }
     return true;
   }
-  const precioTotal = cantidad * 400;
-  await sendWhatsAppMessage(from, `El precio para ${cantidad} letra(s) es de $${precioTotal} 💸.`);
-  context.estado = "Finalizado";
+
+  // Bloque para chisperos
+if (context.estado === "EsperandoCantidadChisperos") {
+  const qty = parseInt(userMessage);
+  if (!isNaN(qty) && qty > 0) {
+    // Verificamos que la cantidad ingresada sea válida según el mapeo
+    const chisperosPrices = {
+      2: 1000,
+      4: 1500,
+      6: 2000,
+      8: 2500,
+      10: 3000
+    };
+    if (chisperosPrices[qty]) {
+      await sendWhatsAppMessage(from, `El precio para ${qty} chisperos es de $${chisperosPrices[qty]} 💸.`);
+      context.estado = "Finalizado";
+    } else {
+      await sendWhatsAppMessage(from, "La cantidad ingresada no es válida. Por favor, ingresa una cantidad válida (2, 4, 6, 8 o 10).");
+    }
+  } else {
+    await sendWhatsAppMessage(from, "Por favor, ingresa un número válido para la cantidad de chisperos.");
+  }
   return true;
 }
 
