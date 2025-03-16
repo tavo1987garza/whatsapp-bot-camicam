@@ -1063,11 +1063,13 @@ if (context.estado === "EsperandoDudas") {
 // Si el cliente está en el estado "EsperandoCantidad", preguntar la cantidad
 if (context.estado === "EsperandoCantidad" && context.servicioPendiente) {
   const cantidad = parseInt(userMessage);
-  if (isNaN(cantidad)) { // Aquí se corrigió el error de sintaxis
+  if (isNaN(cantidad)) {
     await sendWhatsAppMessage(from, "Por favor, ingresa un número válido.");
     return true;
   }
 
+  // Verificar el servicio pendiente
+  if (context.servicioPendiente === "letras gigantes" || context.servicioPendiente === "chisperos") {
     // Agregar el servicio con la cantidad especificada
     if (context.serviciosSeleccionados.toLowerCase().includes(context.servicioPendiente)) {
       // Si ya existe el servicio, actualizar la cantidad
@@ -1121,7 +1123,14 @@ if (context.estado === "EsperandoCantidad" && context.servicioPendiente) {
     context.estado = "EsperandoDudas";
     context.servicioPendiente = null;
     return true;
+  } else {
+    // Si el servicio pendiente no es reconocido
+    await sendWhatsAppMessage(from, "Hubo un error al procesar tu solicitud. Por favor, intenta nuevamente.");
+    context.estado = "EsperandoDudas";
+    context.servicioPendiente = null;
+    return true;
   }
+}
 
   // Si no se encontró un servicio adicional, intentar manejar FAQs
   if (await handleFAQs(from, userMessage)) return true;
