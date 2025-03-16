@@ -897,27 +897,104 @@ if (context.estado === "EsperandoDudas") {
     context.estado = "EsperandoFecha";
     return true;
   }
-  
+
+  // Verificar si el cliente quiere cambiar la cantidad de letras gigantes
+  const matchLetras = userMessage.match(/(?:cambiar|reducir|aumentar|agregar|añadir)\s*(\d+)\s*letras/i);
+  if (matchLetras) {
+    const nuevaCantidad = parseInt(matchLetras[1]);
+    if (isNaN(nuevaCantidad) || nuevaCantidad < 1) {
+      await sendWhatsAppMessage(from, "Por favor, ingresa un número válido de letras. 🔢");
+      return true;
+    }
+
+    // Actualizar la lista de servicios seleccionados
+    context.serviciosSeleccionados = context.serviciosSeleccionados.replace(
+      /letras gigantes\s*\d+/i,
+      `letras gigantes ${nuevaCantidad}`
+    );
+
+    // Recalcular la cotización con la nueva cantidad de letras
+    const newQuotation = calculateQuotation(context.serviciosSeleccionados);
+
+    // Enviar la nueva cotización al usuario
+    await sendWhatsAppMessage(from, "¡Perfecto! Hemos actualizado tu cotización:");
+    await sendWhatsAppMessage(from, "💰 *Tu nueva cotización:*\nDetalle:\n" + newQuotation.details.join("\n"));
+    await sendWhatsAppMessage(from, `Subtotal: $${newQuotation.subtotal.toFixed(2)}\nDescuento (${newQuotation.discountPercent}%): -$${newQuotation.discountAmount.toFixed(2)}\nTotal a pagar: $${newQuotation.total.toFixed(2)}`);
+
+    // Preguntar si desea agregar algo más o si tiene dudas
+    await sendWhatsAppMessage(from, "¿Deseas agregar algo más o tienes alguna duda? 😊");
+    return true;
+  }
+
+  // Verificar si el cliente quiere cambiar la cantidad de chisperos
+  const matchChisperos = userMessage.match(/(?:cambiar|reducir|aumentar|agregar|añadir)\s*(\d+)\s*chisperos/i);
+  if (matchChisperos) {
+    const nuevaCantidad = parseInt(matchChisperos[1]);
+    if (isNaN(nuevaCantidad) || nuevaCantidad < 1) {
+      await sendWhatsAppMessage(from, "Por favor, ingresa un número válido de chisperos. 🔢");
+      return true;
+    }
+
+    // Verificar si la nueva cantidad de chisperos es válida
+    const chisperosPrices = {
+      2: 1000,
+      4: 1500,
+      6: 2000,
+      8: 2500,
+      10: 3000
+    };
+    if (!chisperosPrices[nuevaCantidad]) {
+      await sendWhatsAppMessage(from, `Lo siento, no manejamos paquetes de ${nuevaCantidad} chisperos. Las opciones son: 2, 4, 6, 8 o 10 chisperos.`);
+      return true;
+    }
+
+    // Actualizar la lista de servicios seleccionados
+    context.serviciosSeleccionados = context.serviciosSeleccionados.replace(
+      /chisperos\s*\d+/i,
+      `chisperos ${nuevaCantidad}`
+    );
+
+    // Recalcular la cotización con la nueva cantidad de chisperos
+    const newQuotation = calculateQuotation(context.serviciosSeleccionados);
+
+    // Enviar la nueva cotización al usuario
+    await sendWhatsAppMessage(from, "¡Perfecto! Hemos actualizado tu cotización:");
+    await sendWhatsAppMessage(from, "💰 *Tu nueva cotización:*\nDetalle:\n" + newQuotation.details.join("\n"));
+    await sendWhatsAppMessage(from, `Subtotal: $${newQuotation.subtotal.toFixed(2)}\nDescuento (${newQuotation.discountPercent}%): -$${newQuotation.discountAmount.toFixed(2)}\nTotal a pagar: $${newQuotation.total.toFixed(2)}`);
+
+    // Preguntar si desea agregar algo más o si tiene dudas
+    await sendWhatsAppMessage(from, "¿Deseas agregar algo más o tienes alguna duda? 😊");
+    return true;
+  }
+
   // Verificar si el cliente quiere agregar un servicio adicional
   const serviceKeywords = ["scrapbook", "cabina de fotos", "cabina 360", "lluvia de mariposas", "carrito de shots", "niebla de piso", "audio guest book", "chisperos", "letras gigantes"];
   let foundService = false;
   let newService = "";
-  
+
   for (const keyword of serviceKeywords) {
     if (messageLower.includes(keyword)) {
       foundService = true;
       newService = keyword; // Guardamos el servicio encontrado
-      // Si el servicio aún no estaba incluido, lo agregamos
-      if (!context.serviciosSeleccionados.toLowerCase().includes(keyword)) {
-        context.serviciosSeleccionados += `, ${keyword}`;
+
+      // Verificar si el servicio ya está incluido en la cotización actual
+      if (context.serviciosSeleccionados.toLowerCase().includes(keyword)) {
+        await sendWhatsAppMessage(from, `El servicio "${keyword}" ya está incluido en tu cotización. 😊`);
+        return true;
       }
+
+      // Agregar el nuevo servicio a la lista de servicios seleccionados
+      context.serviciosSeleccionados += `, ${keyword}`;
+
       // Recalcular la cotización con el nuevo servicio agregado
       const newQuotation = calculateQuotation(context.serviciosSeleccionados);
-      await sendWhatsAppMessage(from, "Actualicemos tu cotización:");
+
+      // Enviar la nueva cotización al usuario
+      await sendWhatsAppMessage(from, "¡Perfecto! Hemos actualizado tu cotización:");
       await sendWhatsAppMessage(from, "💰 *Tu nueva cotización:*\nDetalle:\n" + newQuotation.details.join("\n"));
       await sendWhatsAppMessage(from, `Subtotal: $${newQuotation.subtotal.toFixed(2)}\nDescuento (${newQuotation.discountPercent}%): -$${newQuotation.discountAmount.toFixed(2)}\nTotal a pagar: $${newQuotation.total.toFixed(2)}`);
-      
-      // Enviar solo las imágenes y videos correspondientes al nuevo servicio agregado
+
+      // Enviar imágenes y videos correspondientes al nuevo servicio agregado
       if (mediaMapping[newService]) {
         if (mediaMapping[newService].images && mediaMapping[newService].images.length > 0) {
           for (const img of mediaMapping[newService].images) {
@@ -930,17 +1007,16 @@ if (context.estado === "EsperandoDudas") {
           }
         }
       }
-      
-      await sendWhatsAppMessage(from, "¿Deseas agregar algo más o tienes alguna duda?");
-      break;
+
+      // Preguntar si desea agregar algo más o si tiene dudas
+      await sendWhatsAppMessage(from, "¿Deseas agregar algo más o tienes alguna duda? 😊");
+      return true;
     }
   }
-  
-  if (foundService) return true;
-  
-  // Intentar manejar FAQs (por ejemplo: "¿Cómo separo mi fecha?", "¿Con cuánto separo?" o "¿Piden anticipo?")
+
+  // Si no se encontró un servicio adicional, intentar manejar FAQs
   if (await handleFAQs(from, userMessage)) return true;
-  
+
   // Si no se activa ninguna FAQ, pedir mayor precisión
   await sendWhatsAppMessage(from, "¿Podrías especificar tu duda o si deseas agregar algún servicio adicional?");
   return true;
