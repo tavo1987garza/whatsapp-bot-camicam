@@ -894,6 +894,21 @@ if (context.estado === "EsperandoServicios") {
 
 // 5. Estado EsperandoDudas: manejar las preguntas adicionales o agregar servicios
 if (context.estado === "EsperandoDudas") {
+   // Si el usuario escribe exactamente "letras" (o "letra")
+   if (messageLower.trim() === "letras" || messageLower.trim() === "letra") {
+    await sendWhatsAppMessage(from, "¿Cuántas letras ocupas?");
+    context.estado = "EsperandoCantidadLetras";
+    context.servicioPendiente = "letras gigantes"; // Normalizamos a "letras gigantes"
+    return true;
+  }
+  
+  // Si el usuario escribe exactamente "chisperos" o "chispero"
+  if (messageLower.trim() === "chisperos" || messageLower.trim() === "chispero") {
+    await sendWhatsAppMessage(from, "¿Cuántos chisperos ocupas?");
+    context.estado = "EsperandoCantidadChisperos";
+    context.servicioPendiente = "chisperos";
+    return true;
+  }
   // Si el mensaje menciona "flete", preguntamos por fecha y lugar
   if (messageLower.includes("flete")) {
     await sendWhatsAppMessage(from, "Para cotizar el flete, por favor indícame la fecha de tu evento y en qué lugar se realizará.");
