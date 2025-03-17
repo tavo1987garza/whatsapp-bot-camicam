@@ -126,8 +126,8 @@ Responde de forma profesional, clara, concisa y persuasiva, como un vendedor exp
 function calculateQuotation(servicesText) {
   // Diccionario de precios
   const prices = {
-    "cabina de fotos": 3500,
-    "cabina 360": 3500,
+    "cabina de fotos (3 horas)": 3500,
+    "cabina 360 (3 Horas)": 3500,
     "lluvia de mariposas": 2500,
     "carrito de shots con alcohol": 2800,
     "niebla de piso": 3000,
@@ -190,7 +190,7 @@ function calculateQuotation(servicesText) {
         const precioLetras = qty * prices["letras gigantes"];
         subtotal += precioLetras;
         serviceCount++;
-        details.push(`🔸 *${qty} Letras*: $${precioLetras}`);
+        details.push(`🔸 *${qty} Letras Gigantes (5 Horas)*: $${precioLetras}`);
         servicesRecognized.push("letras gigantes");
         letrasCount = qty;
       } else {
