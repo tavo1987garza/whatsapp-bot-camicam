@@ -210,23 +210,35 @@ function calculateQuotation(servicesText) {
     }
   }
   
-  // Aplicar descuento según cantidad de servicios
-  let discountPercent = 0;
-  if (letrasCount >= 2) {
-    discountPercent = 10;
-  } else if (serviceCount === 1) {
-    if (servicesArr.length === 1 && /letras(?:\s*gigantes)?\b/.test(servicesArr[0])) {
+
+  // Aplicar descuento según cantidad de servicios reconocidos
+let discountPercent = 0;
+if (serviceCount === 1) {
+  // Si solo se selecciona un servicio, revisamos el contenido de servicesArr[0]
+  if (servicesArr.length === 1) {
+    // Si es letras (o letras gigantes) => sin descuento
+    if (/letras(?:\s*gigantes)?\b/i.test(servicesArr[0])) {
       discountPercent = 0;
-    } else {
+    }
+    // Si es chisperos y la cantidad es exactamente 2 => sin descuento
+    else if (/chispero[s]?\s*2\b/i.test(servicesArr[0])) {
+      discountPercent = 0;
+    }
+    // Para cualquier otro servicio único => 10%
+    else {
       discountPercent = 10;
     }
-  } else if (serviceCount === 2) {
-    discountPercent = 25;
-  } else if (serviceCount === 3) {
-    discountPercent = 30;
-  } else if (serviceCount >= 4) {
-    discountPercent = 40;
+  } else {
+    discountPercent = 10;
   }
+} else if (serviceCount === 2) {
+  discountPercent = 25;
+} else if (serviceCount === 3) {
+  discountPercent = 30;
+} else if (serviceCount >= 4) {
+  discountPercent = 40;
+}
+
   
   const discountAmount = subtotal * (discountPercent / 100);
   const total = subtotal - discountAmount;
@@ -874,7 +886,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   await delay(2000);
   await sendMessageWithTypingWithState(
     from,
-    "Si deseas modificar tu cotización escribe: \n\n*Agregar* y agrega lo que necesites.\n\n*Quitar* para quitar lo que no necesites. 😊",
+    "Si deseas modificar tu cotización escribe: \n\n***Agregar*** y agrega lo que necesites.\n\n***Quitar*** para quitar lo que no necesites. 😊",
     2000,
     context.estado
   );
