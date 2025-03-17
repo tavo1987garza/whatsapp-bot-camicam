@@ -122,7 +122,6 @@ Responde de forma profesional, clara, concisa y persuasiva, como un vendedor exp
 }
 
 // Función para calcular la cotización y retornar los servicios reconocidos
-// Función para calcular la cotización y retornar los servicios reconocidos
 function calculateQuotation(servicesText) {
   // Diccionario de precios
   const prices = {
@@ -130,12 +129,14 @@ function calculateQuotation(servicesText) {
     "cabina 360": 3500,
     "lluvia de mariposas": 2500,
     "carrito de shots con alcohol": 2800,
+    "carrito de shots sin alcohol": 2200,
     "niebla de piso": 3000,
     "lluvia matalica": 2000,
     "scrapbook": 1300,
     "audio guest book": 2000,
     "letras gigantes": 400 // precio por letra
   };
+
   // Precios para chisperos según cantidad
   const chisperosPrices = {
     2: 1000,
@@ -147,43 +148,43 @@ function calculateQuotation(servicesText) {
 
   // Separar servicios (se asume que están separados por comas)
   const servicesArr = servicesText.split(',').map(s => s.trim().toLowerCase()).filter(s => s.length > 0);
-  
+
   let subtotal = 0;
   let serviceCount = 0; // para aplicar descuentos
   let details = [];
   let servicesRecognized = [];
   let letrasCount = 0;
 
-    for (const service of servicesArr) {
-      // Caso de chisperos (o chispero)
-      if (/chispero[s]?\b/i.test(service)) {
-        const match = service.match(/chispero[s]?\s*(\d+)/i);
-        if (match && match[1]) {
-          // Si hay cantidad, procesar normalmente
-          const qty = parseInt(match[1]);
-          if (chisperosPrices[qty]) {
-            subtotal += chisperosPrices[qty];
-            serviceCount++;
-            details.push(`🔸 *${qty} Chisperos*: $${chisperosPrices[qty]}`);
-            servicesRecognized.push("chisperos");
-          } else {
-            details.push(`🔸 Chisperos: cantidad inválida (${service})`);
-          }
+  for (const service of servicesArr) {
+    // Caso de chisperos (o chispero)
+    if (/chispero[s]?\b/i.test(service)) {
+      const match = service.match(/chispero[s]?\s*(\d+)/i);
+      if (match && match[1]) {
+        // Si hay cantidad, procesar normalmente
+        const qty = parseInt(match[1]);
+        if (chisperosPrices[qty]) {
+          subtotal += chisperosPrices[qty];
+          serviceCount++;
+          details.push(`🔸 *${qty} Chisperos*: $${chisperosPrices[qty]}`);
+          servicesRecognized.push("chisperos");
         } else {
-          // Si no hay cantidad, retornar un objeto indicando que falta la cantidad
-          return {
-            error: true,
-            needsInput: 'chisperos',
-            details: ["🔸 *Chisperos*: Por favor, indícanos cuántos chisperos necesitas."],
-            subtotal: 0,
-            discountPercent: 0,
-            discountAmount: 0,
-            total: 0,
-            servicesRecognized: []
-          };
+          details.push(`🔸 Chisperos: cantidad inválida (${service})`);
         }
+      } else {
+        // Si no hay cantidad, retornar un objeto indicando que falta la cantidad
+        return {
+          error: true,
+          needsInput: 'chisperos',
+          details: ["🔸 *Chisperos*: Por favor, indícanos cuántos chisperos necesitas."],
+          subtotal: 0,
+          discountPercent: 0,
+          discountAmount: 0,
+          total: 0,
+          servicesRecognized: []
+        };
       }
-     
+    }
+
     // Caso de letras o letras gigantes
     else if (/letras(?:\s*gigantes)?\b/.test(service)) {
       const match = service.match(/letras(?:\s*gigantes)?\s*(\d+)/);
@@ -200,89 +201,98 @@ function calculateQuotation(servicesText) {
         details.push(`🔸 *Letras*: cantidad no especificada`);
       }
     }
-    
-    
+
+    /*/ Caso de carrito de shots con o sin alcohol
+    else if (/carrito de shots\s+(con|sin)\s*alcohol/i.test(service)) {
+      const match = service.match(/carrito de shots\s+(con|sin)\s*alcohol/i);
+      if (match) {
+        const tipo = match[1].toLowerCase();
+        const servicioCompleto = `carrito de shots ${tipo} alcohol`;
+        if (prices[servicioCompleto] !== undefined) {
+          subtotal += prices[servicioCompleto];
+          serviceCount++;
+          details.push(`🔸 *Carrito de Shots ${tipo === 'con' ? 'Con Alcohol' : 'Sin Alcohol'}*: $${prices[servicioCompleto]}`);
+          servicesRecognized.push(servicioCompleto);
+        } else {
+          details.push(`🔸 ${servicioCompleto}: servicio no reconocido`);
+        }
+      }
+    } */
+
     // Otros servicios definidos
-else {
-  let baseService;
-  let qty = 1;
-  // Primero comprobamos si el servicio completo coincide con alguna clave de precios
-  if (prices.hasOwnProperty(service)) {
-    baseService = service;
-  } else {
-    // Si no, intentamos extraer el nombre y la cantidad usando regex
-    const matchService = service.match(/^(.+?)(?:\s+(\d+))?$/);
-    if (matchService) {
-      baseService = matchService[1].trim();
-      qty = matchService[2] ? parseInt(matchService[2]) : 1;
+    else {
+      let baseService;
+      let qty = 1;
+      // Primero comprobamos si el servicio completo coincide con alguna clave de precios
+      if (prices.hasOwnProperty(service)) {
+        baseService = service;
+      } else {
+        // Si no, intentamos extraer el nombre y la cantidad usando regex
+        const matchService = service.match(/^(.+?)(?:\s+(\d+))?$/);
+        if (matchService) {
+          baseService = matchService[1].trim();
+          qty = matchService[2] ? parseInt(matchService[2]) : 1;
+        }
+      }
+
+      if (prices[baseService] !== undefined) {
+        subtotal += prices[baseService] * qty;
+        serviceCount++;
+
+        // Formatear el nombre del servicio
+        let serviceNameFormatted = baseService.charAt(0).toUpperCase() + baseService.slice(1);
+
+        // Agregar "(3 horas)" para cabina de fotos y cabina 360
+        if (baseService.toLowerCase() === "cabina de fotos" || baseService.toLowerCase() === "cabina 360") {
+          serviceNameFormatted += " (3 horas)";
+        }
+
+        // Construir el detalle del servicio
+        let serviceDetail = "";
+        if (qty === 1) {
+          serviceDetail = `🔸 *${serviceNameFormatted}:* $${prices[baseService]}`;
+        } else {
+          serviceDetail = `🔸 *${serviceNameFormatted} ${qty}:* $${prices[baseService] * qty}`;
+        }
+
+        details.push(serviceDetail);
+        servicesRecognized.push(baseService);
+      } else {
+        console.warn(`Servicio no reconocido: ${service}`);
+        details.push(`🔸 ${service}: servicio no reconocido`);
+      }
     }
   }
 
-  if (prices[baseService] !== undefined) {
-    subtotal += prices[baseService] * qty;
-    serviceCount++;
-
-    // Formatear el nombre del servicio
-    let serviceNameFormatted = baseService.charAt(0).toUpperCase() + baseService.slice(1);
-    
-    // Agregar "(3 horas)" para cabina de fotos y cabina 360
-    if (baseService.toLowerCase() === "cabina de fotos" || baseService.toLowerCase() === "cabina 360") {
-      serviceNameFormatted += " (3 horas)";
+  // Aplicar descuento según cantidad de servicios reconocidos
+  let discountPercent = 0;
+  if (serviceCount === 1) {
+    // Caso único: si es chisperos y la cantidad es exactamente 2, sin descuento.
+    if (/chispero[s]?\s*2\b/i.test(servicesArr[0])) {
+      discountPercent = 0;
     }
-
-    // Construir el detalle del servicio
-    let serviceDetail = "";
-    if (qty === 1) {
-      serviceDetail = `🔸 *${serviceNameFormatted}: $${prices[baseService]}*`;
-    } else {
-      serviceDetail = `🔸 *${serviceNameFormatted} ${qty}: $${prices[baseService] * qty}*`;
+    // Si es letras (o letras gigantes) y se especifica la cantidad
+    else if (/letras(?:\s*gigantes)?\s*(\d+)/i.test(servicesArr[0])) {
+      const match = servicesArr[0].match(/letras(?:\s*gigantes)?\s*(\d+)/i);
+      const qty = parseInt(match[1]);
+      // Si la cantidad es 1, sin descuento; si es mayor (2 o más), se aplica 10%
+      discountPercent = (qty === 1) ? 0 : 10;
     }
-
-    details.push(serviceDetail);
-    servicesRecognized.push(baseService);
-  } else {
-    console.warn(`Servicio no reconocido: ${service}`);
-    details.push(`🔸 ${service}: servicio no reconocido`);
+    // Para cualquier otro servicio único, aplicar 10%
+    else {
+      discountPercent = 10;
+    }
+  } else if (serviceCount === 2) {
+    discountPercent = 25;
+  } else if (serviceCount === 3) {
+    discountPercent = 30;
+  } else if (serviceCount >= 4) {
+    discountPercent = 40;
   }
-}
- 
-    
-  }
 
-  
-  
-
-// Aplicar descuento según cantidad de servicios reconocidos
-let discountPercent = 0;
-if (serviceCount === 1) {
-  // Caso único: si es chisperos y la cantidad es exactamente 2, sin descuento.
-  if (/chispero[s]?\s*2\b/i.test(servicesArr[0])) {
-    discountPercent = 0;
-  }
-  // Si es letras (o letras gigantes) y se especifica la cantidad
-  else if (/letras(?:\s*gigantes)?\s*(\d+)/i.test(servicesArr[0])) {
-    const match = servicesArr[0].match(/letras(?:\s*gigantes)?\s*(\d+)/i);
-    const qty = parseInt(match[1]);
-    // Si la cantidad es 1, sin descuento; si es mayor (2 o más), se aplica 10%
-    discountPercent = (qty === 1) ? 0 : 10;
-  }
-  // Para cualquier otro servicio único, aplicar 10%
-  else {
-    discountPercent = 10;
-  }
-} else if (serviceCount === 2) {
-  discountPercent = 25;
-} else if (serviceCount === 3) {
-  discountPercent = 30;
-} else if (serviceCount >= 4) {
-  discountPercent = 40;
-}
-
-
-  
   const discountAmount = subtotal * (discountPercent / 100);
   const total = subtotal - discountAmount;
-  
+
   return {
     error: false,
     subtotal,
@@ -293,9 +303,6 @@ if (serviceCount === 1) {
     servicesRecognized
   };
 }
-
-
-
 
 // Rutas (webhook, raíz, etc.)
 app.get('/webhook', (req, res) => {
@@ -459,19 +466,19 @@ async function handleFAQs(from, userMessage) {
   if (faqEntry) {
     await sendWhatsAppMessage(from, faqEntry.answer + " 😊");
     if (faqEntry.imageUrl) {
-      await sendImageMessage(from, faqEntry.imageUrl, "¡Mira nuestros servicios!");
+      await sendImageMessage(from, faqEntry.imageUrl);
     }
     if (faqEntry.images && Array.isArray(faqEntry.images)) {
       for (const imageUrl of faqEntry.images) {
-        await sendImageMessage(from, imageUrl, "Detalle visual");
+        await sendImageMessage(from, imageUrl);
       }
     }
     if (faqEntry.videoUrl) {
-      await sendWhatsAppVideo(from, faqEntry.videoUrl, "Revisa este video");
+      await sendWhatsAppVideo(from, faqEntry.videoUrl);
     }
     if (faqEntry.videos && Array.isArray(faqEntry.videos)) {
       for (const videoUrl of faqEntry.videos) {
-        await sendWhatsAppVideo(from, videoUrl, "Video informativo");
+        await sendWhatsAppVideo(from, videoUrl);
       }
     }
     return true;
@@ -745,6 +752,16 @@ function checkAvailability(dateString) {
   return !occupiedDates.includes(dateString);
 }
 
+function sendMessageToAdmin(message) {
+  const adminNumber = process.env.ADMIN_WHATSAPP_NUMBER;
+  if (!adminNumber) {
+    console.error("El número de WhatsApp del administrador no está definido en .env");
+    return;
+  }
+  sendWhatsAppMessage(adminNumber, message);
+}
+
+
 // Función para manejar el flujo de mensajes del usuario con tono natural
 async function handleUserMessage(from, userMessage, messageLower) {
   if (!userContext[from]) {
@@ -937,57 +954,81 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
 /* ============================================
    Estado: EsperandoServicios
    ============================================ */
-if (context.estado === "EsperandoServicios") {
-  // Si el usuario indica agregar o quitar en su mensaje inicial:
-  if (messageLower.includes("agregar")) {
-    const serviciosAAgregar = userMessage.replace(/agregar/i, "").trim();
-    context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + serviciosAAgregar;
-    await sendWhatsAppMessage(from, `✅ Se ha agregado: ${serviciosAAgregar}`);
-  } else if (messageLower.includes("quitar")) {
-    const serviciosAQuitar = userMessage.replace(/quitar/i, "").trim();
-    context.serviciosSeleccionados = context.serviciosSeleccionados
-      .split(",")
-      .map(s => s.trim())
-      .filter(s => !s.toLowerCase().includes(serviciosAQuitar.toLowerCase()))
-      .join(", ");
-    await sendWhatsAppMessage(from, `✅ Se ha quitado: ${serviciosAQuitar}`);
-  } else {
-    // Se toma el mensaje completo como lista de servicios
-    context.serviciosSeleccionados = userMessage;
-  }
+   if (context.estado === "EsperandoServicios") {
+    // Si el usuario indica agregar o quitar en su mensaje inicial:
+    if (messageLower.includes("agregar")) {
+      const serviciosAAgregar = userMessage.replace(/agregar/i, "").trim();
+      context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + serviciosAAgregar;
+      await sendWhatsAppMessage(from, `✅ Se ha agregado: ${serviciosAAgregar}`);
+    } else if (messageLower.includes("quitar")) {
+      const serviciosAQuitar = userMessage.replace(/quitar/i, "").trim();
+      context.serviciosSeleccionados = context.serviciosSeleccionados
+        .split(",")
+        .map(s => s.trim())
+        .filter(s => !s.toLowerCase().includes(serviciosAQuitar.toLowerCase()))
+        .join(", ");
+      await sendWhatsAppMessage(from, `✅ Se ha quitado: ${serviciosAQuitar}`);
+    } else {
+      // Se toma el mensaje completo como lista de servicios
+      context.serviciosSeleccionados = userMessage;
+    }
   
-  // Inicializamos flags para servicios sin cantidad
-  context.faltanLetras = false;
-  context.faltanChisperos = false;
+    // Inicializamos flags para servicios sin cantidad
+    context.faltanLetras = false;
+    context.faltanChisperos = false;
+    context.faltaVarianteCarritoShots = false;
   
-  // Verificar si "letras" está presente sin cantidad
-  if (/letras(?:\s*gigantes)?(?!\s*\d+)/i.test(context.serviciosSeleccionados)) {
-    context.faltanLetras = true;
-  }
-  // Verificar si "chisperos" está presente sin cantidad
-  if (/chisperos(?!\s*\d+)/i.test(context.serviciosSeleccionados)) {
-    context.faltanChisperos = true;
-  }
+    // Verificar si "letras" está presente sin cantidad
+    if (/letras(?:\s*gigantes)?(?!\s*\d+)/i.test(context.serviciosSeleccionados)) {
+      context.faltanLetras = true;
+    }
+    // Verificar si "chisperos" está presente sin cantidad
+    if (/chisperos(?!\s*\d+)/i.test(context.serviciosSeleccionados)) {
+      context.faltanChisperos = true;
+    }
+    //Verifica si carrito de shots se escribio con la variable
+    if (/carrito de shots/i.test(context.serviciosSeleccionados)) {
+      if (!/carrito de shots\s+(con|sin)\s*alcohol/i.test(context.serviciosSeleccionados)) {
+        context.faltaVarianteCarritoShots = true;
+        // Eliminar la entrada "carrito de shots" sin variante de la cotización
+        context.serviciosSeleccionados = context.serviciosSeleccionados
+          .split(",")
+          .map(s => s.trim())
+          .filter(s => !/^carrito de shots$/i.test(s))  // Filtra entradas exactas sin variante
+          .join(", ");
+        
+        // Cambiar el estado para preguntar la variante
+        context.estado = "EsperandoTipoCarritoShots";
+        await sendWhatsAppMessage(from, "¿El carrito de shots lo deseas CON alcohol o SIN alcohol? 🍹");
+        return true; // Detener el flujo actual y esperar la respuesta del cliente.
+      }
+    } 
   
-  // Priorizar preguntar primero por las letras si faltan
-  if (context.faltanLetras) {
-    context.estado = "EsperandoCantidadLetras";
-    await sendWhatsAppMessage(from, "¿Cuántas letras necesitas? 🔠");
+    // Priorizar preguntar primero por las letras si faltan
+    if (context.faltanLetras) {
+      context.estado = "EsperandoCantidadLetras";
+      await sendWhatsAppMessage(from, "¿Cuántas letras necesitas? 🔠");
+      return true;
+    }
+  
+    // Si no faltan letras pero faltan chisperos, preguntar por ellos
+    if (context.faltanChisperos) {
+      context.estado = "EsperandoCantidadChisperos";
+      await sendWhatsAppMessage(from, "¿Cuántos chisperos ocupas? 🔥 Opciones: 2, 4, 6, 8, 10, etc");
+      return true;
+    }
+  
+    // Finalmente, si ya se resolvieron letras y chisperos pero falta la variante del carrito de shots
+    if (context.faltaVarianteCarritoShots) {
+      context.estado = "EsperandoTipoCarritoShots";
+      await sendWhatsAppMessage(from, "¿El carrito de shots lo deseas CON alcohol o SIN alcohol? 🍹");
+      return true;
+    }
+  
+    // Si ya se especificaron cantidades para ambos, actualizar la cotización
+    await actualizarCotizacion(from, context);
     return true;
   }
-  
-  // Si no faltan letras pero faltan chisperos, preguntar por ellos
-  if (context.faltanChisperos) {
-    context.estado = "EsperandoCantidadChisperos";
-    await sendWhatsAppMessage(from, "¿Cuántos chisperos ocupas? 🔥 Opciones: 2, 4, 6, 8, 10, etc");
-    return true;
-  }
-  
-  // Si ya se especificaron cantidades para ambos, actualizar la cotización
-  await actualizarCotizacion(from, context);
-  return true; 
-}
-
 
 /* ============================================
    Estado: EsperandoCantidadLetras
@@ -1081,6 +1122,95 @@ if (context.estado === "EsperandoDudas" && messageLower.includes("ocupo el nombr
   return true;
 }
 
+
+
+/* ============================================
+   Estado: EsperandoTipoCarritoShots
+   ============================================ */
+if (context.estado === "EsperandoTipoCarritoShots") {
+  const respuesta = userMessage.toLowerCase();
+  let varianteSeleccionada = "";
+  
+  if (respuesta.includes("con")) {
+    varianteSeleccionada = "carrito de shots con alcohol";
+  } else if (respuesta.includes("sin")) {
+    varianteSeleccionada = "carrito de shots sin alcohol";
+  } else {
+    await sendWhatsAppMessage(from, "Por favor, responde 'con' o 'sin' para el carrito de shots.");
+    return true;
+  }
+  
+  // Verificamos si la variante seleccionada ya está en la cotización.
+  if (context.serviciosSeleccionados.toLowerCase().includes(varianteSeleccionada)) {
+    // Si ya está, se determina la otra variante.
+    let otraVariante = (varianteSeleccionada === "carrito de shots con alcohol")
+      ? "carrito de shots sin alcohol"
+      : "carrito de shots con alcohol";
+      
+    // Si la otra variante ya está agregada, se notifica que se requieren intervención.
+    if (context.serviciosSeleccionados.toLowerCase().includes(otraVariante)) {
+      await sendWhatsAppMessage(from, `Ya tienes ambos tipos de carrito de shots en tu cotización. Por favor, contacta a nuestro administrador para mayor asistencia.`);
+      sendMessageToAdmin("El cliente ha intentado agregar duplicados de carrito de shots.");
+      context.estado = "EsperandoDudas";
+      return true;
+    } else {
+      // Se pregunta si desea agregar la otra variante.
+      context.estado = "ConfirmarAgregarCarritoShotsCambio";
+      context.carritoShotsToAgregar = otraVariante;
+      await sendWhatsAppMessage(from, `Ya tienes agregado ${varianteSeleccionada} en tu cotización.\n¿Deseas agregar ${otraVariante}?`);
+      return true;
+    }
+  } else {
+    // Si la variante seleccionada no está en la cotización, se agrega.
+    context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + varianteSeleccionada;
+    await sendWhatsAppMessage(from, `✅ Se ha seleccionado ${varianteSeleccionada}.`);
+
+    // Verificar si faltan letras o chisperos antes de mostrar la cotización
+    if (/letras(?:\s*gigantes)?(?!\s*\d+)/i.test(context.serviciosSeleccionados)) {
+      context.estado = "EsperandoCantidadLetras";
+      await sendWhatsAppMessage(from, "¿Cuántas letras necesitas? 🔠");
+      return true;
+    }
+
+    if (/chisperos(?!\s*\d+)/i.test(context.serviciosSeleccionados)) {
+      context.estado = "EsperandoCantidadChisperos";
+      await sendWhatsAppMessage(from, "¿Cuántos chisperos ocupas? 🔥 Opciones: 2, 4, 6, 8, 10, etc");
+      return true;
+    }
+
+    // Si no faltan letras ni chisperos, mostrar la cotización
+    await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
+    context.estado = "EsperandoDudas";
+    return true;
+  }
+}
+
+
+/* ============================================
+   Estado: ConfirmarAgregarCarritoShotsCambio
+   ============================================ */
+if (context.estado === "ConfirmarAgregarCarritoShotsCambio") {
+  const respuesta = userMessage.toLowerCase();
+  if (respuesta.includes("si")) {
+    // Se agrega la otra variante.
+    let variante = context.carritoShotsToAgregar;
+    if (!context.serviciosSeleccionados.toLowerCase().includes(variante)) {
+      context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + variante;
+      await sendWhatsAppMessage(from, `✅ Se ha agregado ${variante}.`);
+      await actualizarCotizacion(from, context, "¡Cotización actualizada!");
+    }
+    context.estado = "EsperandoDudas";
+    return true;
+  } else {
+    // Si la respuesta es otra, se notifica al administrador para intervención manual.
+    await sendWhatsAppMessage(from, "Entendido. Se requiere intervención para este caso.");
+    sendMessageToAdmin("El cliente intentó agregar un carrito de shots adicional pero no confirmó la variante correctamente.");
+    context.estado = "EsperandoDudas";
+    return true;
+  }
+}
+
+
 /* ============================================
    Estado: EsperandoDudas – Manejo de dudas, agregar o quitar servicios, FAQs, etc.
    ============================================ */
@@ -1088,7 +1218,7 @@ if (context.estado === "EsperandoDudas") {
   // --- Manejo de quitar servicios ---
   if (messageLower.includes("quitar")) {
     const serviciosDisponibles = [
-      "cabina de fotos", "cabina 360", "lluvia de mariposas", "carrito de shots",
+      "cabina de fotos", "cabina 360", "lluvia de mariposas", "carrito de shots con alcohol", "carrito de shots sin alcohol",
       "niebla de piso", "lluvia matalica", "scrapbook", "audio guest book",
       "letras gigantes", "chisperos"
     ];
@@ -1146,7 +1276,7 @@ if (context.estado === "EsperandoDudas") {
   // --- Manejo de agregar servicios ---
   if (messageLower.includes("agregar")) {
     const serviciosDisponibles = [
-      "cabina de fotos", "cabina 360", "lluvia de mariposas", "carrito de shots",
+      "cabina de fotos", "cabina 360", "lluvia de mariposas", "carrito de shots con alcohol", "carrito de shots sin alcohol",
       "niebla de piso", "lluvia matalica", "scrapbook", "audio guest book",
       "letras gigantes", "chisperos"
     ];
@@ -1162,6 +1292,13 @@ if (context.estado === "EsperandoDudas") {
         servicioAAgregar = servicio;
         break;
       }
+    }
+
+     // Si el mensaje contiene "agregar carrito de shots", se activa el flujo específico:
+     if (messageLower.includes("agregar carrito de shots")) {
+      context.estado = "EsperandoTipoCarritoShots";
+    await sendWhatsAppMessage(from, "¿El carrito de shots lo deseas CON alcohol o SIN alcohol? 🍹");
+    return true;
     }
     
     if (servicioAAgregar) {
@@ -1192,6 +1329,9 @@ if (context.estado === "EsperandoDudas") {
         await sendWhatsAppMessage(from, "La cantidad a agregar debe ser mayor que cero.");
         return true;
       }
+
+     
+
       
       // Se agrega el servicio a la cotización
       context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `${servicioAAgregar} ${cantidadAAgregar}`;
@@ -1315,6 +1455,8 @@ app.listen(PORT, () => {
 }).on('error', (err) => {
   console.error('Error al iniciar el servidor:', err);
 });
+
+
 
 
 

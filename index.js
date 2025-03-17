@@ -404,7 +404,6 @@ app.post('/webhook', async (req, res) => {
 
 // FAQs con emojis y nuevos servicios
 const faqs = [
-  { question: /como separo mi fecha|anticipo/i, answer: "💡 Para reservar tu fecha se requiere un anticipo de $500. ¡Así nos aseguramos de ofrecerte lo mejor!" },
   { question: /hacen contrato|contrato/i, answer: "📄 ¡Sí! Una vez que se acredite el anticipo, preparamos el contrato y te enviamos una copia." },
   { question: /con cuanto tiempo separo mi fecha|separar/i, answer: "⏰ Puedes separar tu fecha en cualquier momento, siempre y cuando esté disponible." },
   { question: /se puede separar para 2026|2026/i, answer: "📆 Claro, tenemos agenda para 2025 y 2026. ¡Consulta sin compromiso!" },
@@ -416,6 +415,12 @@ const faqs = [
     question: /que servicios manejas|servicios/i, 
     answer: "🎉 Aquí tienes nuestros servicios:",
     imageUrl: "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg" 
+  },
+  { 
+    question: /si me interesa|me interesa|como se separa|como separo|para separar|cuanto de anticipo/i, 
+    answer: "Separamos fecha con $500, el resto puede ser ese dia, al inicio del evento.\n\nUna vez acreditado el anticipo le pedire Nombre de quien me contrata, lleno su contrato y le envío foto.\n\nSi tiene una vuelta para el centro de Monterrey me avisa para entregarle su contrato original",
+    imageUrl: "http://cami-cam.com/wp-content/uploads/2025/03/Datos-Transferencia-1.jpeg",
+    answer: "722969010494399671" 
   },
   { 
     question: /que incluye la cabina de fotos|cabina de fotos/i, 
