@@ -986,9 +986,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
     if (/chisperos(?!\s*\d+)/i.test(context.serviciosSeleccionados)) {
       context.faltanChisperos = true;
     }
-  
-  
-
+    //Verifica si carrito de shots se escribio con la variable
     if (/carrito de shots/i.test(context.serviciosSeleccionados)) {
       if (!/carrito de shots\s+(con|sin)\s*alcohol/i.test(context.serviciosSeleccionados)) {
         context.faltaVarianteCarritoShots = true;
@@ -1004,7 +1002,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
         await sendWhatsAppMessage(from, "¿El carrito de shots lo deseas CON alcohol o SIN alcohol? 🍹");
         return true; // Detener el flujo actual y esperar la respuesta del cliente.
       }
-    }
+    } 
   
     // Priorizar preguntar primero por las letras si faltan
     if (context.faltanLetras) {
