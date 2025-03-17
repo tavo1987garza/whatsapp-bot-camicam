@@ -193,7 +193,7 @@ function calculateQuotation(servicesText) {
         const precioLetras = qty * prices["letras gigantes"];
         subtotal += precioLetras;
         serviceCount++;
-        details.push(`🔸 *${qty} Letras Gigantes* (5 Horas): $${precioLetras.toLocaleString()}`);
+        details.push(`🔸 *${qty} Letras Gigantes (5 Horas)*: $${precioLetras.toLocaleString()}`);
         servicesRecognized.push("letras gigantes");
         letrasCount = qty;
       } else {
@@ -201,7 +201,6 @@ function calculateQuotation(servicesText) {
         details.push(`🔸 *Letras*: cantidad no especificada`);
       }
     }
-
 
     // Otros servicios definidos
     else {
@@ -220,7 +219,8 @@ function calculateQuotation(servicesText) {
       }
 
       if (prices[baseService] !== undefined) {
-        subtotal += prices[baseService] * qty;
+        const precioTotal = prices[baseService] * qty;
+        subtotal += precioTotal;
         serviceCount++;
 
         // Formatear el nombre del servicio
@@ -287,6 +287,8 @@ function calculateQuotation(servicesText) {
     servicesRecognized
   };
 }
+
+
 
 // Rutas (webhook, raíz, etc.)
 app.get('/webhook', (req, res) => {
@@ -935,7 +937,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   await delay(2000);
   await sendMessageWithTypingWithState(
     from,
-    "Si deseas modificar tu cotización escribe: \n\n*Agregar* y agrega lo que necesites ó\n\n*Quitar* para quitar lo que no ocupas 😊",
+    "Si deseas modificar tu cotización escribe: \n\n*Agregar* y agrega lo que necesites.\n\n*Quitar* para quitar lo que no necesites. 😊",
     2000,
     context.estado
   );
