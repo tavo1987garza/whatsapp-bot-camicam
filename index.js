@@ -386,6 +386,7 @@ const faqs = [
   { question: /con cuanto tiempo separo mi fecha|separar/i, answer: "⏰ Puedes separar tu fecha en cualquier momento, siempre y cuando esté disponible." },
   { question: /se puede separar para 2026|2026/i, answer: "📆 Claro, tenemos agenda para 2025 y 2026. ¡Consulta sin compromiso!" },
   { question: /cuánto se cobra de flete|flete/i, answer: "🚚 El flete varía según la ubicación. Contáctanos y lo calculamos juntos." },
+  { question: /y si quiero mitad y mitad|mitad con alcohol|mitad sin alcohol/i, answer: "Claro!! En nuestra experiencia, si es para XV años no lo recomendamos, puesto que no tendriamos ningun control de quien toma CON alcohol y quien SIN alcohol. Si aún asi lo decides, el precio del carrito mixto se cobra como 'Carrito de shots CON alcohol'  y el precio es de $2,800." },
   { question: /cómo reviso si tienen mi fecha disponible/i, answer: "🔎 Cuéntame, ¿para cuándo es tu evento? Así reviso la disponibilidad." },
   { question: /ubicación|dónde están|donde son|ubican|oficinas/i, answer: "📍 Nos encontramos en la Colonia Independencia en Monterrey. Cubrimos hasta 25 km a la redonda." },
   { question: /pago|método de pago|tarjeta|efectivo/i, answer: "💳 Aceptamos transferencias, depósitos y pagos en efectivo. ¡Lo que te resulte más cómodo!" },
@@ -396,7 +397,7 @@ const faqs = [
   },
   { 
     question: /que incluye la cabina de fotos|cabina de fotos/i, 
-    answer: "📸 La CABINA DE FOTOS incluye 3 horas de servicio, iluminación profesional, fondo personalizado, accesorios temáticos y más.",
+    answer: "📸 La CABINA DE FOTOS incluye 3 horas de servicio, las fotos se imprimen al instante y son de calidad 'Kodak', todas las fotos que se tomen durante las 3 horas son las fotos que se imprimen",
     images: [
       "http://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-1.jpg",
       "http://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-2.jpg",
@@ -1176,7 +1177,7 @@ if (context.estado === "EsperandoDudas") {
   // --- Manejo de agregar servicios ---
 if (messageLower.includes("agregar")) {
   const serviciosDisponibles = [
-    "cabina de fotos", "cabina 360", "lluvia de mariposas", "carrito de shots",
+    "cabina de fotos", "cabina 360", "lluvia de mariposas", "carrito de shots con alcohol", "carrito de shots sin alcohol",
     "niebla de piso", "lluvia matalica", "scrapbook", "audio guest book",
     "letras gigantes", "chisperos"
   ];
