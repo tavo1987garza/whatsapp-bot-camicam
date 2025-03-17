@@ -745,6 +745,16 @@ function checkAvailability(dateString) {
   return !occupiedDates.includes(dateString);
 }
 
+function sendMessageToAdmin(message) {
+  const adminNumber = process.env.ADMIN_WHATSAPP_NUMBER;
+  if (!adminNumber) {
+    console.error("El número de WhatsApp del administrador no está definido en .env");
+    return;
+  }
+  sendWhatsAppMessage(adminNumber, message);
+}
+
+
 // Función para manejar el flujo de mensajes del usuario con tono natural
 async function handleUserMessage(from, userMessage, messageLower) {
   if (!userContext[from]) {
@@ -969,6 +979,15 @@ if (context.estado === "EsperandoServicios") {
     context.faltanChisperos = true;
   }
   
+   // DETECCIÓN: Si se incluye "carrito de shots" sin especificar la variante (con o sin alcohol)
+   if (/carrito de shots/i.test(context.serviciosSeleccionados)) {
+    // Si no se especifica el tipo (CON o SIN alcohol), se solicita la variante.
+    if (!/carrito de shots\s+(con|sin)\s*alcohol/i.test(context.serviciosSeleccionados)) {
+      context.estado = "EsperandoTipoCarritoShots";
+      await sendWhatsAppMessage(from, "¿El carrito de shots lo deseas CON alcohol o SIN alcohol? 🍹");
+      return true;
+    }
+  }
   // Priorizar preguntar primero por las letras si faltan
   if (context.faltanLetras) {
     context.estado = "EsperandoCantidadLetras";
@@ -1081,6 +1100,80 @@ if (context.estado === "EsperandoDudas" && messageLower.includes("ocupo el nombr
   return true;
 }
 
+
+
+/* ============================================
+   Estado: EsperandoTipoCarritoShots
+   ============================================ */
+if (context.estado === "EsperandoTipoCarritoShots") {
+  const respuesta = userMessage.toLowerCase();
+  let varianteSeleccionada = "";
+  
+  if (respuesta.includes("con")) {
+    varianteSeleccionada = "carrito de shots con alcohol";
+  } else if (respuesta.includes("sin")) {
+    varianteSeleccionada = "carrito de shots sin alcohol";
+  } else {
+    await sendWhatsAppMessage(from, "Por favor, responde 'con' o 'sin' para el carrito de shots.");
+    return true;
+  }
+  
+  // Verificamos si la variante seleccionada ya está en la cotización.
+  if (context.serviciosSeleccionados.toLowerCase().includes(varianteSeleccionada)) {
+    // Si ya está, se determina la otra variante.
+    let otraVariante = (varianteSeleccionada === "carrito de shots con alcohol")
+      ? "carrito de shots sin alcohol"
+      : "carrito de shots con alcohol";
+      
+    // Si la otra variante ya está agregada, se notifica que se requieren intervención.
+    if (context.serviciosSeleccionados.toLowerCase().includes(otraVariante)) {
+      await sendWhatsAppMessage(from, `Ya tienes ambos tipos de carrito de shots en tu cotización. Por favor, contacta a nuestro administrador para mayor asistencia.`);
+      sendMessageToAdmin("El cliente ha intentado agregar duplicados de carrito de shots.");
+      context.estado = "EsperandoDudas";
+      return true;
+    } else {
+      // Se pregunta si desea agregar la otra variante.
+      context.estado = "ConfirmarAgregarCarritoShotsCambio";
+      context.carritoShotsToAgregar = otraVariante;
+      await sendWhatsAppMessage(from, `Ya tienes agregado ${varianteSeleccionada} en tu cotización.\n¿Deseas agregar ${otraVariante}?`);
+      return true;
+    }
+  } else {
+    // Si la variante seleccionada no está en la cotización, se agrega.
+    context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + varianteSeleccionada;
+    await sendWhatsAppMessage(from, `✅ Se ha seleccionado ${varianteSeleccionada}.`);
+    await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
+    context.estado = "EsperandoDudas";
+    return true;
+  }
+}
+
+
+/* ============================================
+   Estado: ConfirmarAgregarCarritoShotsCambio
+   ============================================ */
+if (context.estado === "ConfirmarAgregarCarritoShotsCambio") {
+  const respuesta = userMessage.toLowerCase();
+  if (respuesta.includes("si")) {
+    // Se agrega la otra variante.
+    let variante = context.carritoShotsToAgregar;
+    if (!context.serviciosSeleccionados.toLowerCase().includes(variante)) {
+      context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + variante;
+      await sendWhatsAppMessage(from, `✅ Se ha agregado ${variante}.`);
+      await actualizarCotizacion(from, context, "¡Cotización actualizada!");
+    }
+    context.estado = "EsperandoDudas";
+    return true;
+  } else {
+    // Si la respuesta es otra, se notifica al administrador para intervención manual.
+    await sendWhatsAppMessage(from, "Entendido. Se requiere intervención para este caso.");
+    sendMessageToAdmin("El cliente intentó agregar un carrito de shots adicional pero no confirmó la variante correctamente.");
+    context.estado = "EsperandoDudas";
+    return true;
+  }
+}
+
+
 /* ============================================
    Estado: EsperandoDudas – Manejo de dudas, agregar o quitar servicios, FAQs, etc.
    ============================================ */
@@ -1192,6 +1285,14 @@ if (context.estado === "EsperandoDudas") {
         await sendWhatsAppMessage(from, "La cantidad a agregar debe ser mayor que cero.");
         return true;
       }
+
+      // Si el mensaje contiene "agregar carrito de shots", se activa el flujo específico:
+      if (messageLower.includes("agregar carrito de shots")) {
+        context.estado = "EsperandoTipoCarritoShots";
+      await sendWhatsAppMessage(from, "¿El carrito de shots lo deseas CON alcohol o SIN alcohol? 🍹");
+      return true;
+      }
+
       
       // Se agrega el servicio a la cotización
       context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `${servicioAAgregar} ${cantidadAAgregar}`;
