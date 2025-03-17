@@ -1005,7 +1005,7 @@ if (context.estado === "EsperandoCantidadLetras") {
   // Si además faltan chisperos, cambia el estado para solicitarlos
   if (context.faltanChisperos) {
     context.estado = "EsperandoCantidadChisperos";
-    await sendWhatsAppMessage(from, "¿Cuántos chisperos ocupas? 🔥");
+    await sendWhatsAppMessage(from, "¿Cuántos chisperos ocupas? 🔥 Opciones: 2, 4, 6, 8, 10, etc");
     return true;
   }
   
@@ -1025,7 +1025,7 @@ if (context.estado === "EsperandoCantidadLetras") {
       return true;
     }
 
-    // Validar que la cantidad ingresada sea una de las opciones permitidas
+     // Validar que la cantidad ingresada sea una de las opciones permitidas
   if (!chisperosPrices.hasOwnProperty(cantidad.toString())) {
     await sendWhatsAppMessage(from, "La cantidad de chisperos debe ser un número válido. Las opciones disponibles son: 2, 4, 6, 8, 10.");
     return true;
@@ -1177,7 +1177,7 @@ if (context.estado === "EsperandoDudas") {
       if ((servicioAAgregar === "chisperos" || servicioAAgregar === "letras gigantes") && !matchCantidad) {
         if (servicioAAgregar === "chisperos") {
           context.estado = "EsperandoCantidadChisperos";
-          await sendWhatsAppMessage(from, "¿Cuántos chisperos ocupas? 🔥");
+          await sendWhatsAppMessage(from, "¿Cuántos chisperos ocupas? 🔥 Opciones: 2, 4, 6, 8, 10, etc");
         } else if (servicioAAgregar === "letras gigantes") {
           context.estado = "EsperandoCantidadLetras";
           await sendWhatsAppMessage(from, "¿Cuántas letras necesitas? 🔠");
@@ -1187,14 +1187,13 @@ if (context.estado === "EsperandoDudas") {
       
       // Si ya se especificó la cantidad, se extrae
       const cantidadAAgregar = matchCantidad ? parseInt(matchCantidad[1]) : 1;
-
-       // Validar la cantidad para chisperos: debe estar entre las opciones válidas
+      
+        // Validar la cantidad para chisperos: debe estar entre las opciones válidas
     if (servicioAAgregar === "chisperos" && !chisperosPrices.hasOwnProperty(cantidadAAgregar.toString())) {
       await sendWhatsAppMessage(from, "La cantidad de chisperos debe ser un número válido. Las opciones disponibles son: 2, 4, 6, 8, 10.");
       return true;
     }
-    
-      
+
       if (cantidadAAgregar <= 0) {
         await sendWhatsAppMessage(from, "La cantidad a agregar debe ser mayor que cero.");
         return true;
