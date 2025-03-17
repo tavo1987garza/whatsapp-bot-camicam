@@ -204,30 +204,40 @@ function calculateQuotation(servicesText) {
       // Intentamos extraer el nombre base y la cantidad, asumiendo el formato "servicio [cantidad]"
       const matchService = service.match(/^(.+?)(?:\s+(\d+))?$/);
       if (matchService) {
-        let baseService = matchService[1].trim();
+        const baseService = matchService[1].trim();
         const qty = matchService[2] ? parseInt(matchService[2]) : 1;
+    
         if (prices[baseService] !== undefined) {
           subtotal += prices[baseService] * qty;
           serviceCount++;
+    
+          // Formatear el nombre del servicio
           let serviceNameFormatted = baseService.charAt(0).toUpperCase() + baseService.slice(1);
           
           // Agregar "(3 horas)" para cabina de fotos y cabina 360
           if (baseService.toLowerCase() === "cabina de fotos" || baseService.toLowerCase() === "cabina 360") {
             serviceNameFormatted += " (3 horas)";
           }
-          
-          // Siempre se muestra el nombre formateado, sin indicar la cantidad
-          let serviceDetail = `🔸 *${serviceNameFormatted}*: $${prices[baseService] * qty}`;
-          
+    
+          // Construir el detalle del servicio
+          let serviceDetail = "";
+          if (qty === 1) {
+            serviceDetail = `🔸 *${serviceNameFormatted}: $${prices[baseService]}*`;
+          } else {
+            serviceDetail = `🔸 *${serviceNameFormatted} ${qty}: $${prices[baseService] * qty}*`;
+          }
+    
           details.push(serviceDetail);
           servicesRecognized.push(baseService);
         } else {
+          console.warn(`Servicio no reconocido: ${service}`);
           details.push(`🔸 ${service}: servicio no reconocido`);
         }
       } else {
+        console.warn(`Formato de servicio no válido: ${service}`);
         details.push(`🔸 ${service}: servicio no reconocido`);
       }
-    }       
+    }    
     
   }
 
