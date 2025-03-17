@@ -874,7 +874,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   await delay(2000);
   await sendMessageWithTypingWithState(
     from,
-    "¿Deseas agregar algo más o tienes alguna duda? 😊\n\nSi deseas agregar algo más, escribe *Agregar* y lo que necesites.\nSi deseas quitar algo, escribe *Quitar* y lo que necesites quitar. 😊",
+    "Si deseas modificar tu cotización, escribe: *Agregar* y agrega lo que necesites.\nEscribe: *Quitar* para quitar lo que no necesites. 😊",
     2000,
     context.estado
   );
