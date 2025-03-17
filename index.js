@@ -121,21 +121,23 @@ Responde de forma profesional, clara, concisa y persuasiva, como un vendedor exp
   `;
 }
 
-// Función para calcular la cotización y retornar los servicios reconocidos
+
 // Función para calcular la cotización y retornar los servicios reconocidos
 function calculateQuotation(servicesText) {
   // Diccionario de precios
   const prices = {
     "cabina de fotos": 3500,
     "cabina 360": 3500,
-    "lluvia de mariposas": 2500,
+    "lluvia de mariposas": 2700,
     "carrito de shots con alcohol": 2800,
+    "carrito de shots sin alcohol": 2200,
     "niebla de piso": 3000,
     "lluvia matalica": 2000,
     "scrapbook": 1300,
     "audio guest book": 2000,
     "letras gigantes": 400 // precio por letra
   };
+  
   // Precios para chisperos según cantidad
   const chisperosPrices = {
     2: 1000,
@@ -941,6 +943,7 @@ if (context.estado === "EsperandoServicios") {
   // Inicializamos flags para servicios sin cantidad
   context.faltanLetras = false;
   context.faltanChisperos = false;
+  context.faltanShots = false;
   
   // Verificar si "letras" está presente sin cantidad
   if (/letras(?:\s*gigantes)?(?!\s*\d+)/i.test(context.serviciosSeleccionados)) {
@@ -950,7 +953,10 @@ if (context.estado === "EsperandoServicios") {
   if (/chisperos(?!\s*\d+)/i.test(context.serviciosSeleccionados)) {
     context.faltanChisperos = true;
   }
-  
+  // Verificar si "carrito de shots" se menciona sin la opción "con alcohol" o "sin alcohol"
+  if (/carrito de shots(?!\s*(con alcohol|sin alcohol))/i.test(context.serviciosSeleccionados)) {
+    context.faltanShots = true;
+  }
   // Priorizar preguntar primero por las letras si faltan
   if (context.faltanLetras) {
     context.estado = "EsperandoCantidadLetras";
@@ -962,6 +968,12 @@ if (context.estado === "EsperandoServicios") {
   if (context.faltanChisperos) {
     context.estado = "EsperandoCantidadChisperos";
     await sendWhatsAppMessage(from, "¿Cuántos chisperos ocupas? 🔥");
+    return true;
+  }
+
+  if (context.faltanShots) {
+    context.estado = "EsperandoOpcionCarritoShots";
+    await sendWhatsAppMessage(from, "¿El carrito de shots lo deseas CON alcohol o SIN alcohol? 🍹");
     return true;
   }
   
@@ -1025,6 +1037,34 @@ if (context.estado === "EsperandoCantidadChisperos") {
   return true;
 }
 
+
+
+/* ============================================
+   Estado: EsperandoOpcionCarritoShots
+   ============================================ */
+if (context.estado === "EsperandoOpcionCarritoShots") {
+  const lowerMsg = userMessage.toLowerCase();
+  let serviceShots = "";
+  if (lowerMsg.includes("con")) {
+    serviceShots = "carrito de shots con alcohol";
+  } else if (lowerMsg.includes("sin")) {
+    serviceShots = "carrito de shots sin alcohol";
+  } else {
+    // Si no se reconoce la opción, se vuelve a preguntar
+    await sendWhatsAppMessage(from, "Por favor, indícame si deseas el carrito de shots CON alcohol o SIN alcohol.");
+    return true;
+  }
+  
+  // Reemplazar la mención original sin detalle por la opción seleccionada
+  context.serviciosSeleccionados = context.serviciosSeleccionados.replace(/carrito de shots(?!\s*(con alcohol|sin alcohol))/i, serviceShots);
+  
+  await sendWhatsAppMessage(from, `✅ Se ha seleccionado ${serviceShots}.`);
+  
+  // Limpiar flag y actualizar cotización
+  context.faltanShots = false;
+  await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
+  return true;
+}
 
 
 /* ============================================
