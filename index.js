@@ -204,25 +204,24 @@ function calculateQuotation(servicesText) {
       // Intentamos extraer el nombre base y la cantidad, asumiendo el formato "servicio [cantidad]"
       const matchService = service.match(/^(.+?)(?:\s+(\d+))?$/);
       if (matchService) {
-        const baseService = matchService[1].trim();
+        let baseService = matchService[1].trim();
         const qty = matchService[2] ? parseInt(matchService[2]) : 1;
         if (prices[baseService] !== undefined) {
           subtotal += prices[baseService] * qty;
           serviceCount++;
-          
           let serviceNameFormatted = baseService.charAt(0).toUpperCase() + baseService.slice(1);
-      
+          
           // Agregar "(3 horas)" para cabina de fotos y cabina 360
           if (baseService.toLowerCase() === "cabina de fotos" || baseService.toLowerCase() === "cabina 360") {
             serviceNameFormatted += " (3 horas)";
           }
-
+          
           let serviceDetail = "";
-          // Si la cantidad es 1, mostramos solo el nombre del servicio
+          // Si la cantidad es 1, mostrar solo el nombre; si es mayor, mostrar la cantidad
           if (qty === 1) {
-            serviceDetail = `🔸 *${baseService.charAt(0).toUpperCase() + baseService.slice(1)}*: $${prices[baseService]}`;
+            serviceDetail = `🔸 *${serviceNameFormatted}*: $${prices[baseService]}`;
           } else {
-            serviceDetail = `🔸 *${baseService.charAt(0).toUpperCase() + baseService.slice(1)} ${qty}*: $${prices[baseService] * qty}`;
+            serviceDetail = `🔸 *${serviceNameFormatted} ${qty}*: $${prices[baseService] * qty}`;
           }
           details.push(serviceDetail);
           servicesRecognized.push(baseService);
@@ -232,7 +231,7 @@ function calculateQuotation(servicesText) {
       } else {
         details.push(`🔸 ${service}: servicio no reconocido`);
       }
-    }
+    }    
     
     
   }
@@ -885,7 +884,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   await sendMessageWithTypingWithState(from, mensajeDetalles, 2000, context.estado);
   await delay(2000);
 
-  const mensajeResumen = `Subtotal: $${cotizacion.subtotal.toFixed(2)}\nDescuento (${cotizacion.discountPercent}%): -$${cotizacion.discountAmount.toFixed(2)}\nTotal a pagar: $${cotizacion.total.toFixed(2)}`;
+  const mensajeResumen = `Subtotal: $${cotizacion.subtotal.toFixed(2)}\nDescuento (${cotizacion.discountPercent}%): -$${cotizacion.discountAmount.toFixed(2)}\n*TOTAL A PAGAR: $${cotizacion.total.toFixed(2)}*`;
   await sendMessageWithTypingWithState(from, mensajeResumen, 2000, context.estado);
 
   // Envío de imágenes y videos solo para nuevos servicios (no se reenvían si ya fueron enviados)
