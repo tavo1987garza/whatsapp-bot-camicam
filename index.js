@@ -874,7 +874,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   await delay(2000);
   await sendMessageWithTypingWithState(
     from,
-    "Si deseas modificar tu cotización, escribe: *Agregar* y agrega lo que necesites.\nEscribe: *Quitar* para quitar lo que no necesites. 😊",
+    "Si deseas modificar tu cotización escribe: \n\n*Agregar* y agrega lo que necesites.\n\n*Quitar* para quitar lo que no necesites. 😊",
     2000,
     context.estado
   );
@@ -899,24 +899,42 @@ if (context.estado === "EsperandoServicios") {
       .join(", ");
     await sendWhatsAppMessage(from, `✅ Se ha quitado: ${serviciosAQuitar}`);
   } else {
-    // Si no se usa agregar/quitar, se toma el mensaje como lista de servicios
+    // Se toma el mensaje completo como lista de servicios
     context.serviciosSeleccionados = userMessage;
   }
   
-  // Verificar si se mencionan "letras" o "chisperos" sin cantidad
-  if ((messageLower.includes("letras") || messageLower.includes("letra")) && !/\d+/.test(messageLower)) {
+  // Inicializamos flags para servicios sin cantidad
+  context.faltanLetras = false;
+  context.faltanChisperos = false;
+  
+  // Verificar si "letras" está presente sin cantidad
+  if (/letras(?:\s*gigantes)?(?!\s*\d+)/i.test(context.serviciosSeleccionados)) {
+    context.faltanLetras = true;
+  }
+  // Verificar si "chisperos" está presente sin cantidad
+  if (/chisperos(?!\s*\d+)/i.test(context.serviciosSeleccionados)) {
+    context.faltanChisperos = true;
+  }
+  
+  // Priorizar preguntar primero por las letras si faltan
+  if (context.faltanLetras) {
     context.estado = "EsperandoCantidadLetras";
     await sendWhatsAppMessage(from, "¿Cuántas letras necesitas? 🔠");
     return true;
-  } else if ((messageLower.includes("chisperos") || messageLower.includes("chispero")) && !/\d+/.test(messageLower)) {
+  }
+  
+  // Si no faltan letras pero faltan chisperos, preguntar por ellos
+  if (context.faltanChisperos) {
     context.estado = "EsperandoCantidadChisperos";
-    await sendWhatsAppMessage(from, "¿Cuántos chisperos necesitas? 🔥");
+    await sendWhatsAppMessage(from, "¿Cuántos chisperos ocupas? 🔥");
     return true;
   }
   
+  // Si ya se especificaron cantidades para ambos, actualizar la cotización
   await actualizarCotizacion(from, context);
   return true;
 }
+
 
 /* ============================================
    Estado: EsperandoCantidadLetras
@@ -927,15 +945,24 @@ if (context.estado === "EsperandoCantidadLetras") {
     await sendWhatsAppMessage(from, "Por favor, ingresa un número válido para la cantidad de letras.");
     return true;
   }
-  // Regex que captura "letras" o "letras gigantes", con o sin número
+  // Regex para capturar "letras" o "letras gigantes", con o sin número
   const regex = /letras(?:\s*gigantes)?(\s*\d+)?/i;
   if (regex.test(context.serviciosSeleccionados)) {
-    // Reemplaza cualquier mención de "letras" (con o sin cantidad) por la versión actualizada
+    // Reemplaza cualquier mención de "letras" sin cantidad o con cantidad antigua
     context.serviciosSeleccionados = context.serviciosSeleccionados.replace(regex, `letras gigantes ${cantidad}`);
   } else {
     context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `letras gigantes ${cantidad}`;
   }
   await sendWhatsAppMessage(from, `✅ Se han agregado ${cantidad} letras gigantes.`);
+  
+  // Si además faltan chisperos, cambia el estado para solicitarlos
+  if (context.faltanChisperos) {
+    context.estado = "EsperandoCantidadChisperos";
+    await sendWhatsAppMessage(from, "¿Cuántos chisperos ocupas? 🔥");
+    return true;
+  }
+  
+  // Si no faltan chisperos, actualizar la cotización
   await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
   return true;
 }
@@ -958,9 +985,11 @@ if (context.estado === "EsperandoCantidadChisperos") {
     context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `chisperos ${cantidad}`;
   }
   await sendWhatsAppMessage(from, `✅ Se han agregado ${cantidad} chisperos.`);
+  // Actualizar la cotización final
   await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
   return true;
 }
+
 
 
 /* ============================================
