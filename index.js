@@ -867,13 +867,13 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
       if (mediaMapping[service] && (!context.mediosEnviados || !context.mediosEnviados.has(service))) {
         if (mediaMapping[service].images && mediaMapping[service].images.length > 0) {
           for (const img of mediaMapping[service].images) {
-            await sendImageMessage(from, img, `${service} - imagen`);
+            await sendImageMessage(from, img);
             await delay(1000);
           }
         }
         if (mediaMapping[service].videos && mediaMapping[service].videos.length > 0) {
           for (const vid of mediaMapping[service].videos) {
-            await sendWhatsAppVideo(from, vid, `${service} - video`);
+            await sendWhatsAppVideo(from, vid);
             await delay(1000);
           }
         }
@@ -886,12 +886,13 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   await delay(2000);
   await sendMessageWithTypingWithState(
     from,
-    "Si deseas modificar tu cotización escribe: \n\n***Agregar*** y agrega lo que necesites.\n\n***Quitar*** para quitar lo que no necesites. 😊",
+    "Si deseas modificar tu cotización escribe: \n\n*Agregar* y agrega lo que necesites.\n\n*Quitar* para quitar lo que no necesites. 😊",
     2000,
     context.estado
   );
   context.estado = "EsperandoDudas";
 }
+
 
 /* ============================================
    Estado: EsperandoServicios
