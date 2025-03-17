@@ -130,6 +130,7 @@ function calculateQuotation(servicesText) {
     "cabina 360": 3500,
     "lluvia de mariposas": 2500,
     "carrito de shots con alcohol": 2800,
+    "carrito de shots sin alcohol":2200,
     "niebla de piso": 3000,
     "lluvia matalica": 2000,
     "scrapbook": 1300,
@@ -981,11 +982,18 @@ if (context.estado === "EsperandoServicios") {
   }
   
   // DETECCIÓN: Si se incluye "carrito de shots" pero sin especificar la variante (con o sin alcohol)
-  if (/carrito de shots/i.test(context.serviciosSeleccionados)) {
-    if (!/carrito de shots\s+(con|sin)\s*alcohol/i.test(context.serviciosSeleccionados)) {
-      context.faltaVarianteCarritoShots = true;
-    }
+if (/carrito de shots/i.test(context.serviciosSeleccionados)) {
+  if (!/carrito de shots\s+(con|sin)\s*alcohol/i.test(context.serviciosSeleccionados)) {
+    context.faltaVarianteCarritoShots = true;
+    // Eliminar la entrada "carrito de shots" sin variante de la cotización
+    context.serviciosSeleccionados = context.serviciosSeleccionados
+      .split(",")
+      .map(s => s.trim())
+      .filter(s => !/^carrito de shots$/i.test(s))  // Filtra entradas exactas sin variante
+      .join(", ");
   }
+}
+
 
   // Priorizar preguntar primero por las letras si faltan
   if (context.faltanLetras) {
