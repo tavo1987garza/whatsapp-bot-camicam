@@ -1005,8 +1005,6 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
         return true; // Detener el flujo actual y esperar la respuesta del cliente.
       }
     }
-
-
   
     // Priorizar preguntar primero por las letras si faltan
     if (context.faltanLetras) {
