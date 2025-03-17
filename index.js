@@ -1005,12 +1005,6 @@ if (context.estado === "EsperandoServicios") {
     return true;
   }
 
-  // Finalmente, si ya se resolvieron letras y chisperos pero falta la variante del carrito de shots
-  if (context.faltaVarianteCarritoShots) {
-    context.estado = "EsperandoTipoCarritoShots";
-    await sendWhatsAppMessage(from, "¿El carrito de shots lo deseas CON alcohol o SIN alcohol? 🍹");
-    return true;
-  }
   
   // Si ya se especificaron cantidades para ambos, actualizar la cotización
   await actualizarCotizacion(from, context);
