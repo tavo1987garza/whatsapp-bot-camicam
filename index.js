@@ -976,6 +976,7 @@ if (context.estado === "EsperandoServicios") {
   // Inicializamos flags para servicios sin cantidad
   context.faltanLetras = false;
   context.faltanChisperos = false;
+  context.faltaVarianteCarritoShots = false;
   
   // Verificar si "letras" está presente sin cantidad
   if (/letras(?:\s*gigantes)?(?!\s*\d+)/i.test(context.serviciosSeleccionados)) {
@@ -1008,6 +1009,13 @@ if (context.estado === "EsperandoServicios") {
   if (context.faltanChisperos) {
     context.estado = "EsperandoCantidadChisperos";
     await sendWhatsAppMessage(from, "¿Cuántos chisperos ocupas? 🔥 Opciones: 2, 4, 6, 8, 10, etc");
+    return true;
+  }
+
+   // Finalmente, si ya se resolvieron letras y chisperos pero falta la variante del carrito de shots
+   if (context.faltaVarianteCarritoShots) {
+    context.estado = "EsperandoTipoCarritoShots";
+    await sendWhatsAppMessage(from, "¿El carrito de shots lo deseas CON alcohol o SIN alcohol? 🍹");
     return true;
   }
 
