@@ -860,6 +860,8 @@ if (context.estado === "EsperandoServicios") {
     return true;
   }
 
+
+
   // Calcular la cotización
   const cotizacion = calculateQuotation(context.serviciosSeleccionados);
 
@@ -932,10 +934,14 @@ if (context.estado === "EsperandoServicios") {
 if (context.estado === "EsperandoCantidadLetras") {
   const cantidad = parseInt(userMessage);
   if (!isNaN(cantidad) && cantidad > 0) {
+    // Agregar las letras a la lista de servicios seleccionados
     context.serviciosSeleccionados += `, letras gigantes ${cantidad}`;
+    
+    // Recalcular la cotización y enviar la respuesta al cliente
     await enviarCotizacion(from, context);
   } else {
-    await sendWhatsAppMessage(from, "Por favor, ingresa un número válido y mayor que 0 para la cantidad de letras.");
+    // Si la cantidad no es válida, pedir que la ingrese nuevamente
+    await sendWhatsAppMessage(from, "Por favor, ingresa un número válido para la cantidad de letras.");
   }
   return true;
 }
@@ -943,10 +949,14 @@ if (context.estado === "EsperandoCantidadLetras") {
 // 4.2 Estado EsperandoCantidadChisperos
 if (context.estado === "EsperandoCantidadChisperos") {
   const cantidad = parseInt(userMessage);
-  if (!isNaN(cantidad)) {
+  if (!isNaN(cantidad) && cantidad > 0) {
+    // Agregar los chisperos a la lista de servicios seleccionados
     context.serviciosSeleccionados += `, chisperos ${cantidad}`;
+    
+    // Recalcular la cotización y enviar la respuesta al cliente
     await enviarCotizacion(from, context);
   } else {
+    // Si la cantidad no es válida, pedir que la ingrese nuevamente
     await sendWhatsAppMessage(from, "Por favor, ingresa un número válido para la cantidad de chisperos.");
   }
   return true;
