@@ -953,8 +953,10 @@ if (context.estado === "EsperandoServicios") {
   if (/chisperos(?!\s*\d+)/i.test(context.serviciosSeleccionados)) {
     context.faltanChisperos = true;
   }
+  
   // Verificar si "carrito de shots" se menciona sin la opción "con alcohol" o "sin alcohol"
-  if (/carrito de shots(?!\s*(con alcohol|sin alcohol))/i.test(context.serviciosSeleccionados)) {
+  // Ajustamos la expresión regular para capturar también un número opcional (por ejemplo, "carrito de shots 1")
+  if (/carrito de shots(?:\s*\d+)?(?!\s*(con alcohol|sin alcohol))/i.test(context.serviciosSeleccionados)) {
     context.faltanShots = true;
   }
   // Priorizar preguntar primero por las letras si faltan
@@ -1042,29 +1044,37 @@ if (context.estado === "EsperandoCantidadChisperos") {
 /* ============================================
    Estado: EsperandoOpcionCarritoShots
    ============================================ */
-if (context.estado === "EsperandoOpcionCarritoShots") {
-  const lowerMsg = userMessage.toLowerCase();
-  let serviceShots = "";
-  if (lowerMsg.includes("con")) {
-    serviceShots = "carrito de shots con alcohol";
-  } else if (lowerMsg.includes("sin")) {
-    serviceShots = "carrito de shots sin alcohol";
-  } else {
-    // Si no se reconoce la opción, se vuelve a preguntar
-    await sendWhatsAppMessage(from, "Por favor, indícame si deseas el carrito de shots CON alcohol o SIN alcohol.");
+   if (context.estado === "EsperandoOpcionCarritoShots") {
+    const respuesta = userMessage.trim().toLowerCase();
+    let serviceShots = "";
+    if (respuesta === "con") {
+      serviceShots = "carrito de shots con alcohol";
+    } else if (respuesta === "sin") {
+      serviceShots = "carrito de shots sin alcohol";
+    } else if (respuesta.includes("con alcohol")) {
+      serviceShots = "carrito de shots con alcohol";
+    } else if (respuesta.includes("sin alcohol")) {
+      serviceShots = "carrito de shots sin alcohol";
+    } else {
+      await sendWhatsAppMessage(from, "Por favor, indícame si deseas el carrito de shots CON alcohol o SIN alcohol escribiendo 'con' o 'sin'.");
+      return true;
+    }
+    
+    // Reemplazar la mención original sin detalle por la opción seleccionada.
+    // Se usa una expresión regular que capture "carrito de shots" con o sin número, si no está acompañado de "con alcohol" o "sin alcohol".
+    context.serviciosSeleccionados = context.serviciosSeleccionados.replace(
+      /carrito de shots(?:\s*\d+)?(?!\s*(con alcohol|sin alcohol))/i,
+      serviceShots
+    );
+    
+    await sendWhatsAppMessage(from, `✅ Se ha seleccionado ${serviceShots}.`);
+    
+    // Limpiar flag y actualizar cotización
+    context.faltanShots = false;
+    await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
     return true;
   }
   
-  // Reemplazar la mención original sin detalle por la opción seleccionada
-  context.serviciosSeleccionados = context.serviciosSeleccionados.replace(/carrito de shots(?!\s*(con alcohol|sin alcohol))/i, serviceShots);
-  
-  await sendWhatsAppMessage(from, `✅ Se ha seleccionado ${serviceShots}.`);
-  
-  // Limpiar flag y actualizar cotización
-  context.faltanShots = false;
-  await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
-  return true;
-}
 
 
 /* ============================================
