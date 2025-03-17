@@ -211,24 +211,22 @@ function calculateQuotation(servicesText) {
   }
   
 
-  // Aplicar descuento según cantidad de servicios reconocidos
+// Aplicar descuento según cantidad de servicios reconocidos
 let discountPercent = 0;
 if (serviceCount === 1) {
-  // Si solo se selecciona un servicio, revisamos el contenido de servicesArr[0]
-  if (servicesArr.length === 1) {
-    // Si es letras (o letras gigantes) => sin descuento
-    if (/letras(?:\s*gigantes)?\b/i.test(servicesArr[0])) {
-      discountPercent = 0;
-    }
-    // Si es chisperos y la cantidad es exactamente 2 => sin descuento
-    else if (/chispero[s]?\s*2\b/i.test(servicesArr[0])) {
-      discountPercent = 0;
-    }
-    // Para cualquier otro servicio único => 10%
-    else {
-      discountPercent = 10;
-    }
-  } else {
+  // Caso único: si es chisperos y la cantidad es exactamente 2, sin descuento.
+  if (/chispero[s]?\s*2\b/i.test(servicesArr[0])) {
+    discountPercent = 0;
+  }
+  // Si es letras (o letras gigantes) y se especifica la cantidad
+  else if (/letras(?:\s*gigantes)?\s*(\d+)/i.test(servicesArr[0])) {
+    const match = servicesArr[0].match(/letras(?:\s*gigantes)?\s*(\d+)/i);
+    const qty = parseInt(match[1]);
+    // Si la cantidad es 1, sin descuento; si es mayor (2 o más), se aplica 10%
+    discountPercent = (qty === 1) ? 0 : 10;
+  }
+  // Para cualquier otro servicio único, aplicar 10%
+  else {
     discountPercent = 10;
   }
 } else if (serviceCount === 2) {
@@ -238,6 +236,7 @@ if (serviceCount === 1) {
 } else if (serviceCount >= 4) {
   discountPercent = 40;
 }
+
 
   
   const discountAmount = subtotal * (discountPercent / 100);
