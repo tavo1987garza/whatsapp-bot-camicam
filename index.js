@@ -852,7 +852,7 @@ function contarLetras(texto) {
 async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   const cotizacion = calculateQuotation(context.serviciosSeleccionados);
   const cabecera = mensajePreliminar ? mensajePreliminar : "💰 *Tu cotización:*";
-  const mensajeDetalles = `${cabecera}\nDetalle:\n` + cotizacion.details.join("\n");
+  const mensajeDetalles = `${cabecera}\n\n` + cotizacion.details.join("\n");
 
   await sendMessageWithTypingWithState(from, mensajeDetalles, 2000, context.estado);
   await delay(2000);
