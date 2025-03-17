@@ -1185,7 +1185,7 @@ if (context.estado === "EsperandoDudas") {
   // --- Manejo de quitar servicios ---
   if (messageLower.includes("quitar")) {
     const serviciosDisponibles = [
-      "cabina de fotos", "cabina 360", "lluvia de mariposas", "carrito de shots",
+      "cabina de fotos", "cabina 360", "lluvia de mariposas", "carrito de shots con alcohol", "carrito de shots sin alcohol",
       "niebla de piso", "lluvia matalica", "scrapbook", "audio guest book",
       "letras gigantes", "chisperos"
     ];
@@ -1243,7 +1243,7 @@ if (context.estado === "EsperandoDudas") {
   // --- Manejo de agregar servicios ---
   if (messageLower.includes("agregar")) {
     const serviciosDisponibles = [
-      "cabina de fotos", "cabina 360", "lluvia de mariposas", "carrito de shots",
+      "cabina de fotos", "cabina 360", "lluvia de mariposas", "carrito de shots con alcohol", "carrito de shots sin alcohol",
       "niebla de piso", "lluvia matalica", "scrapbook", "audio guest book",
       "letras gigantes", "chisperos"
     ];
