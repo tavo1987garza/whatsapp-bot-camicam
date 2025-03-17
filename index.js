@@ -1024,12 +1024,6 @@ if (context.estado === "EsperandoCantidadLetras") {
       await sendWhatsAppMessage(from, "Por favor, ingresa un número válido para la cantidad de chisperos.");
       return true;
     }
-
-     // Validar que la cantidad ingresada sea una de las opciones permitidas
-  if (!chisperosPrices.hasOwnProperty(cantidad.toString())) {
-    await sendWhatsAppMessage(from, "La cantidad de chisperos debe ser un número válido. Las opciones disponibles son: 2, 4, 6, 8, 10.");
-    return true;
-  }
    
     // Regex para capturar "chisperos" con o sin número
     const regex = /chisperos(\s*\d+)?/i;
@@ -1187,13 +1181,7 @@ if (context.estado === "EsperandoDudas") {
       
       // Si ya se especificó la cantidad, se extrae
       const cantidadAAgregar = matchCantidad ? parseInt(matchCantidad[1]) : 1;
-      
-        // Validar la cantidad para chisperos: debe estar entre las opciones válidas
-    if (servicioAAgregar === "chisperos" && !chisperosPrices.hasOwnProperty(cantidadAAgregar.toString())) {
-      await sendWhatsAppMessage(from, "La cantidad de chisperos debe ser un número válido. Las opciones disponibles son: 2, 4, 6, 8, 10.");
-      return true;
-    }
-
+    
       if (cantidadAAgregar <= 0) {
         await sendWhatsAppMessage(from, "La cantidad a agregar debe ser mayor que cero.");
         return true;
