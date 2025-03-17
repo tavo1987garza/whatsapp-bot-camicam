@@ -466,19 +466,19 @@ async function handleFAQs(from, userMessage) {
   if (faqEntry) {
     await sendWhatsAppMessage(from, faqEntry.answer + " 😊");
     if (faqEntry.imageUrl) {
-      await sendImageMessage(from, faqEntry.imageUrl, "¡Mira nuestros servicios!");
+      await sendImageMessage(from, faqEntry.imageUrl);
     }
     if (faqEntry.images && Array.isArray(faqEntry.images)) {
       for (const imageUrl of faqEntry.images) {
-        await sendImageMessage(from, imageUrl, "Detalle visual");
+        await sendImageMessage(from, imageUrl);
       }
     }
     if (faqEntry.videoUrl) {
-      await sendWhatsAppVideo(from, faqEntry.videoUrl, "Revisa este video");
+      await sendWhatsAppVideo(from, faqEntry.videoUrl);
     }
     if (faqEntry.videos && Array.isArray(faqEntry.videos)) {
       for (const videoUrl of faqEntry.videos) {
-        await sendWhatsAppVideo(from, videoUrl, "Video informativo");
+        await sendWhatsAppVideo(from, videoUrl);
       }
     }
     return true;
