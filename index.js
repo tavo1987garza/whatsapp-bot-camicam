@@ -973,7 +973,7 @@ if (context.estado === "EsperandoServicios") {
   // Si no faltan letras pero faltan chisperos, preguntar por ellos
   if (context.faltanChisperos) {
     context.estado = "EsperandoCantidadChisperos";
-    await sendWhatsAppMessage(from, "¿Cuántos chisperos ocupas? 🔥");
+    await sendWhatsAppMessage(from, "¿Cuántos chisperos ocupas? 🔥 Opciones: 2, 4, 6, 8, 10, etc");
     return true;
   }
   
