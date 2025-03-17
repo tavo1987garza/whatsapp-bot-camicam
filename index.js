@@ -1018,19 +1018,17 @@ if (context.estado === "EsperandoCantidadLetras") {
 /* ============================================
    Estado: EsperandoCantidadChisperos
    ============================================ */
-   if (context.estado === "EsperandoCantidadChisperos") {
+     if (context.estado === "EsperandoCantidadChisperos") {
     const cantidad = parseInt(userMessage);
     if (isNaN(cantidad) || cantidad <= 0) {
       await sendWhatsAppMessage(from, "Por favor, ingresa un número válido para la cantidad de chisperos.");
       return true;
     }
-
     // Validación de cantidad para chisperos
-  if (!chisperosPrices[cantidad]) {
-    await sendWhatsAppMessage(from, "Los chisperos los vendemos por pares. Las opciones disponibles son: 2, 4, 6, 8, 10.");
-    return true;
-  }
-  
+    if (!chisperosPrices[cantidad]) {
+      await sendWhatsAppMessage(from, "Los chisperos los vendemos por pares. Las opciones disponibles son: 2, 4, 6, 8, 10.");
+      return true;
+    }
     // Regex para capturar "chisperos" con o sin número
     const regex = /chisperos(\s*\d+)?/i;
     if (regex.test(context.serviciosSeleccionados)) {
@@ -1038,11 +1036,12 @@ if (context.estado === "EsperandoCantidadLetras") {
     } else {
       context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `chisperos ${cantidad}`;
     }
-  
     await sendWhatsAppMessage(from, `✅ Se han agregado ${cantidad} chisperos.`);
+    // Actualizar la cotización final
     await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
     return true;
-  } 
+  }
+  
 
 
 
