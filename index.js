@@ -1024,11 +1024,7 @@ if (context.estado === "EsperandoCantidadLetras") {
       await sendWhatsAppMessage(from, "Por favor, ingresa un número válido para la cantidad de chisperos.");
       return true;
     }
-    // Validación de cantidad para chisperos
-    if (!chisperosPrices[cantidad]) {
-      await sendWhatsAppMessage(from, "Los chisperos los vendemos por pares. Las opciones disponibles son: 2, 4, 6, 8, 10.");
-      return true;
-    }
+   
     // Regex para capturar "chisperos" con o sin número
     const regex = /chisperos(\s*\d+)?/i;
     if (regex.test(context.serviciosSeleccionados)) {
