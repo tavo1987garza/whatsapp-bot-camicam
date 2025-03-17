@@ -417,10 +417,13 @@ const faqs = [
     imageUrl: "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg" 
   },
   { 
-    question: /si me interesa|me interesa|como se separa|como separo|para separar|cuanto de anticipo/i, 
-    answer: "Separamos fecha con $500, el resto puede ser ese dia, al inicio del evento.\n\nUna vez acreditado el anticipo le pedire Nombre de quien me contrata, lleno su contrato y le envío foto.\n\nSi tiene una vuelta para el centro de Monterrey me avisa para entregarle su contrato original",
-    imageUrl: "http://cami-cam.com/wp-content/uploads/2025/03/Datos-Transferencia-1.jpeg",
-    answer: "722969010494399671" 
+    question: /si me interesa|me interesa|con cuánto se separa|con cuanto separo|como se separa|como separo|para separar|cuanto de anticipo/i, 
+    answer: "⏰ Puedes separar tu fecha en cualquier momento, siempre y cuando esté disponible.\n\nSeparamos fecha con $500, el resto puede ser ese dia, al inicio del evento.\n\nUna vez acreditado el anticipo solo pedire Nombre y los datos del evento, lleno tu contrato y te envío foto.\n\nSi tienes una vuelta para el centro de Monterrey me avisas para entregarte tu contrato original"    
+  },
+  { 
+    question: /para depositarte|datos para deposito|transfiero|transferencia|depositar|depósito/i, 
+    imageUrl: "http://cami-cam.com/wp-content/uploads/2025/03/Datos-Transferencia-1.jpeg", 
+    answer: "722969010494399671"
   },
   { 
     question: /que incluye la cabina de fotos|cabina de fotos/i, 
