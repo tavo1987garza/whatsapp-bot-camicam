@@ -987,17 +987,14 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
       context.faltanChisperos = true;
     }
   
-    // DETECCIÓN: Si se incluye "carrito de shots" pero sin especificar la variante (con o sin alcohol)
+    // DETECCIÓN: Si se incluye "carrito de shots" sin especificar la variante (con o sin alcohol)
     if (/carrito de shots/i.test(context.serviciosSeleccionados)) {
-      if (!/carrito de shots\s+(con|sin)\s*alcohol/i.test(context.serviciosSeleccionados)) {
-        context.faltaVarianteCarritoShots = true;
-        // Eliminar la entrada "carrito de shots" sin variante de la cotización
-        context.serviciosSeleccionados = context.serviciosSeleccionados
-          .split(",")
-          .map(s => s.trim())
-          .filter(s => !/^carrito de shots$/i.test(s))  // Filtra entradas exactas sin variante
-          .join(", ");
-      }
+    // Si no se especifica el tipo (CON o SIN alcohol), se solicita la variante.
+    if (!/carrito de shots\s+(con|sin)\s*alcohol/i.test(context.serviciosSeleccionados)) {
+    context.estado = "EsperandoTipoCarritoShots";
+    await sendWhatsAppMessage(from, "¿El carrito de shots lo deseas CON alcohol o SIN alcohol? 🍹");
+    return true; // Detener el flujo actual y esperar la respuesta del cliente.
+     }
     }
   
     // Priorizar preguntar primero por las letras si faltan
