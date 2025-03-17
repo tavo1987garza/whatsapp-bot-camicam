@@ -1164,6 +1164,21 @@ if (context.estado === "EsperandoTipoCarritoShots") {
     // Si la variante seleccionada no está en la cotización, se agrega.
     context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + varianteSeleccionada;
     await sendWhatsAppMessage(from, `✅ Se ha seleccionado ${varianteSeleccionada}.`);
+
+    // Verificar si faltan letras o chisperos antes de mostrar la cotización
+    if (/letras(?:\s*gigantes)?(?!\s*\d+)/i.test(context.serviciosSeleccionados)) {
+      context.estado = "EsperandoCantidadLetras";
+      await sendWhatsAppMessage(from, "¿Cuántas letras necesitas? 🔠");
+      return true;
+    }
+
+    if (/chisperos(?!\s*\d+)/i.test(context.serviciosSeleccionados)) {
+      context.estado = "EsperandoCantidadChisperos";
+      await sendWhatsAppMessage(from, "¿Cuántos chisperos ocupas? 🔥 Opciones: 2, 4, 6, 8, 10, etc");
+      return true;
+    }
+
+    // Si no faltan letras ni chisperos, mostrar la cotización
     await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
     context.estado = "EsperandoDudas";
     return true;
