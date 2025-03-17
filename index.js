@@ -216,13 +216,9 @@ function calculateQuotation(servicesText) {
             serviceNameFormatted += " (3 horas)";
           }
           
-          let serviceDetail = "";
-          // Si la cantidad es 1, mostrar solo el nombre; si es mayor, mostrar la cantidad
-          if (qty === 1) {
-            serviceDetail = `🔸 *${serviceNameFormatted}*: $${prices[baseService]}`;
-          } else {
-            serviceDetail = `🔸 *${serviceNameFormatted} ${qty}*: $${prices[baseService] * qty}`;
-          }
+          // Siempre se muestra el nombre formateado, sin indicar la cantidad
+          let serviceDetail = `🔸 *${serviceNameFormatted}*: $${prices[baseService] * qty}`;
+          
           details.push(serviceDetail);
           servicesRecognized.push(baseService);
         } else {
@@ -231,8 +227,7 @@ function calculateQuotation(servicesText) {
       } else {
         details.push(`🔸 ${service}: servicio no reconocido`);
       }
-    }    
-    
+    }       
     
   }
 
@@ -1129,50 +1124,56 @@ if (context.estado === "EsperandoDudas") {
   }
   
   // --- Manejo de agregar servicios ---
-  if (messageLower.includes("agregar")) {
-    const serviciosDisponibles = [
-      "cabina de fotos", "cabina 360", "lluvia de mariposas", "carrito de shots",
-      "niebla de piso", "lluvia matalica", "scrapbook", "audio guest book",
-      "letras gigantes", "chisperos"
-    ];
-    let servicioAAgregar = null;
-    for (const servicio of serviciosDisponibles) {
-      if (servicio === "letras gigantes" && messageLower.includes("letras")) {
-        servicioAAgregar = "letras gigantes";
-        break;
-      } else if (servicio === "chisperos" && (messageLower.includes("chispero") || messageLower.includes("chisperos"))) {
-        servicioAAgregar = "chisperos";
-        break;
-      } else if (messageLower.includes(servicio)) {
-        servicioAAgregar = servicio;
-        break;
-      }
-    }
-    if (servicioAAgregar) {
-      const matchCantidad = userMessage.match(/(?:agregar|añadir)\s*(\d+)\s*/i);
-      const cantidadAAgregar = matchCantidad ? parseInt(matchCantidad[1]) : 1;
-      if (cantidadAAgregar <= 0) {
-        await sendWhatsAppMessage(from, "La cantidad a agregar debe ser mayor que cero.");
-        return true;
-      }
-      const regex = new RegExp(`${servicioAAgregar}\\s*(\\d+)?`, "i");
-      if (regex.test(context.serviciosSeleccionados)) {
-        const matchActual = context.serviciosSeleccionados.match(regex);
-        let cantidadActual = matchActual && matchActual[1] ? parseInt(matchActual[1]) : 1;
-        const nuevaCantidad = cantidadActual + cantidadAAgregar;
-        context.serviciosSeleccionados = context.serviciosSeleccionados.replace(regex, `${servicioAAgregar} ${nuevaCantidad}`);
-        await sendWhatsAppMessage(from, `✅ Se han agregado ${cantidadAAgregar} ${servicioAAgregar}. Ahora tienes ${nuevaCantidad}.`);
-      } else {
-        context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `${servicioAAgregar} ${cantidadAAgregar}`;
-        await sendWhatsAppMessage(from, `✅ Se ha agregado ${cantidadAAgregar} ${servicioAAgregar}.`);
-      }
-      await actualizarCotizacion(from, context, "¡Cotización actualizada!");
-      return true;
-    } else {
-      await sendWhatsAppMessage(from, "No entendí qué servicio deseas agregar. Por favor, especifica el servicio que deseas incluir.");
-      return true;
+  // --- Manejo de agregar servicios ---
+if (messageLower.includes("agregar")) {
+  const serviciosDisponibles = [
+    "cabina de fotos", "cabina 360", "lluvia de mariposas", "carrito de shots",
+    "niebla de piso", "lluvia matalica", "scrapbook", "audio guest book",
+    "letras gigantes", "chisperos"
+  ];
+  let servicioAAgregar = null;
+  for (const servicio of serviciosDisponibles) {
+    if (servicio === "letras gigantes" && messageLower.includes("letras")) {
+      servicioAAgregar = "letras gigantes";
+      break;
+    } else if (servicio === "chisperos" && (messageLower.includes("chispero") || messageLower.includes("chisperos"))) {
+      servicioAAgregar = "chisperos";
+      break;
+    } else if (messageLower.includes(servicio)) {
+      servicioAAgregar = servicio;
+      break;
     }
   }
+  
+  if (servicioAAgregar) {
+    // Verificamos si ya se encuentra agregado en la cotización
+    const regex = new RegExp(`${servicioAAgregar}(\\s*\\d+)?`, "i");
+    if (regex.test(context.serviciosSeleccionados)) {
+      // Si ya está agregado, informamos y no se agrega de nuevo.
+      await sendWhatsAppMessage(from, `Ya tienes agregado ${servicioAAgregar} en tu cotización.`);
+      return true;
+    }
+    
+    // Si no está agregado, se procede a agregarlo
+    const matchCantidad = userMessage.match(/(?:agregar|añadir)\s*(\d+)\s*/i);
+    const cantidadAAgregar = matchCantidad ? parseInt(matchCantidad[1]) : 1;
+    if (cantidadAAgregar <= 0) {
+      await sendWhatsAppMessage(from, "La cantidad a agregar debe ser mayor que cero.");
+      return true;
+    }
+    
+    // Se agrega el servicio a la cotización
+    context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `${servicioAAgregar} ${cantidadAAgregar}`;
+    await sendWhatsAppMessage(from, `✅ Se ha agregado ${cantidadAAgregar} ${servicioAAgregar}.`);
+    await actualizarCotizacion(from, context, "¡Cotización actualizada!");
+    return true;
+  } else {
+    // Si no se reconoce el servicio a agregar
+    await sendWhatsAppMessage(from, "No entendí qué servicio deseas agregar. Por favor, especifica el servicio que deseas incluir.");
+    return true;
+  }
+}
+
   
   // --- Manejo de FAQs o dudas generales ---
   if (await handleFAQs(from, userMessage)) return true;
