@@ -1026,7 +1026,6 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
     return true;
   }
 
-
 /* ============================================
    Estado: EsperandoCantidadLetras
    ============================================ */
