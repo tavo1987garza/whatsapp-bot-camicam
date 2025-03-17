@@ -194,18 +194,11 @@ function calculateQuotation(servicesText) {
         servicesRecognized.push("letras gigantes");
         letrasCount = qty;
       } else {
-        return {
-          error: true,
-          needsInput: 'letras',
-          details: ["🔸 *Letras*: Por favor, indícanos cuántas letras ocupas."],
-          subtotal: 0,
-          discountPercent: 0,
-          discountAmount: 0,
-          total: 0,
-          servicesRecognized: []
-        };
+        // En este punto, gracias a la actualización, no debería ocurrir
+        details.push(`🔸 *Letras*: cantidad no especificada`);
       }
     }
+    
     // Otros servicios definidos
     else if (prices[service] !== undefined) {
       subtotal += prices[service];
@@ -934,18 +927,19 @@ if (context.estado === "EsperandoCantidadLetras") {
     await sendWhatsAppMessage(from, "Por favor, ingresa un número válido para la cantidad de letras.");
     return true;
   }
-  const regex = /letras gigantes\s*\d*/i;
+  // Regex que captura "letras" o "letras gigantes", con o sin número
+  const regex = /letras(?:\s*gigantes)?(\s*\d+)?/i;
   if (regex.test(context.serviciosSeleccionados)) {
-    // Actualiza la cantidad existente
+    // Reemplaza cualquier mención de "letras" (con o sin cantidad) por la versión actualizada
     context.serviciosSeleccionados = context.serviciosSeleccionados.replace(regex, `letras gigantes ${cantidad}`);
   } else {
-    // Agrega el servicio de letras al paquete
     context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `letras gigantes ${cantidad}`;
   }
   await sendWhatsAppMessage(from, `✅ Se han agregado ${cantidad} letras gigantes.`);
   await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
   return true;
 }
+
 
 /* ============================================
    Estado: EsperandoCantidadChisperos
@@ -956,7 +950,8 @@ if (context.estado === "EsperandoCantidadChisperos") {
     await sendWhatsAppMessage(from, "Por favor, ingresa un número válido para la cantidad de chisperos.");
     return true;
   }
-  const regex = /chisperos\s*\d*/i;
+  // Regex para capturar "chisperos" con o sin número
+  const regex = /chisperos(\s*\d+)?/i;
   if (regex.test(context.serviciosSeleccionados)) {
     context.serviciosSeleccionados = context.serviciosSeleccionados.replace(regex, `chisperos ${cantidad}`);
   } else {
@@ -966,6 +961,7 @@ if (context.estado === "EsperandoCantidadChisperos") {
   await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
   return true;
 }
+
 
 /* ============================================
    Estado: ConfirmandoLetras (caso "Ocupo el nombre de ...")
