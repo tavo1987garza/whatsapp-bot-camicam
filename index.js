@@ -209,7 +209,14 @@ function calculateQuotation(servicesText) {
         if (prices[baseService] !== undefined) {
           subtotal += prices[baseService] * qty;
           serviceCount++;
-          details.push(`🔸 *${baseService.charAt(0).toUpperCase() + baseService.slice(1)} ${qty}*: $${prices[baseService] * qty}`);
+          let serviceDetail = "";
+          // Si la cantidad es 1, mostramos solo el nombre del servicio
+          if (qty === 1) {
+            serviceDetail = `🔸 *${baseService.charAt(0).toUpperCase() + baseService.slice(1)}*: $${prices[baseService]}`;
+          } else {
+            serviceDetail = `🔸 *${baseService.charAt(0).toUpperCase() + baseService.slice(1)} ${qty}*: $${prices[baseService] * qty}`;
+          }
+          details.push(serviceDetail);
           servicesRecognized.push(baseService);
         } else {
           details.push(`🔸 ${service}: servicio no reconocido`);
@@ -218,6 +225,7 @@ function calculateQuotation(servicesText) {
         details.push(`🔸 ${service}: servicio no reconocido`);
       }
     }
+    
     
   }
 
