@@ -209,6 +209,14 @@ function calculateQuotation(servicesText) {
         if (prices[baseService] !== undefined) {
           subtotal += prices[baseService] * qty;
           serviceCount++;
+          
+          let serviceNameFormatted = baseService.charAt(0).toUpperCase() + baseService.slice(1);
+      
+          // Agregar "(3 horas)" para cabina de fotos y cabina 360
+          if (baseService.toLowerCase() === "cabina de fotos" || baseService.toLowerCase() === "cabina 360") {
+            serviceNameFormatted += " (3 horas)";
+          }
+
           let serviceDetail = "";
           // Si la cantidad es 1, mostramos solo el nombre del servicio
           if (qty === 1) {
