@@ -193,7 +193,7 @@ function calculateQuotation(servicesText) {
         const precioLetras = qty * prices["letras gigantes"];
         subtotal += precioLetras;
         serviceCount++;
-        details.push(`🔸 *${qty} Letras Gigantes (5 Horas)*: $${precioLetras.toLocaleString()}`);
+        details.push(`🔸 *${qty} Letras Gigantes* (5 Horas): $${precioLetras.toLocaleString()}`);
         servicesRecognized.push("letras gigantes");
         letrasCount = qty;
       } else {
@@ -908,7 +908,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   await sendMessageWithTypingWithState(from, mensajeDetalles, 2000, context.estado);
   await delay(2000);
 
-  const mensajeResumen = `Subtotal: $${cotizacion.subtotal.toLocaleString()}\nDescuento (${cotizacion.discountPercent}%): -$${cotizacion.discountAmount.toLocaleString()}\n*TOTAL A PAGAR: $${cotizacion.total.toLocaleString()}*`;
+  const mensajeResumen = `Subtotal: $${cotizacion.subtotal.toLocaleString()}\nDescuento (${cotizacion.discountPercent}%): -$${cotizacion.discountAmount.toLocaleString()}\n\n*TOTAL A PAGAR: $${cotizacion.total.toLocaleString()}*`;
   await sendMessageWithTypingWithState(from, mensajeResumen, 2000, context.estado);
 
   // Envío de imágenes y videos solo para nuevos servicios (no se reenvían si ya fueron enviados)
@@ -937,7 +937,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   await delay(2000);
   await sendMessageWithTypingWithState(
     from,
-    "Si deseas modificar tu cotización escribe: \n\n*Agregar* y agrega lo que necesites.\n\n*Quitar* para quitar lo que no necesites. 😊",
+    "Si deseas modificar tu cotización escribe: \n\n*Agregar* y agrega lo que necesites ó\n\n*Quitar* para quitar lo que no ocupes 😊",
     2000,
     context.estado
   );
