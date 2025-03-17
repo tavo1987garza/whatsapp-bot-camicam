@@ -154,34 +154,36 @@ function calculateQuotation(servicesText) {
   let servicesRecognized = [];
   let letrasCount = 0;
 
-  for (const service of servicesArr) {
-    // Caso de chisperos (o chispero)
-    if (/chispero[s]?\b/.test(service)) {
-      const match = service.match(/chispero[s]?\s*(\d+)/);
-      if (match && match[1]) {
-        const qty = parseInt(match[1]);
-        if (chisperosPrices[qty]) {
-          subtotal += chisperosPrices[qty];
-          serviceCount++;
-          details.push(`🔸 *${qty} Chisperos*: $${chisperosPrices[qty]}`);
-          servicesRecognized.push("chisperos");
+    for (const service of servicesArr) {
+      // Caso de chisperos (o chispero)
+      if (/chispero[s]?\b/i.test(service)) {
+        const match = service.match(/chispero[s]?\s*(\d+)/i);
+        if (match && match[1]) {
+          // Si hay cantidad, procesar normalmente
+          const qty = parseInt(match[1]);
+          if (chisperosPrices[qty]) {
+            subtotal += chisperosPrices[qty];
+            serviceCount++;
+            details.push(`🔸 *${qty} Chisperos*: $${chisperosPrices[qty]}`);
+            servicesRecognized.push("chisperos");
+          } else {
+            details.push(`🔸 Chisperos: cantidad inválida (${service})`);
+          }
         } else {
-          details.push(`🔸 Chisperos: cantidad inválida (${service})`);
+          // Si no hay cantidad, retornar un objeto indicando que falta la cantidad
+          return {
+            error: true,
+            needsInput: 'chisperos',
+            details: ["🔸 *Chisperos*: Por favor, indícanos cuántos chisperos necesitas."],
+            subtotal: 0,
+            discountPercent: 0,
+            discountAmount: 0,
+            total: 0,
+            servicesRecognized: []
+          };
         }
-      } else {
-        // Retornamos un objeto indicando que falta la cantidad
-        return {
-          error: true,
-          needsInput: 'chisperos',
-          details: ["🔸 *Chisperos*: Por favor, indícanos cuántos chisperos necesitas."],
-          subtotal: 0,
-          discountPercent: 0,
-          discountAmount: 0,
-          total: 0,
-          servicesRecognized: []
-        };
       }
-    }
+     
     // Caso de letras o letras gigantes
     else if (/letras(?:\s*gigantes)?\b/.test(service)) {
       const match = service.match(/letras(?:\s*gigantes)?\s*(\d+)/);
@@ -1016,24 +1018,25 @@ if (context.estado === "EsperandoCantidadLetras") {
 /* ============================================
    Estado: EsperandoCantidadChisperos
    ============================================ */
-if (context.estado === "EsperandoCantidadChisperos") {
-  const cantidad = parseInt(userMessage);
-  if (isNaN(cantidad) || cantidad <= 0) {
-    await sendWhatsAppMessage(from, "Por favor, ingresa un número válido para la cantidad de chisperos.");
+   if (context.estado === "EsperandoCantidadChisperos") {
+    const cantidad = parseInt(userMessage);
+    if (isNaN(cantidad) || cantidad <= 0) {
+      await sendWhatsAppMessage(from, "Por favor, ingresa un número válido para la cantidad de chisperos.");
+      return true;
+    }
+  
+    // Regex para capturar "chisperos" con o sin número
+    const regex = /chisperos(\s*\d+)?/i;
+    if (regex.test(context.serviciosSeleccionados)) {
+      context.serviciosSeleccionados = context.serviciosSeleccionados.replace(regex, `chisperos ${cantidad}`);
+    } else {
+      context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `chisperos ${cantidad}`;
+    }
+  
+    await sendWhatsAppMessage(from, `✅ Se han agregado ${cantidad} chisperos.`);
+    await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
     return true;
   }
-  // Regex para capturar "chisperos" con o sin número
-  const regex = /chisperos(\s*\d+)?/i;
-  if (regex.test(context.serviciosSeleccionados)) {
-    context.serviciosSeleccionados = context.serviciosSeleccionados.replace(regex, `chisperos ${cantidad}`);
-  } else {
-    context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `chisperos ${cantidad}`;
-  }
-  await sendWhatsAppMessage(from, `✅ Se han agregado ${cantidad} chisperos.`);
-  // Actualizar la cotización final
-  await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
-  return true;
-}
 
 
 
