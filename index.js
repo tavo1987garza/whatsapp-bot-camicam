@@ -379,6 +379,21 @@ app.post('/webhook', async (req, res) => {
     }
   });
 
+  async function notifyAdmin(from, message) {
+    const adminNumber = process.env.ADMIN_WHATSAPP_NUMBER;
+    if (!adminNumber) {
+      console.error("ADMIN_WHATSAPP_NUMBER no está definido.");
+      return;
+    }
+    try {
+      await sendWhatsAppMessage(adminNumber, message);
+      console.log("Notificación enviada al administrador.");
+    } catch (error) {
+      console.error("Error al notificar al administrador:", error.message);
+    }
+  }
+  
+
 // FAQs con emojis y nuevos servicios
 const faqs = [
   { question: /como separo mi fecha|anticipo/i, answer: "💡 Para reservar tu fecha se requiere un anticipo de $500. ¡Así nos aseguramos de ofrecerte lo mejor!" },
@@ -1052,29 +1067,50 @@ if (context.estado === "EsperandoCantidadChisperos") {
       serviceShots = "carrito de shots con alcohol";
     } else if (respuesta === "sin") {
       serviceShots = "carrito de shots sin alcohol";
-    } else if (respuesta.includes("con alcohol")) {
-      serviceShots = "carrito de shots con alcohol";
-    } else if (respuesta.includes("sin alcohol")) {
-      serviceShots = "carrito de shots sin alcohol";
     } else {
       await sendWhatsAppMessage(from, "Por favor, indícame si deseas el carrito de shots CON alcohol o SIN alcohol escribiendo 'con' o 'sin'.");
       return true;
     }
     
-    // Reemplazar la mención original sin detalle por la opción seleccionada.
-    // Se usa una expresión regular que capture "carrito de shots" con o sin número, si no está acompañado de "con alcohol" o "sin alcohol".
+    // Actualizar el string de servicios: reemplazar "carrito de shots" (posible con número) por la opción elegida.
     context.serviciosSeleccionados = context.serviciosSeleccionados.replace(
       /carrito de shots(?:\s*\d+)?(?!\s*(con alcohol|sin alcohol))/i,
       serviceShots
     );
     
     await sendWhatsAppMessage(from, `✅ Se ha seleccionado ${serviceShots}.`);
-    
-    // Limpiar flag y actualizar cotización
-    context.faltanShots = false;
-    await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
+    context.estado = "EsperandoDudas"; // o el estado que corresponda
+    await actualizarCotizacion(from, context, "¡Cotización actualizada!");
     return true;
   }
+
+  /* ============================================
+   Estado: EsperandoConfirmacionOpcionShotsCambio
+   ============================================ */
+  if (context.estado === "EsperandoConfirmacionOpcionShotsCambio") {
+    const respuesta = userMessage.trim().toLowerCase();
+    if (respuesta === "si") {
+      // Se agrega el servicio con la opción opuesta
+      const serviceToAdd = context.opcionShotsDuplicado; // ej. "carrito de shots sin alcohol" o viceversa
+      // Asumimos cantidad 1, pero se podría extender a extraer cantidad si se desea
+      context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `${serviceToAdd} 1`;
+      await sendWhatsAppMessage(from, `✅ Se ha agregado 1 ${serviceToAdd}.`);
+      await actualizarCotizacion(from, context, "¡Cotización actualizada!");
+      context.estado = "EsperandoDudas";
+      context.opcionShotsDuplicado = null;
+      return true;
+    } else {
+      // Si la respuesta no es afirmativa, se notifica al administrador para intervención humana
+      await sendWhatsAppMessage(from, "Se requiere intervención humana para este cambio. Un administrador se pondrá en contacto contigo.");
+      // Aquí se llama a la función que envía notificación al administrador
+      await notifyAdmin(from, `El cliente ${from} respondió: "${userMessage}" al intentar agregar carrito de shots opuesto.`);
+
+      context.estado = "EsperandoDudas";
+      context.opcionShotsDuplicado = null;
+      return true;
+    }
+  }
+  
   
 
 
@@ -1221,11 +1257,26 @@ if (context.estado === "EsperandoDudas") {
     }
     
     if (servicioAAgregar) {
-      // Verificar si el servicio ya está agregado en la cotización
-      const regex = new RegExp(`${servicioAAgregar}(\\s*\\d+)?`, "i");
-      if (regex.test(context.serviciosSeleccionados)) {
-        await sendWhatsAppMessage(from, `Ya tienes agregado ${servicioAAgregar} en tu cotización.`);
-        return true;
+      // Tratamiento especial para carrito de shots duplicados
+      if (servicioAAgregar.includes("carrito de shots")) {
+        const regex = new RegExp(`${servicioAAgregar}(\\s*\\d+)?`, "i");
+        if (regex.test(context.serviciosSeleccionados)) {
+          // Si ya existe la misma opción, se propone la opuesta
+          let oppositeOption = servicioAAgregar.includes("con alcohol") 
+            ? "carrito de shots sin alcohol" 
+            : "carrito de shots con alcohol";
+          context.estado = "EsperandoConfirmacionOpcionShotsCambio";
+          context.opcionShotsDuplicado = oppositeOption; // Guardamos la opción opuesta
+          await sendWhatsAppMessage(from, `Ya tienes agregado ${servicioAAgregar} en tu cotización. ¿Deseas agregar ${oppositeOption}?`);
+          return true;
+        }
+      } else {
+        // Para otros servicios: si ya existe, se informa y se evita agregar duplicado.
+        const regex = new RegExp(`${servicioAAgregar}(\\s*\\d+)?`, "i");
+        if (regex.test(context.serviciosSeleccionados)) {
+          await sendWhatsAppMessage(from, `Ya tienes agregado ${servicioAAgregar} en tu cotización.`);
+          return true;
+        }
       }
       
       // Extraer cantidad a agregar (se asume 1 si no se especifica)
@@ -1246,6 +1297,7 @@ if (context.estado === "EsperandoDudas") {
       return true;
     }
   }
+  
   
 
   
