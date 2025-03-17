@@ -121,23 +121,21 @@ Responde de forma profesional, clara, concisa y persuasiva, como un vendedor exp
   `;
 }
 
-
+// Función para calcular la cotización y retornar los servicios reconocidos
 // Función para calcular la cotización y retornar los servicios reconocidos
 function calculateQuotation(servicesText) {
   // Diccionario de precios
   const prices = {
     "cabina de fotos": 3500,
     "cabina 360": 3500,
-    "lluvia de mariposas": 2700,
+    "lluvia de mariposas": 2500,
     "carrito de shots con alcohol": 2800,
-    "carrito de shots sin alcohol": 2200,
     "niebla de piso": 3000,
     "lluvia matalica": 2000,
     "scrapbook": 1300,
     "audio guest book": 2000,
     "letras gigantes": 400 // precio por letra
   };
-  
   // Precios para chisperos según cantidad
   const chisperosPrices = {
     2: 1000,
@@ -379,21 +377,6 @@ app.post('/webhook', async (req, res) => {
     }
   });
 
-  async function notifyAdmin(from, message) {
-    const adminNumber = process.env.ADMIN_WHATSAPP_NUMBER;
-    if (!adminNumber) {
-      console.error("ADMIN_WHATSAPP_NUMBER no está definido.");
-      return;
-    }
-    try {
-      await sendWhatsAppMessage(adminNumber, message);
-      console.log("Notificación enviada al administrador.");
-    } catch (error) {
-      console.error("Error al notificar al administrador:", error.message);
-    }
-  }
-  
-
 // FAQs con emojis y nuevos servicios
 const faqs = [
   { question: /como separo mi fecha|anticipo/i, answer: "💡 Para reservar tu fecha se requiere un anticipo de $500. ¡Así nos aseguramos de ofrecerte lo mejor!" },
@@ -401,7 +384,6 @@ const faqs = [
   { question: /con cuanto tiempo separo mi fecha|separar/i, answer: "⏰ Puedes separar tu fecha en cualquier momento, siempre y cuando esté disponible." },
   { question: /se puede separar para 2026|2026/i, answer: "📆 Claro, tenemos agenda para 2025 y 2026. ¡Consulta sin compromiso!" },
   { question: /cuánto se cobra de flete|flete/i, answer: "🚚 El flete varía según la ubicación. Contáctanos y lo calculamos juntos." },
-  { question: /y si quiero mitad y mitad|mitad con alcohol|mitad sin alcohol/i, answer: "Claro!! En nuestra experiencia, si es para XV años no lo recomendamos, puesto que no tendriamos ningun control de quien toma CON alcohol y quien SIN alcohol. Si aún asi lo decides, el precio del carrito mixto se cobra como 'Carrito de shots CON alcohol'  y el precio es de $2,800." },
   { question: /cómo reviso si tienen mi fecha disponible/i, answer: "🔎 Cuéntame, ¿para cuándo es tu evento? Así reviso la disponibilidad." },
   { question: /ubicación|dónde están|donde son|ubican|oficinas/i, answer: "📍 Nos encontramos en la Colonia Independencia en Monterrey. Cubrimos hasta 25 km a la redonda." },
   { question: /pago|método de pago|tarjeta|efectivo/i, answer: "💳 Aceptamos transferencias, depósitos y pagos en efectivo. ¡Lo que te resulte más cómodo!" },
@@ -412,7 +394,7 @@ const faqs = [
   },
   { 
     question: /que incluye la cabina de fotos|cabina de fotos/i, 
-    answer: "📸 La CABINA DE FOTOS incluye 3 horas de servicio, las fotos se imprimen al instante y son de calidad 'Kodak', todas las fotos que se tomen durante las 3 horas son las fotos que se imprimen",
+    answer: "📸 La CABINA DE FOTOS incluye 3 horas de servicio, iluminación profesional, fondo personalizado, accesorios temáticos y más.",
     images: [
       "http://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-1.jpg",
       "http://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-2.jpg",
@@ -959,7 +941,6 @@ if (context.estado === "EsperandoServicios") {
   // Inicializamos flags para servicios sin cantidad
   context.faltanLetras = false;
   context.faltanChisperos = false;
-  context.faltanShots = false;
   
   // Verificar si "letras" está presente sin cantidad
   if (/letras(?:\s*gigantes)?(?!\s*\d+)/i.test(context.serviciosSeleccionados)) {
@@ -970,11 +951,6 @@ if (context.estado === "EsperandoServicios") {
     context.faltanChisperos = true;
   }
   
-  // Verificar si "carrito de shots" se menciona sin la opción "con alcohol" o "sin alcohol"
-  // Ajustamos la expresión regular para capturar también un número opcional (por ejemplo, "carrito de shots 1")
-  if (/carrito de shots(?:\s*\d+)?(?!\s*(con alcohol|sin alcohol))/i.test(context.serviciosSeleccionados)) {
-    context.faltanShots = true;
-  }
   // Priorizar preguntar primero por las letras si faltan
   if (context.faltanLetras) {
     context.estado = "EsperandoCantidadLetras";
@@ -986,12 +962,6 @@ if (context.estado === "EsperandoServicios") {
   if (context.faltanChisperos) {
     context.estado = "EsperandoCantidadChisperos";
     await sendWhatsAppMessage(from, "¿Cuántos chisperos ocupas? 🔥");
-    return true;
-  }
-
-  if (context.faltanShots) {
-    context.estado = "EsperandoOpcionCarritoShots";
-    await sendWhatsAppMessage(from, "¿El carrito de shots lo deseas CON alcohol o SIN alcohol? 🍹");
     return true;
   }
   
@@ -1055,65 +1025,6 @@ if (context.estado === "EsperandoCantidadChisperos") {
   return true;
 }
 
-
-
-/* ============================================
-   Estado: EsperandoOpcionCarritoShots
-   ============================================ */
-   if (context.estado === "EsperandoOpcionCarritoShots") {
-    const respuesta = userMessage.trim().toLowerCase();
-    let serviceShots = "";
-    if (respuesta === "con") {
-      serviceShots = "carrito de shots con alcohol";
-    } else if (respuesta === "sin") {
-      serviceShots = "carrito de shots sin alcohol";
-    } else {
-      await sendWhatsAppMessage(from, "Por favor, indícame si deseas el carrito de shots CON alcohol o SIN alcohol escribiendo 'con' o 'sin'.");
-      return true;
-    }
-    
-    
-    // Agregar el servicio pendiente con la opción elegida y cantidad 1 (o la cantidad pendiente si se maneja)
-    context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `${serviceShots} 1`;
-    await sendWhatsAppMessage(from, `✅ Se ha seleccionado ${serviceShots}.`);
-    
-    // Cambiar estado a "EsperandoDudas" (u otro estado final) y limpiar la variable pendiente
-    context.estado = "EsperandoDudas";
-    delete context.servicioPendienteShots;
-    
-    await actualizarCotizacion(from, context, "¡Cotización actualizada!");
-    return true;
-  }
-  
-
-  /* ============================================
-   Estado: EsperandoConfirmacionOpcionShotsCambio
-   ============================================ */
-  if (context.estado === "EsperandoConfirmacionOpcionShotsCambio") {
-    const respuesta = userMessage.trim().toLowerCase();
-    if (respuesta === "si") {
-      // Se agrega el servicio con la opción opuesta
-      const serviceToAdd = context.opcionShotsDuplicado; // ej. "carrito de shots sin alcohol" o viceversa
-      // Asumimos cantidad 1, pero se podría extender a extraer cantidad si se desea
-      context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `${serviceToAdd} 1`;
-      await sendWhatsAppMessage(from, `✅ Se ha agregado 1 ${serviceToAdd}.`);
-      await actualizarCotizacion(from, context, "¡Cotización actualizada!");
-      context.estado = "EsperandoDudas";
-      context.opcionShotsDuplicado = null;
-      return true;
-    } else {
-      // Si la respuesta no es afirmativa, se notifica al administrador para intervención humana
-      await sendWhatsAppMessage(from, "Se requiere intervención humana para este cambio. Un administrador se pondrá en contacto contigo.");
-      // Aquí se llama a la función que envía notificación al administrador
-      await notifyAdmin(from, `El cliente ${from} respondió: "${userMessage}" al intentar agregar carrito de shots opuesto.`);
-
-      context.estado = "EsperandoDudas";
-      context.opcionShotsDuplicado = null;
-      return true;
-    }
-  }
-  
-  
 
 
 /* ============================================
@@ -1213,77 +1124,36 @@ if (context.estado === "EsperandoDudas") {
   }
   
   // --- Manejo de agregar servicios ---
-  // --- Manejo de agregar servicios ---
 if (messageLower.includes("agregar")) {
   const serviciosDisponibles = [
-    "cabina de fotos", 
-    "cabina 360", 
-    "lluvia de mariposas", 
-    "carrito de shots con alcohol", 
-    "carrito de shots sin alcohol",
-    "niebla de piso", 
-    "lluvia matalica", 
-    "scrapbook", 
-    "audio guest book",
-    "letras gigantes", 
-    "chisperos"
+    "cabina de fotos", "cabina 360", "lluvia de mariposas", "carrito de shots",
+    "niebla de piso", "lluvia matalica", "scrapbook", "audio guest book",
+    "letras gigantes", "chisperos"
   ];
-  
   let servicioAAgregar = null;
-  
-  // Tratamiento especial para "carrito de shots"
-  if (messageLower.includes("carrito de shots")) {
-    if (messageLower.includes("con alcohol")) {
-      servicioAAgregar = "carrito de shots con alcohol";
-    } else if (messageLower.includes("sin alcohol")) {
-      servicioAAgregar = "carrito de shots sin alcohol";
-    } else {
-      // Si no se especifica la opción, se guarda en el contexto y se pregunta
-      context.estado = "EsperandoOpcionCarritoShots";
-      context.servicioPendienteShots = "carrito de shots"; // indicador pendiente
-      await sendWhatsAppMessage(from, "¿El carrito de shots lo deseas CON alcohol o SIN alcohol? 🍹");
-      return true;
-    }
-  } else {
-    // Para el resto de los servicios
-    for (const servicio of serviciosDisponibles) {
-      if (servicio === "letras gigantes" && messageLower.includes("letras")) {
-        servicioAAgregar = "letras gigantes";
-        break;
-      } else if (servicio === "chisperos" && (messageLower.includes("chispero") || messageLower.includes("chisperos"))) {
-        servicioAAgregar = "chisperos";
-        break;
-      } else if (messageLower.includes(servicio)) {
-        servicioAAgregar = servicio;
-        break;
-      }
+  for (const servicio of serviciosDisponibles) {
+    if (servicio === "letras gigantes" && messageLower.includes("letras")) {
+      servicioAAgregar = "letras gigantes";
+      break;
+    } else if (servicio === "chisperos" && (messageLower.includes("chispero") || messageLower.includes("chisperos"))) {
+      servicioAAgregar = "chisperos";
+      break;
+    } else if (messageLower.includes(servicio)) {
+      servicioAAgregar = servicio;
+      break;
     }
   }
   
   if (servicioAAgregar) {
-    // Verificar duplicados
-    if (servicioAAgregar.includes("carrito de shots")) {
-      const regex = new RegExp(`${servicioAAgregar}(\\s*\\d+)?`, "i");
-      if (regex.test(context.serviciosSeleccionados)) {
-        // Ya existe la opción agregada; se propone la opción opuesta
-        let oppositeOption = servicioAAgregar.includes("con alcohol") 
-          ? "carrito de shots sin alcohol" 
-          : "carrito de shots con alcohol";
-        context.estado = "EsperandoConfirmacionOpcionShotsCambio";
-        context.opcionShotsDuplicado = oppositeOption; // Guardamos la opción opuesta
-        await sendWhatsAppMessage(from, `Ya tienes agregado ${servicioAAgregar} en tu cotización. ¿Deseas agregar ${oppositeOption}?`);
-        return true;
-      }
-    } else {
-      // Para los demás servicios
-      const regex = new RegExp(`${servicioAAgregar}(\\s*\\d+)?`, "i");
-      if (regex.test(context.serviciosSeleccionados)) {
-        await sendWhatsAppMessage(from, `Ya tienes agregado ${servicioAAgregar} en tu cotización.`);
-        return true;
-      }
+    // Verificamos si ya se encuentra agregado en la cotización
+    const regex = new RegExp(`${servicioAAgregar}(\\s*\\d+)?`, "i");
+    if (regex.test(context.serviciosSeleccionados)) {
+      // Si ya está agregado, informamos y no se agrega de nuevo.
+      await sendWhatsAppMessage(from, `Ya tienes agregado ${servicioAAgregar} en tu cotización.`);
+      return true;
     }
     
-    // Extraer cantidad a agregar (se asume 1 si no se especifica)
+    // Si no está agregado, se procede a agregarlo
     const matchCantidad = userMessage.match(/(?:agregar|añadir)\s*(\d+)\s*/i);
     const cantidadAAgregar = matchCantidad ? parseInt(matchCantidad[1]) : 1;
     if (cantidadAAgregar <= 0) {
@@ -1291,20 +1161,17 @@ if (messageLower.includes("agregar")) {
       return true;
     }
     
-    // Agregar el servicio a la cotización
+    // Se agrega el servicio a la cotización
     context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `${servicioAAgregar} ${cantidadAAgregar}`;
     await sendWhatsAppMessage(from, `✅ Se ha agregado ${cantidadAAgregar} ${servicioAAgregar}.`);
     await actualizarCotizacion(from, context, "¡Cotización actualizada!");
     return true;
   } else {
+    // Si no se reconoce el servicio a agregar
     await sendWhatsAppMessage(from, "No entendí qué servicio deseas agregar. Por favor, especifica el servicio que deseas incluir.");
     return true;
   }
 }
-
-  
-  
-  
 
   
   // --- Manejo de FAQs o dudas generales ---
@@ -1415,3 +1282,5 @@ app.listen(PORT, () => {
 }).on('error', (err) => {
   console.error('Error al iniciar el servidor:', err);
 });
+
+
