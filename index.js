@@ -202,7 +202,7 @@ function calculateQuotation(servicesText) {
       }
     }
 
-    // Caso de carrito de shots con o sin alcohol
+    /*/ Caso de carrito de shots con o sin alcohol
     else if (/carrito de shots\s+(con|sin)\s*alcohol/i.test(service)) {
       const match = service.match(/carrito de shots\s+(con|sin)\s*alcohol/i);
       if (match) {
@@ -217,7 +217,7 @@ function calculateQuotation(servicesText) {
           details.push(`🔸 ${servicioCompleto}: servicio no reconocido`);
         }
       }
-    }
+    } */
 
     // Otros servicios definidos
     else {
@@ -250,9 +250,9 @@ function calculateQuotation(servicesText) {
         // Construir el detalle del servicio
         let serviceDetail = "";
         if (qty === 1) {
-          serviceDetail = `🔸 *${serviceNameFormatted}: $${prices[baseService]}*`;
+          serviceDetail = `🔸 *${serviceNameFormatted}:* $${prices[baseService]}`;
         } else {
-          serviceDetail = `🔸 *${serviceNameFormatted} ${qty}: $${prices[baseService] * qty}*`;
+          serviceDetail = `🔸 *${serviceNameFormatted} ${qty}:* $${prices[baseService] * qty}`;
         }
 
         details.push(serviceDetail);
