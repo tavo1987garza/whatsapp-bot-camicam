@@ -200,15 +200,28 @@ function calculateQuotation(servicesText) {
     }
     
     // Otros servicios definidos
-    else if (prices[service] !== undefined) {
-      subtotal += prices[service];
-      serviceCount++;
-      details.push(`🔸 *${service.charAt(0).toUpperCase() + service.slice(1)}*: $${prices[service]}`);
-      servicesRecognized.push(service);
-    } else {
-      details.push(`🔸 ${service}: servicio no reconocido`);
+    else {
+      // Intentamos extraer el nombre base y la cantidad, asumiendo el formato "servicio [cantidad]"
+      const matchService = service.match(/^(.+?)(?:\s+(\d+))?$/);
+      if (matchService) {
+        const baseService = matchService[1].trim();
+        const qty = matchService[2] ? parseInt(matchService[2]) : 1;
+        if (prices[baseService] !== undefined) {
+          subtotal += prices[baseService] * qty;
+          serviceCount++;
+          details.push(`🔸 *${baseService.charAt(0).toUpperCase() + baseService.slice(1)} ${qty}*: $${prices[baseService] * qty}`);
+          servicesRecognized.push(baseService);
+        } else {
+          details.push(`🔸 ${service}: servicio no reconocido`);
+        }
+      } else {
+        details.push(`🔸 ${service}: servicio no reconocido`);
+      }
     }
+    
   }
+
+  
   
 
 // Aplicar descuento según cantidad de servicios reconocidos
