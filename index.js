@@ -1036,7 +1036,7 @@ if (context.estado === "EsperandoCantidadLetras") {
     await sendWhatsAppMessage(from, `✅ Se han agregado ${cantidad} chisperos.`);
     await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
     return true;
-  }
+  } 
 
 
 
