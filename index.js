@@ -201,45 +201,51 @@ function calculateQuotation(servicesText) {
       }
     }
     
+    
     // Otros servicios definidos
-    else {
-      // Intentamos extraer el nombre base y la cantidad, asumiendo el formato "servicio [cantidad]"
-      const matchService = service.match(/^(.+?)(?:\s+(\d+))?$/);
-      if (matchService) {
-        const baseService = matchService[1].trim();
-        const qty = matchService[2] ? parseInt(matchService[2]) : 1;
+else {
+  let baseService;
+  let qty = 1;
+  // Primero comprobamos si el servicio completo coincide con alguna clave de precios
+  if (prices.hasOwnProperty(service)) {
+    baseService = service;
+  } else {
+    // Si no, intentamos extraer el nombre y la cantidad usando regex
+    const matchService = service.match(/^(.+?)(?:\s+(\d+))?$/);
+    if (matchService) {
+      baseService = matchService[1].trim();
+      qty = matchService[2] ? parseInt(matchService[2]) : 1;
+    }
+  }
+
+  if (prices[baseService] !== undefined) {
+    subtotal += prices[baseService] * qty;
+    serviceCount++;
+
+    // Formatear el nombre del servicio
+    let serviceNameFormatted = baseService.charAt(0).toUpperCase() + baseService.slice(1);
     
-        if (prices[baseService] !== undefined) {
-          subtotal += prices[baseService] * qty;
-          serviceCount++;
-    
-          // Formatear el nombre del servicio
-          let serviceNameFormatted = baseService.charAt(0).toUpperCase() + baseService.slice(1);
-          
-          // Agregar "(3 horas)" para cabina de fotos y cabina 360
-          if (baseService.toLowerCase() === "cabina de fotos" || baseService.toLowerCase() === "cabina 360") {
-            serviceNameFormatted += " (3 horas)";
-          }
-    
-          // Construir el detalle del servicio
-          let serviceDetail = "";
-          if (qty === 1) {
-            serviceDetail = `🔸 *${serviceNameFormatted}: $${prices[baseService]}*`;
-          } else {
-            serviceDetail = `🔸 *${serviceNameFormatted} ${qty}: $${prices[baseService] * qty}*`;
-          }
-    
-          details.push(serviceDetail);
-          servicesRecognized.push(baseService);
-        } else {
-          console.warn(`Servicio no reconocido: ${service}`);
-          details.push(`🔸 ${service}: servicio no reconocido`);
-        }
-      } else {
-        console.warn(`Formato de servicio no válido: ${service}`);
-        details.push(`🔸 ${service}: servicio no reconocido`);
-      }
-    }    
+    // Agregar "(3 horas)" para cabina de fotos y cabina 360
+    if (baseService.toLowerCase() === "cabina de fotos" || baseService.toLowerCase() === "cabina 360") {
+      serviceNameFormatted += " (3 horas)";
+    }
+
+    // Construir el detalle del servicio
+    let serviceDetail = "";
+    if (qty === 1) {
+      serviceDetail = `🔸 *${serviceNameFormatted}: $${prices[baseService]}*`;
+    } else {
+      serviceDetail = `🔸 *${serviceNameFormatted} ${qty}: $${prices[baseService] * qty}*`;
+    }
+
+    details.push(serviceDetail);
+    servicesRecognized.push(baseService);
+  } else {
+    console.warn(`Servicio no reconocido: ${service}`);
+    details.push(`🔸 ${service}: servicio no reconocido`);
+  }
+}
+ 
     
   }
 
