@@ -798,6 +798,45 @@ async function handleUserMessage(from, userMessage, messageLower) {
     return true; // Salir de la función después de manejar la acción
   }
 
+   // Manejar la acción del botón "COMENZAR"
+   if (context.estado === "introduccion" && messageLower === "✨ SI ✨") {
+    await sendWhatsAppMessage(
+      from,
+      "Perfecto!!. Comencemos",
+      2000,
+      context.estado
+    );
+    context.estado = "Contacto Inicial";
+  }
+
+
+  // 0. Introduccion al cliente
+  if (context.estado === "Introduccion") {
+    // Mensaje inicial explicando que es un asistente virtual
+    await sendMessageWithTypingWithState(
+      from,
+      "¡Hola! 👋 Te damos la Bienvenida a *Camicam Photobooth* 🤩",
+      2000, // Retraso de 3 segundos
+      "Introduccion"
+    );
+
+  await sendWhatsAppMessage(
+    from,
+    "Este es un asistente Virtual, donde podrás cotizar los servicios que necesitas en tu evento para que luzca Extraordinario",
+    2000,
+  )
+
+  await sendInteractiveMessage(
+    from,
+    "Para una mejor experiencia, por favor interactúa con los botones que te estaré mostrarando 👇 Empezamos?",
+    [
+      {id: "comenzar", title: "✨ SI ✨"}
+    ]
+  )
+   // Actualizar el estado del contexto
+   context.estado = "Contacto Inicial";
+   return true;
+}
 
 // 1. Inicio: dar la bienvenida y mostrar opciones con imagen
 if (context.estado === "Contacto Inicial") {
@@ -805,7 +844,7 @@ if (context.estado === "Contacto Inicial") {
   await sendMessageWithTypingWithState(
     from,
     "¡Hola! 👋 Te damos la Bienvenida a *Camicam Photobooth*. \n\n📍Atendemos el Centro de Monterrey y hasta 30 km a la redonda \n\nConoce los Servicios que ofrecemos 🤩",
-    3000, // Retraso de 3 segundos
+    2000, // Retraso de 3 segundos
     "Contacto Inicial"
   );
 
