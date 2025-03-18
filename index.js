@@ -21,7 +21,7 @@ const userContext = {};
 // Instancia global de caché para respuestas de OpenAI (disponible en todo el código)
 const responseCache = new NodeCache({ stdTTL: 3600 });
 
-
+ 
 // Objeto para asociar servicios a medios (imágenes y videos)
 const mediaMapping = {
   "cabina de fotos": {
