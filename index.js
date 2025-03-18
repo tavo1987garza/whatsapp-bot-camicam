@@ -766,6 +766,15 @@ function sendMessageToAdmin(message) {
   sendWhatsAppMessage(adminNumber, message);
 }
 
+async function solicitarFecha(from, context) {
+  await sendMessageWithTypingWithState(
+    from,
+    "Para continuar, por favor indícame la fecha de tu evento (Formato DD/MM/AAAA) 📆.",
+    2000, // Retraso de 2 segundos
+    context.estado
+  );
+  context.estado = "EsperandoFecha";
+}
 
 // Función para manejar el flujo de mensajes del usuario con tono natural
 async function handleUserMessage(from, userMessage, messageLower) {
@@ -782,6 +791,13 @@ async function handleUserMessage(from, userMessage, messageLower) {
     };
   }
   const context = userContext[from];
+
+  // Manejar la acción del botón "CONTINUAR"
+  if (context.estado === "EsperandoContinuar" && messageLower === "continuar") {
+    await solicitarFecha(from, context); // Solicitar la fecha del evento
+    return true; // Salir de la función después de manejar la acción
+  }
+
 
 // 1. Inicio: dar la bienvenida y mostrar opciones con imagen
 if (context.estado === "Contacto Inicial") {
@@ -832,7 +848,7 @@ if (context.estado === "Contacto Inicial") {
   return true;
 }
 
- // 3. Opciones: paquete sugerido o armar paquete
+// 3. Opciones: paquete sugerido o armar paquete
 if (context.estado === "OpcionesSeleccionadas") {
   console.log("Valor recibido en OpcionesSeleccionadas:", messageLower);
 
@@ -840,8 +856,8 @@ if (context.estado === "OpcionesSeleccionadas") {
     // Mensaje con retraso para simular interacción humana
     await sendMessageWithTypingWithState(
       from,
-      "¡Genial! 😃 Vamos a armar tu paquete personalizado.\n\nPor favor, indícame los servicios que deseas incluir.\n\n✏️ Escribe separado por comas por ejemplo: \n\ncabina de fotos, niebla de piso, scrapbook, chisperos 4, letras gigantes 4",
-      3000, // Retraso de 2 segundos
+      "¡Genial! 😃 Vamos a armar tu paquete personalizado.\n\nPor favor, indícame los servicios que deseas incluir.\n\n✏️ Escribe separado por comas, por ejemplo: \n\ncabina de fotos, niebla de piso, scrapbook, chisperos 4, letras gigantes 4",
+      2000, // Retraso de 2 segundos
       "OpcionesSeleccionadas"
     );
     context.estado = "EsperandoServicios";
@@ -849,6 +865,16 @@ if (context.estado === "OpcionesSeleccionadas") {
   } else if (messageLower === "paquete_sugerido") {
     // Determinar el paquete sugerido según el tipo de evento
     let paqueteSugerido;
+    if (!context.tipoEvento) {
+      await sendMessageWithTypingWithState(
+        from,
+        "😕 No se ha seleccionado un tipo de evento. Por favor, elige un tipo de evento válido.",
+        2000,
+        "OpcionesSeleccionadas"
+      );
+      return true;
+    }
+
     if (context.tipoEvento === "Boda") {
       paqueteSugerido = "🎉 *Paquete Wedding*: Incluye Cabina 360, iniciales decorativas, 2 chisperos y un carrito de shots con alcohol, todo por *$4,450*.";
     } else if (context.tipoEvento === "XV") {
@@ -866,14 +892,7 @@ if (context.estado === "OpcionesSeleccionadas") {
     );
 
     // Solicitar la fecha del evento
-    await sendMessageWithTypingWithState(
-      from,
-      "Para continuar, por favor indícame la fecha de tu evento (Formato DD/MM/AAAA) 📆.",
-      2000, // Retraso de 2 segundos
-      "OpcionesSeleccionadas"
-    );
-
-    context.estado = "EsperandoFecha";
+    await solicitarFecha(from, context);
     return true;
   } else {
     // Mensaje de error si no se selecciona una opción válida
@@ -961,7 +980,11 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
     ]
   );
   context.estado = "EsperandoDudas";
+
 }
+
+  
+
 
 
 /* ============================================
@@ -1225,17 +1248,6 @@ if (context.estado === "ConfirmarAgregarCarritoShotsCambio") {
 
 
 
-  // Manejar la acción del botón "CONTINUAR"
-  if (messageLower === "continuar") {
-    await sendMessageWithTypingWithState(
-      from,
-      "Para continuar, por favor indícame la fecha de tu evento (Formato DD/MM/AAAA) 📆.",
-      2000, // Retraso de 2 segundos
-      "EsperandoContinuar"
-    );
-    context.estado = "EsperandoFecha"; // Cambiar al estado para solicitar la fecha
-    return true;
-  }
 
 /* ============================================
    Estado: EsperandoDudas – Manejo de dudas, agregar o quitar servicios, FAQs, etc.
