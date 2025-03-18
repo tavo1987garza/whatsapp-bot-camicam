@@ -131,7 +131,7 @@ function calculateQuotation(servicesText) {
     "carrito de shots con alcohol": 2800,
     "carrito de shots sin alcohol": 2200,
     "niebla de piso": 3000,
-    "lluvia matalica": 2000,
+    "lluvia matálica": 2000,
     "scrapbook": 1300,
     "audio guest book": 2000,
     "letras gigantes": 400 // precio por letra
@@ -1213,7 +1213,7 @@ if (context.estado === "EsperandoDudas") {
   if (messageLower.includes("quitar")) {
     const serviciosDisponibles = [
       "cabina de fotos", "cabina 360", "lluvia de mariposas", "carrito de shots con alcohol", "carrito de shots sin alcohol",
-      "niebla de piso", "lluvia matalica", "scrapbook", "audio guest book",
+      "niebla de piso", "lluvia matálica", "scrapbook", "audio guest book",
       "letras gigantes", "chisperos"
     ];
     let servicioAQuitar = null;
@@ -1271,7 +1271,7 @@ if (context.estado === "EsperandoDudas") {
   if (messageLower.includes("agregar")) {
     const serviciosDisponibles = [
       "cabina de fotos", "cabina 360", "lluvia de mariposas", "carrito de shots con alcohol", "carrito de shots sin alcohol",
-      "niebla de piso", "lluvia matalica", "scrapbook", "audio guest book",
+      "niebla de piso", "lluvia matálica", "scrapbook", "audio guest book",
       "letras gigantes", "chisperos"
     ];
     let servicioAAgregar = null;
