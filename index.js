@@ -2,7 +2,6 @@
 import dotenv from 'dotenv'; // Para cargar variables de entorno
 import express from 'express';
 import axios from 'axios';
-import OpenAI from 'openai';
 import NodeCache from 'node-cache';
 
 // Cargar variables de entorno
@@ -12,10 +11,6 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configurar cliente de OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 // Middleware para manejar JSON
 app.use(express.json());
@@ -94,32 +89,7 @@ const mediaMapping = {
   }
 };
 
-// Función para construir el contexto para OpenAI (ajustado para sonar más humano)
-function construirContexto() {
-  return `
-Eres un agente de ventas de "Camicam Photobooth" 😃. 
-Nos dedicamos a la renta de servicios para eventos sociales, con especialización en bodas y XV años. 
-Ofrecemos los siguientes servicios:
-  - Cabina de fotos: $3,500
-  - Cabina 360: $3,500
-  - Lluvia de mariposas: $2,500
-  - Carrito de shots con alcohol: $2,800
-  - Letras gigantes: $400 cada una
-  - Niebla de piso: $3,000
-  - Lluvia matalica: $2,000
-  - Scrapbook: $1,300
-  - Audio Guest Book: $2,000
-  - Chisperos (por pares):
-       • 2 chisperos = $1,000  
-       • 4 chisperos = $1,500  
-       • 6 chisperos = $2,000  
-       • 8 chisperos = $2,500  
-       • 10 chisperos = $3,000
-  
-Atendemos el centro de Monterrey, Nuevo León y el área metropolitana hasta 25 km a la redonda. 
-Responde de forma profesional, clara, concisa y persuasiva, como un vendedor experto en nuestros servicios.
-  `;
-}
+
 
 // Función para calcular la cotización y retornar los servicios reconocidos
 function calculateQuotation(servicesText) {
@@ -410,8 +380,12 @@ const faqs = [
     imageUrl: "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg" 
   },
   { 
-    question: /si me interesa|me interesa|con cuánto se separa|con cuanto separo|como se separa|como separo|para separar|cuanto de anticipo/i, 
+    question: /con cuánto se separa|con cuanto separo|como se separa|como separo|para separar|cuanto de anticipo/i, 
     answer: "⏰ Puedes separar tu fecha en cualquier momento, siempre y cuando esté disponible.\n\nSeparamos fecha con $500, el resto puede ser ese dia, al inicio del evento.\n\nUna vez acreditado el anticipo solo pedire Nombre y los datos del evento, lleno tu contrato y te envío foto.\n\nSi tienes una vuelta para el centro de Monterrey me avisas para entregarte tu contrato original"    
+  },
+  { 
+    question: /me interesa|/i, 
+    answer: "Genial!! \n\nPara continuar por favor indicame la fecha de tu evento para revisar disponibilidad "    
   },
   { 
     question: /para depositarte|datos para deposito|transfiero|transferencia|depositar|depósito/i, 
@@ -944,7 +918,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   await delay(2000);
   await sendMessageWithTypingWithState(
     from,
-    "Si deseas modificar tu cotización escribe: \n\n*Agregar* y agrega lo que necesites ó\n\n*Quitar* para quitar lo que no ocupes 😊",
+    "Escribe: \n\n*'Agregar'* para agregar otro servicio \n\n*'Quitar'* para eliminar un servicio \n\n*'Me interesa'* para continuar 😊",
     2000,
     context.estado
   );
@@ -1330,9 +1304,6 @@ if (context.estado === "EsperandoDudas") {
         await sendWhatsAppMessage(from, "La cantidad a agregar debe ser mayor que cero.");
         return true;
       }
-
-     
-
       
       // Se agrega el servicio a la cotización
       context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `${servicioAAgregar} ${cantidadAAgregar}`;
@@ -1345,8 +1316,6 @@ if (context.estado === "EsperandoDudas") {
       return true;
     }
   }
-  
-
   
   // --- Manejo de FAQs o dudas generales ---
   if (await handleFAQs(from, userMessage)) return true;
@@ -1389,66 +1358,10 @@ if (context.estado === "EsperandoDudas") {
     }
   }
 
-
-
-  // Otros casos: enviar consulta a OpenAI para respuestas adicionales
-  try {
-    function getCacheKey(query) {
-      return query.toLowerCase();
-    }
-    async function getResponseFromOpenAI(query) {
-      const contextoPaquetes = construirContexto();
-      const fullQuery = `
-  ${contextoPaquetes}
-  
-  El cliente dice: "${query}"
-  Responde de forma clara, profesional y cercana, utilizando el contexto proporcionado.
-      `;
-      const key = getCacheKey(fullQuery);
-      const cachedResponse = responseCache.get(key);  // Uso de la instancia global
-      if (cachedResponse) {
-        console.log("Usando respuesta en caché para la consulta:", fullQuery);
-        return cachedResponse;
-      }
-      const response = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [
-          { role: "system", content: "Eres un asesor de ventas amigable y cercano en servicios para eventos. Responde de forma breve, clara y natural." },
-          { role: "user", content: fullQuery }
-        ],
-        temperature: 0.7,
-        max_tokens: 80,
-      });
-      const answer = response.choices[0].message.content;
-      if (!answer || answer.trim() === "") {
-        throw new Error("Respuesta vacía");
-      }
-      responseCache.set(key, answer);
-      return answer;
-    }
-    async function handleOpenAIResponse(from, userMessage) {
-      try {
-        const answer = await getResponseFromOpenAI(userMessage);
-        await sendWhatsAppMessage(from, answer);
-        if (answer.includes("Lamentablemente, la información proporcionada no incluye detalles")) {
-          const adminMessage = `El cliente ${from} preguntó: "${userMessage}" y la respuesta fue: "${answer}". Se requiere intervención humana.`;
-          await sendWhatsAppMessage(process.env.ADMIN_WHATSAPP_NUMBER, adminMessage);
-        }
-      } catch (error) {
-        console.error("Error de OpenAI:", error.message);
-        const adminMessage = `El cliente ${from} preguntó: "${userMessage}" y OpenAI no pudo responder. Se requiere intervención humana.`;
-        await sendWhatsAppMessage(process.env.ADMIN_WHATSAPP_NUMBER, adminMessage);
-        await sendWhatsAppMessage(from, "Tu consulta requiere la intervención de un agente. Pronto nos pondremos en contacto contigo.");
-      }
-    }
-    await handleOpenAIResponse(from, userMessage);
-    return true;
-  } catch (error) {
-    console.error("❌ Error en handleUserMessage:", error.message);
-    await sendWhatsAppMessage(from, "😔 Perdona, ocurrió un error inesperado. Por favor, inténtalo de nuevo.");
-    return false;
-  }
 }
+
+
+
 
 // Iniciar el servidor
 app.listen(PORT, () => {
