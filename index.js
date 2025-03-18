@@ -1228,6 +1228,19 @@ if (context.estado === "ConfirmarAgregarCarritoShotsCambio") {
 /* ============================================
    Estado: EsperandoDudas – Manejo de dudas, agregar o quitar servicios, FAQs, etc.
    ============================================ */
+   //Manipula el Boton "Continuar"
+   if (context.estado === "EsperandoDudas" && messageLower === "continuar") {
+    // Lógica para continuar con el flujo
+    await sendMessageWithTypingWithState(
+      from,
+      "¡Perfecto! Para continuar, por favor indícame la fecha de tu evento (Formato DD/MM/AAAA) 📆.",
+      2000,
+      "EsperandoFecha" // Cambia al siguiente estado
+    );
+    context.estado = "EsperandoFecha"; // Actualiza el estado
+    return true;
+  }
+  
 if (context.estado === "EsperandoDudas") {
   // --- Manejo de quitar servicios ---
   if (messageLower.includes("quitar")) {
@@ -1357,18 +1370,6 @@ if (context.estado === "EsperandoDudas") {
     }
   }
 
-      //Manipula el Boton "Continuar"
-      if (context.estado === "EsperandoDudas" && messageLower === "continuar") {
-        // Lógica para continuar con el flujo
-        await sendMessageWithTypingWithState(
-          from,
-          "¡Perfecto! Para continuar, por favor indícame la fecha de tu evento (Formato DD/MM/AAAA) 📆.",
-          2000,
-          "EsperandoFecha" // Cambia al siguiente estado
-        );
-        context.estado = "EsperandoFecha"; // Actualiza el estado
-        return true;
-      }
   
 
   
