@@ -948,10 +948,19 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   await delay(2000);
   await sendMessageWithTypingWithState(
     from,
-    "Escribe: \n\n*'Agregar'* para agregar otro servicio \n\n*'Quitar'* para eliminar un servicio \n\n*'Me interesa'* para continuar 😊",
+    "Para modificar tu cotizacion, Escribe: \n\n*'Agregar y lo que quieras agregar'* para agregar otro servicio \n\n*'Quitar y lo que desees quitar'* para eliminar un servicio 😊",
     2000,
     context.estado
   );
+    
+// Enviar mensaje con botón "CONTINUAR"
+await sendInteractiveMessage(
+  from,
+  "O toca el botón para continuar:",
+  [
+    { id: "continuar", title: "CONTINUAR" } 
+  ]
+);
   context.estado = "EsperandoDudas";
 }
 
@@ -1273,7 +1282,7 @@ if (context.estado === "EsperandoDudas") {
       await actualizarCotizacion(from, context, "¡Cotización actualizada!");
       return true;
     } else {
-      await sendWhatsAppMessage(from, "No entendí qué servicio deseas quitar. Por favor, especifica el servicio que deseas eliminar.");
+      await sendWhatsAppMessage(from, "No entendí qué servicio deseas quitar. Por favor, escribe: 'Quitar y el servicio que deseas quitar'");
       return true;
     }
   }
@@ -1334,6 +1343,19 @@ if (context.estado === "EsperandoDudas") {
         await sendWhatsAppMessage(from, "La cantidad a agregar debe ser mayor que cero.");
         return true;
       }
+ 
+      //Manipula el Boton "Continuar"
+      if (context.estado === "EsperandoDudas" && messageLower === "continuar") {
+        // Lógica para continuar con el flujo
+        await sendMessageWithTypingWithState(
+          from,
+          "¡Perfecto! Para continuar, por favor indícame la fecha de tu evento (Formato DD/MM/AAAA) 📆.",
+          2000,
+          "EsperandoFecha" // Cambia al siguiente estado
+        );
+        context.estado = "EsperandoFecha"; // Actualiza el estado
+        return true;
+      }
 
      
 
@@ -1345,7 +1367,7 @@ if (context.estado === "EsperandoDudas") {
       return true;
     } else {
       // Si no se reconoce el servicio a agregar
-      await sendWhatsAppMessage(from, "No entendí qué servicio deseas agregar. Por favor, especifica el servicio que deseas incluir.");
+      await sendWhatsAppMessage(from, "No entendí qué servicio deseas agregar. Por favor, escribe: 'Agregar y el servicio que deseas agregar'");
       return true;
     }
   }
@@ -1360,6 +1382,7 @@ if (context.estado === "EsperandoDudas") {
 }
 
   // 6. Procesar la fecha del evento
+  
   if (context.estado === "EsperandoFecha") {
     if (!isValidDate(userMessage)) {
       await sendWhatsAppMessage(from, "😕 El formato de la fecha es incorrecto. Por favor utiliza el formato DD/MM/AAAA.");
