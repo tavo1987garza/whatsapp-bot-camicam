@@ -1344,21 +1344,6 @@ if (context.estado === "EsperandoDudas") {
         return true;
       }
  
-      //Manipula el Boton "Continuar"
-      if (context.estado === "EsperandoDudas" && messageLower === "continuar") {
-        // Lógica para continuar con el flujo
-        await sendMessageWithTypingWithState(
-          from,
-          "¡Perfecto! Para continuar, por favor indícame la fecha de tu evento (Formato DD/MM/AAAA) 📆.",
-          2000,
-          "EsperandoFecha" // Cambia al siguiente estado
-        );
-        context.estado = "EsperandoFecha"; // Actualiza el estado
-        return true;
-      }
-
-     
-
       
       // Se agrega el servicio a la cotización
       context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `${servicioAAgregar} ${cantidadAAgregar}`;
@@ -1371,6 +1356,19 @@ if (context.estado === "EsperandoDudas") {
       return true;
     }
   }
+
+      //Manipula el Boton "Continuar"
+      if (context.estado === "EsperandoDudas" && messageLower === "continuar") {
+        // Lógica para continuar con el flujo
+        await sendMessageWithTypingWithState(
+          from,
+          "¡Perfecto! Para continuar, por favor indícame la fecha de tu evento (Formato DD/MM/AAAA) 📆.",
+          2000,
+          "EsperandoFecha" // Cambia al siguiente estado
+        );
+        context.estado = "EsperandoFecha"; // Actualiza el estado
+        return true;
+      }
   
 
   
