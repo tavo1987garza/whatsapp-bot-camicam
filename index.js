@@ -122,6 +122,13 @@ Responde de forma profesional, clara, concisa y persuasiva, como un vendedor exp
 }
 
 // Función para calcular la cotización y retornar los servicios reconocidos
+function normalizarTexto(texto) {
+  return texto
+    .normalize("NFD") // Normaliza caracteres con tildes
+    .replace(/[\u0300-\u036f]/g, "") // Elimina tildes
+    .toLowerCase(); // Convierte a minúsculas
+}
+
 function calculateQuotation(servicesText) {
   // Diccionario de precios
   const prices = {
@@ -131,7 +138,7 @@ function calculateQuotation(servicesText) {
     "carrito de shots con alcohol": 2800,
     "carrito de shots sin alcohol": 2200,
     "niebla de piso": 3000,
-    "lluvia matálica": 2000,
+    "lluvia metálica": 2000, // Asegúrate de que esté escrito correctamente
     "scrapbook": 1300,
     "audio guest book": 2000,
     "letras gigantes": 400 // precio por letra
@@ -147,7 +154,10 @@ function calculateQuotation(servicesText) {
   };
 
   // Separar servicios (se asume que están separados por comas)
-  const servicesArr = servicesText.split(',').map(s => s.trim().toLowerCase()).filter(s => s.length > 0);
+  const servicesArr = servicesText
+    .split(',')
+    .map(s => normalizarTexto(s.trim())) // Normaliza cada servicio
+    .filter(s => s.length > 0);
 
   let subtotal = 0;
   let serviceCount = 0; // para aplicar descuentos
@@ -193,7 +203,7 @@ function calculateQuotation(servicesText) {
         const precioLetras = qty * prices["letras gigantes"];
         subtotal += precioLetras;
         serviceCount++;
-        details.push(`🔸 *${qty} Letras Gigantes* (5 Horas): $${precioLetras.toLocaleString()}`);
+        details.push(`🔸 *${qty} Letras Gigantes (5 Horas)*: $${precioLetras.toLocaleString()}`);
         servicesRecognized.push("letras gigantes");
         letrasCount = qty;
       } else {
@@ -243,7 +253,7 @@ function calculateQuotation(servicesText) {
         servicesRecognized.push(baseService);
       } else {
         console.warn(`Servicio no reconocido: ${service}`);
-        details.push(`🔸 ${service}: servicio no reconocido`);
+        details.push(`🔸 ${service}: No reconocido. ¿Quisiste decir "lluvia metálica"?`);
       }
     }
   }
@@ -287,7 +297,6 @@ function calculateQuotation(servicesText) {
     servicesRecognized
   };
 }
-
 
 
 // Rutas (webhook, raíz, etc.)
