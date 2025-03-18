@@ -414,7 +414,7 @@ const faqs = [
     answer: "⏰ Puedes separar tu fecha en cualquier momento, siempre y cuando esté disponible.\n\nSeparamos fecha con $500, el resto puede ser ese dia, al inicio del evento.\n\nUna vez acreditado el anticipo solo pedire Nombre y los datos del evento, lleno tu contrato y te envío foto.\n\nSi tienes una vuelta para el centro de Monterrey me avisas para entregarte tu contrato original"    
   },
   { 
-    question: /me interesa|/i, 
+    question: /me interesa/i, 
     answer: "Genial!! \n\nPara continuar por favor indicame la fecha de tu evento para revisar disponibilidad "    
   },
   { 
@@ -1395,63 +1395,7 @@ if (context.estado === "EsperandoDudas") {
 
 
 
-  // Otros casos: enviar consulta a OpenAI para respuestas adicionales
-  try {
-    function getCacheKey(query) {
-      return query.toLowerCase();
-    }
-    async function getResponseFromOpenAI(query) {
-      const contextoPaquetes = construirContexto();
-      const fullQuery = `
-  ${contextoPaquetes}
-  
-  El cliente dice: "${query}"
-  Responde de forma clara, profesional y cercana, utilizando el contexto proporcionado.
-      `;
-      const key = getCacheKey(fullQuery);
-      const cachedResponse = responseCache.get(key);  // Uso de la instancia global
-      if (cachedResponse) {
-        console.log("Usando respuesta en caché para la consulta:", fullQuery);
-        return cachedResponse;
-      }
-      const response = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [
-          { role: "system", content: "Eres un asesor de ventas amigable y cercano en servicios para eventos. Responde de forma breve, clara y natural." },
-          { role: "user", content: fullQuery }
-        ],
-        temperature: 0.7,
-        max_tokens: 80,
-      });
-      const answer = response.choices[0].message.content;
-      if (!answer || answer.trim() === "") {
-        throw new Error("Respuesta vacía");
-      }
-      responseCache.set(key, answer);
-      return answer;
-    }
-    async function handleOpenAIResponse(from, userMessage) {
-      try {
-        const answer = await getResponseFromOpenAI(userMessage);
-        await sendWhatsAppMessage(from, answer);
-        if (answer.includes("Lamentablemente, la información proporcionada no incluye detalles")) {
-          const adminMessage = `El cliente ${from} preguntó: "${userMessage}" y la respuesta fue: "${answer}". Se requiere intervención humana.`;
-          await sendWhatsAppMessage(process.env.ADMIN_WHATSAPP_NUMBER, adminMessage);
-        }
-      } catch (error) {
-        console.error("Error de OpenAI:", error.message);
-        const adminMessage = `El cliente ${from} preguntó: "${userMessage}" y OpenAI no pudo responder. Se requiere intervención humana.`;
-        await sendWhatsAppMessage(process.env.ADMIN_WHATSAPP_NUMBER, adminMessage);
-        await sendWhatsAppMessage(from, "Tu consulta requiere la intervención de un agente. Pronto nos pondremos en contacto contigo.");
-      }
-    }
-    await handleOpenAIResponse(from, userMessage);
-    return true;
-  } catch (error) {
-    console.error("❌ Error en handleUserMessage:", error.message);
-    await sendWhatsAppMessage(from, "😔 Perdona, ocurrió un error inesperado. Por favor, inténtalo de nuevo.");
-    return false;
-  }
+
 }
 
 // Iniciar el servidor
