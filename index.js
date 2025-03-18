@@ -952,15 +952,14 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
     2000,
     context.estado
   );
-    
-// Enviar mensaje con botón "CONTINUAR"
-await sendInteractiveMessage(
-  from,
-  "O toca el botón para continuar:",
-  [
-    { id: "continuar", title: "CONTINUAR" } 
-  ]
-);
+  // Enviar mensaje con botón "CONTINUAR"
+  await sendInteractiveMessage(
+    from,
+    "O toca el botón para continuar:",
+    [
+      { id: "continuar", title: "CONTINUAR" } 
+    ]
+  );
   context.estado = "EsperandoDudas";
 }
 
@@ -1225,23 +1224,23 @@ if (context.estado === "ConfirmarAgregarCarritoShotsCambio") {
 }
 
 
+
+  // Manejar la acción del botón "CONTINUAR"
+  if (messageLower === "continuar") {
+    await sendMessageWithTypingWithState(
+      from,
+      "Para continuar, por favor indícame la fecha de tu evento (Formato DD/MM/AAAA) 📆.",
+      2000, // Retraso de 2 segundos
+      "EsperandoContinuar"
+    );
+    context.estado = "EsperandoFecha"; // Cambiar al estado para solicitar la fecha
+    return true;
+  }
+
 /* ============================================
    Estado: EsperandoDudas – Manejo de dudas, agregar o quitar servicios, FAQs, etc.
    ============================================ */
-   //Manipula el Boton "Continuar"
-   if (context.estado === "EsperandoDudas" && messageLower === "continuar") {
-    // Lógica para continuar con el flujo
-    await sendMessageWithTypingWithState(
-      from,
-      "¡Perfecto! Para continuar, por favor indícame la fecha de tu evento (Formato DD/MM/AAAA) 📆.",
-      2000,
-      "EsperandoFecha" // Cambia al siguiente estado
-    );
-    context.estado = "EsperandoFecha"; // Actualiza el estado
-    return true;
-  }
-  
-if (context.estado === "EsperandoDudas") {
+ if (context.estado === "EsperandoDudas") {
   // --- Manejo de quitar servicios ---
   if (messageLower.includes("quitar")) {
     const serviciosDisponibles = [
@@ -1414,11 +1413,9 @@ if (context.estado === "EsperandoDudas") {
       return true;
     }
   }
-
-
-
-
 }
+
+
 
 // Iniciar el servidor
 app.listen(PORT, () => {
