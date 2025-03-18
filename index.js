@@ -793,7 +793,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
   const context = userContext[from];
 
   // Manejar la acción del botón "CONTINUAR"
-  if (context.estado === "EsperandoContinuar" && messageLower === "continuar") {
+  if (context.estado === "EsperandoDudas" && messageLower === "continuar") {
     await solicitarFecha(from, context); // Solicitar la fecha del evento
     return true; // Salir de la función después de manejar la acción
   }
