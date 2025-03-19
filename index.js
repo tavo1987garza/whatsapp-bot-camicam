@@ -1078,6 +1078,25 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
         return true; // Detener el flujo actual y esperar la respuesta del cliente.
       }
     } 
+    // Verificar si se incluye "cabina" sin especificar tipo (de fotos o 360)
+    if (/cabina(?!\s*(de fotos|360))/i.test(context.serviciosSeleccionados)) {
+       context.faltaTipoCabina = true;
+       // Eliminar la entrada "cabina" sin especificar de la cotización
+       context.serviciosSeleccionados = context.serviciosSeleccionados
+         .split(",")
+         .map(s => s.trim())
+         .filter(s => !/^cabina$/i.test(s))
+         .join(", ");
+  
+        context.estado = "EsperandoTipoCabina";
+        await sendWhatsAppMessage(from, "¿Deseas agregar Cabina de fotos o Cabina 360?");
+        return true;
+    }
+
+
+    
+
+   
   
     // Priorizar preguntar primero por las letras si faltan
     if (context.faltanLetras) {
@@ -1285,6 +1304,98 @@ if (context.estado === "ConfirmarAgregarCarritoShotsCambio") {
   }
 }
 
+/* ============================================
+   Estado: EsperandoTipoCabina
+   ============================================ */
+   if (context.estado === "EsperandoTipoCabina") {
+    const respuesta = userMessage.toLowerCase();
+    let varianteSeleccionada = "";
+  
+    // Mapear las posibles respuestas: "fotos" o "inflable" para cabina de fotos;
+    // "360" o "giratoria" para cabina 360.
+    if (respuesta.includes("fotos") || respuesta.includes("inflable")) {
+      varianteSeleccionada = "cabina de fotos";
+    } else if (respuesta.includes("360") || respuesta.includes("giratoria")) {
+      varianteSeleccionada = "cabina 360";
+    } else {
+      await sendWhatsAppMessage(from, "Por favor, responde 'fotos' o '360' para seleccionar el tipo de cabina.");
+      return true;
+    }
+    
+    // Verificar si la variante seleccionada ya está en la cotización.
+    if (context.serviciosSeleccionados.toLowerCase().includes(varianteSeleccionada)) {
+      // Si ya está, se determina la otra variante.
+      let otraVariante = (varianteSeleccionada === "cabina de fotos")
+        ? "cabina 360"
+        : "cabina de fotos";
+        
+      // Si la otra variante ya está agregada, se notifica que se requiere intervención.
+      if (context.serviciosSeleccionados.toLowerCase().includes(otraVariante)) {
+        await sendWhatsAppMessage(from, `Ya tienes ambas variantes de cabina en tu cotización. Por favor, contacta a nuestro administrador para mayor asistencia.`);
+        sendMessageToAdmin("El cliente ha intentado agregar duplicados de cabina.");
+        context.estado = "EsperandoDudas";
+        return true;
+      } else {
+        // Se pregunta si desea agregar la otra variante.
+        context.estado = "ConfirmarAgregarCabinaCambio";
+        context.cabinaToAgregar = otraVariante;
+        await sendWhatsAppMessage(from, `Ya tienes agregada ${varianteSeleccionada} en tu cotización.\n¿Deseas agregar ${otraVariante}?`);
+        return true;
+      }
+    } else {
+      // Si la variante seleccionada no está en la cotización, se agrega.
+      context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + varianteSeleccionada;
+      await sendWhatsAppMessage(from, `✅ Se ha seleccionado ${varianteSeleccionada}.`);
+  
+      // Verificar si aún faltan otros datos (prioridad: letras, chisperos, carrito de shots)
+      if (/letras(?:\s*gigantes)?(?!\s*\d+)/i.test(context.serviciosSeleccionados)) {
+        context.estado = "EsperandoCantidadLetras";
+        await sendWhatsAppMessage(from, "¿Cuántas letras necesitas? 🔠");
+        return true;
+      }
+      if (/chisperos(?!\s*\d+)/i.test(context.serviciosSeleccionados)) {
+        context.estado = "EsperandoCantidadChisperos";
+        await sendWhatsAppMessage(from, "¿Cuántos chisperos ocupas? 🔥 Opciones: 2, 4, 6, 8, 10, etc");
+        return true;
+      }
+      if (context.faltaVarianteCarritoShots) {
+        context.estado = "EsperandoTipoCarritoShots";
+        await sendWhatsAppMessage(from, "¿El carrito de shots lo deseas CON alcohol o SIN alcohol? 🍹");
+        return true;
+      }
+  
+      // Si ya se tienen todos los datos, se actualiza la cotización.
+      await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
+      context.estado = "EsperandoDudas";
+      return true;
+    }
+  }
+  
+
+  /* ============================================
+   Estado: ConfirmarAgregarCabinaCambio
+   ============================================ */
+if (context.estado === "ConfirmarAgregarCabinaCambio") {
+  const respuesta = userMessage.toLowerCase();
+  if (respuesta.includes("si")) {
+    // Se agrega la otra variante.
+    let variante = context.cabinaToAgregar;
+    if (!context.serviciosSeleccionados.toLowerCase().includes(variante)) {
+      context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + variante;
+      await sendWhatsAppMessage(from, `✅ Se ha agregado ${variante}.`);
+      await actualizarCotizacion(from, context, "¡Cotización actualizada!");
+    }
+    context.estado = "EsperandoDudas";
+    return true;
+  } else {
+    // Si la respuesta no es afirmativa, se notifica al administrador para intervención manual.
+    await sendWhatsAppMessage(from, "Entendido. Se requiere intervención para este caso.");
+    sendMessageToAdmin("El cliente intentó agregar duplicados de cabina, pero no confirmó la adición de la otra variante correctamente.");
+    context.estado = "EsperandoDudas";
+    return true;
+  }
+}
+
 
 
 
@@ -1377,6 +1488,13 @@ if (context.estado === "ConfirmarAgregarCarritoShotsCambio") {
     await sendWhatsAppMessage(from, "¿El carrito de shots lo deseas CON alcohol o SIN alcohol? 🍹");
     return true;
     }
+
+    // Caso especial: "agregar cabina" sin especificar tipo
+  if (messageLower.includes("agregar cabina") && !messageLower.includes("cabina de fotos") && !messageLower.includes("cabina 360")) {
+    context.estado = "EsperandoTipoCabina";
+    await sendWhatsAppMessage(from, "¿Deseas agregar Cabina de fotos o Cabina 360?");
+    return true;
+  }
     
     if (servicioAAgregar) {
       // Verificar si ya está agregado en la cotización
