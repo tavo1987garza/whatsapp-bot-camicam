@@ -897,15 +897,7 @@ if (context.estado === "EsperandoSubtipoOtroEvento") {
   await handleOtherEvent(from, context, messageLower);
   return true;
 }
-  /*// Enviar botones para elegir entre paquete sugerido o armar paquete
-  await sendInteractiveMessage(from, `¡Qué emoción! 👏👏\n\n¡Muchas felicidades por tu celebración! ✨ \n\nAhora, ¿qué te gustaría hacer?`, [
-    { id: "paquete_sugerido", title: "Ver paquete sugerido" },
-    { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
-  ]);
-  context.estado = "OpcionesSeleccionadas";
-  return true;
-}*/
-
+  
 // 🟢 3. Opciones: paquete sugerido o armar paquete
 if (context.estado === "OpcionesSeleccionadas") {
   console.log("Valor recibido en OpcionesSeleccionadas:", messageLower);
