@@ -982,11 +982,11 @@ function contarLetras(texto) {
  * basadas en los servicios seleccionados.
  *
  * Se aplican dos reglas:
- * 1. Si se seleccionó "cabina de fotos" pero no "scrapbook", se sugiere agregar Scrapbook.
+ * 1. Si se seleccionó "cabina de fotos" pero no "scrapbook", se sugiere agregar Scrapbook y se activa un flag para mostrar su video.
  * 2. En caso contrario (o si ya se agregó Scrapbook), y si se tienen exactamente 2 servicios,
  *    se sugiere agregar un tercer o cuarto servicio para obtener un mayor descuento.
  *
- * Además, se utiliza una bandera (context.upsellSuggested) para evitar repetir la sugerencia.
+ * Se utiliza la bandera (context.upsellSuggested) para evitar repetir la sugerencia.
  */
 function checkUpsellSuggestions(context) {
   // Si ya se sugirió en este flujo, no volver a sugerir para no ser intrusivos.
@@ -1009,6 +1009,8 @@ function checkUpsellSuggestions(context) {
   // Regla 1: Si se seleccionó "cabina de fotos" pero no "scrapbook"
   if (servicios.includes("cabina de fotos") && !servicios.includes("scrapbook")) {
     suggestions.push("👉 ¿Sabías que al agregar *Scrapbook* tu evento se verá aún más espectacular? ¡Además, podrías aprovechar un mayor descuento!");
+    // Activar flag para enviar el video del scrapbook
+    context.suggestScrapbookVideo = true;
   } else {
     // Regla 2: Si ya se agregó Scrapbook u otro servicio, y se tienen exactamente 2 servicios
     if (serviceCount === 2) {
@@ -1022,7 +1024,7 @@ function checkUpsellSuggestions(context) {
 
 /**
  * Función actualizada para recalcular y enviar la cotización,
- * integrando las sugerencias de upsell.
+ * integrando las sugerencias de upsell y mostrando el video del scrapbook si aplica.
  */
 async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   const cotizacion = calculateQuotation(context.serviciosSeleccionados);
@@ -1063,6 +1065,16 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
     const mensajeUpsell = upsellSuggestions.join("\n");
     await delay(2000);
     await sendMessageWithTypingWithState(from, mensajeUpsell, 2000, context.estado);
+    // Si se activó el flag, enviar el video del scrapbook
+    if (context.suggestScrapbookVideo) {
+      const scrapbookMedia = mediaMapping["scrapbook"];
+      if (scrapbookMedia && scrapbookMedia.videos && scrapbookMedia.videos.length > 0) {
+        await delay(2000);
+        await sendWhatsAppVideo(from, scrapbookMedia.videos[0]);
+      }
+      // Reiniciar el flag para no volver a sugerir en el mismo flujo
+      context.suggestScrapbookVideo = false;
+    }
   }
 
   await delay(2000);
@@ -1077,12 +1089,11 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
     from,
     "O toca el botón para continuar:",
     [
-      { id: "continuar", title: "CONTINUAR" } 
+      { id: "continuar", title: "CONTINUAR" }
     ]
   );
   context.estado = "EsperandoDudas";
 }
-
 
 
 
