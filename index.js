@@ -1215,7 +1215,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
         "No entendí tu respuesta. Por favor, selecciona el tipo de evento usando los botones.",
         2000,
         context.estado
-      );
+      ); 
       // Reenviar los botones para que el usuario elija nuevamente
       await sendInteractiveMessage(
         from,
