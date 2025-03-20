@@ -440,7 +440,7 @@ const faqs = [
   },
   { 
     question: /que es el scrapbook|scrapbook/i, 
-    answer: "📚 El Scrapbook es un álbum interactivo donde tus invitados se toman fotos y dejan mensajes para que recuerdes cada detalle.",
+    answer: "📚 El Scrapbook es un álbum interactivo donde tus invitados pegan una de las fotos de la cabina y escriben un lindo mensaje para que recuerdes cada detalle.",
     images: [
       "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-4.jpeg",
       "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-3.jpeg",
@@ -975,19 +975,24 @@ function contarLetras(texto) {
  * @param {object} context - Contexto de la conversación (incluye serviciosSeleccionados, estado, etc.)
  * @param {string} [mensajePreliminar] - Mensaje personalizado (opcional)
  */
+
+
 /**
  * Función que revisa el contexto actual y devuelve sugerencias de upsell
  * basadas en los servicios seleccionados.
  *
- * La idea es:
- * - Si el cliente ha agregado 2 servicios, sugerir que con 3 servicios se obtiene un 30% de descuento
- *   y con 4 servicios, un 40% de descuento.
- * - Además, se incluye una bandera en el contexto para evitar repetir la sugerencia excesivamente.
+ * Se aplican dos reglas:
+ * 1. Si se seleccionó "cabina de fotos" pero no "scrapbook", se sugiere agregar Scrapbook.
+ * 2. En caso contrario (o si ya se agregó Scrapbook), y si se tienen exactamente 2 servicios,
+ *    se sugiere agregar un tercer o cuarto servicio para obtener un mayor descuento.
+ *
+ * Además, se utiliza una bandera (context.upsellSuggested) para evitar repetir la sugerencia.
  */
 function checkUpsellSuggestions(context) {
   // Si ya se sugirió en este flujo, no volver a sugerir para no ser intrusivos.
   if (context.upsellSuggested) return [];
 
+  let suggestions = [];
   const servicios = context.serviciosSeleccionados.toLowerCase();
   const availableServices = [
     "cabina de fotos", "cabina 360", "lluvia de mariposas", "carrito de shots con alcohol",
@@ -995,31 +1000,28 @@ function checkUpsellSuggestions(context) {
     "scrapbook", "audio guest book", "letras gigantes", "chisperos"
   ];
 
+  // Contar la cantidad de servicios seleccionados
   let serviceCount = 0;
   availableServices.forEach(service => {
     if (servicios.includes(service)) serviceCount++;
   });
 
-  let suggestions = [];
-  if (serviceCount === 2) {
-    suggestions.push("¡Buen inicio! Si agregas un tercer servicio, obtendrás un 30% de descuento, y con 4 servicios, ¡hasta un 40%!");
-  }
-  // Puedes agregar otras reglas, por ejemplo:
-  // if (serviceCount === 1) {
-  //   suggestions.push("Agrega otro servicio y mejora tu descuento.");
-  // }
-  // Sugerencia 1: Si se seleccionó "cabina de fotos" pero no "scrapbook"
+  // Regla 1: Si se seleccionó "cabina de fotos" pero no "scrapbook"
   if (servicios.includes("cabina de fotos") && !servicios.includes("scrapbook")) {
     suggestions.push("👉 ¿Sabías que al agregar *Scrapbook* tu evento se verá aún más espectacular? ¡Además, podrías aprovechar un mayor descuento!");
+  } else {
+    // Regla 2: Si ya se agregó Scrapbook u otro servicio, y se tienen exactamente 2 servicios
+    if (serviceCount === 2) {
+      suggestions.push("¡Buen inicio! Si agregas un tercer servicio, obtendrás un 30% de descuento, y con 4 servicios, ¡hasta un 40%!");
+    }
   }
 
-  // Marcar que ya se realizó la sugerencia en este flujo para evitar repetición
   if (suggestions.length > 0) context.upsellSuggested = true;
   return suggestions;
 }
 
 /**
- * Función actualizada para recalcular y enviar la cotización, 
+ * Función actualizada para recalcular y enviar la cotización,
  * integrando las sugerencias de upsell.
  */
 async function actualizarCotizacion(from, context, mensajePreliminar = null) {
@@ -1081,7 +1083,6 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   context.estado = "EsperandoDudas";
 }
 
-  
 
 
 
