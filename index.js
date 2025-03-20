@@ -862,7 +862,7 @@ if (context.estado === "Contacto Inicial") {
   await delay(6000); // Retraso de 5 segundos antes de enviar los botones
   await sendInteractiveMessage(
     from,
-    "Para una mejor experiencia, por favor interactúa con los botones que te mostraré a continuación 😊\n\nSelecciona el tipo de evento que tienes: 👇",
+    "Qué tipo de evento tienes? 😊\n\nSelecciona una opción 👇",
     [
       { id: "evento_boda", title: "💍 Boda" },
       { id: "evento_xv", title: "🎉 XV Años" }
@@ -873,7 +873,7 @@ if (context.estado === "Contacto Inicial") {
   await delay(2000); // Retraso de 2 segundos antes de enviar el mensaje
   await sendMessageWithTypingWithState(
     from,
-    "¿Tu evento no está en la lista? No hay problema 😊\n\nEscribe qué tipo de evento estás organizando para sugerirte algún paquete.",
+    "O dime qué tipo de evento estás organizando? 🥳 ",
     2000,
     "Contacto Inicial"
   );
