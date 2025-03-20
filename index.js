@@ -1008,6 +1008,10 @@ function checkUpsellSuggestions(context) {
   // if (serviceCount === 1) {
   //   suggestions.push("Agrega otro servicio y mejora tu descuento.");
   // }
+  // Sugerencia 1: Si se seleccionó "cabina de fotos" pero no "scrapbook"
+  if (servicios.includes("cabina de fotos") && !servicios.includes("scrapbook")) {
+    suggestions.push("👉 ¿Sabías que al agregar *Scrapbook* tu evento se verá aún más espectacular? ¡Además, podrías aprovechar un mayor descuento!");
+  }
 
   // Marcar que ya se realizó la sugerencia en este flujo para evitar repetición
   if (suggestions.length > 0) context.upsellSuggested = true;
