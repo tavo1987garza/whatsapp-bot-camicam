@@ -738,6 +738,17 @@ async function deactivateTypingIndicator(to) {
   }
 }
 
+//Funcion para solicitar fecha
+async function solicitarFecha(from, context) {
+  await sendMessageWithTypingWithState(
+    from,
+    "Para continuar, por favor indícame la fecha de tu evento (Formato DD/MM/AAAA) 📆.",
+    2000, // Retraso de 2 segundos
+    context.estado
+  );
+  context.estado = "EsperandoFecha";
+}
+
 // Función para validar el formato de la fecha (DD/MM/AAAA)
 function isValidDate(dateString) {
   const regex = /^\d{2}\/\d{2}\/\d{4}$/; // Formato DD/MM/AAAA
@@ -778,15 +789,6 @@ async function sendMessageToAdmin(message) {
 }
 
 
-async function solicitarFecha(from, context) {
-  await sendMessageWithTypingWithState(
-    from,
-    "Para continuar, por favor indícame la fecha de tu evento (Formato DD/MM/AAAA) 📆.",
-    2000, // Retraso de 2 segundos
-    context.estado
-  );
-  context.estado = "EsperandoFecha";
-}
 
 // Función para manejar el flujo de mensajes del usuario con tono natural
 async function handleUserMessage(from, userMessage, messageLower) {
@@ -821,34 +823,6 @@ async function handleUserMessage(from, userMessage, messageLower) {
     context.estado = "Contacto Inicial";
   }
 
-
-  // 0. Introduccion al cliente
-  if (context.estado === "Introduccion") {
-    // Mensaje inicial explicando que es un asistente virtual
-    await sendMessageWithTypingWithState(
-      from,
-      "¡Hola! 👋\n\nBienvenid@ a *Camicam Photobooth* 🤩",
-      2000, // Retraso de 3 segundos
-      "Introduccion"
-    );
-
-  await sendWhatsAppMessage(
-    from,
-    "Este es un asistente Virtual, donde podrás cotizar los servicios que necesitas en tu evento para que luzca Extraordinario",
-    2000,
-  )
-
-  await sendInteractiveMessage(
-    from,
-    "Para una mejor experiencia, por favor interactúa con los botones que te estaré mostrarando 👇 Empezamos?",
-    [
-      {id: "comenzar", title: "✨ SI ✨"}
-    ]
-  )
-   // Actualizar el estado del contexto
-   context.estado = "Contacto Inicial";
-   return true;
-}
 
 // 🟢 1. Inicio: dar la bienvenida y mostrar opciones con imagen
 if (context.estado === "Contacto Inicial") {
@@ -1253,9 +1227,8 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
    ============================================ */
 
    if (context.estado === "EsperandoConfirmacionPaquete") {
-    const messageLower = userMessage.toLowerCase();
-    // Si el usuario acepta el paquete recomendado
-    if (messageLower.includes("aceptar_paquete")) {
+    // Verificar si el usuario seleccionó "Sí, me interesa" (id: "aceptar_paquete")
+    if (messageLower === "aceptar_paquete") {
       await sendMessageWithTypingWithState(
         from,
         "¡Excelente! Hemos agregado el paquete recomendado a tu cotización.",
@@ -1270,8 +1243,8 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
       await solicitarFecha(from, context);
       return true;
     }
-    // Si el usuario prefiere armar su paquete personalizado
-    else if (messageLower.includes("armar_paquete")) {
+    // Si el usuario seleccionó "Armar mi paquete" (id: "armar_paquete")
+    else if (messageLower === "armar_paquete") {
       await sendMessageWithTypingWithState(
         from,
         "¡Perfecto! Vamos a armar tu paquete personalizado. Por favor, indícame los servicios que deseas incluir.",
@@ -1300,7 +1273,6 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
       return true;
     }
   }
-  
 
 /* ============================================
    Estado: EsperandoServicios
