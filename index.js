@@ -983,15 +983,12 @@ function contarLetras(texto) {
  *
  * Se aplican dos reglas:
  * 1. Si se seleccionó "cabina de fotos" pero no "scrapbook", se sugiere agregar Scrapbook y se activa un flag para mostrar su video.
- * 2. En caso contrario (o si ya se agregó Scrapbook), y si se tienen exactamente 2 servicios,
- *    se sugiere agregar un tercer o cuarto servicio para obtener un mayor descuento.
+ * 2. Si ya se agregó *Scrapbook* (o no se cumple la regla 1) y se tienen exactamente 2 servicios, se sugiere agregar un tercer servicio
+ *    (recordando que 3 servicios otorgan 30% de descuento y 4, hasta 40%).
  *
- * Se utiliza la bandera (context.upsellSuggested) para evitar repetir la sugerencia.
+ * Se utiliza la bandera (context.upsellSuggested) para evitar repetir la sugerencia, pero se reinicia si las condiciones cambian.
  */
 function checkUpsellSuggestions(context) {
-  // Si ya se sugirió en este flujo, no volver a sugerir para no ser intrusivos.
-  if (context.upsellSuggested) return [];
-
   let suggestions = [];
   const servicios = context.serviciosSeleccionados.toLowerCase();
   const availableServices = [
@@ -999,6 +996,12 @@ function checkUpsellSuggestions(context) {
     "carrito de shots sin alcohol", "niebla de piso", "lluvia matálica",
     "scrapbook", "audio guest book", "letras gigantes", "chisperos"
   ];
+
+  // Si previamente se había sugerido algo pero ahora ya se agregó el scrapbook,
+  // reiniciamos la bandera para permitir nuevas sugerencias.
+  if (context.upsellSuggested && servicios.includes("scrapbook")) {
+    context.upsellSuggested = false;
+  }
 
   // Contar la cantidad de servicios seleccionados
   let serviceCount = 0;
@@ -1011,14 +1014,14 @@ function checkUpsellSuggestions(context) {
     suggestions.push("👉 ¿Sabías que al agregar *Scrapbook* tu evento se verá aún más espectacular? ¡Además, podrías aprovechar un mayor descuento!");
     // Activar flag para enviar el video del scrapbook
     context.suggestScrapbookVideo = true;
-  } else {
-    // Regla 2: Si ya se agregó Scrapbook u otro servicio, y se tienen exactamente 2 servicios
-    if (serviceCount === 2) {
-      suggestions.push("¡Buen inicio! Si agregas un tercer servicio, obtendrás un 30% de descuento, y con 4 servicios, ¡hasta un 40%!");
-    }
+    context.upsellSuggested = true;
+  }
+  // Regla 2: Si ya se agregó Scrapbook (o no aplica la Regla 1) y se tienen exactamente 2 servicios
+  else if (serviceCount === 2) {
+    suggestions.push("¡Buen inicio! Si agregas un tercer servicio, obtendrás un 30% de descuento, y con 4 servicios, ¡hasta un 40%!");
+    context.upsellSuggested = true;
   }
 
-  if (suggestions.length > 0) context.upsellSuggested = true;
   return suggestions;
 }
 
@@ -1094,7 +1097,6 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   );
   context.estado = "EsperandoDudas";
 }
-
 
 
 /* ============================================
