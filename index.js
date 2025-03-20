@@ -1386,9 +1386,9 @@ if (context.estado === "ConfirmarAgregarCarritoShotsCambio") {
   
     // Mapear las posibles respuestas: "fotos" o "inflable" para cabina de fotos;
     // "360" o "giratoria" para cabina 360.
-    if (respuesta.includes("fotos") || respuesta.includes("inflable") || respuesta.includes("cabina de fotos") || respuesta.includes("cabina inflable")) {
+    if (respuesta.includes("fotos") || respuesta.includes("inflable") || respuesta.includes("Cabina de fotos") || respuesta.includes("Cabina inflable")) {
       varianteSeleccionada = "cabina de fotos";
-    } else if (respuesta.includes("360") || respuesta.includes("giratoria") || respuesta.includes("cabina 360") || respuesta.includes("cabina giratoria")) {
+    } else if (respuesta.includes("360") || respuesta.includes("giratoria") || respuesta.includes("Cabina 360") || respuesta.includes("Cabina giratoria")) {
       varianteSeleccionada = "cabina 360";
     } else {
       await sendWhatsAppMessage(from, "Por favor, responde 'fotos' o '360' para seleccionar el tipo de cabina.");
