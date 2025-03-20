@@ -878,7 +878,8 @@ if (context.estado === "Contacto Inicial") {
  // 2. Capturar el tipo de evento
  if (context.estado === "EsperandoTipoEvento") {
   // Se invoca la función que procesa la elección del cliente
-  await handleTipoEvento(from, userMessage, context);
+  const messageLower = userMessage.toLowerCase();
+  await handleTipoEvento(from, messageLower, context);
   return true;
 }
   /*// Enviar botones para elegir entre paquete sugerido o armar paquete
@@ -1033,7 +1034,7 @@ async function handleOtherEvent(from, context, userMessage) {
 
   // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
   await sendInteractiveMessage(from, "Elige una opción:", [
-    { id: "aceptar_paquete", title: "Sí, quiero este paquete" },
+    { id: "aceptar_paquete", title: "Sí, me interesa" },
     { id: "armar_paquete", title: "Armar mi paquete" }
   ]);
 
