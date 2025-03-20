@@ -757,14 +757,20 @@ function checkAvailability(dateString) {
   return !occupiedDates.includes(dateString);
 }
 
-function sendMessageToAdmin(message) {
+async function sendMessageToAdmin(message) {
   const adminNumber = process.env.ADMIN_WHATSAPP_NUMBER;
   if (!adminNumber) {
     console.error("El número de WhatsApp del administrador no está definido en .env");
     return;
   }
-  sendWhatsAppMessage(adminNumber, message);
+  try {
+    await sendWhatsAppMessage(adminNumber, message);
+    console.log("Mensaje enviado al administrador:", message);
+  } catch (error) {
+    console.error("Error al enviar mensaje al administrador:", error);
+  }
 }
+
 
 async function solicitarFecha(from, context) {
   await sendMessageWithTypingWithState(
@@ -1006,7 +1012,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   await delay(2000);
   await sendMessageWithTypingWithState(
     from,
-    "Para modificar tu cotizacion, Escribe: \n\n*'Agregar y lo que quieras agregar'* para agregar otro servicio \n\n*'Quitar y lo que desees quitar'* para eliminar un servicio 😊",
+    "Para modificar tu cotizacion, Escribe: \n\n'*Agregar* y el nombre del servicio que quieras agregar' ó\n\n'*Quitar* y el nombre del servicio que quieras quitar' 😊",
     2000,
     context.estado
   );
@@ -1582,7 +1588,68 @@ if (context.estado === "ConfirmarAgregarCabinaCambio") {
       return true;
     }
   }
+
+  
+  // Otros casos: enviar consulta a OpenAI para respuestas adicionales
+  try {
+    function getCacheKey(query) {
+      return query.toLowerCase();
+    }
+    async function getResponseFromOpenAI(query) {
+      const contextoPaquetes = construirContexto();
+      const fullQuery = `
+  ${contextoPaquetes}
+  
+  El cliente dice: "${query}"
+  Responde de forma clara, profesional y cercana, utilizando el contexto proporcionado.
+      `;
+      const key = getCacheKey(fullQuery);
+      const cachedResponse = responseCache.get(key);  // Uso de la instancia global
+      if (cachedResponse) {
+        console.log("Usando respuesta en caché para la consulta:", fullQuery);
+        return cachedResponse;
+      }
+      const response = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [
+          { role: "system", content: "Eres un asesor de ventas amigable y cercano en servicios para eventos. Responde de forma breve, clara y natural." },
+          { role: "user", content: fullQuery }
+        ],
+        temperature: 0.7,
+        max_tokens: 80,
+      });
+      const answer = response.choices[0].message.content;
+      if (!answer || answer.trim() === "") {
+        throw new Error("Respuesta vacía");
+      }
+      responseCache.set(key, answer);
+      return answer;
+    }
+    async function handleOpenAIResponse(from, userMessage) {
+      try {
+        const answer = await getResponseFromOpenAI(userMessage);
+        await sendWhatsAppMessage(from, answer);
+        if (answer.includes("Lamentablemente, la información proporcionada no incluye detalles")) {
+          const adminMessage = `El cliente ${from} preguntó: "${userMessage}" y la respuesta fue: "${answer}". Se requiere intervención humana.`;
+          await sendWhatsAppMessage(process.env.ADMIN_WHATSAPP_NUMBER, adminMessage);
+        }
+      } catch (error) {
+        console.error("Error de OpenAI:", error.message);
+        const adminMessage = `El cliente ${from} preguntó: "${userMessage}" y OpenAI no pudo responder. Se requiere intervención humana.`;
+        await sendWhatsAppMessage(process.env.ADMIN_WHATSAPP_NUMBER, adminMessage);
+        await sendWhatsAppMessage(from, "Tu consulta requiere la intervención de un agente. Pronto nos pondremos en contacto contigo.");
+      }
+    }
+    await handleOpenAIResponse(from, userMessage);
+    return true;
+  } catch (error) {
+    console.error("❌ Error en handleUserMessage:", error.message);
+    await sendWhatsAppMessage(from, "😔 Perdona, ocurrió un error inesperado. Por favor, inténtalo de nuevo.");
+    return false;
+  }
 }
+
+
 
 
 
