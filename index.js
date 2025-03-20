@@ -742,7 +742,11 @@ async function deactivateTypingIndicator(to) {
 function isValidDate(dateString) {
   const regex = /^\d{2}\/\d{2}\/\d{4}$/; // Formato DD/MM/AAAA
   if (!regex.test(dateString)) return false;
+
+  // Extraer día, mes y año
   const [day, month, year] = dateString.split('/').map(Number);
+
+  // Validar que la fecha sea válida
   const date = new Date(year, month - 1, day);
   return (
     date.getFullYear() === year &&
@@ -753,10 +757,12 @@ function isValidDate(dateString) {
 
 // Función para verificar disponibilidad (simulada)
 function checkAvailability(dateString) {
-  const occupiedDates = ['15/02/2024', '20/02/2024'];
+  // Simulación de fechas ocupadas
+  const occupiedDates = ["15/02/2024", "20/02/2024"];
   return !occupiedDates.includes(dateString);
 }
 
+// Función para enviar mensjae al administrador
 async function sendMessageToAdmin(message) {
   const adminNumber = process.env.ADMIN_WHATSAPP_NUMBER;
   if (!adminNumber) {
@@ -1058,7 +1064,7 @@ async function handleOtherEvent(from, context, userMessage) {
   ]);
 
   // Actualizar el estado para manejar la respuesta en el siguiente flujo.
-  context.estado = "EsperandoConfirmacionPaqueteOtroEvento";
+  context.estado = "EsperandoConfirmacionPaquete";
 }
 
 
@@ -1211,7 +1217,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
       context.tipoEvento = "XV";
       await sendInteractiveMessage(
         from,
-        `¡Qué emoción! 👏👏\n\n¡Muchas felicidades por tu celebración! ✨\n\nAhora, ¿qué te gustaría hacer?`,
+        `¡Muchas felicidades por tu pronta celebración! ✨\n\n¿Cómo te puedo ayudar?`,
         [
           { id: "paquete_sugerido", title: "Ver paquete sugerido" },
           { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
@@ -1228,7 +1234,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
       context.paqueteRecomendado = recomendacion;
   
       // Enviar la recomendación de forma personalizada
-      const mensajeRecomendacion = `🎉 *${recomendacion.paquete}*\n${recomendacion.descripcion}\n\n¿Te gustaría conocer más detalles o agregar este paquete a tu cotización?`;
+      const mensajeRecomendacion = `🎉 *${recomendacion.paquete}*\n${recomendacion.descripcion}\n\n¿Te interesa? o prefieres armar tu propio paquete`;
       await sendMessageWithTypingWithState(from, mensajeRecomendacion, 2000, context.estado);
   
       // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
@@ -1238,15 +1244,15 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
       ]);
   
       // Actualizar el estado para manejar la respuesta en el siguiente flujo
-      context.estado = "EsperandoConfirmacionPaqueteOtroEvento";
+      context.estado = "EsperandoConfirmacionPaquete";
     }
   }
 
 /* ============================================
-   Estado: EsperandoConfirmacionPaqueteOtroEvento
+   Estado: EsperandoConfirmacionPaquete
    ============================================ */
 
-   if (context.estado === "EsperandoConfirmacionPaqueteOtroEvento") {
+   if (context.estado === "EsperandoConfirmacionPaquete") {
     const messageLower = userMessage.toLowerCase();
     // Si el usuario acepta el paquete recomendado
     if (messageLower.includes("aceptar_paquete")) {
@@ -1256,9 +1262,13 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
         2000,
         context.estado
       );
-      // Procede a solicitar la fecha del evento
-      await solicitarFecha(from, context);
+  
+      // Cambiar el estado a "EsperandoFecha" para solicitar la fecha del evento
       context.estado = "EsperandoFecha";
+  
+      // Solicitar la fecha del evento
+      await solicitarFecha(from, context);
+      return true;
     }
     // Si el usuario prefiere armar su paquete personalizado
     else if (messageLower.includes("armar_paquete")) {
@@ -1269,6 +1279,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
         context.estado
       );
       context.estado = "EsperandoServicios";
+      return true;
     }
     // En caso de no reconocer la respuesta, se reenvían los botones
     else {
@@ -1282,12 +1293,12 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
         from,
         "Elige una opción:",
         [
-          { id: "aceptar_paquete", title: "Sí, quiero este paquete" },
+          { id: "aceptar_paquete", title: "Sí, me interesa" },
           { id: "armar_paquete", title: "Armar mi paquete" }
         ]
       );
+      return true;
     }
-    return true;
   }
   
 
@@ -1816,18 +1827,41 @@ if (context.estado === "ConfirmarAgregarCabinaCambio") {
   // 🟢 6. Procesar la fecha del evento
   
   if (context.estado === "EsperandoFecha") {
+    // Validar el formato de la fecha (DD/MM/AAAA)
     if (!isValidDate(userMessage)) {
-      await sendWhatsAppMessage(from, "😕 El formato de la fecha es incorrecto. Por favor utiliza el formato DD/MM/AAAA.");
-      return true;
+      await sendMessageWithTypingWithState(
+        from,
+        "😕 El formato de la fecha es incorrecto. Por favor, utiliza el formato DD/MM/AAAA.",
+        2000,
+        context.estado
+      );
+      return true; // Mantener el estado en "EsperandoFecha" para volver a solicitar la fecha
     }
+  
+    // Verificar disponibilidad de la fecha (simulado)
     if (!checkAvailability(userMessage)) {
-      await sendWhatsAppMessage(from, "😔 Lo siento, esa fecha ya está reservada. Prueba con otra o contáctanos para más detalles.");
-      context.estado = "Finalizado";
-      return true;
+      await sendMessageWithTypingWithState(
+        from,
+        "😔 Lo siento, esa fecha ya está reservada. Prueba con otra o contáctanos para más detalles.",
+        2000,
+        context.estado
+      );
+      return true; // Mantener el estado en "EsperandoFecha" para volver a solicitar la fecha
     }
+  
+    // Si la fecha es válida y está disponible, guardarla en el contexto
     context.fecha = userMessage;
-    await sendWhatsAppMessage(from, "¡Perfecto! La fecha está disponible. Ahora, ¿podrías decirme en qué lugar se realizará tu evento? 🏢");
+  
+    // Cambiar el estado para solicitar el lugar del evento
     context.estado = "EsperandoLugar";
+  
+    // Solicitar el lugar del evento
+    await sendMessageWithTypingWithState(
+      from,
+      "¡Perfecto! La fecha está disponible. Ahora, ¿podrías decirme en qué lugar se realizará tu evento? 🏢",
+      2000,
+      context.estado
+    );
     return true;
   }
 
