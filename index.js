@@ -975,6 +975,49 @@ function contarLetras(texto) {
  * @param {object} context - Contexto de la conversación (incluye serviciosSeleccionados, estado, etc.)
  * @param {string} [mensajePreliminar] - Mensaje personalizado (opcional)
  */
+/**
+ * Función que revisa el contexto actual y devuelve sugerencias de upsell
+ * basadas en los servicios seleccionados.
+ *
+ * La idea es:
+ * - Si el cliente ha agregado 2 servicios, sugerir que con 3 servicios se obtiene un 30% de descuento
+ *   y con 4 servicios, un 40% de descuento.
+ * - Además, se incluye una bandera en el contexto para evitar repetir la sugerencia excesivamente.
+ */
+function checkUpsellSuggestions(context) {
+  // Si ya se sugirió en este flujo, no volver a sugerir para no ser intrusivos.
+  if (context.upsellSuggested) return [];
+
+  const servicios = context.serviciosSeleccionados.toLowerCase();
+  const availableServices = [
+    "cabina de fotos", "cabina 360", "lluvia de mariposas", "carrito de shots con alcohol",
+    "carrito de shots sin alcohol", "niebla de piso", "lluvia matálica",
+    "scrapbook", "audio guest book", "letras gigantes", "chisperos"
+  ];
+
+  let serviceCount = 0;
+  availableServices.forEach(service => {
+    if (servicios.includes(service)) serviceCount++;
+  });
+
+  let suggestions = [];
+  if (serviceCount === 2) {
+    suggestions.push("¡Buen inicio! Si agregas un tercer servicio, obtendrás un 30% de descuento, y con 4 servicios, ¡hasta un 40%!");
+  }
+  // Puedes agregar otras reglas, por ejemplo:
+  // if (serviceCount === 1) {
+  //   suggestions.push("Agrega otro servicio y mejora tu descuento.");
+  // }
+
+  // Marcar que ya se realizó la sugerencia en este flujo para evitar repetición
+  if (suggestions.length > 0) context.upsellSuggested = true;
+  return suggestions;
+}
+
+/**
+ * Función actualizada para recalcular y enviar la cotización, 
+ * integrando las sugerencias de upsell.
+ */
 async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   const cotizacion = calculateQuotation(context.serviciosSeleccionados);
   const cabecera = mensajePreliminar ? mensajePreliminar : "💰 *Tu cotización:*";
@@ -986,8 +1029,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   const mensajeResumen = `Subtotal: $${cotizacion.subtotal.toLocaleString()}\nDescuento (${cotizacion.discountPercent}%): -$${cotizacion.discountAmount.toLocaleString()}\n\n*TOTAL A PAGAR: $${cotizacion.total.toLocaleString()}*`;
   await sendMessageWithTypingWithState(from, mensajeResumen, 2000, context.estado);
 
-  // Envío de imágenes y videos solo para nuevos servicios (no se reenvían si ya fueron enviados)
-  await delay(4000);
+  // Envío de imágenes y videos para cada servicio, si no se han enviado antes
   if (cotizacion.servicesRecognized && cotizacion.servicesRecognized.length > 0) {
     for (const service of cotizacion.servicesRecognized) {
       if (mediaMapping[service] && (!context.mediosEnviados || !context.mediosEnviados.has(service))) {
@@ -1009,10 +1051,18 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
     }
   }
 
+  // Integrar las sugerencias de upsell de manera sutil
+  const upsellSuggestions = checkUpsellSuggestions(context);
+  if (upsellSuggestions.length > 0) {
+    const mensajeUpsell = upsellSuggestions.join("\n");
+    await delay(2000);
+    await sendMessageWithTypingWithState(from, mensajeUpsell, 2000, context.estado);
+  }
+
   await delay(2000);
   await sendMessageWithTypingWithState(
     from,
-    "Para modificar tu cotizacion, Escribe: \n\n'*Agregar* y el nombre del servicio que quieras agregar' ó\n\n'*Quitar* y el nombre del servicio que quieras quitar' 😊",
+    "Para modificar tu cotización, escribe: \n\n'*Agregar* y el nombre del servicio que quieras agregar' ó\n\n'*Quitar* y el nombre del servicio que quieras quitar' 😊",
     2000,
     context.estado
   );
@@ -1025,7 +1075,6 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
     ]
   );
   context.estado = "EsperandoDudas";
-
 }
 
   
