@@ -877,21 +877,18 @@ if (context.estado === "Contacto Inicial") {
 
  // 2. Capturar el tipo de evento
  if (context.estado === "EsperandoTipoEvento") {
-  if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
-    context.tipoEvento = "Boda";
-  } else if (messageLower.includes("xv") || messageLower.includes("quince")) {
-    context.tipoEvento = "XV";
-  } else {
-    context.tipoEvento = "Otro";
-  }
-  // Enviar botones para elegir entre paquete sugerido o armar paquete
+  // Se invoca la función que procesa la elección del cliente
+  await handleTipoEvento(from, userMessage, context);
+  return true;
+}
+  /*// Enviar botones para elegir entre paquete sugerido o armar paquete
   await sendInteractiveMessage(from, `¡Qué emoción! 👏👏\n\n¡Muchas felicidades por tu celebración! ✨ \n\nAhora, ¿qué te gustaría hacer?`, [
     { id: "paquete_sugerido", title: "Ver paquete sugerido" },
     { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
   ]);
   context.estado = "OpcionesSeleccionadas";
   return true;
-}
+}*/
 
 // 3. Opciones: paquete sugerido o armar paquete
 if (context.estado === "OpcionesSeleccionadas") {
@@ -978,13 +975,80 @@ function contarLetras(texto) {
 
 
 /**
+ * Función para identificar el subtipo de evento dentro de "Otro evento"
+ * y devolver una recomendación de paquete.
+ */
+function getOtherEventPackageRecommendation(userMessage) {
+  const mensaje = userMessage.toLowerCase();
+
+  // Detectar cumpleaños: se pueden buscar números o palabras como "cumpleaños"
+  if (/cumpleaños|birthday|\b\d+\b/.test(mensaje)) {
+    return {
+      paquete: "Paquete Cumpleaños",
+      descripcion: "Incluye letras gigantes personalizadas, números brillantes y una ambientación festiva perfecta para celebrar esa edad especial."
+    };
+  }
+  // Detectar revelación de género: se buscan palabras clave
+  else if (/revelación de género|revelacion|baby|oh baby|girl|boy/.test(mensaje)) {
+    return {
+      paquete: "Paquete Revelación",
+      descripcion: "Ideal para eventos de revelación de género, con letras decorativas y opciones que resaltan 'BABY', 'OH BABY' o 'GIRL BOY'."
+    };
+  }
+  // Detectar propuesta: palabras relacionadas con propuesta o 'marry me'
+  else if (/propuesta|pedir matrimonio|marry me/.test(mensaje)) {
+    return {
+      paquete: "Paquete MARRY ME",
+      descripcion: "Perfecto para una propuesta inolvidable, con letras románticas y personalizadas que dicen 'MARRY ME'."
+    };
+  }
+  // Detectar graduación: se buscan palabras como "grad", "class" o números de generación
+  else if (/graduación|grad|class|gen\b/.test(mensaje)) {
+    return {
+      paquete: "Paquete Graduación",
+      descripcion: "Ofrece letras gigantes modernas ideales para graduaciones, por ejemplo, 'CLASS 2025', 'GRAD 25' o 'GEN 2022'."
+    };
+  }
+  // Si no se detecta un subtipo específico
+  return {
+    paquete: "Paquete Personalizado",
+    descripcion: "Tenemos varias opciones personalizadas. ¿Podrías contarnos un poco más sobre tu evento para ofrecerte la mejor recomendación?"
+  };
+}
+
+/**
+ * Función para manejar la lógica cuando el usuario selecciona "Otro evento".
+ * Se solicita especificar el subtipo y se recomienda un paquete.
+ */
+async function handleOtherEvent(from, context, userMessage) {
+  // Obtener la recomendación basándonos en el mensaje del usuario.
+  const recomendacion = getOtherEventPackageRecommendation(userMessage);
+
+  // Guardar en el contexto el paquete recomendado para posteriores referencias.
+  context.paqueteRecomendado = recomendacion;
+
+  // Enviar la recomendación de forma personalizada.
+  const mensajeRecomendacion = `🎉 *${recomendacion.paquete}*\n${recomendacion.descripcion}\n\n¿Te gustaría conocer más detalles o agregar este paquete a tu cotización?`;
+  await sendMessageWithTypingWithState(from, mensajeRecomendacion, 2000, context.estado);
+
+  // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
+  await sendInteractiveMessage(from, "Elige una opción:", [
+    { id: "aceptar_paquete", title: "Sí, quiero este paquete" },
+    { id: "armar_paquete", title: "Armar mi paquete" }
+  ]);
+
+  // Actualizar el estado para manejar la respuesta en el siguiente flujo.
+  context.estado = "EsperandoConfirmacionPaqueteOtroEvento";
+}
+
+/**
  * Función que revisa el contexto actual y devuelve sugerencias de upsell
  * basadas en los servicios seleccionados.
  *
  * Se aplican dos reglas:
  * 1. Si se seleccionó "cabina de fotos" pero no "scrapbook", se sugiere agregar Scrapbook y se activa un flag para mostrar su video.
- * 2. Si ya se agregó *Scrapbook* (o no se cumple la regla 1) y se tienen exactamente 2 servicios, se sugiere agregar un tercer servicio
- *    (recordando que 3 servicios otorgan 30% de descuento y 4, hasta 40%).
+ * 2. Si ya se agregó *Scrapbook* (o no se cumple la regla 1) y se tienen exactamente 2 servicios,
+ *    se sugiere agregar un tercer servicio (recordando que 3 servicios otorgan 30% y 4, hasta 40% de descuento).
  *
  * Se utiliza la bandera (context.upsellSuggested) para evitar repetir la sugerencia, pero se reinicia si las condiciones cambian.
  */
@@ -1096,6 +1160,43 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
     ]
   );
   context.estado = "EsperandoDudas";
+}
+
+/**
+ * Función para manejar el tipo de evento, integrando Boda, XV y Otro evento.
+ * 
+   if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
+    context.tipoEvento = "Boda";
+  } else if (messageLower.includes("xv") || messageLower.includes("quince")) {
+ */
+  async function handleTipoEvento(from, messageLower, context) {
+    if (messageLower.includes("boda")) {
+      context.tipoEvento = "Boda";
+      await sendInteractiveMessage(from, `¡Qué emoción! 👏👏\n\n¡Muchas felicidades por tu celebración! ✨ \n\nAhora, ¿qué te gustaría hacer?`, [
+        { id: "paquete_sugerido", title: "Ver paquete sugerido" },
+        { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
+      ]);
+      context.estado = "OpcionesSeleccionadas";
+    } else if (messageLower.includes("xv") || messageLower.includes("quince")) {
+      context.tipoEvento = "XV";
+      await sendInteractiveMessage(from, `¡Qué emoción! 👏👏\n\n¡Muchas felicidades por tu celebración! ✨ \n\nAhora, ¿qué te gustaría hacer?`, [
+        { id: "paquete_sugerido", title: "Ver paquete sugerido" },
+        { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
+      ]);
+      context.estado = "OpcionesSeleccionadas";
+    } else if (messageLower.includes("otro")) {
+      context.tipoEvento = "Otro evento";
+      await sendMessageWithTypingWithState(
+        from,
+        "¡Perfecto! Para ofrecerte la mejor recomendación, ¿podrías indicarme si se trata de un cumpleaños, revelación de género, propuesta o graduación?",
+        2000,
+        context.estado
+      );
+      context.estado = "EsperandoSubtipoOtroEvento";
+  } else if (context.estado === "EsperandoSubtipoOtroEvento") {
+    // Se asume que el usuario ha escrito un mensaje que describe el subtipo
+    await handleOtherEvent(from, context, userMessage);
+  }
 }
 
 
