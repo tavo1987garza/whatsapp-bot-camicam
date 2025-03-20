@@ -1169,30 +1169,23 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
     context.tipoEvento = "Boda";
   } else if (messageLower.includes("xv") || messageLower.includes("quince")) {
  */
-  async function handleTipoEvento(from, messageLower, context) {
-    if (messageLower.includes("boda")) {
-      context.tipoEvento = "Boda";
-      await sendInteractiveMessage(from, `¡Qué emoción! 👏👏\n\n¡Muchas felicidades por tu celebración! ✨ \n\nAhora, ¿qué te gustaría hacer?`, [
-        { id: "paquete_sugerido", title: "Ver paquete sugerido" },
-        { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
-      ]);
-      context.estado = "OpcionesSeleccionadas";
-    } else if (messageLower.includes("xv") || messageLower.includes("quince")) {
-      context.tipoEvento = "XV";
-      await sendInteractiveMessage(from, `¡Qué emoción! 👏👏\n\n¡Muchas felicidades por tu celebración! ✨ \n\nAhora, ¿qué te gustaría hacer?`, [
-        { id: "paquete_sugerido", title: "Ver paquete sugerido" },
-        { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
-      ]);
-      context.estado = "OpcionesSeleccionadas";
-    } else if (messageLower.includes("otro")) {
-      context.tipoEvento = "Otro evento";
-      await sendMessageWithTypingWithState(
-        from,
-        "¡Perfecto! Para ofrecerte la mejor recomendación, ¿podrías indicarme si se trata de un cumpleaños, revelación de género, propuesta o graduación?",
-        2000,
-        context.estado
-      );
-      context.estado = "EsperandoSubtipoOtroEvento";
+async function handleTipoEvento(from, userMessage, context) {
+  if (messageLower.includes("boda")|| messageLower.includes("evento_boda")) {
+    context.tipoEvento = "Boda";
+    // Lógica para manejar el paquete de boda...
+  } else if (messageLower.includes("xv") || messageLower.includes("quince")) {
+    context.tipoEvento = "XV";
+    // Lógica para manejar el paquete de XV...
+  } else if (messageLower.includes("otro")) {
+    context.tipoEvento = "Otro evento";
+    // Solicitar especificación para "Otro evento"
+    await sendMessageWithTypingWithState(
+      from,
+      "¡Perfecto! Para ofrecerte la mejor recomendación, ¿podrías indicarme si se trata de un cumpleaños, revelación de género, propuesta o graduación?",
+      2000,
+      context.estado
+    );
+    context.estado = "EsperandoSubtipoOtroEvento";
   } else if (context.estado === "EsperandoSubtipoOtroEvento") {
     // Se asume que el usuario ha escrito un mensaje que describe el subtipo
     await handleOtherEvent(from, context, userMessage);
