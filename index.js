@@ -821,7 +821,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
     // Mensaje inicial explicando que es un asistente virtual
     await sendMessageWithTypingWithState(
       from,
-      "¡Hola! 👋 Te damos la Bienvenida a *Camicam Photobooth* 🤩",
+      "¡Hola! 👋\n\nBienvenid@ a *Camicam Photobooth* 🤩",
       2000, // Retraso de 3 segundos
       "Introduccion"
     );
@@ -849,7 +849,7 @@ if (context.estado === "Contacto Inicial") {
   // Mensaje inicial explicando que es un asistente virtual
   await sendMessageWithTypingWithState(
     from,
-    "¡Hola! 👋 Te damos la Bienvenida a *Camicam Photobooth*. \n\n📍Atendemos el Centro de Monterrey y hasta 30 km a la redonda \n\nConoce los Servicios que ofrecemos 🤩",
+    "¡Hola! 👋\n\nBienvenid@ a *Camicam Photobooth*.\n\nEstos son los Servicios que ofrecemos 🤩",
     2000, // Retraso de 3 segundos
     "Contacto Inicial"
   );
@@ -862,7 +862,7 @@ if (context.estado === "Contacto Inicial") {
   await delay(6000); // Retraso de 5 segundos antes de enviar los botones
   await sendInteractiveMessage(
     from,
-    "Qué tipo de evento tienes? 😊\n\nSelecciona una opción 👇",
+    "Con nosotros puedes armar tu propio paquete, o ver uno que te sugerimos\n\nQué tipo de evento tienes? 😊\n\nSelecciona una opción 👇",
     [
       { id: "evento_boda", title: "💍 Boda" },
       { id: "evento_xv", title: "🎉 XV Años" }
@@ -1196,7 +1196,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
       context.tipoEvento = "Boda";
       await sendInteractiveMessage(
         from,
-        `¡Qué emoción! 👏👏\n\n¡Muchas felicidades por tu celebración! ✨\n\nAhora, ¿qué te gustaría hacer?`,
+        `¡Muchas felicidades por tu pronta celebración! ✨\n\n¿Cómo te puedo ayudar?`,
         [
           { id: "paquete_sugerido", title: "Ver paquete sugerido" },
           { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
