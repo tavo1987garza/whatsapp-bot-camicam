@@ -940,8 +940,15 @@ if (context.estado === "OpcionesSeleccionadas") {
       "OpcionesSeleccionadas"
     );
 
-    // Solicitar la fecha del evento
-    await solicitarFecha(from, context);
+     // Solicitar la fecha del evento
+     await sendMessageWithTypingWithState(
+      from,
+      "Para continuar, por favor indícame la fecha de tu evento (Formato DD/MM/AAAA) 📆.",
+      2000, // Retraso de 2 segundos
+      "OpcionesSeleccionadas"
+    );
+
+    context.estado = "EsperandoFecha";
     return true;
   } else {
     // Mensaje de error si no se selecciona una opción válida
@@ -951,6 +958,7 @@ if (context.estado === "OpcionesSeleccionadas") {
       2000, // Retraso de 2 segundos
       "OpcionesSeleccionadas"
     );
+    
 
     // Reenviar los botones para que el usuario seleccione nuevamente
     await sendInteractiveMessage(
