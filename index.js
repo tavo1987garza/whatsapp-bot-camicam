@@ -933,16 +933,26 @@ if (context.estado === "OpcionesSeleccionadas") {
       paqueteSugerido = "🎈 *Paquete Party*: Incluye Cabina de fotos, 4 letras gigantes y un carrito de shots con alcohol, todo por *$4,450*.";
     }
 
-    // Enviar mensaje con el paquete sugerido
+    // Enviar mensaje con el paquete sugerido y la pregunta
     await sendMessageWithTypingWithState(
       from,
-      `¡Perfecto! 🎊 Has seleccionado el paquete sugerido para *${context.tipoEvento}*: ${paqueteSugerido}`,
+      `Aquí tienes nuestro paquete sugerido para *${context.tipoEvento}*:\n\n${paqueteSugerido}\n\n¿Te interesa? o prefieres armar tu propio paquete`,
       2000, // Retraso de 2 segundos
       "OpcionesSeleccionadas"
     );
 
-    // Solicitar la fecha del evento
-    await solicitarFecha(from, context);
+    // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
+    await sendInteractiveMessage(
+      from,
+      "Elige una opción:",
+      [
+        { id: "aceptar_paquete", title: "Sí, me interesa" },
+        { id: "armar_paquete", title: "Armar mi paquete" }
+      ]
+    );
+
+    // Actualizar el estado para manejar la respuesta en el siguiente flujo
+    context.estado = "EsperandoConfirmacionPaquete";
     return true;
     
   } else {
@@ -1038,7 +1048,7 @@ async function handleOtherEvent(from, context, userMessage) {
   context.paqueteRecomendado = recomendacion;
 
   // Enviar la recomendación de forma personalizada.
-  const mensajeRecomendacion = `🎉 *${recomendacion.paquete}*\n${recomendacion.descripcion}\n\n¿Te gustaría conocer más detalles o agregar este paquete a tu cotización?`;
+  const mensajeRecomendacion = `🎉 *${recomendacion.paquete}*\n\n${recomendacion.descripcion}\n\n¿Te interesa? o prefieres armar tu ptopio paquete?`;
   await sendMessageWithTypingWithState(from, mensajeRecomendacion, 2000, context.estado);
 
   // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
