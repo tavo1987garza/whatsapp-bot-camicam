@@ -1974,6 +1974,10 @@ if (context.estado === "EsperandoLugar") {
     from,
     "http://cami-cam.com/wp-content/uploads/2025/03/Datos-Transferencia-1.jpeg"
   );
+  await sendWhatsAppMessage(
+    from,
+    "722969010494399671"
+  );
   
   // Mensaje 2: Explicación del siguiente paso una vez acreditado el anticipo
   await sendMessageWithTypingWithState(
