@@ -1211,7 +1211,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   
       // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
       await sendInteractiveMessage(from, "Elige una opción:", [
-        { id: "aceptar_paquete", title: "Sí, me interesa" },
+        { id: "continuar", title: "CONTINUAR" },
         { id: "armar_paquete", title: "Armar mi paquete" }
       ]);
      
@@ -1228,7 +1228,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
     const messageLower = userMessage.toLowerCase();
   
     // Si el usuario seleccionó "Sí, me interesa" (id: "aceptar_paquete")
-    if (messageLower === "aceptar_paquete") {
+    if (messageLower === "continuar") {
       await sendMessageWithTypingWithState(
         from,
         "¡Excelente! Hemos agregado el paquete recomendado a tu cotización.",
@@ -1266,7 +1266,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
         from,
         "Elige una opción:",
         [
-          { id: "aceptar_paquete", title: "Sí, me interesa" },
+          { id: "continuar", title: "CONTINUAR" },
           { id: "armar_paquete", title: "Armar mi paquete" }
         ]
       );
