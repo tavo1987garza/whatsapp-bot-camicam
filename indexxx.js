@@ -1,23 +1,43 @@
-  //Manipula el Boton "Continuar"
-  if (context.estado === "EsperandoDudas" && messageLower === "continuar") {
-    // Lógica para continuar con el flujo
+if (context.estado === "EsperandoConfirmacionPaqueteOtroEvento") {
+  const messageLower = userMessage.toLowerCase();
+  // Si el usuario acepta el paquete recomendado
+  if (messageLower.includes("aceptar_paquete")) {
     await sendMessageWithTypingWithState(
       from,
-      "¡Perfecto! Para continuar, por favor indícame la fecha de tu evento (Formato DD/MM/AAAA) 📆.",
+      "¡Excelente! Hemos agregado el paquete recomendado a tu cotización.",
       2000,
-      "EsperandoFecha" // Cambia al siguiente estado
+      context.estado
     );
-    context.estado = "EsperandoFecha"; // Actualiza el estado
-    return true;
+    // Procede a solicitar la fecha del evento
+    await solicitarFecha(from, context);
+    context.estado = "EsperandoFecha";
   }
-
-
-
-  // Enviar mensaje con botón "CONTINUAR"
-await sendInteractiveMessage(
-  from,
-  "O toca el botón para continuar:",
-  [
-    { id: "continuar", title: "CONTINUAR" } 
-  ]
-);
+  // Si el usuario prefiere armar su paquete personalizado
+  else if (messageLower.includes("armar_paquete")) {
+    await sendMessageWithTypingWithState(
+      from,
+      "¡Perfecto! Vamos a armar tu paquete personalizado. Por favor, indícame los servicios que deseas incluir.",
+      2000,
+      context.estado
+    );
+    context.estado = "EsperandoServicios";
+  }
+  // En caso de no reconocer la respuesta, se reenvían los botones
+  else {
+    await sendMessageWithTypingWithState(
+      from,
+      "No entendí tu respuesta. Por favor, selecciona una opción válida.",
+      2000,
+      context.estado
+    );
+    await sendInteractiveMessage(
+      from,
+      "Elige una opción:",
+      [
+        { id: "aceptar_paquete", title: "Sí, quiero este paquete" },
+        { id: "armar_paquete", title: "Armar mi paquete" }
+      ]
+    );
+  }
+  return true;
+}
