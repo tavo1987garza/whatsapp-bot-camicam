@@ -816,7 +816,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
   }
 
   // Manejar la acción del botón "CONTINUAR"
-  if (context.estado === "EsperandoDudas" && messageLower === "zaz y zaz") {
+  if (context.estado === "EsperandoDudas" && messageLower === "continuar") {
     await solicitarFecha(from, context); // Solicitar la fecha del evento
     return true; // Salir de la función después de manejar la acción
   }
@@ -924,7 +924,7 @@ if (context.estado === "OpcionesSeleccionadas") {
       from,
       "Elige una opción:",
       [
-        { id: "aceptar_paquete", title: "Sí, me interesa" },
+        { id: "continuar", title: "CONTINUAR" },
         { id: "armar_paquete", title: "Armar mi paquete" }
       ]
     );
@@ -1031,7 +1031,7 @@ async function handleOtherEvent(from, context, userMessage) {
 
   // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
   await sendInteractiveMessage(from, "Elige una opción:", [
-    { id: "aceptar_paquete", title: "Sí, me interesa" },
+    { id: "continuar", title: "CONTINUAR" },
     { id: "armar_paquete", title: "Armar mi paquete" }
   ]);
 
@@ -1211,7 +1211,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   
       // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
       await sendInteractiveMessage(from, "Elige una opción:", [
-        { id: "continuar", title: "zaz y zaz" },
+        { id: "continuar", title: "CONTINUAR" },
         { id: "armar_paquete", title: "Armar mi paquete" }
       ]);
      
