@@ -416,7 +416,7 @@ const faqs = [
   {
     question: /me interesa\b/i, // Coincide con "me interesa" pero no con "Sí, me interesa"
     answer: "Genial!! \n\nPara continuar por favor indicame la fecha de tu evento para revisar disponibilidad "
-  },
+  },  
   { 
     question: /para depositarte|datos para deposito|transfiero|transferencia|depositar|depósito/i, 
     imageUrl: "http://cami-cam.com/wp-content/uploads/2025/03/Datos-Transferencia-1.jpeg", 
