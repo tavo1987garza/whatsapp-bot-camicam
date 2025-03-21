@@ -816,7 +816,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
   }
 
   // Manejar la acción del botón "CONTINUAR"
-  if (context.estado === "EsperandoDudas" && messageLower === "Si, me interesa") {
+  if (context.estado === "EsperandoDudas" && messageLower === "si_me_interesa") {
     await solicitarFecha(from, context); // Solicitar la fecha del evento
     return true; // Salir de la función después de manejar la acción
   }
@@ -1211,7 +1211,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   
       // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
       await sendInteractiveMessage(from, "Elige una opción:", [
-        { id: "si_me_interesa", title: "CONTINUAR" },
+        { id: "si_me_interesa", title: "Si, me interesa" },
         { id: "armar_paquete", title: "Armar mi paquete" }
       ]);
      
@@ -1228,7 +1228,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
     const messageLower = userMessage.toLowerCase();
   
     // Si el usuario seleccionó "Sí, me interesa" (id: "aceptar_paquete")
-    if (messageLower === "Si, me interesa") {
+    if (messageLower === "si_me_interesa") {
       await sendMessageWithTypingWithState(
         from,
         "¡Excelente! Hemos agregado el paquete recomendado a tu cotización.",
@@ -1266,7 +1266,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
         from,
         "Elige una opción:",
         [
-          { id: "si_me_interesa", title: "CONTINUAR" },
+          { id: "si_me_interesa", title: "Si, me interesa" },
           { id: "armar_paquete", title: "Armar mi paquete" }
         ]
       );
