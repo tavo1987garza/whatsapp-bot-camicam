@@ -1211,7 +1211,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   
       // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
       await sendInteractiveMessage(from, "Elige una opción:", [
-        { id: "continuar", title: "CONTINUAR" },
+        { id: "continuar", title: "zaz y zaz" },
         { id: "armar_paquete", title: "Armar mi paquete" }
       ]);
      
