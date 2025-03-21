@@ -1228,7 +1228,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
     const messageLower = userMessage.toLowerCase();
   
     // Si el usuario seleccionó "Sí, me interesa" (id: "aceptar_paquete")
-    if (messageLower === "continuar") {
+    if (messageLower === "vamos Gus") {
       await sendMessageWithTypingWithState(
         from,
         "¡Excelente! Hemos agregado el paquete recomendado a tu cotización.",
