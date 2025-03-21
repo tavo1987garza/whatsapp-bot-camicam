@@ -742,22 +742,59 @@ async function deactivateTypingIndicator(to) {
 async function solicitarFecha(from, context) {
   await sendMessageWithTypingWithState(
     from,
-    "Para continuar, por favor indícame la fecha de tu evento (Formato DD/MM/AAAA) 📆.",
+    "De acuerdo\n\nPara continuar, por favor indícame la fecha de tu evento\n\n(Formato DD/MM/AAAA) 📆.",
     2000, // Retraso de 2 segundos
     context.estado
   );
   context.estado = "EsperandoFecha";
 }
 
-// Función para validar el formato de la fecha (DD/MM/AAAA)
+// Función para parsear fechas en formato textual (e.g., "20 de mayo 2025")
+function parseFecha(dateString) {
+  // Si ya está en formato DD/MM/AAAA, la retornamos limpia
+  const regexStandard = /^\d{2}\/\d{2}\/\d{4}$/;
+  if (regexStandard.test(dateString.trim())) {
+    return dateString.trim();
+  }
+  
+  // Expresión regular para fechas en formato "20 de mayo 2025" o variantes similares
+  const regexText = /^(\d{1,2})\s*(?:de\s+)?([a-záéíóú]+)\s*(?:de\s+)?(\d{4})$/i;
+  const match = dateString.match(regexText);
+  if (!match) return null; // No se pudo parsear
+  
+  // Extraer día, mes y año
+  let day = match[1].padStart(2, '0'); // Se asegura que el día tenga 2 dígitos
+  const monthName = match[2].toLowerCase();
+  const year = match[3];
+  
+  // Mapeo de nombres de meses en español a números
+  const monthMap = {
+    'enero': '01',
+    'febrero': '02',
+    'marzo': '03',
+    'abril': '04',
+    'mayo': '05',
+    'junio': '06',
+    'julio': '07',
+    'agosto': '08',
+    'septiembre': '09',
+    'setiembre': '09', // variante
+    'octubre': '10',
+    'noviembre': '11',
+    'diciembre': '12'
+  };
+  
+  const month = monthMap[monthName];
+  if (!month) return null; // Mes no reconocido
+  
+  return `${day}/${month}/${year}`;
+}
+
+// Función para validar formato y existencia de la fecha (DD/MM/AAAA)
 function isValidDate(dateString) {
   const regex = /^\d{2}\/\d{2}\/\d{4}$/; // Formato DD/MM/AAAA
   if (!regex.test(dateString)) return false;
-
-  // Extraer día, mes y año
   const [day, month, year] = dateString.split('/').map(Number);
-
-  // Validar que la fecha sea válida
   const date = new Date(year, month - 1, day);
   return (
     date.getFullYear() === year &&
@@ -766,9 +803,53 @@ function isValidDate(dateString) {
   );
 }
 
-// Función para verificar disponibilidad (simulada)
+// Función extendida para validar la fecha (acepta formatos numérico o textual)
+function isValidDateExtended(dateString) {
+  const formattedDate = parseFecha(dateString);
+  if (!formattedDate) return false;
+  return isValidDate(formattedDate);
+}
+
+// Función para validar que la fecha no esté en el pasado
+function isValidFutureDate(dateString) {
+  const formattedDate = parseFecha(dateString);
+  if (!formattedDate) return false;
+  if (!isValidDate(formattedDate)) return false;
+  
+  // Extraer día, mes y año y crear objeto Date
+  const [day, month, year] = formattedDate.split('/').map(Number);
+  const inputDate = new Date(year, month - 1, day);
+  
+  // Fecha actual sin considerar hora, minutos, etc.
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  return inputDate >= today;
+}
+
+// Función para validar que la fecha esté dentro de los próximos 2 años
+function isWithinTwoYears(dateString) {
+  const formattedDate = parseFecha(dateString);
+  if (!formattedDate) return false;
+  if (!isValidDate(formattedDate)) return false;
+  
+  const [day, month, year] = formattedDate.split('/').map(Number);
+  const inputDate = new Date(year, month - 1, day);
+  
+  // Fecha actual sin horas
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  // Fecha máxima permitida: hoy + 2 años
+  const maxDate = new Date(today);
+  maxDate.setFullYear(maxDate.getFullYear() + 2);
+  
+  return inputDate <= maxDate;
+}
+
+// Función original para verificar disponibilidad (simulada)
 function checkAvailability(dateString) {
-  // Simulación de fechas ocupadas
+  // Simulación de fechas ocupadas (en formato DD/MM/AAAA)
   const occupiedDates = ["15/02/2024", "20/02/2024"];
   return !occupiedDates.includes(dateString);
 }
@@ -1797,46 +1878,71 @@ if (context.estado === "ConfirmarAgregarCabinaCambio") {
   return true;
 }
 
-  // 🟢 6. Procesar la fecha del evento
-  
-  if (context.estado === "EsperandoFecha") {
-    // Validar el formato de la fecha (DD/MM/AAAA)
-    if (!isValidDate(userMessage)) {
-      await sendMessageWithTypingWithState(
-        from,
-        "😕 El formato de la fecha es incorrecto. Por favor, utiliza el formato DD/MM/AAAA.",
-        2000,
-        context.estado
-      );
-      return true; // Mantener el estado en "EsperandoFecha" para volver a solicitar la fecha
-    }
-  
-    // Verificar disponibilidad de la fecha (simulado)
-    if (!checkAvailability(userMessage)) {
-      await sendMessageWithTypingWithState(
-        from,
-        "😔 Lo siento, esa fecha ya está reservada. Prueba con otra o contáctanos para más detalles.",
-        2000,
-        context.estado
-      );
-      return true; // Mantener el estado en "EsperandoFecha" para volver a solicitar la fecha
-    }
-  
-    // Si la fecha es válida y está disponible, guardarla en el contexto
-    context.fecha = userMessage;
-  
-    // Cambiar el estado para solicitar el lugar del evento
-    context.estado = "EsperandoLugar";
-  
-    // Solicitar el lugar del evento
+// 🟢 6. Procesar la fecha del evento
+if (context.estado === "EsperandoFecha") {
+  // Validar el formato extendido de la fecha (acepta "DD/MM/AAAA" o "20 de mayo 2025")
+  if (!isValidDateExtended(userMessage)) {
     await sendMessageWithTypingWithState(
       from,
-      "¡Perfecto! La fecha está disponible. Ahora, ¿podrías decirme en qué lugar se realizará tu evento? 🏢",
+      "😕 El formato de la fecha es incorrecto. Por favor, utiliza el formato DD/MM/AAAA o '20 de mayo 2025'.",
+      2000,
+      context.estado
+    );
+    return true; // Se mantiene en "EsperandoFecha"
+  }
+
+  // Validar que la fecha sea futura (no haya pasado)
+  if (!isValidFutureDate(userMessage)) {
+    await sendMessageWithTypingWithState(
+      from,
+      "La fecha ingresada ya pasó. Por favor, ingresa una fecha futura.",
       2000,
       context.estado
     );
     return true;
   }
+
+  // Validar que la fecha esté dentro de los próximos 2 años
+  if (!isWithinTwoYears(userMessage)) {
+    await sendMessageWithTypingWithState(
+      from,
+      "La agenda aún no está abierta para esa fecha. Por favor, ingresa una fecha dentro de los próximos 2 años.",
+      2000,
+      context.estado
+    );
+    return true;
+  }
+
+  // Convertir la fecha al formato DD/MM/AAAA utilizando parseFecha
+  const formattedDate = parseFecha(userMessage);
+
+  // Verificar disponibilidad de la fecha (simulado)
+  if (!checkAvailability(formattedDate)) {
+    await sendMessageWithTypingWithState(
+      from,
+      "😔 Lo siento, esa fecha ya está reservada. Prueba con otra o contáctanos para más detalles.",
+      2000,
+      context.estado
+    );
+    return true;
+  }
+
+  // Si todas las validaciones son exitosas, guardar la fecha en el contexto
+  context.fecha = formattedDate;
+  
+  // Cambiar el estado para solicitar el lugar del evento
+  context.estado = "EsperandoLugar";
+
+  // Solicitar el lugar del evento, mostrando la fecha registrada
+  await sendMessageWithTypingWithState(
+    from,
+    `¡Perfecto! La fecha ${formattedDate} está disponible. Ahora, ¿podrías decirme en qué lugar se realizará tu evento? 🏢`,
+    2000,
+    context.estado
+  );
+  return true;
+}
+
 
   // 🟢 7. Procesar la ubicación del evento
   if (context.estado === "EsperandoLugar") {
