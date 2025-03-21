@@ -909,9 +909,15 @@ if (context.estado === "Contacto Inicial") {
   // Mensaje inicial explicando que es un asistente virtual
   await sendMessageWithTypingWithState(
     from,
-    "¡Hola! 👋\n\nBienvenid@ a *Camicam Photobooth*.\n\nEstos son los Servicios que ofrecemos 🤩",
+    "¡Hola! 👋\n\nBienvenid@ a *Camicam Photobooth*.",
     2000, // Retraso de 3 segundos
     "Contacto Inicial"
+  );
+
+  await sendWhatsAppMessage(
+    from,
+    "Estos son los Servicios que ofrecemos 🤩",
+    1000,
   );
 
   // Enviar la imagen de servicios con un retraso
@@ -922,7 +928,7 @@ if (context.estado === "Contacto Inicial") {
   await delay(6000); // Retraso de 5 segundos antes de enviar los botones
   await sendInteractiveMessage(
     from,
-    "Aquí puedes armar tu propio paquete, o ver nuestra sugerencia\n\nQué tipo de evento tienes? 😊\n\nSelecciona una opción 👇",
+    "Puedes armar tu propio paquete, o ver nuestro paquete sugerido👌\n\n¿Qué evento tienes? 😊\n\nSelecciona una opción 👇",
     [
       { id: "evento_boda", title: "💍 Boda" },
       { id: "evento_xv", title: "🎉 XV Años" }
@@ -1949,12 +1955,7 @@ if (context.estado === "EsperandoLugar") {
   // Guardar el lugar ingresado
   context.lugar = userMessage;
   
-  // Primer mensaje: confirmación de fecha y lugar
-  await sendWhatsAppMessage(
-    from,
-    "¡Genial! Ya tenemos la fecha y el lugar."
-  );
-  
+ 
   // Mensaje 1: Explicación del anticipo para separar la fecha
   await sendMessageWithTypingWithState(
     from,
@@ -1964,25 +1965,17 @@ if (context.estado === "EsperandoLugar") {
   );
   
   // Enviar mensaje con datos para transferencia y una imagen (ajusta la URL y texto según convenga)
-  await sendMessageWithTypingWithState(
-    from,
-    "Estos son los datos para la transferencia:",
-    2000,
-    context.estado
-  );
+ 
   await sendImageMessage(
     from,
-    "http://cami-cam.com/wp-content/uploads/2025/03/Datos-Transferencia-1.jpeg"
+    "http://cami-cam.com/wp-content/uploads/2025/03/Datos-Transferencia-1.jpeg", "722969010494399671"
   );
-  await sendWhatsAppMessage(
-    from,
-    "722969010494399671"
-  );
+  
   
   // Mensaje 2: Explicación del siguiente paso una vez acreditado el anticipo
   await sendMessageWithTypingWithState(
     from,
-    "Una vez acreditado tu anticipo, te pediré el nombre de quien me contrata y los datos que hagan falta, llenaré tu contrato y te enviaré foto. Por ahora, sería todo de nuestra parte; pronto Gustavo se pondrá en contacto contigo para ultimar los detalles.",
+    "Una vez acreditado el anticipo, pediré tu nombre completo y los datos que hagan falta.\n\nLleno tu contrato y te envío foto.",
     2000,
     context.estado
   );
@@ -1990,7 +1983,7 @@ if (context.estado === "EsperandoLugar") {
   // Enviar mensaje interactivo con botón "Preguntas frecuentes"
   await sendWhatsAppMessage(
     from,
-    "Si tienes alguna pregunta, puedes consultarlas en el siguiente link:\n\nhttps://cami-cam.com/preguntas-frecuentes/"
+    "❓ Aqui puedes consultar algunas Preguntas Frecuentes:👇\n\nhttps://cami-cam.com/preguntas-frecuentes/"
   );
   
   // Mensaje final de cierre del flujo
