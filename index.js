@@ -1157,7 +1157,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
     from,
     "O toca el botón para continuar:",
     [
-      { id: "continuar", title: "CONTINUAR" }
+      { id: "continuar", title: "vamos Gus" }
     ]
   );
   context.estado = "EsperandoDudas";
