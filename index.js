@@ -413,9 +413,9 @@ const faqs = [
     question: /con cuánto se separa|con cuanto separo|como se separa|como separo|para separar|cuanto de anticipo/i, 
     answer: "⏰ Puedes separar tu fecha en cualquier momento, siempre y cuando esté disponible.\n\nSeparamos fecha con $500, el resto puede ser ese dia, al inicio del evento.\n\nUna vez acreditado el anticipo solo pedire Nombre y los datos del evento, lleno tu contrato y te envío foto.\n\nSi tienes una vuelta para el centro de Monterrey me avisas para entregarte tu contrato original"    
   },
-  { 
-    question: /me interesa/i, 
-    answer: "Genial!! \n\nPara continuar por favor indicame la fecha de tu evento para revisar disponibilidad "    
+  {
+    question: /me interesa\b/i, // Coincide con "me interesa" pero no con "Sí, me interesa"
+    answer: "Genial!! \n\nPara continuar por favor indicame la fecha de tu evento para revisar disponibilidad "
   },
   { 
     question: /para depositarte|datos para deposito|transfiero|transferencia|depositar|depósito/i, 
@@ -486,9 +486,9 @@ async function handleFAQs(from, userMessage) {
         await sendWhatsAppVideo(from, videoUrl);
       }
     }
-    return true;
+    return true; // Indicar que se manejó una FAQ
   }
-  return false;
+  return false; // No se manejó ninguna FAQ
 }
 
 // Función para reportar mensajes al CRM
@@ -806,21 +806,19 @@ async function handleUserMessage(from, userMessage, messageLower) {
   }
   const context = userContext[from];
 
+  
+  // Si el estado es "EsperandoConfirmacionPaquete", no procesar FAQs
+  if (context.estado !== "EsperandoConfirmacionPaquete") {
+    // Procesar FAQs solo si no está en el estado "EsperandoConfirmacionPaquete"
+    if (await handleFAQs(from, userMessage)) {
+      return true; // Si se manejó una FAQ, salir de la función
+    }
+  }
+
   // Manejar la acción del botón "CONTINUAR"
   if (context.estado === "EsperandoDudas" && messageLower === "continuar") {
     await solicitarFecha(from, context); // Solicitar la fecha del evento
     return true; // Salir de la función después de manejar la acción
-  }
-
-   // Manejar la acción del botón "COMENZAR"
-   if (context.estado === "introduccion" && messageLower === "✨ SI ✨") {
-    await sendWhatsAppMessage(
-      from,
-      "Perfecto!!. Comencemos",
-      2000,
-      context.estado
-    );
-    context.estado = "Contacto Inicial";
   }
 
 
