@@ -819,7 +819,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
   if (context.estado === "EsperandoDudas" && messageLower.trim() === "si_me_interesa") {
     await solicitarFecha(from, context); // Solicitar la fecha del evento
     return true; // Salir de la función después de manejar la acción
-  }
+  }  
 
 
 // 🟢 1. Inicio: dar la bienvenida y mostrar opciones con imagen
