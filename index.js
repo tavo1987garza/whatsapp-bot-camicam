@@ -1944,13 +1944,64 @@ if (context.estado === "EsperandoFecha") {
 }
 
 
-  // 🟢 7. Procesar la ubicación del evento
-  if (context.estado === "EsperandoLugar") {
-    context.lugar = userMessage;
-    await sendWhatsAppMessage(from, "¡Genial! Ya tenemos la fecha y el lugar. Un agente se pondrá en contacto contigo para ultimar los detalles. \n\nSi tienes alguna duda adicional por favor hazme saber y en breve te responderemos.\n\n¡Gracias por confiar en Camicam Photobooth! 🎉");
-    context.estado = "Finalizado";
-    return true;
-  }
+// 🟢 7. Procesar la ubicación del evento
+if (context.estado === "EsperandoLugar") {
+  // Guardar el lugar ingresado
+  context.lugar = userMessage;
+  
+  // Primer mensaje: confirmación de fecha y lugar
+  await sendWhatsAppMessage(
+    from,
+    "¡Genial! Ya tenemos la fecha y el lugar."
+  );
+  
+  // Mensaje 1: Explicación del anticipo para separar la fecha
+  await sendMessageWithTypingWithState(
+    from,
+    "Para separar la fecha solicitamos un anticipo de $500, el resto puede ser el día del evento.",
+    2000,
+    context.estado
+  );
+  
+  // Enviar mensaje con datos para transferencia y una imagen (ajusta la URL y texto según convenga)
+  await sendMessageWithTypingWithState(
+    from,
+    "Estos son los datos para la transferencia:",
+    2000,
+    context.estado
+  );
+  await sendImageMessage(
+    from,
+    "http://cami-cam.com/wp-content/uploads/2025/03/Datos-Transferencia-1.jpeg"
+  );
+  
+  // Mensaje 2: Explicación del siguiente paso una vez acreditado el anticipo
+  await sendMessageWithTypingWithState(
+    from,
+    "Una vez acreditado tu anticipo, te pediré el nombre de quien me contrata y los datos que hagan falta, llenaré tu contrato y te enviaré foto. Por ahora, sería todo de nuestra parte; pronto Gustavo se pondrá en contacto contigo para ultimar los detalles.",
+    2000,
+    context.estado
+  );
+  
+  // Enviar mensaje interactivo con botón "Preguntas frecuentes"
+  await sendWhatsAppMessage(
+    from,
+    "Si tienes alguna pregunta, puedes consultarlas en el siguiente link:\n\nhttps://cami-cam.com/preguntas-frecuentes/"
+  );
+  
+  // Mensaje final de cierre del flujo
+  await sendMessageWithTypingWithState(
+    from,
+    "Y si tienes alguna duda adicional, por favor hazme saber y en breve te responderemos. ¡Gracias por confiar en *Camicam Photobooth*!",
+    2000,
+    context.estado
+  );
+  
+  // Actualizar el estado para finalizar el flujo
+  context.estado = "Finalizado";
+  return true;
+}
+
 
   // Rama para "letras gigantes" en otros flujos (si aplica)
   if (!["Contacto Inicial", "EsperandoTipoEvento", "OpcionesSeleccionadas", "EsperandoFecha", "EsperandoLugar", "EsperandoCantidadLetras"].includes(context.estado)) {
