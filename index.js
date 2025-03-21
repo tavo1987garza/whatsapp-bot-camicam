@@ -920,7 +920,7 @@ if (context.estado === "OpcionesSeleccionadas") {
       from,
       "Elige una opción:",
       [
-        { id: "aceptar_paquete", title: "Sí, me interesa" },
+        { id: "continuar", title: "Sí, me interesa" },
         { id: "armar_paquete", title: "Armar mi paquete" }
       ]
     );
@@ -1027,7 +1027,7 @@ async function handleOtherEvent(from, context, userMessage) {
 
   // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
   await sendInteractiveMessage(from, "Elige una opción:", [
-    { id: "aceptar_paquete", title: "Sí, me interesa" },
+    { id: "continuar", title: "Sí, me interesa" },
     { id: "armar_paquete", title: "Armar mi paquete" }
   ]);
 
