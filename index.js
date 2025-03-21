@@ -928,7 +928,7 @@ if (context.estado === "Contacto Inicial") {
   await delay(6000); // Retraso de 5 segundos antes de enviar los botones
   await sendInteractiveMessage(
     from,
-    "Puedes armar tu propio paquete, o ver nuestro paquete sugerido👌\n\n¿Qué evento tienes? 😊\n\nSelecciona una opción 👇",
+    "Puedes armar tu propio paquete, o ver nuestro paquete sugerido👌\n\n😊¿Qué evento tienes?\n\nSelecciona una opción 👇",
     [
       { id: "evento_boda", title: "💍 Boda" },
       { id: "evento_xv", title: "🎉 XV Años" }
@@ -1968,7 +1968,9 @@ if (context.estado === "EsperandoLugar") {
  
   await sendImageMessage(
     from,
-    "http://cami-cam.com/wp-content/uploads/2025/03/Datos-Transferencia-1.jpeg", "722969010494399671"
+    "http://cami-cam.com/wp-content/uploads/2025/03/Datos-Transferencia-1.jpeg", "722969010494399671",
+    2000,
+    context.estado
   );
   
   
@@ -1983,13 +1985,15 @@ if (context.estado === "EsperandoLugar") {
   // Enviar mensaje interactivo con botón "Preguntas frecuentes"
   await sendWhatsAppMessage(
     from,
-    "❓ Aqui puedes consultar algunas Preguntas Frecuentes:👇\n\nhttps://cami-cam.com/preguntas-frecuentes/"
+    "❓ Aqui puedes consultar algunas Preguntas Frecuentes:👇\nhttps://cami-cam.com/preguntas-frecuentes/",
+    2000,
+    context.estado
   );
   
   // Mensaje final de cierre del flujo
   await sendMessageWithTypingWithState(
     from,
-    "Y si tienes alguna duda adicional, por favor hazme saber y en breve te responderemos. ¡Gracias por confiar en *Camicam Photobooth*!",
+    "Y si tienes alguna duda adicional, por favor con toda confianza.\n\nMi nombre es Gustavo González y estoy a tus órdenes 😀",
     2000,
     context.estado
   );
