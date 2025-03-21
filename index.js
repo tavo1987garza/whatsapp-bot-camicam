@@ -1214,7 +1214,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
         { id: "aceptar_paquete", title: "Sí, me interesa" },
         { id: "armar_paquete", title: "Armar mi paquete" }
       ]);
-  
+   
       // Actualizar el estado para manejar la respuesta en el siguiente flujo
       context.estado = "EsperandoConfirmacionPaquete";
     }
