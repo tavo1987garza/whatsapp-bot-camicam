@@ -119,7 +119,7 @@ Ofrecemos los siguientes servicios:
 Atendemos el centro de Monterrey, Nuevo León y el área metropolitana hasta 25 km a la redonda. 
 Responde de forma profesional, clara, concisa y persuasiva, como un vendedor experto en nuestros servicios.
   `;
-}
+} 
 
 // Función para calcular la cotización y retornar los servicios reconocidos
 function calculateQuotation(servicesText) {
