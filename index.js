@@ -1224,53 +1224,55 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
    Estado: EsperandoConfirmacionPaquete
    ============================================ */
 
-   if (context.estado === "EsperandoConfirmacionPaquete") {
-    // Verificar si el usuario seleccionó "Sí, me interesa" (id: "aceptar_paquete")
-    if (messageLower === "aceptar_paquete") {
-      await sendMessageWithTypingWithState(
-        from,
-        "¡Excelente! Hemos agregado el paquete recomendado a tu cotización.",
-        2000,
-        context.estado
-      );
-  
-      // Cambiar el estado a "EsperandoFecha" para solicitar la fecha del evento
-      context.estado = "EsperandoFecha";
-  
-      // Solicitar la fecha del evento
-      await solicitarFecha(from, context);
-      return true;
-    }
-    // Si el usuario seleccionó "Armar mi paquete" (id: "armar_paquete")
-    else if (messageLower === "armar_paquete") {
-      await sendMessageWithTypingWithState(
-        from,
-        "¡Perfecto! Vamos a armar tu paquete personalizado. Por favor, indícame los servicios que deseas incluir.",
-        2000,
-        context.estado
-      );
-      context.estado = "EsperandoServicios";
-      return true;
-    }
-    // En caso de no reconocer la respuesta, se reenvían los botones
-    else {
-      await sendMessageWithTypingWithState(
-        from,
-        "No entendí tu respuesta. Por favor, selecciona una opción válida.",
-        2000,
-        context.estado
-      );
-      await sendInteractiveMessage(
-        from,
-        "Elige una opción:",
-        [
-          { id: "aceptar_paquete", title: "Sí, me interesa" },
-          { id: "armar_paquete", title: "Armar mi paquete" }
-        ]
-      );
-      return true;
-    }
+if (context.estado === "EsperandoConfirmacionPaquete") {
+  const messageLower = userMessage.toLowerCase();
+
+  // Si el usuario seleccionó "Sí, me interesa" (id: "aceptar_paquete")
+  if (messageLower === "aceptar_paquete") {
+    await sendMessageWithTypingWithState(
+      from,
+      "¡Excelente! Hemos agregado el paquete recomendado a tu cotización.",
+      2000,
+      context.estado
+    );
+
+    // Cambiar el estado a "EsperandoFecha" para solicitar la fecha del evento
+    context.estado = "EsperandoFecha";
+
+    // Solicitar la fecha del evento
+    await solicitarFecha(from, context);
+    return true;
   }
+  // Si el usuario seleccionó "Armar mi paquete" (id: "armar_paquete")
+  else if (messageLower === "armar_paquete") {
+    await sendMessageWithTypingWithState(
+      from,
+      "¡Perfecto! Vamos a armar tu paquete personalizado. Por favor, indícame los servicios que deseas incluir.",
+      2000,
+      context.estado
+    );
+    context.estado = "EsperandoServicios";
+    return true;
+  }
+  // En caso de no reconocer la respuesta, se reenvían los botones
+  else {
+    await sendMessageWithTypingWithState(
+      from,
+      "No entendí tu respuesta. Por favor, selecciona una opción válida.",
+      2000,
+      context.estado
+    );
+    await sendInteractiveMessage(
+      from,
+      "Elige una opción:",
+      [
+        { id: "aceptar_paquete", title: "Sí, me interesa" },
+        { id: "armar_paquete", title: "Armar mi paquete" }
+      ]
+    );
+    return true;
+  }
+}
 
 /* ============================================
    Estado: EsperandoServicios
