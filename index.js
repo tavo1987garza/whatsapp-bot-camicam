@@ -816,7 +816,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
   }
 
   // Manejar la acción del botón "CONTINUAR"
-  if (context.estado === "EsperandoDudas" && messageLower === "vamos Gus") {
+  if (context.estado === "EsperandoDudas" && messageLower === "si_me_interesa") {
     await solicitarFecha(from, context); // Solicitar la fecha del evento
     return true; // Salir de la función después de manejar la acción
   }
@@ -840,7 +840,7 @@ if (context.estado === "Contacto Inicial") {
   await delay(6000); // Retraso de 5 segundos antes de enviar los botones
   await sendInteractiveMessage(
     from,
-    "Con nosotros puedes armar tu propio paquete, o ver uno que te sugerimos\n\nQué tipo de evento tienes? 😊\n\nSelecciona una opción 👇",
+    "Aquí puedes armar tu propio paquete, o ver nuestra sugerencia\n\nQué tipo de evento tienes? 😊\n\nSelecciona una opción 👇",
     [
       { id: "evento_boda", title: "💍 Boda" },
       { id: "evento_xv", title: "🎉 XV Años" }
@@ -924,7 +924,7 @@ if (context.estado === "OpcionesSeleccionadas") {
       from,
       "Elige una opción:",
       [
-        { id: "continuar", title: "vamos Gus" },
+        { id: "si_me_interesa", title: "vamos Gus" },
         { id: "armar_paquete", title: "Armar mi paquete" }
       ]
     );
@@ -1031,7 +1031,7 @@ async function handleOtherEvent(from, context, userMessage) {
 
   // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
   await sendInteractiveMessage(from, "Elige una opción:", [
-    { id: "continuar", title: "CONTINUAR" },
+    { id: "si_me_interesa", title: "CONTINUAR" },
     { id: "armar_paquete", title: "Armar mi paquete" }
   ]);
 
@@ -1083,7 +1083,7 @@ function checkUpsellSuggestions(context) {
   }
   // Regla 2: Si ya se agregó Scrapbook (o no aplica la Regla 1) y se tienen exactamente 2 servicios
   else if (serviceCount === 2) {
-    suggestions.push("¡Buen inicio! Si agregas un tercer servicio, obtendrás un 30% de descuento, y con 4 servicios, ¡hasta un 40%!");
+    suggestions.push("¡Sugerencia! Si agregas un tercer servicio, obtendrás un 30% de descuento, y con 4 servicios, ¡hasta un 40%!");
     context.upsellSuggested = true;
   }
 
@@ -1157,7 +1157,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
     from,
     "O toca el botón para continuar:",
     [
-      { id: "continuar", title: "vamos Gus" }
+      { id: "si_me_interesa", title: "vamos Gus" }
     ]
   );
   context.estado = "EsperandoDudas";
@@ -1211,7 +1211,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   
       // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
       await sendInteractiveMessage(from, "Elige una opción:", [
-        { id: "continuar", title: "CONTINUAR" },
+        { id: "si_me_interesa", title: "CONTINUAR" },
         { id: "armar_paquete", title: "Armar mi paquete" }
       ]);
      
@@ -1228,7 +1228,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
     const messageLower = userMessage.toLowerCase();
   
     // Si el usuario seleccionó "Sí, me interesa" (id: "aceptar_paquete")
-    if (messageLower === "vamos Gus") {
+    if (messageLower === "si_me_interesa") {
       await sendMessageWithTypingWithState(
         from,
         "¡Excelente! Hemos agregado el paquete recomendado a tu cotización.",
@@ -1266,7 +1266,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
         from,
         "Elige una opción:",
         [
-          { id: "continuar", title: "CONTINUAR" },
+          { id: "si_me_interesa", title: "CONTINUAR" },
           { id: "armar_paquete", title: "Armar mi paquete" }
         ]
       );
