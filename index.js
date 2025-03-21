@@ -413,10 +413,10 @@ const faqs = [
     question: /con cuánto se separa|con cuanto separo|como se separa|como separo|para separar|cuanto de anticipo/i, 
     answer: "⏰ Puedes separar tu fecha en cualquier momento, siempre y cuando esté disponible.\n\nSeparamos fecha con $500, el resto puede ser ese dia, al inicio del evento.\n\nUna vez acreditado el anticipo solo pedire Nombre y los datos del evento, lleno tu contrato y te envío foto.\n\nSi tienes una vuelta para el centro de Monterrey me avisas para entregarte tu contrato original"    
   },
-  {
+  /*{
     question: /me interesa\b/i, // Coincide con "me interesa" pero no con "Sí, me interesa"
     answer: "Genial!! \n\nPara continuar por favor indicame la fecha de tu evento para revisar disponibilidad "
-  },  
+  },*/  
   { 
     question: /para depositarte|datos para deposito|transfiero|transferencia|depositar|depósito/i, 
     imageUrl: "http://cami-cam.com/wp-content/uploads/2025/03/Datos-Transferencia-1.jpeg", 
@@ -816,7 +816,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
   }
 
   // Manejar la acción del botón "CONTINUAR"
-  if (context.estado === "EsperandoDudas" && messageLower === "si_me_interesa") {
+  if (context.estado === "EsperandoDudas" && messageLower === "Si, me interesa") {
     await solicitarFecha(from, context); // Solicitar la fecha del evento
     return true; // Salir de la función después de manejar la acción
   }
@@ -924,7 +924,7 @@ if (context.estado === "OpcionesSeleccionadas") {
       from,
       "Elige una opción:",
       [
-        { id: "si_me_interesa", title: "vamos Gus" },
+        { id: "si_me_interesa", title: "Si, me interesa" },
         { id: "armar_paquete", title: "Armar mi paquete" }
       ]
     );
@@ -1157,7 +1157,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
     from,
     "O toca el botón para continuar:",
     [
-      { id: "si_me_interesa", title: "vamos Gus" }
+      { id: "si_me_interesa", title: "Si, me interesa" }
     ]
   );
   context.estado = "EsperandoDudas";
@@ -1228,7 +1228,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
     const messageLower = userMessage.toLowerCase();
   
     // Si el usuario seleccionó "Sí, me interesa" (id: "aceptar_paquete")
-    if (messageLower === "si_me_interesa") {
+    if (messageLower === "Si, me interesa") {
       await sendMessageWithTypingWithState(
         from,
         "¡Excelente! Hemos agregado el paquete recomendado a tu cotización.",
