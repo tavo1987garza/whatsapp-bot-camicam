@@ -924,7 +924,7 @@ if (context.estado === "OpcionesSeleccionadas") {
       from,
       "Elige una opción:",
       [
-        { id: "continuar", title: "CONTINUAR" },
+        { id: "continuar", title: "vamos Gus" },
         { id: "armar_paquete", title: "Armar mi paquete" }
       ]
     );
@@ -1866,7 +1866,7 @@ if (context.estado === "ConfirmarAgregarCabinaCambio") {
   ${contextoPaquetes}
   
   El cliente dice: "${query}"
-  Responde de forma clara, profesional y cercana, utilizando el contexto proporcionado.
+  Responde de forma clara y corta, profesional y cercana, utilizando el contexto proporcionado.
       `;
       const key = getCacheKey(fullQuery);
       const cachedResponse = responseCache.get(key);  // Uso de la instancia global
