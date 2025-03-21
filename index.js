@@ -989,7 +989,7 @@ if (context.estado === "OpcionesSeleccionadas") {
         2000,
         "OpcionesSeleccionadas"
       );
-      return true;
+      return true; 
     }
 
     if (context.tipoEvento === "Boda") {
