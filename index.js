@@ -918,6 +918,7 @@ if (context.estado === "Contacto Inicial") {
     from,
     "Estos son los Servicios que ofrecemos 🤩",
     1000,
+    "Contacto Inicial"
   );
 
   // Enviar la imagen de servicios con un retraso
@@ -972,7 +973,7 @@ if (context.estado === "OpcionesSeleccionadas") {
     // Mensaje con retraso para simular interacción humana
     await sendMessageWithTypingWithState(
       from,
-      "¡Genial! 😃 Vamos a armar tu paquete personalizado.\n\nPor favor, indícame los servicios que deseas incluir.\n\n✏️ Escribe separado por comas, por ejemplo: \n\ncabina de fotos, niebla de piso, scrapbook, chisperos 4, letras gigantes 4",
+      "¡Genial! 😃 Vamos a armar tu paquete personalizado.\n\n✏️ Escribe separado por comas, por ejemplo: \n\ncabina de fotos, niebla de piso, scrapbook, chisperos 4, letras gigantes 4",
       2000, // Retraso de 2 segundos
       "OpcionesSeleccionadas"
     );
@@ -1969,7 +1970,7 @@ if (context.estado === "EsperandoLugar") {
   await sendImageMessage(
     from,
     "http://cami-cam.com/wp-content/uploads/2025/03/Datos-Transferencia-1.jpeg", "722969010494399671",
-    2000,
+    3000,
     context.estado
   );
   
@@ -1978,7 +1979,7 @@ if (context.estado === "EsperandoLugar") {
   await sendMessageWithTypingWithState(
     from,
     "Una vez acreditado el anticipo, pediré tu nombre completo y los datos que hagan falta.\n\nLleno tu contrato y te envío foto.",
-    2000,
+    4000,
     context.estado
   );
   
@@ -1986,7 +1987,7 @@ if (context.estado === "EsperandoLugar") {
   await sendWhatsAppMessage(
     from,
     "❓ Aqui puedes consultar algunas Preguntas Frecuentes:👇\nhttps://cami-cam.com/preguntas-frecuentes/",
-    2000,
+    4000,
     context.estado
   );
   
@@ -1994,7 +1995,7 @@ if (context.estado === "EsperandoLugar") {
   await sendMessageWithTypingWithState(
     from,
     "Y si tienes alguna duda adicional, por favor con toda confianza.\n\nMi nombre es Gustavo González y estoy a tus órdenes 😀",
-    2000,
+    4000,
     context.estado
   );
   
