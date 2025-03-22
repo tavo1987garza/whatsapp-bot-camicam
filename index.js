@@ -1025,7 +1025,7 @@ if (context.estado === "Contacto Inicial") {
   await delay(6000); // Retraso de 5 segundos antes de enviar los botones
   await sendInteractiveMessage(
     from,
-    "Puedes armar tu propio paquete, o ver nuestro paquete sugerido👌\n\nPor favor Selecciona el evento que tienes 👇",
+    "Puedes ver nuestro paquete sugerido👌 o armar tu propio paquete personaliado\n\nPor favor Selecciona el evento que tienes 👇",
     [
       { id: "evento_boda", title: "💍 Boda" },
       { id: "evento_xv", title: "🎉 XV Años" }
@@ -1339,23 +1339,25 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
     }
   }
 
+    // OBTENER el nombre del paquete que guardaste en context.paqueteRecomendado
+// Si no existe, mostramos "Paquete Sugerido"
+const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
+
   // 8) Mensaje final con instrucción para agregar/quitar
   await delay(2000);
   await sendMessageWithTypingWithState(
     from,
-    "¿Te ha gustado más el paquete que te hemos sugerido?",
+    `¿Te gustaría contratar el ${tituloPaquete}?`,
     2000,
     context.estado
   );
 
-  // OBTENER el nombre del paquete que guardaste en context.paqueteRecomendado
-// Si no existe, mostramos "Paquete Sugerido"
-const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
+
 
   // 9) Botón para continuar
   await sendInteractiveMessage(
     from,
-    "¿O prefieres tu paquete personalizado?",
+    "¿O tu paquete personalizado?",
     [
       { id: "si_me_interesa_sugerido", title: tituloPaquete },
       { id: "si_me_interesa", title: "PAQ PERSONALIZADO" },
@@ -1391,7 +1393,7 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
         from,
         `¡Muchas felicidades! Tu Boda será increíble!! ✨
     \n\n🎉 *${context.paqueteRecomendado.paquete}*: ${context.paqueteRecomendado.descripcion}.\n\n
-    ¿Te interesa contratar este paquete o prefieres Armar tu Paquete?`,
+    Te gustaría contratar el *${context.paqueteRecomendado.paquete}* o prefieres Armar tu Paquete?`,
         [
           { id: "si_me_interesa", title: "PAQUETE WEDDING" },
           { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
@@ -1413,7 +1415,7 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
         from,
         `¡Muchas felicidades! Tu fiesta será Inolvidable!! ✨
     \n\n🎂 *${context.paqueteRecomendado.paquete}*: ${context.paqueteRecomendado.descripcion}.\n\n
-    ¿Te interesa contratar este paquete o prefieres Armar tu Paquete?`,
+    ¿Te gustaría contratar el *${context.paqueteRecomendado.paquete}* o prefieres Armar tu Paquete?`,
         [
           { id: "si_me_interesa", title: "PAQUETE MIS XV" },
           { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
