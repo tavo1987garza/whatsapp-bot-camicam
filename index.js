@@ -466,12 +466,7 @@ function findFAQ(userMessage) {
 }
 
 // Función para manejar FAQs
-async function handleFAQs(from, userMessage, context) {
-  // Bloquear FAQs si el estado es "EsperandoServicios"
-  if (context.estado === "EsperandoServicios") {
-    return false;
-  }
-
+async function handleFAQs(from, userMessage) {
   const faqEntry = findFAQ(userMessage);
   if (faqEntry) {
     await sendWhatsAppMessage(from, faqEntry.answer + " 😊");
@@ -491,10 +486,14 @@ async function handleFAQs(from, userMessage, context) {
         await sendWhatsAppVideo(from, videoUrl);
       }
     }
-    return true; // Se manejó una FAQ
+    return true; // Indicar que se manejó una FAQ
   }
   return false; // No se manejó ninguna FAQ
 }
+
+
+
+
 
 // Función para reportar mensajes al CRM
 async function reportMessageToCRM(to, message, tipo = "enviado") {
