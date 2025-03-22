@@ -467,10 +467,6 @@ function findFAQ(userMessage) {
 
 // Función para manejar FAQs
 async function handleFAQs(from, userMessage, context) {
-    // Bloquear FAQs si el estado es "EsperandoServicios"
-    if (context.estado === "EsperandoServicios") {
-      return false;
-    }
   const faqEntry = findFAQ(userMessage);
   if (faqEntry) {
     await sendWhatsAppMessage(from, faqEntry.answer + " 😊");
@@ -972,6 +968,11 @@ if (context.estado === "EsperandoSubtipoOtroEvento") {
   await handleOtherEvent(from, context, messageLower);
   return true;
 }
+  
+  // Bloquear FAQs si el estado es "EsperandoServicios"
+  if (context.estado === "EsperandoServicios") {
+    return false;
+  }
   
 // 🟢 3. Opciones: paquete sugerido o armar paquete
 if (context.estado === "OpcionesSeleccionadas") {
