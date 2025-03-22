@@ -1656,7 +1656,7 @@ if (context.estado === "ConfirmarAgregarCarritoShotsCambio") {
       await sendWhatsAppMessage(from, "Por favor, responde 'fotos' o '360' para seleccionar el tipo de cabina.");
       return true;
     }
-    
+      
     // Verificar si la variante seleccionada ya está en la cotización.
     if (context.serviciosSeleccionados.toLowerCase().includes(varianteSeleccionada)) {
       // Si ya está, se determina la otra variante.
