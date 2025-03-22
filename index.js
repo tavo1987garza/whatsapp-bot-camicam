@@ -920,6 +920,20 @@ async function handleUserMessage(from, userMessage, messageLower) {
     return true; // Salir de la función después de manejar la acción
   }  
 
+   // Interceptamos el botón "modificar_cotizacion"
+   if (messageLower === "modificar_cotizacion") {
+    // Cambiamos el estado al que maneja "Agregar" y "Quitar"
+    context.estado = "EsperandoDudas";
+
+    // Enviamos las instrucciones
+    await sendWhatsAppMessage(
+      from,
+      "Puedes modificar tu cotización 😊. Escribe:\n\n*Agregar* + el nombre del servicio\n\n*Quitar* + el nombre del servicio"
+    );
+
+    return true; // Evitamos procesar otros estados, ya que se manejó aquí
+  }
+
 
 // 🟢 1. Inicio: dar la bienvenida y mostrar opciones con imagen
 if (context.estado === "Contacto Inicial") {
@@ -946,7 +960,7 @@ if (context.estado === "Contacto Inicial") {
   await delay(6000); // Retraso de 5 segundos antes de enviar los botones
   await sendInteractiveMessage(
     from,
-    "Puedes armar tu propio paquete, o ver nuestro paquete sugerido👌\n\n😊¿Qué evento tienes?\n\nSelecciona una opción 👇",
+    "Puedes armar tu propio paquete, o ver nuestro paquete sugerido👌\n\nPor favor Selecciona el evento que tienes 👇",
     [
       { id: "evento_boda", title: "💍 Boda" },
       { id: "evento_xv", title: "🎉 XV Años" }
@@ -991,7 +1005,7 @@ if (context.estado === "OpcionesSeleccionadas") {
     // Mensaje con retraso para simular interacción humana
     await sendMessageWithTypingWithState(
       from,
-      "¡Genial! 😃 Vamos a armar tu paquete personalizado.\n\n✏️ *Escribe separado por comas*\nPor ejemplo: \n\ncabina de fotos, niebla de piso, scrapbook, 4 chisperos, 6letras gigantes",
+      "¡Genial! 😃 Vamos a armar tu paquete personalizado.\n\n✏️ *Escribe separado por comas*，\n\nPor ejemplo: \ncabina de fotos, niebla de piso, scrapbook, 4 chisperos, 6letras gigantes",
       2000, // Retraso de 2 segundos
       "OpcionesSeleccionadas"
     );
@@ -1277,7 +1291,8 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
     "O selecciona *Si, me interesa* si quieres continuar con tu cotizacion personalizada",
     [
       { id: "si_me_interesa", title: "Si, me interesa" },
-      { id: "paquete_sugerido", title: "Ver paquete sugerido" }
+      { id: "paquete_sugerido", title: "Ver paquete sugerido" },
+      { id: "modificar_cotizacion", title: "Modificar Cotización" }
     ]
   );
 
