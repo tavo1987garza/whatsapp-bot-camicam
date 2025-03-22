@@ -969,11 +969,7 @@ if (context.estado === "EsperandoSubtipoOtroEvento") {
   return true;
 }
   
-  // Bloquear FAQs si el estado es "EsperandoServicios"
-  if (context.estado === "EsperandoServicios") {
-    return false;
-  }
-  
+
 // 🟢 3. Opciones: paquete sugerido o armar paquete
 if (context.estado === "OpcionesSeleccionadas") {
   console.log("Valor recibido en OpcionesSeleccionadas:", messageLower);
@@ -1881,15 +1877,12 @@ if (context.estado === "ConfirmarAgregarCabinaCambio") {
       return true;
     }
   }
-
   
-
-  
-  // --- Manejo de FAQs o dudas generales ---
+  /*// --- Manejo de FAQs o dudas generales ---
   if (await handleFAQs(from, userMessage)) return true;
   
   await sendWhatsAppMessage(from, "¿Podrías especificar tu duda o si deseas agregar algún servicio adicional? 😊\n\nSi deseas agregar algo, escribe *Agregar* y lo que necesites.\nSi deseas quitar algo, escribe *Quitar* y lo que necesites quitar.");
-  return true;
+  return true;*/
 }
 
 // 🟢 6. Procesar la fecha del evento
