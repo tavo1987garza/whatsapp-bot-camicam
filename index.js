@@ -969,7 +969,7 @@ if (context.estado === "EsperandoSubtipoOtroEvento") {
 if (context.estado === "OpcionesSeleccionadas") {
   console.log("Valor recibido en OpcionesSeleccionadas:", messageLower);
 
-  if (messageLower === "armar_paquete") {
+  if (messageLower === "armar_paquete" || messageLower === "armar mi paquete") {
     // Mensaje con retraso para simular interacción humana
     await sendMessageWithTypingWithState(
       from,
@@ -1331,7 +1331,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
       return true;
     }
     // Si el usuario seleccionó "Armar mi paquete" (id: "armar_paquete")
-    else if (messageLower === "armar_paquete") {
+    else if (messageLower === "armar_paquete" || messageLower === "armar mi paquete") {
       await sendMessageWithTypingWithState(
         from,
         "¡Perfecto! Vamos a armar tu paquete personalizado. Por favor, indícame los servicios que deseas incluir.",
