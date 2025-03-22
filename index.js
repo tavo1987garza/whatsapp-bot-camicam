@@ -948,7 +948,7 @@ if (context.estado === "Contacto Inicial") {
   await sendMessageWithTypingWithState(
     from,
     "Estos son los Servicios que ofrecemos 🤩",
-    2000, // Retraso de 2 segundos
+    2500, // Retraso de 2 segundos
     "Contacto Inicial"
   );
 
@@ -1005,7 +1005,7 @@ if (context.estado === "OpcionesSeleccionadas") {
     // Mensaje con retraso para simular interacción humana
     await sendMessageWithTypingWithState(
       from,
-      "¡Genial! 😃 Vamos a armar tu paquete personalizado.\n\n✏️ *Escribe separado por comas*，\n\nPor ejemplo: \ncabina de fotos, niebla de piso, scrapbook, 4 chisperos, 6letras gigantes",
+      "¡Genial! 😃 Vamos a armar tu paquete personalizado.\n\n✏️ *Escribe separado por comas*,\n\nPor ejemplo: \ncabina de fotos, niebla de piso, scrapbook, 4 chisperos, 6 letras gigantes",
       2000, // Retraso de 2 segundos
       "OpcionesSeleccionadas"
     );
@@ -1280,7 +1280,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   await delay(2000);
   await sendMessageWithTypingWithState(
     from,
-    "Puedes modificar tu cotización, 😊 escribe: \n\n'*Agregar* y el nombre del servicio' o\n\n'*Quitar* y el nombre del servicio'",
+    "¿Te interesa contratar tu paquete personalizado?",
     2000,
     context.estado
   );
@@ -1288,7 +1288,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   // 9) Botón para continuar
   await sendInteractiveMessage(
     from,
-    "O selecciona *Si, me interesa* si quieres continuar con tu cotizacion personalizada",
+    "¿O prefieres ver el paquete sugerido?",
     [
       { id: "si_me_interesa", title: "Si, me interesa" },
       { id: "paquete_sugerido", title: "Ver paquete sugerido" },
