@@ -937,7 +937,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
    /* ============================================
    ⚠️Interceptamos el botón "CUALQUIER OTRO PAQUETE"⚠️
    ============================================ */
-   if ((context.estado === "OpcionesSeleccionadas") &&
+   if ((context.estado === "EsperandoDudas") &&
    messageLower.trim() === "si_me_interesa_sugerido") {
    await solicitarFecha(from, context); // Solicitar la fecha del evento
    return true; // Salir de la función después de manejar la acción
