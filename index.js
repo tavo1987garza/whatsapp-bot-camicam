@@ -1656,6 +1656,10 @@ if (context.estado === "ConfirmarAgregarCarritoShotsCambio") {
       await sendWhatsAppMessage(from, "Por favor, responde 'fotos' o '360' para seleccionar el tipo de cabina.");
       return true;
     }
+
+      // Agregar la cabina seleccionada a la cotización
+  context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + varianteSeleccionada;
+  await sendWhatsAppMessage(from, `✅ Se ha seleccionado ${varianteSeleccionada}.`);
       
     // Verificar si la variante seleccionada ya está en la cotización.
     if (context.serviciosSeleccionados.toLowerCase().includes(varianteSeleccionada)) {
