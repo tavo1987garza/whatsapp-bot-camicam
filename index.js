@@ -1370,7 +1370,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
       context.tipoEvento = "Boda";
       await sendInteractiveMessage(
         from,
-        `¡Muchas felicidades! Tu Boda será increible!!✨\n\n🎉 *Paquete Wedding*: Incluye Cabina 360, iniciales decorativas, 2 chisperos y un carrito de shots con alcohol, todo por *$4,450*.\n\nTe interesa contratar paquete Wedding o prefieres Armar tu Paquete?`,
+        `¡Muchas felicidades! Tu Boda será increible!!✨\n\n🎉 *Paquete Wedding*: Incluye Cabina 360, iniciales decorativas, 2 chisperos y un carrito de shots con alcohol, todo por *$4,450*.\n\nTe interesa contratar el paquete Wedding o prefieres Armar tu Paquete?`,
         [
           { id: "si_me_interesa", title: "PAQUETE WEDDING" },
           { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
@@ -1383,9 +1383,9 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
       context.tipoEvento = "XV";
       await sendInteractiveMessage(
         from,
-        `¡Muchas felicidades! Tu fiesta será Inolvidable!! ✨\n\n¿Cómo te podemos ayudar?`,
+        `¡Muchas felicidades! Tu fiesta será Inolvidable!! ✨\n\n🎂 *Paquete Mis XV*: Incluye 6 letras gigantes, Cabina de fotos, Lluvia de mariposas y 2 chisperos, todo por *$5,600*.\n\nTe interesa contratar el paquete MIS XV o prefieres Armar tu Paquete?`,
         [
-          { id: "paquete_sugerido", title: "Ver paquete sugerido" },
+          { id: "si_me-interesa", title: "PAQUETE MIS XV" },
           { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
         ]
       );
