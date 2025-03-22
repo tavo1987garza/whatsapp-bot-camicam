@@ -1000,7 +1000,7 @@ if (context.estado === "Contacto Inicial") {
   );
 
   // Enviar la imagen de servicios con un retraso
-  await delay(4000); // Retraso de 4 segundos antes de enviar la imagen
+  await delay(3000); // Retraso de 3 segundos antes de enviar la imagen
   await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
 
   // Enviar los botones con otro retraso
@@ -1015,7 +1015,7 @@ if (context.estado === "Contacto Inicial") {
   );
 
   // Mensaje adicional para eventos no listados
-  await delay(2000); // Retraso de 2 segundos antes de enviar el mensaje
+  await delay(1500); // Retraso de 1.5 segundos antes de enviar el mensaje
   await sendMessageWithTypingWithState(
     from,
     "O dime qué tipo de evento estás organizando? 🥳 ",
@@ -1052,7 +1052,7 @@ if (context.estado === "OpcionesSeleccionadas") {
     // Mensaje con retraso para simular interacción humana
     await sendMessageWithTypingWithState(
       from,
-      "¡Genial! 😃 ¡Vamos a personalizar tu paquete!\n\n✏️ *Escribe separado por comas*,\n\nPor ejemplo: \ncabina de fotos, cabina 360, 6 letras gigantes, carrito de shots con alcohol, carrito de shots sin alcohol, lluvia de mariposas, lluvia metálica, niebla de piso, scrapbook, 4 chisperos",
+      "¡Genial! 😃 ¡Vamos a personalizar tu paquete!\n\n✏️ *Escribe separado por comas*,\n\nPor ejemplo: \ncabina de fotos, cabina 360, 6 letras gigantes, 4 chisperos, carrito de shots con alcohol, carrito de shots sin alcohol, lluvia de mariposas, lluvia metálica, niebla de piso, scrapbook, audio guest book",
       2000, // Retraso de 2 segundos
       "OpcionesSeleccionadas"
     );
