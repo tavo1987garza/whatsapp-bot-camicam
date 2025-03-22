@@ -1184,7 +1184,7 @@ function getOtherEventPackageRecommendation(userMessage) {
   }
   // Si no se detecta un subtipo específico
   return {
-    paquete: "Paq. Personalizado",
+    paquete: "Paq. Otro",
     descripcion: "Tenemos varias opciones personalizadas. ¿Podrías contarnos un poco más sobre tu evento para ofrecerte la mejor recomendación?"
   };
 }
