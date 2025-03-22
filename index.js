@@ -927,18 +927,19 @@ if (context.estado === "Contacto Inicial") {
   await sendMessageWithTypingWithState(
     from,
     "¡Hola! 👋\n\nBienvenid@ a *Camicam Photobooth*.",
-    2000, // Retraso de 3 segundos
+    2000, // Retraso de 2 segundos
     "Contacto Inicial"
   );
 
-  await sendWhatsAppMessage(
+  await sendMessageWithTypingWithState(
     from,
     "Estos son los Servicios que ofrecemos 🤩",
-    2000,
+    2000, // Retraso de 2 segundos
+    "Contacto Inicial"
   );
 
   // Enviar la imagen de servicios con un retraso
-  await delay(5000); // Retraso de 5 segundos antes de enviar la imagen
+  await delay(4000); // Retraso de 4 segundos antes de enviar la imagen
   await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
 
   // Enviar los botones con otro retraso
@@ -990,7 +991,7 @@ if (context.estado === "OpcionesSeleccionadas") {
     // Mensaje con retraso para simular interacción humana
     await sendMessageWithTypingWithState(
       from,
-      "¡Genial! 😃 Vamos a armar tu paquete personalizado.\n\n✏️ Escribe separado por comas, por ejemplo: \n\ncabina de fotos, niebla de piso, scrapbook, chisperos 4, letras gigantes 4",
+      "¡Genial! 😃 Vamos a armar tu paquete personalizado.\n\n✏️ *Escribe separado por comas*\nPor ejemplo: \n\ncabina de fotos, niebla de piso, scrapbook, 4 chisperos, 6letras gigantes",
       2000, // Retraso de 2 segundos
       "OpcionesSeleccionadas"
     );
