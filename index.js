@@ -1343,7 +1343,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   await delay(2000);
   await sendMessageWithTypingWithState(
     from,
-    `¿Te ha gustado más el ${tituloPaquete}?`,
+    "¿Te ha gustado más el paquete que te hemos sugerido?",
     2000,
     context.estado
   );
