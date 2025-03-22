@@ -1400,12 +1400,12 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
       context.paqueteRecomendado = recomendacion;
   
       // Enviar la recomendación de forma personalizada
-      const mensajeRecomendacion = `🎉 *${recomendacion.paquete}*\n${recomendacion.descripcion}\n\n¿Te interesa? o prefieres armar tu propio paquete`;
+      const mensajeRecomendacion = `🎉 *${recomendacion.paquete}*\n${recomendacion.descripcion}\n\nTe interesa contratar el paquete ${recomendacion.paquete} o prefieres Armar tu Paquete?`;
       await sendMessageWithTypingWithState(from, mensajeRecomendacion, 2000, context.estado);
   
       // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
       await sendInteractiveMessage(from, "Elige una opción:", [
-        { id: "si_me_interesa", title: "Si, me interesa" },
+        { id: "si_me_interesa", title: "CONTRATAR" },
         { id: "armar_paquete", title: "Armar mi paquete" }
       ]);
      
