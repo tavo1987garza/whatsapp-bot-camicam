@@ -1385,7 +1385,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
         from,
         `¡Muchas felicidades! Tu fiesta será Inolvidable!! ✨\n\n🎂 *Paquete Mis XV*: Incluye 6 letras gigantes, Cabina de fotos, Lluvia de mariposas y 2 chisperos, todo por *$5,600*.\n\nTe interesa contratar el paquete MIS XV o prefieres Armar tu Paquete?`,
         [
-          { id: "si_me-interesa", title: "PAQUETE MIS XV" },
+          { id: "si_me_interesa", title: "PAQUETE MIS XV" },
           { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
         ]
       );
