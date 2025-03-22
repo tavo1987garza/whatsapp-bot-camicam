@@ -924,7 +924,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
 
 
   /* ============================================
-   ⚠️Interceptamos el botón "WEDDING"⚠️
+   ⚠️Interceptamos el botón "WEDDING Y XV"⚠️
    ============================================ */
    if ((context.estado === "OpcionesSeleccionadas") &&
    messageLower.trim() === "si_me_interesa") {
@@ -932,7 +932,16 @@ async function handleUserMessage(from, userMessage, messageLower) {
    return true; // Salir de la función después de manejar la acción
  }  
 
+ 
 
+   /* ============================================
+   ⚠️Interceptamos el botón "CUALQUIER OTRO PAQUETE"⚠️
+   ============================================ */
+   if ((context.estado === "OpcionesSeleccionadas") &&
+   messageLower.trim() === "si_me_interesa_sugerido") {
+   await solicitarFecha(from, context); // Solicitar la fecha del evento
+   return true; // Salir de la función después de manejar la acción
+ }  
     /* ============================================
    Interceptamos el botón "modificar_cotizacion"
    ============================================ */
