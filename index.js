@@ -1157,28 +1157,28 @@ function getOtherEventPackageRecommendation(userMessage) {
   // Detectar cumpleaños: se pueden buscar números o palabras como "cumpleaños"
   if (/cumpleaños|birthday|\b\d+\b/.test(mensaje)) {
     return {
-      paquete: "Paquete Cumpleaños",
+      paquete: "PAQUETE CUMPLEAÑOS",
       descripcion: "Incluye letras gigantes personalizadas, números brillantes y una ambientación festiva perfecta para celebrar esa edad especial."
     };
   }
   // Detectar revelación de género: se buscan palabras clave
   else if (/revelación de género|revelacion|baby|oh baby|girl|boy/.test(mensaje)) {
     return {
-      paquete: "Paquete Revelación",
+      paquete: "PAQUETE REVELACION",
       descripcion: "Ideal para eventos de revelación de género, con letras decorativas y opciones que resaltan 'BABY', 'OH BABY' o 'GIRL BOY'."
     };
   }
   // Detectar propuesta: palabras relacionadas con propuesta o 'marry me'
   else if (/propuesta|pedir matrimonio|marry me/.test(mensaje)) {
     return {
-      paquete: "Paquete MARRY ME",
+      paquete: "PAQUETE MARRY ME",
       descripcion: "Perfecto para una propuesta inolvidable, con letras románticas y personalizadas que dicen 'MARRY ME'."
     };
   }
   // Detectar graduación: se buscan palabras como "grad", "class" o números de generación
   else if (/graduación|grad|class|gen\b/.test(mensaje)) {
     return {
-      paquete: "Paquete Graduación",
+      paquete: "PAQUETE GRADUACION",
       descripcion: "Ofrece letras gigantes modernas ideales para graduaciones, por ejemplo, 'CLASS 2025', 'GRAD 25' o 'GEN 2022'."
     };
   }
