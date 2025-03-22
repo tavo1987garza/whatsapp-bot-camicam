@@ -1266,7 +1266,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   await delay(2000);
   await sendMessageWithTypingWithState(
     from,
-    "Para modificar tu cotización, escribe: \n\n'*Agregar* y el nombre del servicio' o\n'*Quitar* y el nombre del servicio' 😊",
+    "Puedes modificar tu cotización, 😊 escribe: \n\n'*Agregar* y el nombre del servicio' o\n\n'*Quitar* y el nombre del servicio'",
     2000,
     context.estado
   );
@@ -1274,9 +1274,10 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   // 9) Botón para continuar
   await sendInteractiveMessage(
     from,
-    "O toca el botón para continuar:",
+    "O selecciona *Si, me interesa* si quieres continuar con tu cotizacion personalizada",
     [
-      { id: "si_me_interesa", title: "Si, me interesa" }
+      { id: "si_me_interesa", title: "Si, me interesa" },
+      { id: "paquete_sugerido", title: "Ver paquete sugerido" }
     ]
   );
 
