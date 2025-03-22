@@ -996,8 +996,6 @@ if (context.estado === "OpcionesSeleccionadas") {
       paqueteSugerido = "🎉 *Paquete Wedding*: Incluye Cabina 360, iniciales decorativas, 2 chisperos y un carrito de shots con alcohol, todo por *$4,450*.";
     } else if (context.tipoEvento === "XV") {
       paqueteSugerido = "🎂 *Paquete Mis XV*: Incluye 6 letras gigantes, Cabina de fotos, Lluvia de mariposas y 2 chisperos, todo por *$5,600*.";
-    } else {
-      paqueteSugerido = "🎈 *Paquete Party*: Incluye Cabina de fotos, 4 letras gigantes y un carrito de shots con alcohol, todo por *$4,450*.";
     }
 
     // Enviar mensaje con el paquete sugerido y la pregunta
