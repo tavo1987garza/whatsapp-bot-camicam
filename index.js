@@ -1333,11 +1333,11 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
     // Si el usuario seleccionó "Armar mi paquete" (id: "armar_paquete")
     else if (messageLower === "armar_paquete" || messageLower === "armar mi paquete") {
       await sendMessageWithTypingWithState(
-        from,
-        "¡Perfecto! Vamos a armar tu paquete personalizado. Por favor, indícame los servicios que deseas incluir.",
-        2000,
-        context.estado
-      );
+      from,
+      "¡Genial! 😃 Vamos a armar tu paquete personalizado.\n\n✏️ Escribe separado por comas, por ejemplo: \n\ncabina de fotos, niebla de piso, scrapbook, chisperos 4, letras gigantes 4",
+      2000, // Retraso de 2 segundos
+      "OpcionesSeleccionadas"
+    );
       context.estado = "EsperandoServicios";
       return true;
     }
