@@ -1386,8 +1386,15 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
     // Si el usuario indica agregar o quitar en su mensaje inicial:
     if (messageLower.includes("agregar")) {
       const serviciosAAgregar = userMessage.replace(/agregar/i, "").trim();
+      
+      // 🟢 TRANSFORMACIÓN: "6 letras" => "letras gigantes 6", "4 chisperos" => "chisperos 4"
+      serviciosAAgregar = serviciosAAgregar
+        .replace(/\b(\d+)\s+letras(?:\s*gigantes)?\b/gi, 'letras gigantes $1')
+        .replace(/\b(\d+)\s+chisperos?\b/gi, 'chisperos $1');
+
       context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + serviciosAAgregar;
       await sendWhatsAppMessage(from, `✅ Se ha agregado: ${serviciosAAgregar}`);
+
     } else if (messageLower.includes("quitar")) {
       const serviciosAQuitar = userMessage.replace(/quitar/i, "").trim();
       context.serviciosSeleccionados = context.serviciosSeleccionados
@@ -1397,8 +1404,15 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
         .join(", ");
       await sendWhatsAppMessage(from, `✅ Se ha quitado: ${serviciosAQuitar}`);
     } else {
-      // Se toma el mensaje completo como lista de servicios
-      context.serviciosSeleccionados = userMessage;
+      // Si el usuario pone directamente la lista sin "agregar"
+      // => También se hace la TRANSFORMACIÓN antes de asignar.
+      let listaServicios = userMessage;
+      
+      listaServicios = listaServicios
+        .replace(/\b(\d+)\s+letras(?:\s*gigantes)?\b/gi, 'letras gigantes $1')
+        .replace(/\b(\d+)\s+chisperos?\b/gi, 'chisperos $1');
+      
+      context.serviciosSeleccionados = listaServicios;
     }
   
     // Inicializamos flags para servicios sin cantidad
