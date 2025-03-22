@@ -1432,7 +1432,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
     else if (messageLower === "armar_paquete" || messageLower === "armar mi paquete") {
       await sendMessageWithTypingWithState(
         from,
-        "¡Genial! 😃 Vamos a armar tu paquete personalizado.\n\n✏️ Escribe separado por comas, por ejemplo: \n\ncabina de fotos, niebla de piso, scrapbook, chisperos 4, letras gigantes 4",
+        "¡Genial! 😃 ¡Vamos a personalizar tu paquete!\n\n✏️ *Escribe separado por comas*,\n\nPor ejemplo: \ncabina de fotos, cabina 360, 6 letras gigantes, 4 chisperos, carrito de shots con alcohol, carrito de shots sin alcohol, lluvia de mariposas, lluvia metálica, niebla de piso, scrapbook, audio guest book",
       2000,
         context.estado
       );
