@@ -1643,14 +1643,23 @@ if (context.estado === "ConfirmarAgregarCarritoShotsCambio") {
    Estado: EsperandoTipoCabina
    ============================================ */
    if (context.estado === "EsperandoTipoCabina") {
-    const respuesta = userMessage.toLowerCase();
+    const respuesta = userMessage.toLowerCase().trim();
     let varianteSeleccionada = "";
   
-    // Mapear las posibles respuestas: "fotos" o "inflable" para cabina de fotos;
-    // "360" o "giratoria" para cabina 360.
-    if (respuesta.includes("fotos") || respuesta.includes("inflable") || respuesta.includes("cabinadefotos")) {
+    // 1) Verificar primero si el usuario escribió "cabina de fotos" textual
+    if (respuesta.includes("cabina de fotos")) {
       varianteSeleccionada = "cabina de fotos";
-    } else if (respuesta.includes("360") || respuesta.includes("giratoria") || respuesta.includes("cabina360")) {
+    }
+    // 2) Verificar si escribió solo "fotos", "inflable" (que a veces lo tomas también como cabina de fotos)
+    else if (respuesta.includes("fotos") || respuesta.includes("inflable")) {
+      varianteSeleccionada = "cabina de fotos";
+    }
+    // 3) Verificar primero si el usuario escribió "cabina 360" textual
+    else if (respuesta.includes("cabina 360")) {
+      varianteSeleccionada = "cabina 360";
+    }
+    // 4) Verificar si escribió solo "360", "giratoria"
+    else if (respuesta.includes("360") || respuesta.includes("giratoria")) {
       varianteSeleccionada = "cabina 360";
     } else {
       await sendWhatsAppMessage(from, "Por favor, responde 'fotos' o '360' para seleccionar el tipo de cabina.");
