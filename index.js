@@ -917,7 +917,7 @@ if (context.estado === "Contacto Inicial") {
   await sendWhatsAppMessage(
     from,
     "Estos son los Servicios que ofrecemos 🤩",
-    1000,
+    2000,
     "Contacto Inicial"
   );
 
@@ -1333,11 +1333,11 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
     // Si el usuario seleccionó "Armar mi paquete" (id: "armar_paquete")
     else if (messageLower === "armar_paquete" || messageLower === "armar mi paquete") {
       await sendMessageWithTypingWithState(
-      from,
-      "¡Genial! 😃 Vamos a armar tu paquete personalizado.\n\n✏️ Escribe separado por comas, por ejemplo: \n\ncabina de fotos, niebla de piso, scrapbook, chisperos 4, letras gigantes 4",
-      2000, // Retraso de 2 segundos
-      "OpcionesSeleccionadas"
-    );
+        from,
+        "¡Genial! 😃 Vamos a armar tu paquete personalizado.\n\n✏️ Escribe separado por comas, por ejemplo: \n\ncabina de fotos, niebla de piso, scrapbook, chisperos 4, letras gigantes 4",
+      2000,
+        context.estado
+      );
       context.estado = "EsperandoServicios";
       return true;
     }
