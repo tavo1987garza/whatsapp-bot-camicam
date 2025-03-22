@@ -904,8 +904,9 @@ async function handleUserMessage(from, userMessage, messageLower) {
   }
   const context = userContext[from];
 
-  
-  // Si el estado es "EsperandoConfirmacionPaquete", no procesar FAQs
+    /* ============================================
+   Si el estado es "EsperandoConfirmacionPaquete", no procesar FAQs
+   ============================================ */
   if (context.estado === "EsperandoConfirmacionPaquete") {
     // Procesar FAQs solo si no está en el estado "EsperandoConfirmacionPaquete"
     if (await handleFAQs(from, userMessage)) {
@@ -913,14 +914,19 @@ async function handleUserMessage(from, userMessage, messageLower) {
     }
   }
 
-  // Manejar la acción del botón "CONTINUAR"
+    /* ============================================
+   Interceptamos el botón "si_me_interesa"
+   ============================================ */
   if ((context.estado === "EsperandoDudas" || context.estado === "EsperandoConfirmacionPaquete") &&
     messageLower.trim() === "si_me_interesa") {
     await solicitarFecha(from, context); // Solicitar la fecha del evento
     return true; // Salir de la función después de manejar la acción
   }  
 
-   // Interceptamos el botón "modificar_cotizacion"
+
+    /* ============================================
+   Interceptamos el botón "modificar_cotizacion"
+   ============================================ */
    if (messageLower === "modificar_cotizacion") {
     // Cambiamos el estado al que maneja "Agregar" y "Quitar"
     context.estado = "EsperandoDudas";
@@ -932,6 +938,47 @@ async function handleUserMessage(from, userMessage, messageLower) {
     );
 
     return true; // Evitamos procesar otros estados, ya que se manejó aquí
+  }
+
+
+  /* ============================================
+   Interceptamos el botón "paquete_sugerido"
+   ============================================ */
+  if (messageLower === "paquete_sugerido") {
+    // Aquí reutilizamos la lógica que mostrabas en "OpcionesSeleccionadas" o "EsperandoConfirmacionPaquete"
+    
+    // Si no sabes el tipo de evento: 
+    if (!context.tipoEvento) {
+      await sendWhatsAppMessage(from, "¿Para qué evento lo necesitas? Boda, XV, etc.");
+      context.estado = "EsperandoTipoEvento";
+      return true;
+    }
+
+    // Si SÍ tenemos context.tipoEvento:
+    let paqueteSugerido;
+    if (context.tipoEvento === "Boda") {
+      paqueteSugerido = "🎉 *Paquete Wedding*: Incluye Cabina 360, iniciales decorativas, 2 chisperos y un carrito de shots con alcohol, todo por *$4,450*.";
+    } else if (context.tipoEvento === "XV") {
+      paqueteSugerido = "🎂 *Paquete Mis XV*: Incluye 6 letras gigantes, Cabina de fotos, Lluvia de mariposas y 2 chisperos, todo por *$5,600*.";
+    } else {
+      // algún manejo para "otro evento", etc.
+      paqueteSugerido = "Aquí iría tu paquete sugerido genérico, o uno especial para ese evento.";
+    }
+
+    await sendWhatsAppMessage(
+      from,
+      `Aquí tienes nuestro paquete sugerido para *${context.tipoEvento}*:\n\n${paqueteSugerido}\n\n¿Te interesa? o prefieres armar tu propio paquete?`
+    );
+
+    // Opcional: ofrecer botones de “sí me interesa” y “armar mi paquete”
+    await sendInteractiveMessage(from, "Elige una opción:", [
+      { id: "si_me_interesa", title: "Si, me interesa" },
+      { id: "armar_paquete", title: "Armar mi paquete" }
+    ]);
+
+    // Ajustar estado al que usas para manejar esa respuesta
+    context.estado = "EsperandoConfirmacionPaquete";
+    return true;
   }
 
 
@@ -1005,7 +1052,7 @@ if (context.estado === "OpcionesSeleccionadas") {
     // Mensaje con retraso para simular interacción humana
     await sendMessageWithTypingWithState(
       from,
-      "¡Genial! 😃 Vamos a armar tu paquete personalizado.\n\n✏️ *Escribe separado por comas*,\n\nPor ejemplo: \ncabina de fotos, niebla de piso, scrapbook, 4 chisperos, 6 letras gigantes",
+      "¡Genial! 😃 ¡Vamos a personalizar tu paquete!\n\n✏️ *Escribe separado por comas*,\n\nPor ejemplo: \ncabina de fotos, cabina 360, 6 letras gigantes, carrito de shots con alcohol, carrito de shots sin alcohol, lluvia de mariposas, lluvia metálica, niebla de piso, scrapbook, 4 chisperos",
       2000, // Retraso de 2 segundos
       "OpcionesSeleccionadas"
     );
@@ -1314,7 +1361,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
       context.tipoEvento = "Boda";
       await sendInteractiveMessage(
         from,
-        `¡Muchas felicidades por tu pronta celebración! ✨\n\n¿Cómo te puedo ayudar?`,
+        `¡Muchas felicidades! Tu Boda será increible!!✨\n\n¿Cómo te podemos ayudar?`,
         [
           { id: "paquete_sugerido", title: "Ver paquete sugerido" },
           { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
@@ -1327,7 +1374,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
       context.tipoEvento = "XV";
       await sendInteractiveMessage(
         from,
-        `¡Muchas felicidades por tu pronta celebración! ✨\n\n¿Cómo te puedo ayudar?`,
+        `¡Muchas felicidades! Tu fiesta será Inolvidable!! ✨\n\n¿Cómo te podemos ayudar?`,
         [
           { id: "paquete_sugerido", title: "Ver paquete sugerido" },
           { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
