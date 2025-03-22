@@ -1215,8 +1215,6 @@ async function handleOtherEvent(from, context, userMessage) {
 }
 
 
-
-
 /**
  * Función que revisa el contexto actual y devuelve sugerencias de upsell
  * basadas en los servicios seleccionados.
