@@ -1181,7 +1181,7 @@ function checkUpsellSuggestions(context) {
 
   // Regla 1: Si se seleccionó "cabina de fotos" pero no "scrapbook"
   if (servicios.includes("cabina de fotos") && !servicios.includes("scrapbook")) {
-    suggestions.push("👉 ¿Sabías que al agregar *Scrapbook* tu evento se verá aún más espectacular? ¡Además, podrías aprovechar un mayor descuento!");
+    suggestions.push("👉 Sugerencia: Al agregar *Scrapbook*, tu evento se verá aún más espectacular\n¡Además, podrías aprovechar un mayor descuento!🤩\n\nEscribe *Agregar Scrapbook* si lo deseas");
     // Activar flag para enviar el video del scrapbook
     context.suggestScrapbookVideo = true;
     context.upsellSuggested = true;
@@ -1200,19 +1200,23 @@ function checkUpsellSuggestions(context) {
  * integrando las sugerencias de upsell y mostrando el video del scrapbook si aplica.
  */
 async function actualizarCotizacion(from, context, mensajePreliminar = null) {
+  // 1) Calcular la cotización
   const cotizacion = calculateQuotation(context.serviciosSeleccionados);
+
+  // 2) Mensajes de cabecera (si lo deseas)
   const cabecera = mensajePreliminar ? mensajePreliminar : "💰 *Tu cotización:*";
+  // Este mensaje se puede enviar antes o después. 
+  // Si quieres enviarlo luego de las imágenes, puedes omitirlo aquí.
+  
+  // 3) Preparar texto de detalles y texto de resumen
   const mensajeDetalles = `${cabecera}\n\n` + cotizacion.details.join("\n");
-
-  await sendMessageWithTypingWithState(from, mensajeDetalles, 2000, context.estado);
-  await delay(2000);
-
   const mensajeResumen = `Subtotal: $${cotizacion.subtotal.toLocaleString()}\nDescuento (${cotizacion.discountPercent}%): -$${cotizacion.discountAmount.toLocaleString()}\n\n*TOTAL A PAGAR: $${cotizacion.total.toLocaleString()}*`;
-  await sendMessageWithTypingWithState(from, mensajeResumen, 2000, context.estado);
 
-  // Envío de imágenes y videos para cada servicio, si no se han enviado antes
+  // 4) Enviar primero las imágenes y videos (en base a los servicios reconocidos) 
+  //    antes de mostrar la descripción textual de la cotización.
   if (cotizacion.servicesRecognized && cotizacion.servicesRecognized.length > 0) {
     for (const service of cotizacion.servicesRecognized) {
+      // Verifica si ya se enviaron medios previamente
       if (mediaMapping[service] && (!context.mediosEnviados || !context.mediosEnviados.has(service))) {
         if (mediaMapping[service].images && mediaMapping[service].images.length > 0) {
           for (const img of mediaMapping[service].images) {
@@ -1226,38 +1230,48 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
             await delay(1000);
           }
         }
+        // Marcar como enviado
         if (!context.mediosEnviados) context.mediosEnviados = new Set();
         context.mediosEnviados.add(service);
       }
     }
   }
 
-  // Integrar las sugerencias de upsell de manera sutil
+  // 5) Después de mostrar los archivos, se envían los detalles de la cotización (servicios)
+  await sendMessageWithTypingWithState(from, mensajeDetalles, 2000, context.estado);
+  await delay(2000);
+
+  // 6) Y finalmente el resumen (subtotal, descuento y total)
+  await sendMessageWithTypingWithState(from, mensajeResumen, 2000, context.estado);
+
+  // 7) Checar si hay sugerencias de upsell
   const upsellSuggestions = checkUpsellSuggestions(context);
   if (upsellSuggestions.length > 0) {
     const mensajeUpsell = upsellSuggestions.join("\n");
     await delay(2000);
     await sendMessageWithTypingWithState(from, mensajeUpsell, 2000, context.estado);
-    // Si se activó el flag, enviar el video del scrapbook
+
+    // Si había que mostrar video de scrapbook
     if (context.suggestScrapbookVideo) {
       const scrapbookMedia = mediaMapping["scrapbook"];
       if (scrapbookMedia && scrapbookMedia.videos && scrapbookMedia.videos.length > 0) {
         await delay(2000);
         await sendWhatsAppVideo(from, scrapbookMedia.videos[0]);
       }
-      // Reiniciar el flag para no volver a sugerir en el mismo flujo
       context.suggestScrapbookVideo = false;
     }
   }
 
+  // 8) Mensaje final con instrucción para agregar/quitar
   await delay(2000);
   await sendMessageWithTypingWithState(
     from,
-    "Para modificar tu cotización, escribe: \n\n'*Agregar* y el nombre del servicio que quieras agregar' ó\n\n'*Quitar* y el nombre del servicio que quieras quitar' 😊",
+    "Para modificar tu cotización, escribe: \n\n'*Agregar* y el nombre del servicio' o\n'*Quitar* y el nombre del servicio' 😊",
     2000,
     context.estado
   );
-  // Enviar mensaje con botón "CONTINUAR"
+
+  // 9) Botón para continuar
   await sendInteractiveMessage(
     from,
     "O toca el botón para continuar:",
@@ -1265,8 +1279,11 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
       { id: "si_me_interesa", title: "Si, me interesa" }
     ]
   );
+
+  // 10) Ajustar el estado si aplica
   context.estado = "EsperandoDudas";
 }
+
 
 /**
  * Función para manejar el tipo de evento, integrando Boda, XV y Otro evento.
