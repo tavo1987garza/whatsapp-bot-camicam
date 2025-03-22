@@ -466,7 +466,7 @@ function findFAQ(userMessage) {
 }
 
 // Función para manejar FAQs
-async function handleFAQs(from, userMessage, context) {
+async function handleFAQs(from, userMessage) {
   const faqEntry = findFAQ(userMessage);
   if (faqEntry) {
     await sendWhatsAppMessage(from, faqEntry.answer + " 😊");
@@ -1433,11 +1433,6 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
         return true;
     }
 
-
-    
-
-   
-  
     // Priorizar preguntar primero por las letras si faltan
     if (context.faltanLetras) {
       context.estado = "EsperandoCantidadLetras";
@@ -1653,9 +1648,9 @@ if (context.estado === "ConfirmarAgregarCarritoShotsCambio") {
   
     // Mapear las posibles respuestas: "fotos" o "inflable" para cabina de fotos;
     // "360" o "giratoria" para cabina 360.
-    if (respuesta.includes("fotos") || respuesta.includes("inflable")) {
+    if (respuesta.includes("fotos") || respuesta.includes("inflable") || respuesta.includes("cabina de fotos")) {
       varianteSeleccionada = "cabina de fotos";
-    } else if (respuesta.includes("360") || respuesta.includes("giratoria")) {
+    } else if (respuesta.includes("360") || respuesta.includes("giratoria") || respuesta.includes("cabina 360")) {
       varianteSeleccionada = "cabina 360";
     } else {
       await sendWhatsAppMessage(from, "Por favor, responde 'fotos' o '360' para seleccionar el tipo de cabina.");
