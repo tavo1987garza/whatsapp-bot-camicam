@@ -887,7 +887,6 @@ async function sendMessageToAdmin(message) {
 }
 
 
-
 // Función para manejar el flujo de mensajes del usuario con tono natural
 async function handleUserMessage(from, userMessage, messageLower) {
   if (!userContext[from]) {
@@ -997,7 +996,7 @@ if (context.estado === "Contacto Inicial") {
     "Estos son los Servicios que ofrecemos 🤩",
     2500, // Retraso de 2 segundos
     "Contacto Inicial"
-  );
+  );  
 
   // Enviar la imagen de servicios con un retraso
   await delay(3000); // Retraso de 3 segundos antes de enviar la imagen
