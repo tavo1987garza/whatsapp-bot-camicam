@@ -360,10 +360,23 @@ app.post('/webhook', async (req, res) => {
   console.log("🔘 Botón presionado:", buttonReply);
   console.log("📄 Lista seleccionada:", listReply);
   
-  // Si el usuario ya está en un flujo específico, se omite el chequeo de FAQs (excepto en dudas)
-  if (!userContext[from] || !["EsperandoServicios", "EsperandoFecha", "EsperandoLugar", "EsperandoCantidadLetras", "EsperandoDudas"].includes(userContext[from].estado)) {
+  // Si el usuario ya está en un flujo específico, se omite el chequeo de FAQs 
+  if (
+    !userContext[from] ||
+    ![
+      "EsperandoServicios",
+      "EsperandoFecha",
+      "EsperandoLugar",
+      "EsperandoCantidadLetras",
+      "EsperandoDudas",
+      "EsperandoTipoCabina",
+      "ConfirmarAgregarCabinaCambio",
+      "EsperandoTipoCarritoShots"
+    ].includes(userContext[from].estado)
+  ) {
     if (await handleFAQs(from, userMessage)) return res.sendStatus(200);
   }
+  
   
   try {
     const handledFlow = await handleUserMessage(from, userMessage, messageLower);
