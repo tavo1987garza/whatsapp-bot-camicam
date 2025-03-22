@@ -1370,9 +1370,19 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
     // Caso Boda
     if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
       context.tipoEvento = "Boda";
+      // GUARDAR el objeto
+      context.paqueteRecomendado = {
+        paquete: "PAQUETE WEDDING",
+        descripcion: "🎉Incluye Cabina 360, iniciales decorativas, 2 chisperos y un carrito de shots con alcohol, todo por *$4,450*",
+        // puedes agregar más campos si gustas (precio, etc.)
+      };
+    
+      // Luego envías los botones
       await sendInteractiveMessage(
         from,
-        `¡Muchas felicidades! Tu Boda será increible!!✨\n\n🎉 *Paquete Wedding*: Incluye Cabina 360, iniciales decorativas, 2 chisperos y un carrito de shots con alcohol, todo por *$4,450*.\n\nTe interesa contratar el paquete Wedding o prefieres Armar tu Paquete?`,
+        `¡Muchas felicidades! Tu Boda será increíble!! ✨
+    \n\n🎉 *${context.paqueteRecomendado.paquete}*: ${context.paqueteRecomendado.descripcion}.\n\n
+    ¿Te interesa contratar este paquete o prefieres Armar tu Paquete?`,
         [
           { id: "si_me_interesa", title: "PAQUETE WEDDING" },
           { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
@@ -1383,9 +1393,18 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
     // Caso XV
     else if (messageLower.includes("xv") || messageLower.includes("quince")) {
       context.tipoEvento = "XV";
+      // GUARDAR el objeto
+      context.paqueteRecomendado = {
+        paquete: "PAQUETE MIS XV",
+        descripcion: "🎂 *Paquete Mis XV*: Incluye 6 letras gigantes, Cabina de fotos, Lluvia de mariposas y 2 chisperos, todo por *$5,600*",
+      };
+    
+      // Luego envías los botones
       await sendInteractiveMessage(
         from,
-        `¡Muchas felicidades! Tu fiesta será Inolvidable!! ✨\n\n🎂 *Paquete Mis XV*: Incluye 6 letras gigantes, Cabina de fotos, Lluvia de mariposas y 2 chisperos, todo por *$5,600*.\n\nTe interesa contratar el paquete MIS XV o prefieres Armar tu Paquete?`,
+        `¡Muchas felicidades! Tu fiesta será Inolvidable!! ✨
+    \n\n🎂 *${context.paqueteRecomendado.paquete}*: ${context.paqueteRecomendado.descripcion}.\n\n
+    ¿Te interesa contratar este paquete o prefieres Armar tu Paquete?`,
         [
           { id: "si_me_interesa", title: "PAQUETE MIS XV" },
           { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
