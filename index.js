@@ -1705,7 +1705,6 @@ if (context.estado === "ConfirmarAgregarCarritoShotsCambio") {
       return true;
     }
   }
-  
 
   /* ============================================
    Estado: ConfirmarAgregarCabinaCambio
