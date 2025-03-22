@@ -1184,7 +1184,7 @@ function getOtherEventPackageRecommendation(userMessage) {
   }
   // Si no se detecta un subtipo específico
   return {
-    paquete: "Paquete Personalizado",
+    paquete: "Paq. Personalizado",
     descripcion: "Tenemos varias opciones personalizadas. ¿Podrías contarnos un poco más sobre tu evento para ofrecerte la mejor recomendación?"
   };
 }
@@ -1336,18 +1336,22 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   await delay(2000);
   await sendMessageWithTypingWithState(
     from,
-    "¿Te interesa contratar tu paquete personalizado?",
+    "¿Te ha gustado más el paquete que te hemos sugerido?",
     2000,
     context.estado
   );
 
+  // OBTENER el nombre del paquete que guardaste en context.paqueteRecomendado
+// Si no existe, mostramos "Paquete Sugerido"
+const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
+
   // 9) Botón para continuar
   await sendInteractiveMessage(
     from,
-    "¿O prefieres ver el paquete sugerido?",
+    "¿O prefieres tu paquete personalizado?",
     [
-      { id: "si_me_interesa", title: "Si, me interesa" },
-      { id: "paquete_sugerido", title: "Ver paquete sugerido" },
+      { id: "si_me_interesa_sugerido", title: tituloPaquete },
+      { id: "si_me_interesa", title: "PAQ PERSONALIZADO" },
       { id: "modificar_cotizacion", title: "Modificar Cotización" }
     ]
   );
