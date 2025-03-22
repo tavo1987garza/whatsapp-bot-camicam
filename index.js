@@ -1648,18 +1648,14 @@ if (context.estado === "ConfirmarAgregarCarritoShotsCambio") {
   
     // Mapear las posibles respuestas: "fotos" o "inflable" para cabina de fotos;
     // "360" o "giratoria" para cabina 360.
-    if (respuesta.includes("fotos") || respuesta.includes("inflable") || respuesta.includes("cabina de fotos")) {
+    if (respuesta.includes("fotos") || respuesta.includes("inflable") || respuesta.includes("cabinadefotos")) {
       varianteSeleccionada = "cabina de fotos";
-    } else if (respuesta.includes("360") || respuesta.includes("giratoria") || respuesta.includes("cabina 360")) {
+    } else if (respuesta.includes("360") || respuesta.includes("giratoria") || respuesta.includes("cabina360")) {
       varianteSeleccionada = "cabina 360";
     } else {
       await sendWhatsAppMessage(from, "Por favor, responde 'fotos' o '360' para seleccionar el tipo de cabina.");
       return true;
     }
-
-      // Agregar la cabina seleccionada a la cotización
-  context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + varianteSeleccionada;
-  await sendWhatsAppMessage(from, `✅ Se ha seleccionado ${varianteSeleccionada}.`);
       
     // Verificar si la variante seleccionada ya está en la cotización.
     if (context.serviciosSeleccionados.toLowerCase().includes(varianteSeleccionada)) {
