@@ -935,7 +935,6 @@ if (context.estado === "Contacto Inicial") {
     from,
     "Estos son los Servicios que ofrecemos 🤩",
     2000,
-    "Contacto Inicial"
   );
 
   // Enviar la imagen de servicios con un retraso
