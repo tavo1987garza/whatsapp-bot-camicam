@@ -1025,7 +1025,7 @@ if (context.estado === "Contacto Inicial") {
   await delay(6000); // Retraso de 5 segundos antes de enviar los botones
   await sendInteractiveMessage(
     from,
-    "Puedes ver nuestro paquete sugerido👌\n\nO armar tu Paquete Personalizado\n\nPara continuar selecciona el evento que tienes 👇",
+    "Puedes ver nuestro paquete sugerido👌\n\nO Personalizar tu Paquete a tu gusto.\n\nPara continuar selecciona el evento que tienes 👇",
     [
       { id: "evento_boda", title: "💍 Boda" },
       { id: "evento_xv", title: "🎉 XV Años" }
@@ -1407,37 +1407,62 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
       context.paqueteRecomendado = {
         paquete: "PAQUETE MIS XV",
         textoDetallado: `
-*CONTRATA:* 
-🔸 Cabina de fotos (3 Horas) y
-🔸 Niebla de piso ó lluvia de mariposas por
+   *CONTRATA:* 
+🔸 Cabina de fotos (3 Horas) 
+   y escoge
+🔸 Niebla de piso 
+   ó Lluvia de mariposas 
+   por tan sólo
 
-✨ $6,200 ✨
+   PRECIO REGULAR
+   ✨ $6,200 ✨
+¡Contrata ahora y recibe de REGALO!
 
-Más flete dependiendo dónde sea tu evento 📍
-
-Y llévate *GRATIS* la renta de:
-🔸 6 letras Gigantes
+   la renta de:
+🔸 6 letras Gigantes (5 Horas)
+   y
 🔸 2 Chisperos de luz fría
 
-*¡Pero espera!!*
+Todo esto con un valor de $3,400
+
+   *¡Pero espera!!*
 
 ¡Solo este mes disfruta de un descuento de $600!
 
-Paga únicamente *$5,600* por el *Paquete MIS XV*
+Para que pagues únicamente *$5,600* por el "Paquete MIS XV"
 
-*Y ESO NO ES TODO!!*
-Aprovecha también el Bono 🎁exclusivo del mes de Enero:
+¡¡Y eso no es todo, Aprovecha también el BONO EXCLUSIVO 🎁 DE ESTE MES:
 
 🔸 1 Scrapbook para la cabina de fotos
 
+Con un valor de $1,300
+
+¡Completamente  Graris!
+
 ¡Será un recuerdo muy bonito de tu evento!
 
-*¡Contrata todo por tan solo!*
+(Si contrataras todo por separado el precio Regular sería de $11,200)
 
-✨ *$5,600* ✨
+*¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
+
+    ✨ *$5,600* ✨
 
 Más flete, dependiendo dónde sea el evento
 
+🔸 Cabina de fotos (3 Horas)
+🔸 Niebla de piso ó Lluvia de mariposas
+🔸 6 letras Gigantes (5 Horas) 
+🔸 2 Chisperos de luz fría
+🔸 1 Scrapbook
+
+*¡¡TODO ESTO POR TAN SOLO!!*
+
+    ✨ *$5,600* ✨
+
+¡¡No dejes pasar esta oportunidad!!
+
+Revisa Disponiilidad ahora y asegura tu paquete antes de que te ganen la fecha
+ 
 Puedes ver los detalles de los servicios en nuestro sitio web 
 👇👇👇👇👇
 https://cami-cam.com/paquete-mis-xv/
