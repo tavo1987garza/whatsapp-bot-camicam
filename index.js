@@ -1347,7 +1347,7 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
   await delay(2000);
   await sendMessageWithTypingWithState(
     from,
-    `¿Te gustaría contratar el ${tituloPaquete}?`,
+    `Te gustaría contratar el ${tituloPaquete}?`,
     2000,
     context.estado
   );
@@ -1356,7 +1356,7 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
   // 9) Botón para continuar
   await sendInteractiveMessage(
     from,
-    "¿O tu PQUETE PERSONALIZADO?",
+    "O tu Paq Personalizado?",
     [
       { id: "si_me_interesa_sugerido", title: tituloPaquete },
       { id: "si_me_interesa", title: "PAQ PERSONALIZADO" },
