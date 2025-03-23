@@ -2163,7 +2163,12 @@ if (context.estado === "EsperandoLugar") {
     }
   }
 
-  
+  // 🟢 Si el flujo está finalizado, ya NO respondemos con OpenAI
+if (context.estado === "Finalizado") {
+  console.log("El flujo está finalizado. No se enviará la pregunta a OpenAI.");
+  return true; 
+}
+
   // Otros casos: enviar consulta a OpenAI para respuestas adicionales
   try {
     function getCacheKey(query) {
