@@ -1400,81 +1400,89 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
       context.estado = "OpcionesSeleccionadas";
     }
     // Caso XV
-// Caso XV
-else if (messageLower.includes("xv") || messageLower.includes("quince")) {
-  context.tipoEvento = "XV";
-  
-  // Guarda en el contexto al menos la propiedad "paquete" 
-  context.paqueteRecomendado = {
-    paquete: "PAQUETE MIS XV"
-  };
+    else if (messageLower.includes("xv") || messageLower.includes("quince")) {
+      context.tipoEvento = "XV";
+    
+    
+      // Texto del PAQUETE MIS XV
+      context.paqueteRecomendado = {
+        paquete: "PAQUETE MIS XV"
+      };
 
+      
   // PARTE 1
   const textoA = `
-*CONTRATA:* 
-🔸 Cabina de fotos (3 Horas) 
-   y escoge
-🔸 Niebla de piso 
-   ó Lluvia de mariposas 
-   por tan sólo
+  ¡Muchas felicidades! 👏
+  
+  Tu fiesta de XV años será Inolvidable!! ✨
 
-   PRECIO REGULAR
-   ✨ $6,200 ✨
-¡Contrata ahora y recibe de REGALO!
+Te presento el paquete que estamos promocionando:
 
-   la renta de:
-🔸 6 letras Gigantes (5 Horas)
-   y
-🔸 2 Chisperos de luz fría
-
-Todo esto con un valor de $3,400
-
-*¡Pero espera!!*
-
-¡Solo este mes disfruta de un descuento de $600!
-
-Para que pagues únicamente *$5,600* por el "Paquete MIS XV"
-`;
-
-  // PARTE 2
-  const textoB = `
-¡¡Y eso no es todo, Aprovecha también el BONO EXCLUSIVO 🎁 DE ESTE MES:
-
-🔸 1 Scrapbook para la cabina de fotos
-
-Con un valor de $1,300
-¡Completamente Gratis!
-¡Será un recuerdo muy bonito de tu evento!
-
-(Si contrataras todo por separado el precio Regular sería de $11,200)
-
-*¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
-
-    ✨ *$5,600* ✨
-
-Más flete, dependiendo dónde sea el evento
-
-🔸 Cabina de fotos (3 Horas)
-🔸 Niebla de piso ó Lluvia de mariposas
-🔸 6 letras Gigantes (5 Horas) 
-🔸 2 Chisperos de luz fría
-🔸 1 Scrapbook
-
-*¡¡TODO ESTO POR TAN SOLO!!*
-
-    ✨ *$5,600* ✨
-
-¡¡No dejes pasar esta oportunidad!!
-
-Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
-
-Puedes ver los detalles de los servicios en nuestro sitio web 
-👇👇👇👇👇
-https://cami-cam.com/paquete-mis-xv/
-`;
-
-  // 1) Enviar la imagen primero
-  await sendImageMessage(from, "URL_DE_TU_IMAGEN_XV"); 
+*Paquete mis XV*
+  *CONTRATA:* 
+  🔸 Cabina de fotos (3 Horas) 
+     y escoge
+  🔸 Niebla de piso 
+     ó Lluvia de mariposas 
+     por tan sólo
+  
+     PRECIO REGULAR
+     ✨ $6,200 ✨
+  ¡Contrata ahora y recibe de REGALO!
+  
+     la renta de:
+  🔸 6 letras Gigantes (5 Horas)
+     y
+  🔸 2 Chisperos de luz fría
+  
+  Todo esto con un valor de $3,400
+  
+  *¡Pero espera!!*
+  
+  ¡Solo este mes disfruta de un descuento de $600!
+  
+  Para que pagues únicamente *$5,600* por el "Paquete MIS XV"
+  `;
+  
+    // PARTE 2
+    const textoB = `
+  ¡¡Y eso no es todo, Aprovecha también el BONO EXCLUSIVO 🎁 DE ESTE MES:
+  
+  🔸 1 Scrapbook para la cabina de fotos
+  
+  Con un valor de $1,300
+  ¡Completamente Gratis!
+  ¡Será un recuerdo muy bonito de tu evento!
+  
+  (Si contrataras todo por separado el precio Regular sería de $11,200)
+  
+  *¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
+  
+      ✨ *$5,600* ✨
+  
+  Más flete, dependiendo dónde sea el evento
+  
+  🔸 Cabina de fotos (3 Horas)
+  🔸 Niebla de piso ó Lluvia de mariposas
+  🔸 6 letras Gigantes (5 Horas) 
+  🔸 2 Chisperos de luz fría
+  🔸 1 Scrapbook
+  
+  *¡¡TODO ESTO POR TAN SOLO!!*
+  
+      ✨ *$5,600* ✨
+  
+  ¡¡No dejes pasar esta oportunidad!!
+  
+  Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
+  
+  Puedes ver los detalles de los servicios en nuestro sitio web 
+  👇👇👇👇👇
+  https://cami-cam.com/paquete-mis-xv/
+  `;
+    
+      // (1) Enviar imagen (opcional)
+  await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg");
   await delay(2000);
 
   // 2) Enviar la primera parte de texto
@@ -1484,25 +1492,22 @@ https://cami-cam.com/paquete-mis-xv/
 
   // 3) Enviar la segunda parte de texto
   await sendMessageWithTypingWithState(from, textoB, 2000, context.estado);
-
-  // 4) Finalmente, envías botones (usando el nombre guardado en paqueteRecomendado, si quieres)
-  await sendInteractiveMessage(
-    from,
-    `¡Muchas felicidades! 👏
-Tu fiesta de XV años será Inolvidable!! ✨
-
-¿Te gustaría contratar el *${context.paqueteRecomendado.paquete}* 
-o prefieres armar tu propio paquete?`,
-    [
-      { id: "si_me_interesa", title: "PAQUETE MIS XV" },
-      { id: "armar_paquete", title: "🛠️ ARMAR MI PAQUETE" }
-    ]
-  );
-
-  context.estado = "OpcionesSeleccionadas";
-  return true;
-}
-
+    
+    
+    
+      // Al mostrar los botones, usas la misma propiedad
+      await sendInteractiveMessage(
+        from,
+        `Te gustaría contratar el *PAQUETE MIS XV*?\n\no prefieres Armar tu paquete? 👇`,
+        [
+          { id: "si_me_interesa", title: "PAQUETE MIS XV" },
+          { id: "armar_paquete", title: "🛠️ ARMAR MI PAQUETE" }
+        ]
+      );
+    
+      context.estado = "OpcionesSeleccionadas";
+      return true;
+    }
     
     // Caso "Otro"
     else {
