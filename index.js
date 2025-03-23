@@ -1407,7 +1407,6 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
       context.paqueteRecomendado = {
         paquete: "PAQUETE MIS XV",
         textoDetallado: `
-        
 *CONTRATA:* 
 🔸 Cabina de fotos y
 🔸 Niebla de piso o lluvia de mariposas por
@@ -1439,6 +1438,7 @@ Aprovecha también el Bono 🎁exclusivo del mes de Enero:
 
 Más flete, dependiendo dónde sea el evento
 
+Puedes ver los detalles de los servicios en nuestro sitio web 
 👇👇👇👇👇
 https://cami-cam.com/paquete-mis-xv/
 `
