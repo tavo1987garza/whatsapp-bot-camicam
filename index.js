@@ -1459,7 +1459,7 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
         ]
       );
       context.estado = "OpcionesSeleccionadas";
-    }
+    } 
     // Caso "Otro"
     else {
       // Obtener la recomendación basada en el tipo de evento escrito por el usuario
