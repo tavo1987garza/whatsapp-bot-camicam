@@ -1025,7 +1025,7 @@ if (context.estado === "Contacto Inicial") {
   await delay(6000); // Retraso de 5 segundos antes de enviar los botones
   await sendInteractiveMessage(
     from,
-    "Puedes ver nuestro paquete sugerido👌\n\nO armar tu Paquete Personaliado\n\nPor favor selecciona el evento que tienes 👇",
+    "Puedes ver nuestro paquete sugerido👌\n\nO armar tu Paquete Personaliado\n\nPara continuar selecciona el evento que tienes 👇",
     [
       { id: "evento_boda", title: "💍 Boda" },
       { id: "evento_xv", title: "🎉 XV Años" }
@@ -1390,7 +1390,7 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
       await sendInteractiveMessage(
         from,
         `¡Muchas felicidades! Tu Boda será increíble!! ✨
-    \n\n🎉 *${context.paqueteRecomendado.paquete}*: ${context.paqueteRecomendado.descripcion}.\n\n
+    \n\nEl paquete que estamos promocionando es el\n\n🎉 *${context.paqueteRecomendado.paquete}*: ${context.paqueteRecomendado.descripcion}.\n\n
     Te gustaría contratar el *${context.paqueteRecomendado.paquete}* o prefieres Armar tu Paquete?`,
         [
           { id: "si_me_interesa", title: "PAQUETE WEDDING" },
@@ -1402,25 +1402,81 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
     // Caso XV
     else if (messageLower.includes("xv") || messageLower.includes("quince")) {
       context.tipoEvento = "XV";
-      // GUARDAR el objeto
+    
+      // Guardamos en el contexto el texto detallado que deseas
       context.paqueteRecomendado = {
         paquete: "PAQUETE MIS XV",
-        descripcion: "🎂 *Paquete Mis XV*: Incluye 6 letras gigantes, Cabina de fotos, Lluvia de mariposas y 2 chisperos, todo por *$5,600*",
+        descripcion: "Cabina de fotos y Niebla de piso o Lluvia de mariposas. Aprovecha el descuento de $600 este mes.",
+        textoDetallado: `
+    El paquete que estamos promocionando es el
+    “*PAQUETE MIS XV*”
+        
+    *CONTRATA:* 
+    🔸 Cabina de fotos y
+    🔸 Niebla de piso o lluvia de mariposas por
+    
+    ✨ $6,200 ✨
+    
+    Más flete dependiendo dónde sea tu evento 📍
+    
+    Y llévate *GRATIS* la renta de:
+    
+    🔸 6 letras Gigantes
+    🔸 2 Chisperos de luz fría
+    
+    *¡Pero espera!!*
+    
+    ¡Solo este mes disfruta de un descuento de $600!
+    
+    Paga únicamente *$5,600* por el *Paquete MIS XV*
+    
+    *Y ESO NO ES TODO!!*
+    Aprovecha también el Bono 🎁exclusivo del mes de Enero:
+    
+    🔸 1 Scrapbook para la cabina de fotos
+    
+    Será un recuerdo muy bonito de tu evento
+    
+    ¡Contrata todo por tan solo!
+    
+    ✨ *5,600* ✨
+    
+    Más flete, dependiendo dónde sea el evento
+    
+    Puedes ver los detalles de los servicios en nuestro sitio web:
+    👇👇👇👇👇
+    https://cami-cam.com/paquete-mis-xv/
+    `
       };
+    
+      // 1) Enviar la imagen primero
+      await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg");
+      await delay(2000);  // Pausa de 2 segundos (opcional)
+    
+      // 2) Enviar el texto largo detallado
+      await sendMessageWithTypingWithState(
+        from,
+        context.paqueteRecomendado.textoDetallado,
+        2000,  // Retraso para simular "escribiendo"
+        context.estado
+      );
     
       // Luego envías los botones
       await sendInteractiveMessage(
         from,
-        `¡Muchas felicidades! Tu fiesta de XV años será Inolvidable!! ✨
-    \n\n🎂 *${context.paqueteRecomendado.paquete}*: ${context.paqueteRecomendado.descripcion}.\n\n
+        `¡Muchas felicidades! 👏👏 \n\nTu fiesta de XV años será Inolvidable!! ✨
+    \n\nEl paquete que estamos promocionando es el\n\n*${context.paqueteRecomendado.paquete}*: ${context.paqueteRecomendado.descripcion}.\n\n
     ¿Te gustaría contratar el *${context.paqueteRecomendado.paquete}* o prefieres Armar tu Paquete?`,
         [
           { id: "si_me_interesa", title: "PAQUETE MIS XV" },
           { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
         ]
       );
+    
       context.estado = "OpcionesSeleccionadas";
+      return true;
     }
+    
     // Caso "Otro"
     else {
       // Obtener la recomendación basada en el tipo de evento escrito por el usuario
