@@ -1280,7 +1280,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   const cotizacion = calculateQuotation(context.serviciosSeleccionados);
 
   // 2) Mensajes de cabecera (si lo deseas)
-  const cabecera = mensajePreliminar ? mensajePreliminar : "*PAQUETE PERSONALIADO*";
+  const cabecera = mensajePreliminar ? mensajePreliminar : "*PAQUETE PERSONALIZADO*";
   // Este mensaje se puede enviar antes o después. 
   // Si quieres enviarlo luego de las imágenes, puedes omitirlo aquí.
   
@@ -1355,10 +1355,10 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
   // 9) Botón para continuar
   await sendInteractiveMessage(
     from,
-    "O tu Paq Personalizado?",
+    "O tu Paquete Personalizado?",
     [
       { id: "si_me_interesa_sugerido", title: tituloPaquete },
-      { id: "si_me_interesa", title: "PAQ PERSONALIZADO" },
+      { id: "si_me_interesa", title: "PAQ. PERSONALIZADO" },
       { id: "modificar_cotizacion", title: "Modificar Cotización" }
     ]
   );
