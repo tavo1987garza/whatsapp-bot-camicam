@@ -1412,73 +1412,71 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
       
   // PARTE 1
   const textoA = `
-  ¡Muchas felicidades! 👏
+¡Muchas felicidades! 👏
   
-  Tu fiesta de XV años será Inolvidable!! ✨
+Tu fiesta de XV años será Inolvidable!! ✨
 
 Te presento el paquete que estamos promocionando:
 
-*Paquete mis XV*
-  *CONTRATA:* 
-  🔸 Cabina de fotos (3 Horas) 
-     y escoge
-  🔸 Niebla de piso 
-     ó Lluvia de mariposas 
-     por tan sólo
+*PAQUETE MIS XV*
+
+   Incluye: 
+🔸 Cabina de fotos (3 Horas) 
+🔸 6 letras Gigantes (5 Horas)
+🔸 Niebla de piso ó Lluvia de mariposas 
+   
+   por tan sólo
+
+   ✨ $8,900 ✨
+
+¡Contrata ahora y recibe de REGALO!
   
-     PRECIO REGULAR
-     ✨ $6,200 ✨
-  ¡Contrata ahora y recibe de REGALO!
+🔸 2 Chisperos de luz fría
   
-     la renta de:
-  🔸 6 letras Gigantes (5 Horas)
-     y
-  🔸 2 Chisperos de luz fría
+Con un valor de $1,000
   
-  Todo esto con un valor de $3,400
+  *¡¡Pero espera!!*
   
-  *¡Pero espera!!*
-  
-  ¡Solo este mes disfruta de un descuento de $600!
-  
-  Para que pagues únicamente *$5,600* por el "Paquete MIS XV"
-  `;
+¡Solo este mes disfruta de un *30% de descuento*!
+`;
   
     // PARTE 2
     const textoB = `
-  ¡¡Y eso no es todo, Aprovecha también el BONO EXCLUSIVO 🎁 DE ESTE MES:
+¡¡Y eso no es todo!! 
+A los primeros 10 contratos les estaremos Regalando 
   
-  🔸 1 Scrapbook para la cabina de fotos
+🔸 1 Scrapbook personalizado para la cabina de fotos
   
-  Con un valor de $1,300
-  ¡Completamente Gratis!
-  ¡Será un recuerdo muy bonito de tu evento!
+Con un valor de $1,300
+
+¡Te lo llevamos Completamente Gratis!
+
+¡Será un recuerdo muy bonito de tu evento!
   
-  (Si contrataras todo por separado el precio Regular sería de $11,200)
+Si contrataras todo por separado el precio Regular sería de $11,200
   
-  *¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
+*¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
   
-      ✨ *$5,600* ✨
+      ✨ *$6,230* ✨
   
-  Más flete, dependiendo dónde sea el evento
+Sin costos de flete a una distancia de 20 km del centro de Monterrey
   
-  🔸 Cabina de fotos (3 Horas)
-  🔸 Niebla de piso ó Lluvia de mariposas
-  🔸 6 letras Gigantes (5 Horas) 
-  🔸 2 Chisperos de luz fría
-  🔸 1 Scrapbook
+🔸 Cabina de fotos (3 Horas)
+🔸 6 letras Gigantes (5 Horas)
+🔸 Niebla de piso ó Lluvia de mariposas 
+🔸 2 Chisperos de luz fría
+🔸 1 Scrapbook
+🔸 Descuento de $2,670
+🔸 Flete Incluido
   
   *¡¡TODO ESTO POR TAN SOLO!!*
   
       ✨ *$5,600* ✨
   
-  ¡¡No dejes pasar esta oportunidad!!
+¡¡No dejes pasar esta oportunidad!!
   
-  Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
+Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
   
-  Puedes ver los detalles de los servicios en nuestro sitio web 
-  👇👇👇👇👇
-  https://cami-cam.com/paquete-mis-xv/
   `;
     
       // (1) Enviar imagen (opcional)
@@ -1493,6 +1491,10 @@ Te presento el paquete que estamos promocionando:
   // 3) Enviar la segunda parte de texto
   await sendMessageWithTypingWithState(from, textoB, 2000, context.estado);
     
+   // Enviar imagenes u videos del paquete
+  await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg");
+  await delay(2000);
+ 
     
     
       // Al mostrar los botones, usas la misma propiedad
