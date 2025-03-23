@@ -1439,33 +1439,7 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
   
   ¡Completamente  Graris!
   
-  ¡Será un recuerdo muy bonito de tu evento!
-  
-  (Si contrataras todo por separado el precio Regular sería de $11,200)
-  
-  *¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
-  
-      ✨ *$5,600* ✨
-  
-  Más flete, dependiendo dónde sea el evento
-  
-  🔸 Cabina de fotos (3 Horas)
-  🔸 Niebla de piso ó Lluvia de mariposas
-  🔸 6 letras Gigantes (5 Horas) 
-  🔸 2 Chisperos de luz fría
-  🔸 1 Scrapbook
-  
-  *¡¡TODO ESTO POR TAN SOLO!!*
-  
-      ✨ *$5,600* ✨
-  
-  ¡¡No dejes pasar esta oportunidad!!
-  
-  Revisa Disponiilidad ahora y asegura tu paquete antes de que te ganen la fecha
-   
-  Puedes ver los detalles de los servicios en nuestro sitio web 
-  👇👇👇👇👇
-  https://cami-cam.com/paquete-mis-xv/
+
 https://cami-cam.com/paquete-mis-xv/
 `
       };
