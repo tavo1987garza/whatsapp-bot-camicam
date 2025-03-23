@@ -1449,16 +1449,6 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
   
   Más flete, dependiendo dónde sea el evento
   
-  🔸 Cabina de fotos (3 Horas)
-  🔸 Niebla de piso ó Lluvia de mariposas
-  🔸 6 letras Gigantes (5 Horas) 
-  🔸 2 Chisperos de luz fría
-  🔸 1 Scrapbook
-  
-  *¡¡TODO ESTO POR TAN SOLO!!*
-  
-      ✨ *$5,600* ✨
-  
 
 https://cami-cam.com/paquete-mis-xv/
 `
