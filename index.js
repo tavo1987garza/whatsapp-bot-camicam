@@ -1405,9 +1405,46 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
       // GUARDAR el objeto
       context.paqueteRecomendado = {
         paquete: "PAQUETE MIS XV",
-        descripcion: "Paquete que estamos promocionando es el *Paquete MIS XV*: Incluye  BAL BLA BLA BLA BLA6 letras gigantes, Cabina de fotos, Lluvia de mariposas y 2 chisperos, todo por *$5,600*",
+        descripcion: `
+      El paquete que estamos promocionando es el
+      "*PAQUETE MIS XV*"
+      
+      *CONTRATA:* 
+      🔸 Cabina de fotos y
+      🔸 Niebla de piso o lluvia de mariposas por
+      
+      ✨ $6,200 ✨
+      
+      Más flete dependiendo dónde sea tu evento 📍
+      
+      Y llévate *GRATIS* la renta de:
+      🔸 6 letras Gigantes
+      🔸 2 Chisperos de luz fría
+      
+      *¡Pero espera!!*
+      
+      ¡Solo este mes disfruta de un descuento de $600!
+      
+      Paga únicamente *$5,600* por el *Paquete MIS XV*
+      
+      *Y ESO NO ES TODO!!*
+      Aprovecha también el Bono 🎁exclusivo del mes de Enero:
+      
+      🔸 1 Scrapbook para la cabina de fotos
+      
+      ¡Será un recuerdo muy bonito de tu evento!
+      
+      *¡Contrata todo por tan solo!*
+      
+      ✨ *$5,600* ✨
+      
+      Más flete, dependiendo dónde sea el evento
+      
+      👇👇👇👇👇
+      https://cami-cam.com/paquete-mis-xv/
+      `
       };
-    
+      
       // Luego envías los botones
       await sendInteractiveMessage(
         from,
