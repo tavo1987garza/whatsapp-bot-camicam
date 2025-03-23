@@ -1025,7 +1025,7 @@ if (context.estado === "Contacto Inicial") {
   await delay(6000); // Retraso de 5 segundos antes de enviar los botones
   await sendInteractiveMessage(
     from,
-    "Puedes ver nuestro paquete sugerido👌\n\no armar tu paquete personaliado\n\nPor favor\nSelecciona el evento que tienes 👇",
+    "Puedes ver nuestro paquete sugerido👌\n\nO armar tu paquete personaliado\n\nPor favor\nSelecciona el evento que tienes 👇",
     [
       { id: "evento_boda", title: "💍 Boda" },
       { id: "evento_xv", title: "🎉 XV Años" }
