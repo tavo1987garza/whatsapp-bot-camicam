@@ -1461,6 +1461,7 @@ Si contrataras todo por separado el precio Regular sería de $11,200
   
 Sin costos de flete a una distancia de 20 km del centro de Monterrey
   
+   En Resumen:
 🔸 Cabina de fotos (3 Horas)
 🔸 6 letras Gigantes (5 Horas)
 🔸 Niebla de piso ó Lluvia de mariposas 
@@ -1471,7 +1472,7 @@ Sin costos de flete a una distancia de 20 km del centro de Monterrey
   
   *¡¡TODO ESTO POR TAN SOLO!!*
   
-      ✨ *$5,600* ✨
+      ✨ *$6,230* ✨
   
 ¡¡No dejes pasar esta oportunidad!!
   
