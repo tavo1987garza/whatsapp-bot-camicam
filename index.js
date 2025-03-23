@@ -1459,13 +1459,7 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
   
       ✨ *$5,600* ✨
   
-  ¡¡No dejes pasar esta oportunidad!!
-  
-  Revisa Disponiilidad ahora y asegura tu paquete antes de que te ganen la fecha
-   
-  Puedes ver los detalles de los servicios en nuestro sitio web 
-  👇👇👇👇👇
-  https://cami-cam.com/paquete-mis-xv/
+
 https://cami-cam.com/paquete-mis-xv/
 `
       };
