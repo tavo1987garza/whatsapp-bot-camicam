@@ -1416,12 +1416,7 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
       await sendImageMessage(from, "URL");
       await delay(2000);
     
-      await sendMessageWithTypingWithState(
-        from,
-        context.paqueteRecomendado.textoDetallado,
-        2000,
-        context.estado
-      );
+    
     
       // Al mostrar los botones, usas la misma propiedad
       await sendInteractiveMessage(
