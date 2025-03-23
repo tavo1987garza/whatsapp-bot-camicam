@@ -1402,64 +1402,50 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
     // Caso XV
     else if (messageLower.includes("xv") || messageLower.includes("quince")) {
       context.tipoEvento = "XV";
-    
-      // Guardamos en el contexto el texto detallado que deseas
+      // GUARDAR el objeto
       context.paqueteRecomendado = {
         paquete: "PAQUETE MIS XV",
-        descripcion: "Cabina de fotos y Niebla de piso o Lluvia de mariposas. Aprovecha el descuento de $600 este mes.",
-        textoDetallado: `
-    El paquete que estamos promocionando es el
-    “*PAQUETE MIS XV*”
+        descripcion:  `
+        El paquete que estamos promocionando es el
+        “*PAQUETE MIS XV*”
         
-    *CONTRATA:* 
-    🔸 Cabina de fotos y
-    🔸 Niebla de piso o lluvia de mariposas por
-    
-    ✨ $6,200 ✨
-    
-    Más flete dependiendo dónde sea tu evento 📍
-    
-    Y llévate *GRATIS* la renta de:
-    
-    🔸 6 letras Gigantes
-    🔸 2 Chisperos de luz fría
-    
-    *¡Pero espera!!*
-    
-    ¡Solo este mes disfruta de un descuento de $600!
-    
-    Paga únicamente *$5,600* por el *Paquete MIS XV*
-    
-    *Y ESO NO ES TODO!!*
-    Aprovecha también el Bono 🎁exclusivo del mes de Enero:
-    
-    🔸 1 Scrapbook para la cabina de fotos
-    
-    Será un recuerdo muy bonito de tu evento
-    
-    ¡Contrata todo por tan solo!
-    
-    ✨ *5,600* ✨
-    
-    Más flete, dependiendo dónde sea el evento
-    
-    Puedes ver los detalles de los servicios en nuestro sitio web:
-    👇👇👇👇👇
-    https://cami-cam.com/paquete-mis-xv/
-    `
-      };
-    
-      // 1) Enviar la imagen primero
-      await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg");
-      await delay(2000);  // Pausa de 2 segundos (opcional)
-    
-      // 2) Enviar el texto largo detallado
-      await sendMessageWithTypingWithState(
-        from,
-        context.paqueteRecomendado.textoDetallado,
-        2000,  // Retraso para simular "escribiendo"
-        context.estado
-      );
+        *CONTRATA:* 
+        🔸 Cabina de fotos y
+        🔸 Niebla de piso o lluvia de mariposas por
+        
+        ✨ $6,200 ✨
+        
+        Más flete dependiendo dónde sea tu evento 📍
+        
+        Y llévate *GRATIS* la renta de:
+        
+        🔸 6 letras Gigantes
+        🔸 2 Chisperos de luz fría
+        
+        *¡Pero espera!!*
+        
+        ¡Solo este mes disfruta de un descuento de $600!
+        
+        Paga únicamente *$5,600* por el *Paquete MIS XV*
+        
+        *Y ESO NO ES TODO!!*
+        Aprovecha también el Bono 🎁exclusivo del mes de Enero:
+        
+        🔸 1 Scrapbook para la cabina de fotos
+        
+        Será un recuerdo muy bonito de tu evento
+        
+        ¡Contrata todo por tan solo!
+        
+        ✨ *5,600* ✨
+        
+        Más flete, dependiendo dónde sea el evento
+        
+        Puedes ver los detalles de los servicios en nuestro sitio web:
+        👇👇👇👇👇
+        https://cami-cam.com/paquete-mis-xv/
+        `
+          };
     
       // Luego envías los botones
       await sendInteractiveMessage(
@@ -1472,11 +1458,8 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
           { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
         ]
       );
-    
       context.estado = "OpcionesSeleccionadas";
-      return true;
     }
-    
     // Caso "Otro"
     else {
       // Obtener la recomendación basada en el tipo de evento escrito por el usuario
