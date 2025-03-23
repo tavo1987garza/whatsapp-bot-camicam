@@ -1025,7 +1025,7 @@ if (context.estado === "Contacto Inicial") {
   await delay(6000); // Retraso de 5 segundos antes de enviar los botones
   await sendInteractiveMessage(
     from,
-    "Puedes ver nuestro paquete sugerido👌\n\nO armar tu Paquete Personaliado\n\nPara continuar selecciona el evento que tienes 👇",
+    "Puedes ver nuestro paquete sugerido👌\n\nO armar tu Paquete Personalizado\n\nPara continuar selecciona el evento que tienes 👇",
     [
       { id: "evento_boda", title: "💍 Boda" },
       { id: "evento_xv", title: "🎉 XV Años" }
@@ -1389,8 +1389,8 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
       // Luego envías los botones
       await sendInteractiveMessage(
         from,
-        `¡Muchas felicidades! Tu Boda será increíble!! ✨
-    \n\nEl paquete que estamos promocionando es el\n\n🎉 *${context.paqueteRecomendado.paquete}*: ${context.paqueteRecomendado.descripcion}.\n\n
+        `¡Muchas felicidades! Tu Boda será increíble!! ✨\n\n
+    Te presento el paquete que estamos promocionando:\n\n🎉 *${context.paqueteRecomendado.paquete}*: ${context.paqueteRecomendado.descripcion}.\n\n
     Te gustaría contratar el *${context.paqueteRecomendado.paquete}* o prefieres Armar tu Paquete?`,
         [
           { id: "si_me_interesa", title: "PAQUETE WEDDING" },
@@ -1408,8 +1408,8 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
         paquete: "PAQUETE MIS XV",
         textoDetallado: `
 *CONTRATA:* 
-🔸 Cabina de fotos y
-🔸 Niebla de piso o lluvia de mariposas por
+🔸 Cabina de fotos (3 Horas) y
+🔸 Niebla de piso ó lluvia de mariposas por
 
 ✨ $6,200 ✨
 
@@ -1453,14 +1453,14 @@ https://cami-cam.com/paquete-mis-xv/
       await sendInteractiveMessage(
         from,
         `¡Muchas felicidades! 👏\n\nTu fiesta de XV años será Inolvidable!! ✨\n
-        El paquete que estamos promocionando es el:\n
-        *${context.paqueteRecomendado.paquete}*\n 
-        ${context.paqueteRecomendado.textoDetallado}\n
-        Selecciona *PAQUETE MIS XV* si deseas contratar este paquete\n
-        o *Armar mi paquete* si deseas tu paquete personalizado 👇`,
+Te presento el paquete que estamos promocionando:\n
+*${context.paqueteRecomendado.paquete}*\n 
+${context.paqueteRecomendado.textoDetallado}\n
+Selecciona *PAQUETE MIS XV* si deseas contratar este paquete\n
+o *Armar mi paquete* si deseas tu paquete personalizado 👇`,
         [
           { id: "si_me_interesa", title: "PAQUETE MIS XV" },
-          { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
+          { id: "armar_paquete", title: "🛠️ ARMAR MI PAQUETE" }
         ]
       );
     
