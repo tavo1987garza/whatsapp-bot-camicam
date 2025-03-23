@@ -952,7 +952,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
     // Enviamos las instrucciones
     await sendWhatsAppMessage(
       from,
-      "Puedes modificar tu cotización 😊. Escribe:\n\n*Agregar* + el nombre del servicio\n\n*Quitar* + el nombre del servicio"
+      "😊 Para modificar tu cotización\nEscribe:\n\n'*Agregar* y el nombre del servicio' ó\n\n'*Quitar* y el nombre del servicio'"
     );
 
     return true; // Evitamos procesar otros estados, ya que se manejó aquí
@@ -1412,7 +1412,7 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
       // Luego envías los botones
       await sendInteractiveMessage(
         from,
-        `¡Muchas felicidades! Tu fiesta será Inolvidable!! ✨
+        `¡Muchas felicidades! Tu fiesta de XV años será Inolvidable!! ✨
     \n\n🎂 *${context.paqueteRecomendado.paquete}*: ${context.paqueteRecomendado.descripcion}.\n\n
     ¿Te gustaría contratar el *${context.paqueteRecomendado.paquete}* o prefieres Armar tu Paquete?`,
         [
