@@ -1281,7 +1281,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   const cotizacion = calculateQuotation(context.serviciosSeleccionados);
 
   // 2) Mensajes de cabecera (si lo deseas)
-  const cabecera = mensajePreliminar ? mensajePreliminar : "💰 *Tu cotización:*";
+  const cabecera = mensajePreliminar ? mensajePreliminar : "*PAQUETE PERSONALIADO*";
   // Este mensaje se puede enviar antes o después. 
   // Si quieres enviarlo luego de las imágenes, puedes omitirlo aquí.
   
@@ -1773,7 +1773,7 @@ if (context.estado === "ConfirmarAgregarCarritoShotsCambio") {
     if (!context.serviciosSeleccionados.toLowerCase().includes(variante)) {
       context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + variante;
       await sendWhatsAppMessage(from, `✅ Se ha agregado ${variante}.`);
-      await actualizarCotizacion(from, context, "¡Cotización actualizada!");
+      await actualizarCotizacion(from, context, "¡Paquete Personalizado actualizado!");
     }
     context.estado = "EsperandoDudas";
     return true;
@@ -1873,7 +1873,7 @@ if (context.estado === "ConfirmarAgregarCabinaCambio") {
     if (!context.serviciosSeleccionados.toLowerCase().includes(variante)) {
       context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + variante;
       await sendWhatsAppMessage(from, `✅ Se ha agregado ${variante}.`);
-      await actualizarCotizacion(from, context, "¡Cotización actualizada!");
+      await actualizarCotizacion(from, context, "¡Paquete Personalizado actualizado!");
     }
     context.estado = "EsperandoDudas";
     return true;
@@ -1943,7 +1943,7 @@ if (context.estado === "ConfirmarAgregarCabinaCambio") {
           .join(", ");
         await sendWhatsAppMessage(from, `✅ ${servicioAQuitar.charAt(0).toUpperCase() + servicioAQuitar.slice(1)} eliminado de tu cotización.`);
       }
-      await actualizarCotizacion(from, context, "¡Cotización actualizada!");
+      await actualizarCotizacion(from, context, "¡Paquete Personalizado actualizado!");
       return true;
     } else {
       await sendWhatsAppMessage(from, "No entendí qué servicio deseas quitar. Por favor, escribe: 'Quitar y el servicio que deseas quitar'");
@@ -2019,7 +2019,7 @@ if (context.estado === "ConfirmarAgregarCabinaCambio") {
       // Se agrega el servicio a la cotización
       context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `${servicioAAgregar} ${cantidadAAgregar}`;
       await sendWhatsAppMessage(from, `✅ Se ha agregado ${cantidadAAgregar} ${servicioAAgregar}.`);
-      await actualizarCotizacion(from, context, "¡Cotización actualizada!");
+      await actualizarCotizacion(from, context, "¡Paquete Personalizado actualizado!");
       return true;
     } else {
       // Si no se reconoce el servicio a agregar
