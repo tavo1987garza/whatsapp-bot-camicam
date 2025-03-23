@@ -1403,7 +1403,7 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
     else if (messageLower.includes("xv") || messageLower.includes("quince")) {
       context.tipoEvento = "XV";
     
-      // Todo queda en textoDetallado (incluyendo la “versión corta” si no hay otra)
+      // Texto del PAQUETE MIS XV
       context.paqueteRecomendado = {
         paquete: "PAQUETE MIS XV",
         textoDetallado: `
