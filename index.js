@@ -1454,8 +1454,10 @@ https://cami-cam.com/paquete-mis-xv/
         from,
         `¡Muchas felicidades! 👏\n\nTu fiesta de XV años será Inolvidable!! ✨\n
         El paquete que estamos promocionando es el:\n
-        *${context.paqueteRecomendado.paquete}*\n\n
-        ${context.paqueteRecomendado.textoDetallado}`, // si quieres repetirlo 
+        *${context.paqueteRecomendado.paquete}*\n 
+        ${context.paqueteRecomendado.textoDetallado}\n
+        Selecciona *PAQUETE MIS XV* si deseas contratar este paquete\n
+        o *Armar mi paquete* si deseas tu paquete personalizado 👇`,
         [
           { id: "si_me_interesa", title: "PAQUETE MIS XV" },
           { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
