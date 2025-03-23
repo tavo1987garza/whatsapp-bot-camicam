@@ -1025,7 +1025,7 @@ if (context.estado === "Contacto Inicial") {
   await delay(6000); // Retraso de 5 segundos antes de enviar los botones
   await sendInteractiveMessage(
     from,
-    "Puedes ver nuestro paquete sugerido👌 o armar tu propio paquete personaliado\n\nPor favor Selecciona el evento que tienes 👇",
+    "Puedes ver nuestro paquete sugerido👌\n\no armar tu paquete personaliado\n\nPor favor\nSelecciona el evento que tienes 👇",
     [
       { id: "evento_boda", title: "💍 Boda" },
       { id: "evento_xv", title: "🎉 XV Años" }
@@ -1045,7 +1045,6 @@ if (context.estado === "Contacto Inicial") {
   context.estado = "EsperandoTipoEvento";
   return true;
 }
-
 
  // 🟢 2. Capturar el tipo de evento
  if (context.estado === "EsperandoTipoEvento") {
