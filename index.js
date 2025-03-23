@@ -1407,62 +1407,38 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
       context.paqueteRecomendado = {
         paquete: "PAQUETE MIS XV",
         textoDetallado: `
-   *CONTRATA:* 
+*CONTRATA:* 
 🔸 Cabina de fotos (3 Horas) 
-   y escoge
-🔸 Niebla de piso 
-   ó Lluvia de mariposas 
-   por tan sólo
+y
+🔸 Niebla de piso ó lluvia de mariposas por
 
-   PRECIO REGULAR
-   ✨ $6,200 ✨
-¡Contrata ahora y recibe de REGALO!
+✨ $6,200 ✨
 
-   la renta de:
-🔸 6 letras Gigantes (5 Horas)
-   y
+Más flete dependiendo dónde sea tu evento 📍
+
+Y llévate *GRATIS* la renta de:
+🔸 6 letras Gigantes
 🔸 2 Chisperos de luz fría
 
-Todo esto con un valor de $3,400
-
-   *¡Pero espera!!*
+*¡Pero espera!!*
 
 ¡Solo este mes disfruta de un descuento de $600!
 
-Para que pagues únicamente *$5,600* por el "Paquete MIS XV"
+Paga únicamente *$5,600* por el *Paquete MIS XV*
 
-¡¡Y eso no es todo, Aprovecha también el BONO EXCLUSIVO 🎁 DE ESTE MES:
+*Y ESO NO ES TODO!!*
+Aprovecha también el Bono 🎁exclusivo del mes de Enero:
 
 🔸 1 Scrapbook para la cabina de fotos
 
-Con un valor de $1,300
-
-¡Completamente  Graris!
-
 ¡Será un recuerdo muy bonito de tu evento!
 
-(Si contrataras todo por separado el precio Regular sería de $11,200)
+*¡Contrata todo por tan solo!*
 
-*¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
-
-    ✨ *$5,600* ✨
+✨ *$5,600* ✨
 
 Más flete, dependiendo dónde sea el evento
 
-🔸 Cabina de fotos (3 Horas)
-🔸 Niebla de piso ó Lluvia de mariposas
-🔸 6 letras Gigantes (5 Horas) 
-🔸 2 Chisperos de luz fría
-🔸 1 Scrapbook
-
-*¡¡TODO ESTO POR TAN SOLO!!*
-
-    ✨ *$5,600* ✨
-
-¡¡No dejes pasar esta oportunidad!!
-
-Revisa Disponiilidad ahora y asegura tu paquete antes de que te ganen la fecha
- 
 Puedes ver los detalles de los servicios en nuestro sitio web 
 👇👇👇👇👇
 https://cami-cam.com/paquete-mis-xv/
