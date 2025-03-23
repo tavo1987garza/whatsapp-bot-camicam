@@ -1353,11 +1353,10 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
   );
 
 
-
   // 9) Botón para continuar
   await sendInteractiveMessage(
     from,
-    "¿O tu paquete personalizado?",
+    "¿O tu PQUETE PERSONALIZADO?",
     [
       { id: "si_me_interesa_sugerido", title: tituloPaquete },
       { id: "si_me_interesa", title: "PAQ PERSONALIZADO" },
