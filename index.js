@@ -1433,22 +1433,6 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
   
   ¡¡Y eso no es todo, Aprovecha también el BONO EXCLUSIVO 🎁 DE ESTE MES:
   
-  🔸 1 Scrapbook para la cabina de fotos
-  
-  Con un valor de $1,300
-  
-  ¡Completamente  Graris!
-  
-  ¡Será un recuerdo muy bonito de tu evento!
-  
-  (Si contrataras todo por separado el precio Regular sería de $11,200)
-  
-  *¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
-  
-      ✨ *$5,600* ✨
-  
-  Más flete, dependiendo dónde sea el evento
-  
 
 https://cami-cam.com/paquete-mis-xv/
 `
