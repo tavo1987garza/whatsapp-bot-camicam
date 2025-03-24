@@ -1413,7 +1413,7 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
           { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
         ]
       );
-      context.estado = "EsperandoConfirmacionPaquete";
+      context.estado = "OpcionesSeleccionadas";
     }
     // Caso XV
     else if (messageLower.includes("xv") || messageLower.includes("quince")) {
@@ -1527,7 +1527,7 @@ Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
         ]
       );
     
-      context.estado = "EsperandoConfirmacionPaquete";
+      context.estado = "OpcionesSeleccionadas";
       return true;
     }
     
