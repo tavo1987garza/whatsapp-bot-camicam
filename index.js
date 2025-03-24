@@ -1052,7 +1052,7 @@ if (context.estado === "Contacto Inicial") {
   const messageLower = userMessage.toLowerCase();
   await handleTipoEvento(from, messageLower, context);
   return true;
-}  
+}   
 
 /*if (context.estado === "EsperandoSubtipoOtroEvento") {
   const messageLower = userMessage.toLowerCase();
