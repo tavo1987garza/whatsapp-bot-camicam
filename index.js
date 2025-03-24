@@ -1097,7 +1097,7 @@ if (context.estado === "OpcionesSeleccionadas") {
     // Enviar mensaje con el paquete sugerido y la pregunta
     await sendMessageWithTypingWithState(
       from,
-      `Aquí tienes nuestro paquete sugerido para *${context.tipoEvento}*:\n\n${paqueteSugerido}\n\n¿Te interesa? o prefieres armar tu propio paquete`,
+      `Aquí tienes nuestro paquete para *${context.tipoEvento}*:\n\n${paqueteSugerido}\n\n¿Te interesa? o prefieres armar tu propio paquete`,
       2000, // Retraso de 2 segundos
       "OpcionesSeleccionadas"
     );
