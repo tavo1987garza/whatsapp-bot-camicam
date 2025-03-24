@@ -1581,7 +1581,7 @@ if (context.estado === "EsperandoConfirmacionPaquete") {
     );
     context.estado = "EsperandoServicios";
     return true;
-  }
+  }  
   // Manejo de error
   await sendMessageWithTypingWithState(
     from,
