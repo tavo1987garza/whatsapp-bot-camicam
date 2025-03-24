@@ -1355,7 +1355,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
 
     // OBTENER el nombre del paquete que guardaste en context.paqueteRecomendado
 // Si no existe, mostramos "Paquete Sugerido"
-//Sucede cuando selecciona "Armar mi paquete"
+//Sucede despues de seleccionar "Armar mi paquete" y presentar la cotizacion
 const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
 
   // 8) Mensaje final con instrucción para agregar/quitar
@@ -1413,7 +1413,7 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
           { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
         ]
       );
-      context.estado = "OpcionesSeleccionadas";
+      context.estado = "EsperandoConfirmacionPaquete";
     }
     // Caso XV
     else if (messageLower.includes("xv") || messageLower.includes("quince")) {
@@ -1527,7 +1527,7 @@ Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
         ]
       );
     
-      context.estado = "OpcionesSeleccionadas";
+      context.estado = "EsperandoConfirmacionPaquete";
       return true;
     }
     
