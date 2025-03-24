@@ -1420,14 +1420,15 @@ Te presento el paquete que estamos promocionando:
 
 *PAQUETE MIS XV*
 
-   Incluye: 
+    Incluye: 
 🔸 Cabina de fotos (3 Horas) 
 🔸 6 letras Gigantes (5 Horas)
-🔸 Niebla de piso ó Lluvia de mariposas 
+🔸 Niebla de piso ó 
+    Lluvia de mariposas 
    
-   por tan sólo
+      por tan sólo
 
-   ✨ $8,900 ✨
+     ✨ $8,900 ✨
 
 ¡Contrata ahora y recibe de REGALO!
   
@@ -1435,9 +1436,9 @@ Te presento el paquete que estamos promocionando:
   
 Con un valor de $1,000
   
-  *¡¡Pero espera!!*
+     *¡¡Pero espera!!*
   
-¡Solo este mes disfruta de un *30% de descuento*!
+¡Solo este mes disfruta de un *30% DE DESCUENTO*!
 `;
   
     // PARTE 2
@@ -1460,22 +1461,23 @@ Si contrataras todo por separado el precio Regular sería de $11,200
   
       ✨ *$6,230* ✨
   
-Sin costos de flete a una distancia de 20 km del centro de Monterrey
+Flete Incluido!! a una distancia de 20 km del centro de Monterrey
   
-   En Resumen:
+    En Resumen:
 🔸 Cabina de fotos (3 Horas)
 🔸 6 letras Gigantes (5 Horas)
-🔸 Niebla de piso ó Lluvia de mariposas 
+🔸 Niebla de piso ó 
+    Lluvia de mariposas 
 🔸 2 Chisperos de luz fría
 🔸 1 Scrapbook
 🔸 Descuento de $2,670
 🔸 Flete Incluido
   
-  *¡¡TODO ESTO POR TAN SOLO!!*
+*¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
   
       ✨ *$6,230* ✨
   
-¡¡No dejes pasar esta oportunidad!!
+¡¡Aprovecha esta oportunidad!!
   
 Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
   
@@ -1502,7 +1504,7 @@ Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
       // Al mostrar los botones, usas la misma propiedad
       await sendInteractiveMessage(
         from,
-        `Te gustaría contratar el *PAQUETE MIS XV*?\n\no prefieres Armar tu paquete? 👇`,
+        `Te gustaría continuar con el *PAQUETE MIS XV*?\n\nO prefieres Armar tu paquete? 👇`,
         [
           { id: "si_me_interesa", title: "PAQUETE MIS XV" },
           { id: "armar_paquete", title: "🛠️ ARMAR MI PAQUETE" }
