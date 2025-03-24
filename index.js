@@ -1551,7 +1551,7 @@ Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
      
       // Actualizar el estado para manejar la respuesta en el siguiente flujo
       context.estado = "EsperandoConfirmacionPaquete";
-    }
+    } 
   }
 
 /* ============================================
