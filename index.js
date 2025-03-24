@@ -1061,7 +1061,7 @@ if (context.estado === "EsperandoSubtipoOtroEvento") {
 }
   
 
-// 🟢 3. Opciones: paquete sugerido o armar paquete
+/*// 🟢 3. Opciones: paquete sugerido o armar paquete
 if (context.estado === "OpcionesSeleccionadas") {
   console.log("Valor recibido en OpcionesSeleccionadas:", messageLower);
 
@@ -1138,7 +1138,7 @@ if (context.estado === "OpcionesSeleccionadas") {
 
     return true;
   }
-}
+}*/
 
 /**
  * Función para contar solo letras (ignorando números y caracteres especiales)
