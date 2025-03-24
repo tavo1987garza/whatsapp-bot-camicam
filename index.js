@@ -1562,10 +1562,10 @@ Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
     const messageLower = userMessage.toLowerCase();
   
     // Si el usuario seleccionó "Sí, me interesa" (id: "aceptar_paquete")
-   /* if (messageLower === "si_me_interesa") {
+    if (messageLower === "si_me_interesa") {
       await sendMessageWithTypingWithState(
         from,
-        "¡Excelente! Hemos agregado el paquete recomendado a tu cotización.",
+        "¡Excelente! 😃 Hemos agregado el paquete recomendado a tu cotización.",
         2000,
         context.estado
       );
@@ -1578,7 +1578,7 @@ Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
       return true;
     }
     // Si el usuario seleccionó "Armar mi paquete" (id: "armar_paquete")
-    else*/ if (messageLower === "armar_paquete" || messageLower === "armar mi paquete") {
+    else if (messageLower === "armar_paquete" || messageLower === "armar mi paquete") {
       await sendMessageWithTypingWithState(
         from,
         "¡Genial! 😃😃😃 ¡Vamos a personalizar tu paquete!\n\n✏️ *Escribe separado por comas*,\n\nPor ejemplo: \ncabina de fotos, cabina 360, 6 letras gigantes, 4 chisperos, carrito de shots con alcohol, carrito de shots sin alcohol, lluvia de mariposas, lluvia metálica, niebla de piso, scrapbook, audio guest book",
