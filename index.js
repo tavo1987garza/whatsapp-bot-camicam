@@ -1215,7 +1215,7 @@ function getOtherEventPackageRecommendation(userMessage) {
 /**
  * Función para manejar la lógica cuando el usuario selecciona "Otro evento".
  * Se solicita especificar el subtipo y se recomienda un paquete.
- */
+ *
 async function handleOtherEvent(from, context, userMessage) {
   // Obtener la recomendación basándonos en el mensaje del usuario.
   const recomendacion = getOtherEventPackageRecommendation(userMessage);
@@ -1236,7 +1236,7 @@ async function handleOtherEvent(from, context, userMessage) {
   // Actualizar el estado para manejar la respuesta en el siguiente flujo.
   context.estado = "EsperandoConfirmacionPaquete";
 }
-
+/*
 
 /**
  * Función que revisa el contexto actual y devuelve sugerencias de upsell
@@ -1355,13 +1355,14 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
 
     // OBTENER el nombre del paquete que guardaste en context.paqueteRecomendado
 // Si no existe, mostramos "Paquete Sugerido"
+//Sucede cuando selecciona "Armar mi paquete"
 const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
 
   // 8) Mensaje final con instrucción para agregar/quitar
   await delay(2000);
   await sendMessageWithTypingWithState(
     from,
-    `Te gustaría contratar el ${tituloPaquete}?`,
+    `Te gustaría continuar con el ${tituloPaquete}?`,
     2000,
     context.estado
   );
@@ -1561,7 +1562,7 @@ Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
     const messageLower = userMessage.toLowerCase();
   
     // Si el usuario seleccionó "Sí, me interesa" (id: "aceptar_paquete")
-    if (messageLower === "si_me_interesa") {
+   /* if (messageLower === "si_me_interesa") {
       await sendMessageWithTypingWithState(
         from,
         "¡Excelente! Hemos agregado el paquete recomendado a tu cotización.",
@@ -1577,10 +1578,10 @@ Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
       return true;
     }
     // Si el usuario seleccionó "Armar mi paquete" (id: "armar_paquete")
-    else if (messageLower === "armar_paquete" || messageLower === "armar mi paquete") {
+    else*/ if (messageLower === "armar_paquete" || messageLower === "armar mi paquete") {
       await sendMessageWithTypingWithState(
         from,
-        "¡Genial! 😃 ¡Vamos a personalizar tu paquete!\n\n✏️ *Escribe separado por comas*,\n\nPor ejemplo: \ncabina de fotos, cabina 360, 6 letras gigantes, 4 chisperos, carrito de shots con alcohol, carrito de shots sin alcohol, lluvia de mariposas, lluvia metálica, niebla de piso, scrapbook, audio guest book",
+        "¡Genial! 😃😃😃 ¡Vamos a personalizar tu paquete!\n\n✏️ *Escribe separado por comas*,\n\nPor ejemplo: \ncabina de fotos, cabina 360, 6 letras gigantes, 4 chisperos, carrito de shots con alcohol, carrito de shots sin alcohol, lluvia de mariposas, lluvia metálica, niebla de piso, scrapbook, audio guest book",
       2000,
         context.estado
       );
