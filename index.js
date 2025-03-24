@@ -917,7 +917,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
    /* ============================================
    Interceptamos el botón "si_me_interesa" o "si_me_interesa_sugerido"
    Botonoes de continuidad "WEDDING, XV y PAQUETES SUGERIDOS"
-   ============================================ */
+   ============================================ *
 if (messageLower.trim() === "si_me_interesa" || messageLower.trim() === "si_me_interesa_sugerido") {
     if (
         (context.estado === "EsperandoDudas" || context.estado === "EsperandoConfirmacionPaquete") ||
@@ -927,10 +927,10 @@ if (messageLower.trim() === "si_me_interesa" || messageLower.trim() === "si_me_i
         await solicitarFecha(from, context);
         return true;
     }
-}
+}*/
     /* ============================================
    Interceptamos el botón "si_me_interesa"
-   ============================================ *
+   ============================================ */
   if ((context.estado === "EsperandoDudas" || context.estado === "EsperandoConfirmacionPaquete") &&
     messageLower.trim() === "si_me_interesa") {
     await solicitarFecha(from, context); // Solicitar la fecha del evento
@@ -940,7 +940,7 @@ if (messageLower.trim() === "si_me_interesa" || messageLower.trim() === "si_me_i
 
   /* ============================================
    ⚠️Interceptamos el botón "WEDDING Y XV"⚠️
-   ============================================ *
+   ============================================ */
    if ((context.estado === "OpcionesSeleccionadas") &&
    messageLower.trim() === "si_me_interesa") {
    await solicitarFecha(from, context); // Solicitar la fecha del evento
@@ -951,7 +951,7 @@ if (messageLower.trim() === "si_me_interesa" || messageLower.trim() === "si_me_i
 
    /* ============================================
    ⚠️Interceptamos el botón "CUALQUIER OTRO PAQUETE"⚠️
-   ============================================ *
+   ============================================ */
    if ((context.estado === "EsperandoDudas") &&
    messageLower.trim() === "si_me_interesa_sugerido") {
    await solicitarFecha(from, context); // Solicitar la fecha del evento
