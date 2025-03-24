@@ -1589,7 +1589,7 @@ Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
         from,
         "¡Genial! 😃😃😃 ¡Vamos a personalizar tu paquete!\n\n✏️ *Escribe separado por comas*,\n\nPor ejemplo: \ncabina de fotos, cabina 360, 6 letras gigantes, 4 chisperos, carrito de shots con alcohol, carrito de shots sin alcohol, lluvia de mariposas, lluvia metálica, niebla de piso, scrapbook, audio guest book",
       2000,
-        context.estado
+        context.estado  
       );
       context.estado = "EsperandoServicios";
       return true;
