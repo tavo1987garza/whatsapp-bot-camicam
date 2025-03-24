@@ -1076,7 +1076,7 @@ if (context.estado === "Contacto Inicial") {
 }*/
   
 
-// 🟢 3. Opciones: paquete sugerido o armar paquete
+/*/ 🟢 3. Opciones: paquete sugerido o armar paquete
 if (context.estado === "OpcionesSeleccionadas") {
   console.log("Valor recibido en OpcionesSeleccionadas:", messageLower);
 
@@ -1153,7 +1153,7 @@ if (context.estado === "OpcionesSeleccionadas") {
 
     return true;
   }
-}
+}*/
 
 /**
  * Función para contar solo letras (ignorando números y caracteres especiales)
@@ -1391,223 +1391,261 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
     context.tipoEvento = "Boda";
   } else if (messageLower.includes("xv") || messageLower.includes("quince")) {
  */
-  async function handleTipoEvento(from, messageLower, context) {
-    // Caso Boda
-    if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
-      context.tipoEvento = "Boda";
-      // GUARDAR el objeto
-      context.paqueteRecomendado = {
-        paquete: "PAQUETE WEDDING",
-        descripcion: "🎉Incluye Cabina 360, iniciales decorativas, 2 chisperos y un carrito de shots con alcohol, todo por *$4,450*",
-        // puedes agregar más campos si gustas (precio, etc.)
-      };
+
+
+
+ /* async function handleTipoEvento(from, messageLower, context) {
+  // Caso Boda
+  if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
+    context.tipoEvento = "Boda";
+    context.paqueteRecomendado = {
+      paquete: "PAQUETE WEDDING",
+      descripcion: "🎉 Incluye Cabina 360, iniciales decorativas, 2 chisperos y un carrito de shots con alcohol, todo por *$4,450*",
+    };
     
-      // Luego envías los botones
-      await sendInteractiveMessage(
-        from,
-        `¡Muchas felicidades! Tu Boda será increíble!! ✨\n\n
-    Te presento el paquete que estamos promocionando:\n\n🎉 *${context.paqueteRecomendado.paquete}*: ${context.paqueteRecomendado.descripcion}.\n\n
-    Te gustaría contratar el *${context.paqueteRecomendado.paquete}* o prefieres Armar tu Paquete?`,
-        [
-          { id: "si_me_interesa", title: "PAQUETE WEDDING" },
-          { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
-        ]
-      );
-      context.estado = "OpcionesSeleccionadas";
-    }
-    // Caso XV
-    else if (messageLower.includes("xv") || messageLower.includes("quince")) {
-      context.tipoEvento = "XV";
+    await sendInteractiveMessage(
+      from,
+      `¡Muchas felicidades! Tu Boda será increíble!! ✨\n\nTe presento el paquete promocionado:\n\n🎉 *${context.paqueteRecomendado.paquete}*: ${context.paqueteRecomendado.descripcion}.\n\n¿Te interesa?`,
+      [
+        { id: "si_me_interesa", title: "CONTRATAR PAQUETE" }, // Botón unificado
+        { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
+      ]
+    );
+  } 
+
+  // Caso XV
+  else if (messageLower.includes("xv") || messageLower.includes("quince")) {
+    context.tipoEvento = "XV";
+    context.paqueteRecomendado = {
+      paquete: "PAQUETE MIS XV",
+      descripcion: "🎂 Incluye 6 letras gigantes, Cabina de fotos, Lluvia de mariposas y 2 chisperos, todo por *$5,600*."
+    };
+
+    await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg");
+    await sendMessageWithTypingWithState(from, textoA, 2000, context.estado); // (textoA definido previamente)
+    await sendMessageWithTypingWithState(from, textoB, 2000, context.estado); // (textoB definido previamente)
     
-    
-      // Texto del PAQUETE MIS XV
-      context.paqueteRecomendado = {
-        paquete: "PAQUETE MIS XV"
-      };
-
-      
-  // PARTE 1
-  const textoA = `
-¡Muchas felicidades! 👏
-  
-Tu fiesta de XV años será Inolvidable!! ✨
-
-Te presento el paquete que estamos promocionando:
-
-*PAQUETE MIS XV*
-
-    Incluye: 
-🔸 Cabina de fotos (3 Horas) 
-🔸 6 letras Gigantes (5 Horas)
-🔸 Niebla de piso ó 
-    Lluvia de mariposas 
-   
-      por tan sólo
-
-     ✨ $8,900 ✨
-
-¡Contrata ahora y recibe de REGALO!
-  
-🔸 2 Chisperos de luz fría
-  
-Con un valor de $1,000
-  
-     *¡¡Pero espera!!*
-  
-¡Solo este mes disfruta de un *30% DE DESCUENTO*!
-`;
-  
-    // PARTE 2
-    const textoB = `
-¡¡Y eso no es todo!! 
-
-A los primeros 10 contratos les estaremos Regalando 
-  
-🔸 1 Scrapbook personalizado para la cabina de fotos
-  
-Con un valor de $1,300
-
-¡Te lo llevamos Completamente Gratis!
-
-¡Será un recuerdo muy bonito de tu evento!
-  
-Si contrataras todo por separado el precio Regular sería de $11,200
-  
-*¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
-  
-      ✨ *$6,230* ✨
-  
-Flete Incluido!! a una distancia de 20 km del centro de Monterrey
-  
-    En Resumen:
-🔸 Cabina de fotos (3 Horas)
-🔸 6 letras Gigantes (5 Horas)
-🔸 Niebla de piso ó 
-    Lluvia de mariposas 
-🔸 2 Chisperos de luz fría
-🔸 1 Scrapbook
-🔸 Descuento de $2,670
-🔸 Flete Incluido
-  
-*¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
-  
-      ✨ *$6,230* ✨
-  
-¡¡Aprovecha esta oportunidad!!
-  
-Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
-  
-  `;
-    
-      // (1) Enviar imagen (opcional)
-  await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg");
-  await delay(2000);
-
-  // 2) Enviar la primera parte de texto
-  await sendMessageWithTypingWithState(from, textoA, 2000, context.estado);
-
-  await delay(2000);
-
-  // 3) Enviar la segunda parte de texto
-  await sendMessageWithTypingWithState(from, textoB, 2000, context.estado);
-    
-   // Enviar imagenes u videos del paquete
-  await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg");
-  await delay(2000);
- 
-    
-    
-      // Al mostrar los botones, usas la misma propiedad
-      await sendInteractiveMessage(
-        from,
-        `Te gustaría continuar con el *PAQUETE MIS XV*?\n\nO prefieres Armar tu paquete? 👇`,
-        [
-          { id: "si_me_interesa", title: "PAQUETE MIS XV" },
-          { id: "armar_paquete", title: "🛠️ ARMAR MI PAQUETE" }
-        ]
-      );
-    
-      context.estado = "OpcionesSeleccionadas";
-      return true;
-    }
-    
-    // Caso "Otro"
-    else {
-      // Obtener la recomendación basada en el tipo de evento escrito por el usuario
-      const recomendacion = getOtherEventPackageRecommendation(messageLower);
-  
-      // Guardar en el contexto el paquete recomendado para posteriores referencias
-      context.paqueteRecomendado = recomendacion;
-  
-      // Enviar la recomendación de forma personalizada
-      const mensajeRecomendacion = `🎉 *${recomendacion.paquete}*\n${recomendacion.descripcion}\n\nTe interesa contratar el ${recomendacion.paquete} o prefieres Armar tu Paquete?`;
-      await sendMessageWithTypingWithState(from, mensajeRecomendacion, 2000, context.estado);
-  
-      // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
-      await sendInteractiveMessage(from, "Elige una opción:", [
-        { id: "si_me_interesa", title: "CONTRATAR" },
-        { id: "armar_paquete", title: "Armar mi paquete" }
-      ]);
-     
-      // Actualizar el estado para manejar la respuesta en el siguiente flujo
-      context.estado = "EsperandoConfirmacionPaquete";
-    } 
+    await sendInteractiveMessage(
+      from,
+      `¿Te gustaría contratar el *PAQUETE MIS XV* o prefieres armar tu paquete?`,
+      [
+        { id: "si_me_interesa", title: "CONTRATAR PAQUETE" }, // Botón unificado
+        { id: "armar_paquete", title: "🛠️ ARMAR MI PAQUETE" }
+      ]
+    );
   }
+
+  // Caso "Otro"
+  else {
+    const recomendacion = getOtherEventPackageRecommendation(messageLower);
+    context.paqueteRecomendado = recomendacion;
+    
+    await sendMessageWithTypingWithState(
+      from,
+      `🎉 *${recomendacion.paquete}*\n${recomendacion.descripcion}\n\n¿Te interesa?`,
+      2000,
+      context.estado
+    );
+    
+    await sendInteractiveMessage(
+      from,
+      "Elige una opción:",
+      [
+        { id: "si_me_interesa", title: "CONTRATAR PAQUETE" }, // Botón unificado
+        { id: "armar_paquete", title: "Armar mi paquete" }
+      ]
+    );
+  }
+
+  // Todos los casos terminan en el MISMO ESTADO
+  context.estado = "EsperandoConfirmacionPaquete"; 
+  return true;
+}*/
+
+async function handleTipoEvento(from, messageLower, context) {
+  // 📌 Caso BODA (Wedding)
+  if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
+      context.tipoEvento = "Boda";
+      
+      // Mensajes divididos
+      const parte1 = `💍 *¡FELICIDADES POR TU BODA!* 💐
+
+Nuestro *PAQUETE WEDDING* incluye:
+      
+✨ *Experiencia Premium*:
+- Cabina 360° con impresión inmediata
+- Iniciales decorativas (ej: "A&L")
+- 2 chisperos de luz fría
+- Carrito de shots con alcohol`;
+
+      const parte2 = `🎁 *REGALO EXCLUSIVO*:
+      
+🔹 Audio Guest Book (valor $1,500) *GRATIS*
+🔹 Scrapbook digital (valor $800)
+
+💰 *AHORRO*: 25% dto. por reservar hoy`;
+
+      const parte3 = `💎 *PRECIO FINAL*: $4,450 (regular $5,900)
+
+📦 *Todo incluido*:
+✔ 4 horas de servicio
+✔ Asesoría de coordinación
+✔ Flete incluido (25 km)
+
+⏳ *Válido hasta [fecha]*`;
+
+      // Guardar en contexto
+      context.paqueteRecomendado = {
+          paquete: "PAQUETE WEDDING",
+          descripcion: `${parte1}\n${parte2}\n${parte3}`
+      };
+
+      // Envío multimedia + mensajes
+      await sendVideoMessage(from, "URL_VIDEO_BODA"); // Ej: https://ejemplo.com/video-boda.mp4
+      await delay(2000);
+      
+      await sendMessageWithTypingWithState(from, parte1, 2000, context.estado);
+      await delay(2500);
+      
+      await sendMessageWithTypingWithState(from, parte2, 2000, context.estado);
+      await delay(2000);
+      
+      await sendMessageWithTypingWithState(from, parte3, 2000, context.estado);
+      await delay(1000);
+  }
+
+  // 📌 Caso XV AÑOS (Mismo formato que antes)
+  else if (messageLower.includes("xv") || messageLower.includes("quince")) {
+      context.tipoEvento = "XV";
+      
+      const parte1 = `👑 *¡FELICIDADES PRINCESA!* ✨
+
+*PAQUETE MIS XV* incluye:
+      
+🎀 *Experiencia Completa*:
+- Cabina de fotos (3 horas)
+- 6 letras gigantes (5 horas)
+- Lluvia de mariposas *o* niebla de piso`;
+
+      const parte2 = `🔥 *¡OFERTA ESPECIAL!* 🔥
+
+Al contratar hoy recibes:
+      
+🎁 *Regalos exclusivos*:
+1) 2 chisperos de luz fría ($1,000 valor)
+2) Scrapbook personalizado ($1,300 valor) *GRATIS*`;
+
+      const parte3 = `💎 *PRECIO FINAL*: $6,230 (regular $11,200)
+
+📦 *Todo incluido*:
+✔ Equipos profesionales
+✔ Flete incluido (20 km de MTY)
+✔ Asesoría personalizada
+
+⏳ *Solo para primeros 10 contratos*`;
+
+      context.paqueteRecomendado = {
+          paquete: "PAQUETE MIS XV",
+          descripcion: `${parte1}\n${parte2}\n${parte3}`
+      };
+
+      await sendImageMessage(from, "URL_IMAGEN_XV"); // Ej: https://ejemplo.com/xv-paquete.jpg
+      await delay(1500);
+      
+      // ... (envío secuencial igual que en Boda)
+  }
+
+  // 📌 Caso OTROS EVENTOS (Genérico)
+  else {
+      const recomendacion = getOtherEventPackageRecommendation(messageLower);
+      context.paqueteRecomendado = recomendacion;
+
+      // Dividir también en 3 partes
+      const parte1 = `🎊 *${recomendacion.paquete}* 
+      
+${recomendacion.descripcion.split('\n').slice(0, 4).join('\n')}`; // Primeras 4 líneas
+
+      const parte2 = recomendacion.descripcion.split('\n').slice(4, 8).join('\n'); // Líneas 5-8
+      
+      const parte3 = `💡 *¿Te interesa?* 
+Podemos personalizarlo a tus necesidades. 
+      
+${recomendacion.descripcion.split('\n').slice(8).join('\n')}`; // Resto + CTA
+
+      // Envío
+      await sendImageMessage(from, recomendacion.imagenUrl || "URL_IMAGEN_DEFAULT");
+      await delay(2000);
+      
+      await sendMessageWithTypingWithState(from, parte1, 2000, context.estado);
+      await delay(2000);
+      
+      await sendMessageWithTypingWithState(from, parte2, 2000, context.estado);
+      await delay(2000);
+      
+      await sendMessageWithTypingWithState(from, parte3, 2000, context.estado);
+      await delay(1000);
+  }
+
+  // 🎯 BOTONES FINALES (para todos los casos)
+  await sendInteractiveMessage(
+      from,
+      "¿Quieres reservar este paquete o personalizarlo?",
+      [
+          { id: "si_me_interesa", title: "✅ QUIERO ESTE PAQUETE" },
+          { id: "armar_paquete", title: "✨ ARMAR PERSONALIZADO" }
+      ]
+  );
+
+  context.estado = "EsperandoConfirmacionPaquete";
+  return true;
+}
 
 /* ============================================
    Estado: EsperandoConfirmacionPaquete
    ============================================ */
 
-   if (context.estado === "EsperandoConfirmacionPaquete") {
-    const messageLower = userMessage.toLowerCase();
-  
-    // Si el usuario seleccionó "Sí, me interesa" (id: "aceptar_paquete")
-    if (messageLower === "si_me_interesa") {
-      await sendMessageWithTypingWithState(
-        from,
-        "¡Excelente! 😃 Hemos agregado el paquete recomendado a tu cotización.",
-        2000,
-        context.estado
-      );
-  
-      // Cambiar el estado a "EsperandoFecha" para solicitar la fecha del evento
-      context.estado = "EsperandoFecha";
-  
-      // Solicitar la fecha del evento
-      await solicitarFecha(from, context);
-      return true;
-    }
-    // Si el usuario seleccionó "Armar mi paquete" (id: "armar_paquete")
-    else if (messageLower === "armar_paquete" || messageLower === "armar mi paquete") {
-      await sendMessageWithTypingWithState(
-        from,
-        "¡Genial! 😃😃😃 ¡Vamos a personalizar tu paquete!\n\n✏️ *Escribe separado por comas*,\n\nPor ejemplo: \ncabina de fotos, cabina 360, 6 letras gigantes, 4 chisperos, carrito de shots con alcohol, carrito de shots sin alcohol, lluvia de mariposas, lluvia metálica, niebla de piso, scrapbook, audio guest book",
-      2000,
-        context.estado
-      );
-      context.estado = "EsperandoServicios";
-      return true;
-    }
-    // En caso de no reconocer la respuesta, se reenvían los botones
-    else {
-      await sendMessageWithTypingWithState(
-        from,
-        "No entendí tu respuesta. Por favor, selecciona una opción válida.",
-        2000,
-        context.estado
-      );
-      await sendInteractiveMessage(
-        from,
-        "Elige una opción:",
-        [
-          { id: "si_me_interesa", title: "Si, me interesa" },
-          { id: "armar_paquete", title: "Armar mi paquete" }
-        ]
-      );
-      return true;
-    }
-  }
 
+if (context.estado === "EsperandoConfirmacionPaquete") {
+  if (messageLower === "si_me_interesa") {
+    // Confirmar contratación
+    await sendMessageWithTypingWithState(
+      from,
+      "¡Perfecto! Hemos reservado tu paquete. 🎉\nAhora necesitamos la fecha del evento:",
+      2000,
+      context.estado
+    );
+    context.estado = "EsperandoFecha";
+    await solicitarFecha(from, context);
+  } 
+  else if (messageLower === "armar_paquete") {
+    // Personalizar paquete
+    await sendMessageWithTypingWithState(
+      from,
+      "¡Vamos a crear algo único! ✏️\n*Escribe los servicios que deseas, separados por comas*:\n\nEjemplo:\n\"cabina de fotos, letras gigantes, chisperos\"",
+      2000,
+      context.estado
+    );
+    context.estado = "EsperandoServicios";
+  }
+  else {
+    // Respuesta no válida
+    await sendMessageWithTypingWithState(
+      from,
+      "Por favor, elige una opción válida:",
+      2000,
+      context.estado
+    );
+    await sendInteractiveMessage(
+      from,
+      "¿Qué prefieres?",
+      [
+        { id: "si_me_interesa", title: "✅ CONTRATAR PAQUETE" },
+        { id: "armar_paquete", title: "🛠️ ARMAR PAQUETE" }
+      ]
+    );
+  }
+  return true;
+}
 /* ============================================
    Estado: EsperandoServicios
    ============================================ */
