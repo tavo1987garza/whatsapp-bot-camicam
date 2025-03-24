@@ -914,7 +914,10 @@ async function handleUserMessage(from, userMessage, messageLower) {
   }
 
 
-  // Manejar los casos donde el usuario dice "si_me_interesa" o "si_me_interesa_sugerido"
+   /* ============================================
+   Interceptamos el botón "si_me_interesa" o "si_me_interesa_sugerido"
+   Botonoes de continuidad "WEDDING, XV y PAQUETES SUGERIDOS"
+   ============================================ */
 if (messageLower.trim() === "si_me_interesa" || messageLower.trim() === "si_me_interesa_sugerido") {
     if (
         (context.estado === "EsperandoDudas" || context.estado === "EsperandoConfirmacionPaquete") ||
@@ -1365,7 +1368,7 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
 
 
   // 9) Botón para continuar
-  await sendInteractiveMessage(
+  await sendInteractiveMessage( 
     from,
     "O tu Paquete Personalizado?",
     [
