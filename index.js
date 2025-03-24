@@ -913,9 +913,21 @@ async function handleUserMessage(from, userMessage, messageLower) {
     }
   }
 
+
+  // Manejar los casos donde el usuario dice "si_me_interesa" o "si_me_interesa_sugerido"
+if (messageLower.trim() === "si_me_interesa" || messageLower.trim() === "si_me_interesa_sugerido") {
+    if (
+        (context.estado === "EsperandoDudas" || context.estado === "EsperandoConfirmacionPaquete") ||
+        (context.estado === "OpcionesSeleccionadas" && messageLower.trim() === "si_me_interesa") ||
+        (context.estado === "EsperandoDudas" && messageLower.trim() === "si_me_interesa_sugerido")
+    ) {
+        await solicitarFecha(from, context);
+        return true;
+    }
+}
     /* ============================================
    Interceptamos el botón "si_me_interesa"
-   ============================================ */
+   ============================================ *
   if ((context.estado === "EsperandoDudas" || context.estado === "EsperandoConfirmacionPaquete") &&
     messageLower.trim() === "si_me_interesa") {
     await solicitarFecha(from, context); // Solicitar la fecha del evento
@@ -925,7 +937,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
 
   /* ============================================
    ⚠️Interceptamos el botón "WEDDING Y XV"⚠️
-   ============================================ */
+   ============================================ *
    if ((context.estado === "OpcionesSeleccionadas") &&
    messageLower.trim() === "si_me_interesa") {
    await solicitarFecha(from, context); // Solicitar la fecha del evento
@@ -936,7 +948,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
 
    /* ============================================
    ⚠️Interceptamos el botón "CUALQUIER OTRO PAQUETE"⚠️
-   ============================================ */
+   ============================================ *
    if ((context.estado === "EsperandoDudas") &&
    messageLower.trim() === "si_me_interesa_sugerido") {
    await solicitarFecha(from, context); // Solicitar la fecha del evento
@@ -1156,7 +1168,7 @@ function contarLetras(texto) {
 
 
 /**
- * Función para identificar el subtipo de evento dentro de "Otro evento"
+ * Función para identificar el subtipo de evento 
  * y devolver una recomendación de paquete.
  */
 function getOtherEventPackageRecommendation(userMessage) {
