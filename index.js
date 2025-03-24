@@ -1443,6 +1443,7 @@ Con un valor de $1,000
     // PARTE 2
     const textoB = `
 ¡¡Y eso no es todo!! 
+
 A los primeros 10 contratos les estaremos Regalando 
   
 🔸 1 Scrapbook personalizado para la cabina de fotos
