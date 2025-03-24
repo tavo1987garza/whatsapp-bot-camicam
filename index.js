@@ -1560,45 +1560,59 @@ Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
 /* ============================================
    Estado: EsperandoConfirmacionPaquete
    ============================================ */
-if (context.estado === "EsperandoConfirmacionPaquete") {
-  if (messageLower === "si_me_interesa") {
-    await sendMessageWithTypingWithState(
-      from,
-      "¡Excelente! 😃 Hemos agregado el paquete a tu cotización.",
+/* ============================================
+   Estado: EsperandoConfirmacionPaquete
+   ============================================ */
+
+   if (context.estado === "EsperandoConfirmacionPaquete") {
+    const messageLower = userMessage.toLowerCase();
+  
+    // Si el usuario seleccionó "Sí, me interesa" (id: "aceptar_paquete")
+    if (messageLower === "si_me_interesa") {
+      await sendMessageWithTypingWithState(
+        from,
+        "¡Excelente! 😃 Hemos agregado el paquete recomendado a tu cotización.",
+        2000,
+        context.estado
+      );
+  
+      // Cambiar el estado a "EsperandoFecha" para solicitar la fecha del evento
+      context.estado = "EsperandoFecha";
+  
+      // Solicitar la fecha del evento
+      await solicitarFecha(from, context);
+      return true;
+    }
+    // Si el usuario seleccionó "Armar mi paquete" (id: "armar_paquete")
+    else if (messageLower === "armar_paquete" || messageLower === "armar mi paquete") {
+      await sendMessageWithTypingWithState(
+        from,
+        "¡Genial! 😃😃😃 ¡Vamos a personalizar tu paquete!\n\n✏️ *Escribe separado por comas*,\n\nPor ejemplo: \ncabina de fotos, cabina 360, 6 letras gigantes, 4 chisperos, carrito de shots con alcohol, carrito de shots sin alcohol, lluvia de mariposas, lluvia metálica, niebla de piso, scrapbook, audio guest book",
       2000,
-      context.estado
-    );
-    context.estado = "EsperandoFecha";
-    await solicitarFecha(from, context);
-    return true;
-  } 
-  else if (messageLower === "armar_paquete" || messageLower === "armar mi paquete") {
-    await sendMessageWithTypingWithState(
-      from,
-      "¡Genial! 😃 Personalicemos tu paquete:\n\n✏️ *Escribe los servicios separados por comas*...",
-      2000,
-      context.estado
-    );
-    context.estado = "EsperandoServicios";
-    return true;
+        context.estado
+      );
+      context.estado = "EsperandoServicios";
+      return true;
+    }
+    // En caso de no reconocer la respuesta, se reenvían los botones
+    else {
+      await sendMessageWithTypingWithState(
+        from,
+        "No entendí tu respuesta. Por favor, selecciona una opción válida.",
+        2000,
+        context.estado
+      );
+      await sendInteractiveMessage(
+        from,
+        "Elige una opción:",
+        [
+          { id: "si_me_interesa", title: "Si, me interesa" },
+          { id: "armar_paquete", title: "Armar mi paquete" }
+        ]
+      );
+      return true;
+    }
   }  
-  // Manejo de error
-  await sendMessageWithTypingWithState(
-    from,
-    "No entendí. Por favor usa los botones:",
-    2000,
-    context.estado
-  );
-  await sendInteractiveMessage(
-    from,
-    "Elige:",
-    [
-      { id: "si_me_interesa", title: "CONTRATAR PAQUETE" },
-      { id: "armar_paquete", title: "Armar mi paquete" }
-    ]
-  );
-  return true;
-}
 /* ============================================
    Estado: EsperandoServicios
    ============================================ */
