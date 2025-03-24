@@ -1047,18 +1047,18 @@ if (context.estado === "Contacto Inicial") {
 }
 
  // 🟢 2. Capturar el tipo de evento
- if (context.estado === "EsperandoTipoEvento") {
+ if (context.estado === "EsperandoTipoEvento" || context.estado === "EsperandoSubtipoOtroEvento") {
   // Se invoca la función que procesa la elección del cliente
   const messageLower = userMessage.toLowerCase();
   await handleTipoEvento(from, messageLower, context);
   return true;
 }  
 
-if (context.estado === "EsperandoSubtipoOtroEvento") {
+/*if (context.estado === "EsperandoSubtipoOtroEvento") {
   const messageLower = userMessage.toLowerCase();
   await handleOtherEvent(from, context, messageLower);
   return true;
-}
+}*/
   
 
 /*// 🟢 3. Opciones: paquete sugerido o armar paquete
