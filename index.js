@@ -1634,7 +1634,7 @@ async function handleTipoEvento(from, messageLower, context) {
       from,
       "¿Te interesa este *Paquete Wedding* o prefieres armar tu paquete?",
       [
-        { id: "si_me_interesa_sugerido", title: "PAQUETE WEDDING" },
+        { id: "si_me_interesa", title: "PAQUETE WEDDING" },
         { id: "armar_paquete", title: "Armar mi paquete" }
       ]
     );
@@ -1672,7 +1672,7 @@ async function handleTipoEvento(from, messageLower, context) {
       from,
       "¿Te interesa este *Paquete Mis XV* o prefieres armar tu paquete?",
       [
-        { id: "si_me_interesa_sugerido", title: "PAQUETE MIS XV" },
+        { id: "si_me_interesa", title: "PAQUETE MIS XV" },
         { id: "armar_paquete", title: "Armar mi paquete" }
       ]
     );
