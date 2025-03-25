@@ -1330,7 +1330,7 @@ if (
 
     return true; // Evitamos procesar otros estados, ya que se manejó aquí
   }
-
+ 
 
 // Función para manejar el flujo de mensajes del usuario con tono natural
 async function handleUserMessage(from, userMessage, messageLower) {
