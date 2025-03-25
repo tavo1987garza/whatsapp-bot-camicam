@@ -1234,7 +1234,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
     // OBTENER el nombre del paquete que guardaste en context.paqueteRecomendado
     // Si no existe, mostramos "Paquete Sugerido"
     //Sucede despues de seleccionar "Armar mi paquete" y presentar la cotizacion
-    const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
+    const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete👏Sugerido";
 
    await delay(2000);
    await sendMessageWithTypingWithState(
@@ -1435,7 +1435,7 @@ if (context.estado === "Contacto Inicial") {
   }
 
 /*''''''''''''''''''''''''''''''''
-🟢 4. ESPRAMOS LOS SERVICIOS 🟢
+🟢 4. ESPERAMOS LOS SERVICIOS 🟢
 ''''''''''''''''''''''''''''''''*/
    if (context.estado === "EsperandoServicios") {
     // Si el usuario indica agregar o quitar en su mensaje inicial:
