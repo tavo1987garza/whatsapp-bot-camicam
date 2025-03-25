@@ -723,6 +723,11 @@ async function sendMessageToAdmin(message) {
   if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
     context.tipoEvento = "Boda";
 
+    // Titulo del PAQUETE WEDDING
+    context.paqueteRecomendado = {
+      paquete: "PAQUETE WEDDING"
+    };
+
     // 1) Texto 1
     await sendMessageWithTypingWithState(
       from,
@@ -768,7 +773,11 @@ async function sendMessageToAdmin(message) {
   else if (messageLower.includes("xv") || messageLower.includes("quince")) {
     context.tipoEvento = "XV";
 
- 
+    // Texto del PAQUETE MIS XV
+    context.paqueteRecomendado = {
+      paquete: "PAQUETE MIS XV"
+    };
+
       // PARTE 1
   const textoA = `
 ¡Muchas felicidades! 👏
@@ -1168,22 +1177,22 @@ function calculateQuotation(servicesText) {
 /**************************************
  FUNCION para ACTUALIZAR la cotizacion
  **************************************/
-async function actualizarCotizacion(from, context, mensajePreliminar = null) {
-  // 1) Calcular la cotización
-  const cotizacion = calculateQuotation(context.serviciosSeleccionados);
+ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
+   // 1) Calcular la cotización
+   const cotizacion = calculateQuotation(context.serviciosSeleccionados);
 
-  // 2) Mensajes de cabecera (si lo deseas)
-  const cabecera = mensajePreliminar ? mensajePreliminar : "*PAQUETE PERSONALIZADO*";
-  // Este mensaje se puede enviar antes o después. 
-  // Si quieres enviarlo luego de las imágenes, puedes omitirlo aquí.
+   // 2) Mensajes de cabecera (si lo deseas)
+   const cabecera = mensajePreliminar ? mensajePreliminar : "*PAQUETE PERSONALIZADO*";
+   // Este mensaje se puede enviar antes o después. 
+   // Si quieres enviarlo luego de las imágenes, puedes omitirlo aquí.
   
-  // 3) Preparar texto de detalles y texto de resumen
-  const mensajeDetalles = `${cabecera}\n\n` + cotizacion.details.join("\n");
-  const mensajeResumen = `Subtotal: $${cotizacion.subtotal.toLocaleString()}\nDescuento (${cotizacion.discountPercent}%): -$${cotizacion.discountAmount.toLocaleString()}\n\n*TOTAL A PAGAR: $${cotizacion.total.toLocaleString()}*`;
+   // 3) Preparar texto de detalles y texto de resumen
+   const mensajeDetalles = `${cabecera}\n\n` + cotizacion.details.join("\n");
+   const mensajeResumen = `Subtotal: $${cotizacion.subtotal.toLocaleString()}\nDescuento (${cotizacion.discountPercent}%): -$${cotizacion.discountAmount.toLocaleString()}\n\n*TOTAL A PAGAR: $${cotizacion.total.toLocaleString()}*`;
 
-  // 4) Enviar primero las imágenes y videos (en base a los servicios reconocidos) 
-  //    antes de mostrar la descripción textual de la cotización.
-  if (cotizacion.servicesRecognized && cotizacion.servicesRecognized.length > 0) {
+   // 4) Enviar primero las imágenes y videos (en base a los servicios reconocidos) 
+   //    antes de mostrar la descripción textual de la cotización.
+   if (cotizacion.servicesRecognized && cotizacion.servicesRecognized.length > 0) {
     for (const service of cotizacion.servicesRecognized) {
       // Verifica si ya se enviaron medios previamente
       if (mediaMapping[service] && (!context.mediosEnviados || !context.mediosEnviados.has(service))) {
@@ -1204,18 +1213,18 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
         context.mediosEnviados.add(service);
       }
     }
-  }
+   }
 
-  // 5) Después de mostrar los archivos, se envían los detalles de la cotización (servicios)
-  await sendMessageWithTypingWithState(from, mensajeDetalles, 2000, context.estado);
-  await delay(2000);
+   // 5) Después de mostrar los archivos, se envían los detalles de la cotización (servicios)
+   await sendMessageWithTypingWithState(from, mensajeDetalles, 2000, context.estado);
+   await delay(2000);
 
-  // 6) Y finalmente el resumen (subtotal, descuento y total)
-  await sendMessageWithTypingWithState(from, mensajeResumen, 2000, context.estado);
+   // 6) Y finalmente el resumen (subtotal, descuento y total)
+   await sendMessageWithTypingWithState(from, mensajeResumen, 2000, context.estado);
 
-  // 7) Checar si hay sugerencias de upsell
-  const upsellSuggestions = checkUpsellSuggestions(context);
-  if (upsellSuggestions.length > 0) {
+   // 7) Checar si hay sugerencias de upsell
+   const upsellSuggestions = checkUpsellSuggestions(context);
+   if (upsellSuggestions.length > 0) {
     const mensajeUpsell = upsellSuggestions.join("\n");
     await delay(2000);
     await sendMessageWithTypingWithState(from, mensajeUpsell, 2000, context.estado);
@@ -1229,7 +1238,7 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
       }
       context.suggestScrapbookVideo = false;
     }
-  }
+   }
 
     // OBTENER el nombre del paquete que guardaste en context.paqueteRecomendado
     // Si no existe, mostramos "Paquete Sugerido"
@@ -1252,10 +1261,10 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
       { id: "si_me_interesa", title: "PAQ. PERSONALIZADO" },
       { id: "modificar_cotizacion", title: "Modificar Cotización" }
     ]
-  );
+   );
 
-  context.estado = "EsperandoDudas";
-}
+   context.estado = "EsperandoDudas";
+  }
 
 
 
