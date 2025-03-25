@@ -1037,11 +1037,6 @@ function contarLetras(texto) {
 /***************************************************
  FUNCION para identificar el subtipo de evento 
 y devolver una recomendación de paquete.
-
- * Función unificada para recalcular y enviar la cotización
- * @param {string} from - Destinatario del mensaje
- * @param {object} context - Contexto de la conversación (incluye serviciosSeleccionados, estado, etc.)
- * @param {string} [mensajePreliminar] - Mensaje personalizado (opcional)
  ****************************************************/
 function getOtherEventPackageRecommendation(userMessage) {
   const mensaje = userMessage.toLowerCase();
@@ -1086,17 +1081,6 @@ function getOtherEventPackageRecommendation(userMessage) {
 
 /***************************************************
  FUNCION que maneja la logica de las sugerencias
- 
- Revisa el contexto actual y devuelve sugerencias de upsell
- * basadas en los servicios seleccionados.
- *
- * Se aplican dos reglas:
- * 1. Si se seleccionó "cabina de fotos" pero no "scrapbook", se sugiere agregar Scrapbook y se activa un flag para mostrar su video.
- * 2. Si ya se agregó *Scrapbook* (o no se cumple la regla 1) y se tienen exactamente 2 servicios,
- *    se sugiere agregar un tercer servicio (recordando que 3 servicios otorgan 30% y 4, hasta 40% de descuento).
- *
- * Se utiliza la bandera (context.upsellSuggested) para evitar repetir la sugerencia, pero se reinicia si las condiciones cambian.
-
  ****************************************************/
 function checkUpsellSuggestions(context) {
   let suggestions = [];
@@ -1420,64 +1404,9 @@ Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
   } 
 } 
 
-
-
-
-
-
 /* ============================================
    Estado: EsperandoConfirmacionPaquete
    ============================================ */
-
-  /* if (context.estado === "EsperandoConfirmacionPaquete") {
-    const messageLower = userMessage.toLowerCase();
-  
-    // Si el usuario seleccionó "Sí, me interesa" (id: "aceptar_paquete")
-    if (messageLower === "si_me_interesa") {
-      await sendMessageWithTypingWithState(
-        from,
-        "¡Excelente! 😃 Hemos agregado el paquete recomendado a tu cotización.",
-        2000,
-        context.estado
-      );
-  
-      // Cambiar el estado a "EsperandoFecha" para solicitar la fecha del evento
-      context.estado = "EsperandoFecha";
-  
-      // Solicitar la fecha del evento
-      await solicitarFecha(from, context);
-      return true;
-    }
-    // Si el usuario seleccionó "Armar mi paquete" (id: "armar_paquete")
-    else if (messageLower === "armar_paquete" || messageLower === "armar mi paquete") {
-      await sendMessageWithTypingWithState(
-        from,
-        "¡Genial! 😃😃😃 ¡Vamos a personalizar tu paquete!\n\n✏️ *Escribe separado por comas*,\n\nPor ejemplo: \ncabina de fotos, cabina 360, 6 letras gigantes, 4 chisperos, carrito de shots con alcohol, carrito de shots sin alcohol, lluvia de mariposas, lluvia metálica, niebla de piso, scrapbook, audio guest book",
-      2000,
-        context.estado  
-      );
-      context.estado = "EsperandoServicios";
-      return true;
-    }
-    // En caso de no reconocer la respuesta, se reenvían los botones
-    else {
-      await sendMessageWithTypingWithState(
-        from,
-        "No entendí tu respuesta. Por favor, selecciona una opción válida.",
-        2000,
-        context.estado
-      );
-      await sendInteractiveMessage(
-        from,
-        "Elige una opción:",
-        [
-          { id: "si_me_interesa", title: "Si, me interesa" },
-          { id: "armar_paquete", title: "Armar mi paquete" }
-        ]
-      );
-      return true;
-    }
-  }  */
     if (context.estado === "EsperandoConfirmacionPaquete") {
       const msg = userMessage.toLowerCase();
     
@@ -1670,9 +1599,6 @@ if (context.estado === "EsperandoCantidadLetras") {
     await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
     return true;
   }
-  
-
-
 
 /* ============================================
    Estado: ConfirmandoLetras (caso "Ocupo el nombre de ...")
