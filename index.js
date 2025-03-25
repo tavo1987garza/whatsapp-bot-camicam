@@ -759,7 +759,7 @@ async function deactivateTypingIndicator(to) {
 async function solicitarFecha(from, context) {
   await sendMessageWithTypingWithState(
     from,
-    "De acuerdo\n\nPara continuar, por favor indícame la fecha de tu evento\n\n(Formato DD/MM/AAAA) 📆.",
+    "De acuerdo\n\nPara continuar, por favor indícame la fecha de tu evento\n\nFormato: DD/MM/AAAA 📆\n\nEjemplo: 30/04/2025",
     2000, // Retraso de 2 segundos
     context.estado
   );
@@ -956,7 +956,7 @@ Te presento el paquete que estamos promocionando:
 🔸 Cabina de fotos (3 Horas) 
 🔸 6 letras Gigantes (5 Horas)
 🔸 Niebla de piso ó 
-   Lluvia de mariposas 
+    Lluvia de mariposas 
      
       por tan sólo
   
