@@ -1013,7 +1013,7 @@ if (messageLower.trim() === "si_me_interesa" || messageLower.trim() === "si_me_i
   /* ============================================
    Interceptamos el botón "paquete_sugerido"
    ============================================ */
-  if (messageLower === "paquete_sugerido") {
+  /*if (messageLower === "paquete_sugerido") {
     // Aquí reutilizamos la lógica que mostrabas en "OpcionesSeleccionadas" o "EsperandoConfirmacionPaquete"
     
     // Si no sabes el tipo de evento: 
@@ -1048,7 +1048,7 @@ if (messageLower.trim() === "si_me_interesa" || messageLower.trim() === "si_me_i
     // Ajustar estado al que usas para manejar esa respuesta
     context.estado = "EsperandoConfirmacionPaquete";
     return true;
-  }
+  }*/
 
 
 // 🟢 1. Inicio: dar la bienvenida y mostrar opciones con imagen
