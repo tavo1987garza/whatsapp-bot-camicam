@@ -1696,7 +1696,7 @@ async function handleTipoEvento(from, messageLower, context) {
 
     // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
     await sendInteractiveMessage(from, "Elige una opción:", [
-      { id: "si_me_interesa", title: tituloPaquete },
+      { id: "si_me_interesa", title: recomendacion.paquete },
       { id: "armar_paquete", title: "Armar mi paquete" }
     ]);
    
