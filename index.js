@@ -953,24 +953,17 @@ if (messageLower.trim() === "si_me_interesa" || messageLower.trim() === "si_me_i
 }*/
 
 // 2) Interceptar "si_me_interesa_sugerido" y "si_me_interesa"
-if (messageLower === "si_me_interesa_sugerido" || messageLower === "si_me_interesa") {
-  // Revisar si su estado lo permite
-  if (
-    context.estado === "EsperandoConfirmacionPaquete" ||
-    context.estado === "EsperandoDudas"
-  ) {
-    if (messageLower === "si_me_interesa_sugerido") {
-      await sendWhatsAppMessage(from, "¡Excelente! Tomemos como base el paquete sugerido. 🤩");
-    } else {
-      // messageLower === "si_me_interesa"
-      await sendWhatsAppMessage(from, "¡Perfecto! Me alegra que te interese el paquete personalizado. 🙌");
-    }
-    // Ahora pasamos a pedir fecha
+if (
+  messageLower === "si_me_interesa_sugerido" || messageLower === "si_me_interesa") {
+  // Verificamos estado
+  if (context.estado === "EsperandoConfirmacionPaquete" || context.estado === "EsperandoDudas") {
+    // olicitamos fecha
     context.estado = "EsperandoFecha";
     await solicitarFecha(from, context);
-    return true;
+    return true; // Salimos
   }
 }
+
     /* ============================================
    Interceptamos el botón "si_me_interesa"
    ============================================ *
