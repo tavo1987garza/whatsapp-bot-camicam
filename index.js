@@ -1703,7 +1703,7 @@ async function handleTipoEvento(from, messageLower, context) {
     // Actualizar el estado para manejar la respuesta en el siguiente flujo
     context.estado = "EsperandoConfirmacionPaquete";
   } 
-}
+} 
 
 /* ============================================
    Estado: EsperandoConfirmacionPaquete
