@@ -886,6 +886,387 @@ async function sendMessageToAdmin(message) {
   }
 }
 
+/***************************************************
+ FUNCION para seleccionar el Tipo de evento: Boda, XV Años, Otros sugeridos
+ y enviar la información
+ ****************************************************/
+ async function handleTipoEvento(from, messageLower, context) {
+
+  //CASO BODA
+  if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
+    context.tipoEvento = "Boda";
+
+    // 1) Texto 1
+    await sendMessageWithTypingWithState(
+      from,
+      "¡Muchas felicidades por tu Boda! 👏 Será un día inolvidable. ❤️",
+      2000,
+      context.estado
+    );
+
+    // 2) Texto 2
+    await delay(2000);
+    await sendMessageWithTypingWithState(
+      from,
+      "Te presento el *Paquete Wedding* que estamos promocionando: \n\nIncluye Cabina 360, iniciales decorativas, 2 chisperos y un carrito de shots con alcohol, por *$4,450*.",
+      2000,
+      context.estado
+    );
+
+    // 3) Video
+    await delay(2000);
+    await sendWhatsAppVideo(from, "URL_DE_TU_VIDEO_DE_BODA");
+
+    // 4) Imagen
+    await delay(2000);
+    await sendImageMessage(from, "URL_DE_TU_IMAGEN_DE_BODA");
+
+    // 5) Botones "si_me_interesa_sugerido" y "armar_paquete"
+    await delay(2000);
+    await sendInteractiveMessage(
+      from,
+      "¿¿Te gustaría continuar con el *PAQUETE WEDDING*?\n\nO prefieres armar tu paquete?",
+      [
+        { id: "si_me_interesa", title: "PAQUETE WEDDING" },
+        { id: "armar_paquete", title: "Armar mi paquete" }
+      ]
+    );
+
+    // -> Unificación: pasamos directamente a "EsperandoConfirmacionPaquete"
+    context.estado = "EsperandoConfirmacionPaquete";
+    return true;
+  }
+
+  //CASO XV
+  else if (messageLower.includes("xv") || messageLower.includes("quince")) {
+    context.tipoEvento = "XV";
+
+ 
+      // PARTE 1
+  const textoA = `
+¡Muchas felicidades! 👏
+    
+Tu fiesta de XV años será Inolvidable!! ✨
+  
+Te presento el paquete que estamos promocionando:
+  
+  *PAQUETE MIS XV*
+  
+      Incluye: 
+🔸 Cabina de fotos (3 Horas) 
+🔸 6 letras Gigantes (5 Horas)
+🔸 Niebla de piso ó 
+   Lluvia de mariposas 
+     
+      por tan sólo
+  
+     ✨ $8,900 ✨
+  
+*¡Contrata ahora y recibe de REGALO!*
+    
+🔸 2 Chisperos de luz fría
+Con un valor de $1,000
+    
+     *¡¡Además!!*
+    
+¡Solo este mes disfruta de un *30% DE DESCUENTO*!
+`;
+    
+    const textoB = `
+¡¡Y eso no es todo!! 
+    
+A los primeros 10 Quinceañeras les estaremos Regalando 
+      
+🔸 1 Scrapbook personalizado para la cabina de fotos
+      
+Con un valor de $1,300
+    
+¡Te lo llevamos Completamente Gratis!
+    
+¡Será un recuerdo muy bonito de tu evento!
+      
+Si contrataras todo por separado el precio Regular sería de $11,200
+      
+*¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
+      
+      ✨ *$6,230* ✨
+      
+SIN COSTO DE FLETE!! a una distancia de 20 km del centro de Monterrey
+      
+    En Resumen:
+
+🔸 *Cabina de fotos* (3 Horas)
+🔸 *6 letras Gigantes* (5 Horas)
+🔸 *Niebla de piso* ó 
+    *Lluvia de mariposas* 
+🔸 *2 Chisperos de luz fría*
+🔸 *1 Scrapbook*
+🔸 *Descuento de $2,670*
+🔸 *Flete Incluido*
+      
+*¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
+      
+      ✨ *$6,230* ✨
+      
+¡¡Aprovecha esta oportunidad!!
+      
+Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
+      
+`;
+
+    // 1) Texto 1
+    await sendImageMessage(from, "URL_DE_IMAGEN_XV");
+
+    await delay(2000);
+    await sendMessageWithTypingWithState(from, textoA, 2000, context.estado);
+
+    // 2) Texto 2
+    await delay(2000);
+    await sendMessageWithTypingWithState(from, textoB, 2000, context.estado);
+
+    // 3) Video
+    await delay(2000);
+    await sendWhatsAppVideo(from, "URL_DE_TU_VIDEO_XV");
+
+    // 4) Imagen
+    await delay(2000);
+    await sendImageMessage(from, "URL_DE_IMAGEN_XV");
+
+    // 5) Botones
+    await delay(2000);
+    await sendInteractiveMessage(
+      from,
+      "¿Te gustaría continuar con el *PAQUETE MIS XV*?\n\nO prefieres armar tu Paquete Personalizado?",
+      [
+        { id: "si_me_interesa", title: "PAQUETE MIS XV" },
+        { id: "armar_paquete", title: "Armar mi paquete" }
+      ]
+    );
+
+    // -> Directamente a "EsperandoConfirmacionPaquete"
+    context.estado = "EsperandoConfirmacionPaquete";
+    return true;
+  }
+
+  // CASO OTRO
+  else {
+    // Obtener la recomendación basada en el tipo de evento escrito por el usuario
+    const recomendacion = getOtherEventPackageRecommendation(messageLower);
+
+    // Guardar en el contexto el paquete recomendado para posteriores referencias
+    context.paqueteRecomendado = recomendacion;
+
+    // Enviar la recomendación de forma personalizada
+    const mensajeRecomendacion = `🎉 *${recomendacion.paquete}*\n${recomendacion.descripcion}\n\nTe gustaría continuar con el ${recomendacion.paquete}?`;
+    await sendMessageWithTypingWithState(from, mensajeRecomendacion, 2000, context.estado);
+
+    // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
+    await sendInteractiveMessage(from, "O prefieres Armar tu Paquete?", 
+      [
+      { id: "si_me_interesa", title: recomendacion.paquete },
+      { id: "armar_paquete", title: "Armar mi paquete" }
+    ]);
+   
+    // Actualizar el estado para manejar la respuesta en el siguiente flujo
+    context.estado = "EsperandoConfirmacionPaquete";
+  } 
+} 
+
+
+
+/***************************************************
+ FUNCION para contar solo letras (ignorando números y caracteres especiales)
+ ****************************************************/
+function contarLetras(texto) {
+  return texto.replace(/[^a-zA-Z]/g, "").length;
+}
+
+
+
+/***************************************************
+ FUNCION para identificar el subtipo de evento 
+y devolver una recomendación de paquete.
+ ****************************************************/
+function getOtherEventPackageRecommendation(userMessage) {
+  const mensaje = userMessage.toLowerCase();
+
+  // Detectar cumpleaños: se pueden buscar números o palabras como "cumpleaños"
+  if (/cumpleaños|birthday|\b\d+\b/.test(mensaje)) {
+    return {
+      paquete: "PAQUETE CUMPLEAÑOS",
+      descripcion: "Incluye letras gigantes personalizadas, números brillantes y una ambientación festiva perfecta para celebrar esa edad especial."
+    };
+  }
+  // Detectar revelación de género: se buscan palabras clave
+  else if (/revelación de género|revelacion|baby|oh baby|girl|boy/.test(mensaje)) {
+    return {
+      paquete: "PAQUETE REVELACION",
+      descripcion: "Ideal para eventos de revelación de género, con letras decorativas y opciones que resaltan 'BABY', 'OH BABY' o 'GIRL BOY'."
+    };
+  }
+  // Detectar propuesta: palabras relacionadas con propuesta o 'marry me'
+  else if (/propuesta|pedir matrimonio|marry me/.test(mensaje)) {
+    return {
+      paquete: "PAQUETE MARRY ME",
+      descripcion: "Perfecto para una propuesta inolvidable, con letras románticas y personalizadas que dicen 'MARRY ME'."
+    };
+  }
+  // Detectar graduación: se buscan palabras como "grad", "class" o números de generación
+  else if (/graduación|grad|class|gen\b/.test(mensaje)) {
+    return {
+      paquete: "PAQUETE GRADUACION",
+      descripcion: "Ofrece letras gigantes modernas ideales para graduaciones, por ejemplo, 'CLASS 2025', 'GRAD 25' o 'GEN 2022'."
+    };
+  }
+  // Si no se detecta un subtipo específico
+  return {
+    paquete: "Paq. Otro",
+    descripcion: "Tenemos varias opciones personalizadas. ¿Podrías contarnos un poco más sobre tu evento para ofrecerte la mejor recomendación?"
+  };
+}
+
+
+
+
+/***************************************************
+ FUNCION que maneja la logica de las sugerencias
+ ****************************************************/
+function checkUpsellSuggestions(context) {
+  let suggestions = [];
+  const servicios = context.serviciosSeleccionados.toLowerCase();
+  const availableServices = [
+    "cabina de fotos", "cabina 360", "lluvia de mariposas", "carrito de shots con alcohol",
+    "carrito de shots sin alcohol", "niebla de piso", "lluvia matálica",
+    "scrapbook", "audio guest book", "letras gigantes", "chisperos"
+  ];
+
+  // Si previamente se había sugerido algo pero ahora ya se agregó el scrapbook,
+  // reiniciamos la bandera para permitir nuevas sugerencias.
+  if (context.upsellSuggested && servicios.includes("scrapbook")) {
+    context.upsellSuggested = false;
+  }
+
+  // Contar la cantidad de servicios seleccionados
+  let serviceCount = 0;
+  availableServices.forEach(service => {
+    if (servicios.includes(service)) serviceCount++;
+  });
+
+  // Regla 1: Si se seleccionó "cabina de fotos" pero no "scrapbook"
+  if (servicios.includes("cabina de fotos") && !servicios.includes("scrapbook")) {
+    suggestions.push("👉 Sugerencia: Al agregar *Scrapbook*, tu evento se verá aún más espectacular\n¡Además, podrías aprovechar un mayor descuento!🤩\n\nEscribe *Agregar Scrapbook* si lo deseas");
+    // Activar flag para enviar el video del scrapbook
+    context.suggestScrapbookVideo = true;
+    context.upsellSuggested = true;
+  }
+  // Regla 2: Si ya se agregó Scrapbook (o no aplica la Regla 1) y se tienen exactamente 2 servicios
+  else if (serviceCount === 2) {
+    suggestions.push("¡Sugerencia! Si agregas un tercer servicio, obtendrás un 30% de descuento, y con 4 servicios, ¡hasta un 40%!");
+    context.upsellSuggested = true;
+  }
+
+  return suggestions;
+}
+
+
+/***************************************************
+ FUNCION para actualizar la cotizacion
+ Muestra sugerencias
+ ****************************************************/
+async function actualizarCotizacion(from, context, mensajePreliminar = null) {
+  // 1) Calcular la cotización
+  const cotizacion = calculateQuotation(context.serviciosSeleccionados);
+
+  // 2) Mensajes de cabecera (si lo deseas)
+  const cabecera = mensajePreliminar ? mensajePreliminar : "*PAQUETE PERSONALIZADO*";
+  // Este mensaje se puede enviar antes o después. 
+  // Si quieres enviarlo luego de las imágenes, puedes omitirlo aquí.
+  
+  // 3) Preparar texto de detalles y texto de resumen
+  const mensajeDetalles = `${cabecera}\n\n` + cotizacion.details.join("\n");
+  const mensajeResumen = `Subtotal: $${cotizacion.subtotal.toLocaleString()}\nDescuento (${cotizacion.discountPercent}%): -$${cotizacion.discountAmount.toLocaleString()}\n\n*TOTAL A PAGAR: $${cotizacion.total.toLocaleString()}*`;
+
+  // 4) Enviar primero las imágenes y videos (en base a los servicios reconocidos) 
+  //    antes de mostrar la descripción textual de la cotización.
+  if (cotizacion.servicesRecognized && cotizacion.servicesRecognized.length > 0) {
+    for (const service of cotizacion.servicesRecognized) {
+      // Verifica si ya se enviaron medios previamente
+      if (mediaMapping[service] && (!context.mediosEnviados || !context.mediosEnviados.has(service))) {
+        if (mediaMapping[service].images && mediaMapping[service].images.length > 0) {
+          for (const img of mediaMapping[service].images) {
+            await sendImageMessage(from, img);
+            await delay(1000);
+          }
+        }
+        if (mediaMapping[service].videos && mediaMapping[service].videos.length > 0) {
+          for (const vid of mediaMapping[service].videos) {
+            await sendWhatsAppVideo(from, vid);
+            await delay(1000);
+          }
+        }
+        // Marcar como enviado
+        if (!context.mediosEnviados) context.mediosEnviados = new Set();
+        context.mediosEnviados.add(service);
+      }
+    }
+  }
+
+  // 5) Después de mostrar los archivos, se envían los detalles de la cotización (servicios)
+  await sendMessageWithTypingWithState(from, mensajeDetalles, 2000, context.estado);
+  await delay(2000);
+
+  // 6) Y finalmente el resumen (subtotal, descuento y total)
+  await sendMessageWithTypingWithState(from, mensajeResumen, 2000, context.estado);
+
+  // 7) Checar si hay sugerencias de upsell
+  const upsellSuggestions = checkUpsellSuggestions(context);
+  if (upsellSuggestions.length > 0) {
+    const mensajeUpsell = upsellSuggestions.join("\n");
+    await delay(2000);
+    await sendMessageWithTypingWithState(from, mensajeUpsell, 2000, context.estado);
+
+    // Si había que mostrar video de scrapbook
+    if (context.suggestScrapbookVideo) {
+      const scrapbookMedia = mediaMapping["scrapbook"];
+      if (scrapbookMedia && scrapbookMedia.videos && scrapbookMedia.videos.length > 0) {
+        await delay(2000);
+        await sendWhatsAppVideo(from, scrapbookMedia.videos[0]);
+      }
+      context.suggestScrapbookVideo = false;
+    }
+  }
+
+    // OBTENER el nombre del paquete que guardaste en context.paqueteRecomendado
+// Si no existe, mostramos "Paquete Sugerido"
+//Sucede despues de seleccionar "Armar mi paquete" y presentar la cotizacion
+const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
+
+  // 8) Mensaje final con instrucción para agregar/quitar
+  await delay(2000);
+  await sendMessageWithTypingWithState(
+    from,
+    `Te gustaría continuar con el ${tituloPaquete}?`,
+    2000,
+    context.estado
+  );
+
+
+  // 9) Botón para continuar
+  await sendInteractiveMessage( 
+    from,
+    "O tu Paquete Personalizado?",
+    [
+      { id: "si_me_interesa_sugerido", title: tituloPaquete },
+      { id: "si_me_interesa", title: "PAQ. PERSONALIZADO" },
+      { id: "modificar_cotizacion", title: "Modificar Cotización" }
+    ]
+  );
+
+  // 10) Ajustar el estado si aplica
+  context.estado = "EsperandoDudas";
+}
+
+
 
 // Función para manejar el flujo de mensajes del usuario con tono natural
 async function handleUserMessage(from, userMessage, messageLower) {
@@ -1586,12 +1967,6 @@ if (context.estado === "ConfirmarAgregarCabinaCambio") {
       return true;
     }
   }
-  
-  /*// --- Manejo de FAQs o dudas generales ---
-  if (await handleFAQs(from, userMessage)) return true;
-  
-  await sendWhatsAppMessage(from, "¿Podrías especificar tu duda o si deseas agregar algún servicio adicional? 😊\n\nSi deseas agregar algo, escribe *Agregar* y lo que necesites.\nSi deseas quitar algo, escribe *Quitar* y lo que necesites quitar.");
-  return true;*/
 }
 
 // 🟢 6. Procesar la fecha del evento
@@ -1789,385 +2164,6 @@ if (context.estado === "Finalizado") {
   
 
    
-/***************************************************
- FUNCION para seleccionar el Tipo de evento: Boda, XV Años, Otros sugeridos
- y enviar la información
- ****************************************************/
- async function handleTipoEvento(from, messageLower, context) {
-
-  //CASO BODA
-  if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
-    context.tipoEvento = "Boda";
-
-    // 1) Texto 1
-    await sendMessageWithTypingWithState(
-      from,
-      "¡Muchas felicidades por tu Boda! 👏 Será un día inolvidable. ❤️",
-      2000,
-      context.estado
-    );
-
-    // 2) Texto 2
-    await delay(2000);
-    await sendMessageWithTypingWithState(
-      from,
-      "Te presento el *Paquete Wedding* que estamos promocionando: \n\nIncluye Cabina 360, iniciales decorativas, 2 chisperos y un carrito de shots con alcohol, por *$4,450*.",
-      2000,
-      context.estado
-    );
-
-    // 3) Video
-    await delay(2000);
-    await sendWhatsAppVideo(from, "URL_DE_TU_VIDEO_DE_BODA");
-
-    // 4) Imagen
-    await delay(2000);
-    await sendImageMessage(from, "URL_DE_TU_IMAGEN_DE_BODA");
-
-    // 5) Botones "si_me_interesa_sugerido" y "armar_paquete"
-    await delay(2000);
-    await sendInteractiveMessage(
-      from,
-      "¿¿Te gustaría continuar con el *PAQUETE WEDDING*?\n\nO prefieres armar tu paquete?",
-      [
-        { id: "si_me_interesa", title: "PAQUETE WEDDING" },
-        { id: "armar_paquete", title: "Armar mi paquete" }
-      ]
-    );
-
-    // -> Unificación: pasamos directamente a "EsperandoConfirmacionPaquete"
-    context.estado = "EsperandoConfirmacionPaquete";
-    return true;
-  }
-
-  //CASO XV
-  else if (messageLower.includes("xv") || messageLower.includes("quince")) {
-    context.tipoEvento = "XV";
-
- 
-      // PARTE 1
-  const textoA = `
-¡Muchas felicidades! 👏
-    
-Tu fiesta de XV años será Inolvidable!! ✨
-  
-Te presento el paquete que estamos promocionando:
-  
-  *PAQUETE MIS XV*
-  
-      Incluye: 
-🔸 Cabina de fotos (3 Horas) 
-🔸 6 letras Gigantes (5 Horas)
-🔸 Niebla de piso ó 
-   Lluvia de mariposas 
-     
-      por tan sólo
-  
-     ✨ $8,900 ✨
-  
-*¡Contrata ahora y recibe de REGALO!*
-    
-🔸 2 Chisperos de luz fría
-Con un valor de $1,000
-    
-     *¡¡Además!!*
-    
-¡Solo este mes disfruta de un *30% DE DESCUENTO*!
-`;
-    
-    const textoB = `
-¡¡Y eso no es todo!! 
-    
-A los primeros 10 Quinceañeras les estaremos Regalando 
-      
-🔸 1 Scrapbook personalizado para la cabina de fotos
-      
-Con un valor de $1,300
-    
-¡Te lo llevamos Completamente Gratis!
-    
-¡Será un recuerdo muy bonito de tu evento!
-      
-Si contrataras todo por separado el precio Regular sería de $11,200
-      
-*¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
-      
-      ✨ *$6,230* ✨
-      
-SIN COSTO DE FLETE!! a una distancia de 20 km del centro de Monterrey
-      
-    En Resumen:
-
-🔸 *Cabina de fotos* (3 Horas)
-🔸 *6 letras Gigantes* (5 Horas)
-🔸 *Niebla de piso* ó 
-    *Lluvia de mariposas* 
-🔸 *2 Chisperos de luz fría*
-🔸 *1 Scrapbook*
-🔸 *Descuento de $2,670*
-🔸 *Flete Incluido*
-      
-*¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
-      
-      ✨ *$6,230* ✨
-      
-¡¡Aprovecha esta oportunidad!!
-      
-Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
-      
-`;
-
-    // 1) Texto 1
-    await sendImageMessage(from, "URL_DE_IMAGEN_XV");
-
-    await delay(2000);
-    await sendMessageWithTypingWithState(from, textoA, 2000, context.estado);
-
-    // 2) Texto 2
-    await delay(2000);
-    await sendMessageWithTypingWithState(from, textoB, 2000, context.estado);
-
-    // 3) Video
-    await delay(2000);
-    await sendWhatsAppVideo(from, "URL_DE_TU_VIDEO_XV");
-
-    // 4) Imagen
-    await delay(2000);
-    await sendImageMessage(from, "URL_DE_IMAGEN_XV");
-
-    // 5) Botones
-    await delay(2000);
-    await sendInteractiveMessage(
-      from,
-      "¿Te gustaría continuar con el *PAQUETE MIS XV*?\n\nO prefieres armar tu Paquete Personalizado?",
-      [
-        { id: "si_me_interesa", title: "PAQUETE MIS XV" },
-        { id: "armar_paquete", title: "Armar mi paquete" }
-      ]
-    );
-
-    // -> Directamente a "EsperandoConfirmacionPaquete"
-    context.estado = "EsperandoConfirmacionPaquete";
-    return true;
-  }
-
-  // CASO OTRO
-  else {
-    // Obtener la recomendación basada en el tipo de evento escrito por el usuario
-    const recomendacion = getOtherEventPackageRecommendation(messageLower);
-
-    // Guardar en el contexto el paquete recomendado para posteriores referencias
-    context.paqueteRecomendado = recomendacion;
-
-    // Enviar la recomendación de forma personalizada
-    const mensajeRecomendacion = `🎉 *${recomendacion.paquete}*\n${recomendacion.descripcion}\n\nTe gustaría continuar con el ${recomendacion.paquete}?`;
-    await sendMessageWithTypingWithState(from, mensajeRecomendacion, 2000, context.estado);
-
-    // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
-    await sendInteractiveMessage(from, "O prefieres Armar tu Paquete?", 
-      [
-      { id: "si_me_interesa", title: recomendacion.paquete },
-      { id: "armar_paquete", title: "Armar mi paquete" }
-    ]);
-   
-    // Actualizar el estado para manejar la respuesta en el siguiente flujo
-    context.estado = "EsperandoConfirmacionPaquete";
-  } 
-} 
-
-
-
-/***************************************************
- FUNCION para contar solo letras (ignorando números y caracteres especiales)
- ****************************************************/
-function contarLetras(texto) {
-  return texto.replace(/[^a-zA-Z]/g, "").length;
-}
-
-
-
-/***************************************************
- FUNCION para identificar el subtipo de evento 
-y devolver una recomendación de paquete.
- ****************************************************/
-function getOtherEventPackageRecommendation(userMessage) {
-  const mensaje = userMessage.toLowerCase();
-
-  // Detectar cumpleaños: se pueden buscar números o palabras como "cumpleaños"
-  if (/cumpleaños|birthday|\b\d+\b/.test(mensaje)) {
-    return {
-      paquete: "PAQUETE CUMPLEAÑOS",
-      descripcion: "Incluye letras gigantes personalizadas, números brillantes y una ambientación festiva perfecta para celebrar esa edad especial."
-    };
-  }
-  // Detectar revelación de género: se buscan palabras clave
-  else if (/revelación de género|revelacion|baby|oh baby|girl|boy/.test(mensaje)) {
-    return {
-      paquete: "PAQUETE REVELACION",
-      descripcion: "Ideal para eventos de revelación de género, con letras decorativas y opciones que resaltan 'BABY', 'OH BABY' o 'GIRL BOY'."
-    };
-  }
-  // Detectar propuesta: palabras relacionadas con propuesta o 'marry me'
-  else if (/propuesta|pedir matrimonio|marry me/.test(mensaje)) {
-    return {
-      paquete: "PAQUETE MARRY ME",
-      descripcion: "Perfecto para una propuesta inolvidable, con letras románticas y personalizadas que dicen 'MARRY ME'."
-    };
-  }
-  // Detectar graduación: se buscan palabras como "grad", "class" o números de generación
-  else if (/graduación|grad|class|gen\b/.test(mensaje)) {
-    return {
-      paquete: "PAQUETE GRADUACION",
-      descripcion: "Ofrece letras gigantes modernas ideales para graduaciones, por ejemplo, 'CLASS 2025', 'GRAD 25' o 'GEN 2022'."
-    };
-  }
-  // Si no se detecta un subtipo específico
-  return {
-    paquete: "Paq. Otro",
-    descripcion: "Tenemos varias opciones personalizadas. ¿Podrías contarnos un poco más sobre tu evento para ofrecerte la mejor recomendación?"
-  };
-}
-
-
-
-
-/***************************************************
- FUNCION que maneja la logica de las sugerencias
- ****************************************************/
-function checkUpsellSuggestions(context) {
-  let suggestions = [];
-  const servicios = context.serviciosSeleccionados.toLowerCase();
-  const availableServices = [
-    "cabina de fotos", "cabina 360", "lluvia de mariposas", "carrito de shots con alcohol",
-    "carrito de shots sin alcohol", "niebla de piso", "lluvia matálica",
-    "scrapbook", "audio guest book", "letras gigantes", "chisperos"
-  ];
-
-  // Si previamente se había sugerido algo pero ahora ya se agregó el scrapbook,
-  // reiniciamos la bandera para permitir nuevas sugerencias.
-  if (context.upsellSuggested && servicios.includes("scrapbook")) {
-    context.upsellSuggested = false;
-  }
-
-  // Contar la cantidad de servicios seleccionados
-  let serviceCount = 0;
-  availableServices.forEach(service => {
-    if (servicios.includes(service)) serviceCount++;
-  });
-
-  // Regla 1: Si se seleccionó "cabina de fotos" pero no "scrapbook"
-  if (servicios.includes("cabina de fotos") && !servicios.includes("scrapbook")) {
-    suggestions.push("👉 Sugerencia: Al agregar *Scrapbook*, tu evento se verá aún más espectacular\n¡Además, podrías aprovechar un mayor descuento!🤩\n\nEscribe *Agregar Scrapbook* si lo deseas");
-    // Activar flag para enviar el video del scrapbook
-    context.suggestScrapbookVideo = true;
-    context.upsellSuggested = true;
-  }
-  // Regla 2: Si ya se agregó Scrapbook (o no aplica la Regla 1) y se tienen exactamente 2 servicios
-  else if (serviceCount === 2) {
-    suggestions.push("¡Sugerencia! Si agregas un tercer servicio, obtendrás un 30% de descuento, y con 4 servicios, ¡hasta un 40%!");
-    context.upsellSuggested = true;
-  }
-
-  return suggestions;
-}
-
-
-/***************************************************
- FUNCION para actualizar la cotizacion
- Muestra sugerencias
- ****************************************************/
-async function actualizarCotizacion(from, context, mensajePreliminar = null) {
-  // 1) Calcular la cotización
-  const cotizacion = calculateQuotation(context.serviciosSeleccionados);
-
-  // 2) Mensajes de cabecera (si lo deseas)
-  const cabecera = mensajePreliminar ? mensajePreliminar : "*PAQUETE PERSONALIZADO*";
-  // Este mensaje se puede enviar antes o después. 
-  // Si quieres enviarlo luego de las imágenes, puedes omitirlo aquí.
-  
-  // 3) Preparar texto de detalles y texto de resumen
-  const mensajeDetalles = `${cabecera}\n\n` + cotizacion.details.join("\n");
-  const mensajeResumen = `Subtotal: $${cotizacion.subtotal.toLocaleString()}\nDescuento (${cotizacion.discountPercent}%): -$${cotizacion.discountAmount.toLocaleString()}\n\n*TOTAL A PAGAR: $${cotizacion.total.toLocaleString()}*`;
-
-  // 4) Enviar primero las imágenes y videos (en base a los servicios reconocidos) 
-  //    antes de mostrar la descripción textual de la cotización.
-  if (cotizacion.servicesRecognized && cotizacion.servicesRecognized.length > 0) {
-    for (const service of cotizacion.servicesRecognized) {
-      // Verifica si ya se enviaron medios previamente
-      if (mediaMapping[service] && (!context.mediosEnviados || !context.mediosEnviados.has(service))) {
-        if (mediaMapping[service].images && mediaMapping[service].images.length > 0) {
-          for (const img of mediaMapping[service].images) {
-            await sendImageMessage(from, img);
-            await delay(1000);
-          }
-        }
-        if (mediaMapping[service].videos && mediaMapping[service].videos.length > 0) {
-          for (const vid of mediaMapping[service].videos) {
-            await sendWhatsAppVideo(from, vid);
-            await delay(1000);
-          }
-        }
-        // Marcar como enviado
-        if (!context.mediosEnviados) context.mediosEnviados = new Set();
-        context.mediosEnviados.add(service);
-      }
-    }
-  }
-
-  // 5) Después de mostrar los archivos, se envían los detalles de la cotización (servicios)
-  await sendMessageWithTypingWithState(from, mensajeDetalles, 2000, context.estado);
-  await delay(2000);
-
-  // 6) Y finalmente el resumen (subtotal, descuento y total)
-  await sendMessageWithTypingWithState(from, mensajeResumen, 2000, context.estado);
-
-  // 7) Checar si hay sugerencias de upsell
-  const upsellSuggestions = checkUpsellSuggestions(context);
-  if (upsellSuggestions.length > 0) {
-    const mensajeUpsell = upsellSuggestions.join("\n");
-    await delay(2000);
-    await sendMessageWithTypingWithState(from, mensajeUpsell, 2000, context.estado);
-
-    // Si había que mostrar video de scrapbook
-    if (context.suggestScrapbookVideo) {
-      const scrapbookMedia = mediaMapping["scrapbook"];
-      if (scrapbookMedia && scrapbookMedia.videos && scrapbookMedia.videos.length > 0) {
-        await delay(2000);
-        await sendWhatsAppVideo(from, scrapbookMedia.videos[0]);
-      }
-      context.suggestScrapbookVideo = false;
-    }
-  }
-
-    // OBTENER el nombre del paquete que guardaste en context.paqueteRecomendado
-// Si no existe, mostramos "Paquete Sugerido"
-//Sucede despues de seleccionar "Armar mi paquete" y presentar la cotizacion
-const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
-
-  // 8) Mensaje final con instrucción para agregar/quitar
-  await delay(2000);
-  await sendMessageWithTypingWithState(
-    from,
-    `Te gustaría continuar con el ${tituloPaquete}?`,
-    2000,
-    context.estado
-  );
-
-
-  // 9) Botón para continuar
-  await sendInteractiveMessage( 
-    from,
-    "O tu Paquete Personalizado?",
-    [
-      { id: "si_me_interesa_sugerido", title: tituloPaquete },
-      { id: "si_me_interesa", title: "PAQ. PERSONALIZADO" },
-      { id: "modificar_cotizacion", title: "Modificar Cotización" }
-    ]
-  );
-
-  // 10) Ajustar el estado si aplica
-  context.estado = "EsperandoDudas";
-}
 
 
 }
