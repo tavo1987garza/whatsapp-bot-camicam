@@ -1691,11 +1691,12 @@ async function handleTipoEvento(from, messageLower, context) {
     context.paqueteRecomendado = recomendacion;
 
     // Enviar la recomendación de forma personalizada
-    const mensajeRecomendacion = `🎉 *${recomendacion.paquete}*\n${recomendacion.descripcion}\n\nTe interesa contratar el ${recomendacion.paquete} o prefieres Armar tu Paquete?`;
+    const mensajeRecomendacion = `🎉 *${recomendacion.paquete}*\n${recomendacion.descripcion}\n\nTe gustaría continuar con el ${recomendacion.paquete}?`;
     await sendMessageWithTypingWithState(from, mensajeRecomendacion, 2000, context.estado);
 
     // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
-    await sendInteractiveMessage(from, "Elige una opción:", [
+    await sendInteractiveMessage(from, "O prefieres Armar tu Paquete?", 
+      [
       { id: "si_me_interesa", title: recomendacion.paquete },
       { id: "armar_paquete", title: "Armar mi paquete" }
     ]);
