@@ -906,7 +906,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
     /* ============================================
    Si el estado es "EsperandoConfirmacionPaquete", no procesar FAQs
    ============================================ */
-  if (context.estado === "EsperandoConfirmacionPaquete") {
+  if (context.estado === "EsperandoServicios") {
     // Procesar FAQs solo si no está en el estado "EsperandoConfirmacionPaquete"
     if (await handleFAQs(from, userMessage)) {
       return true; // Si se manejó una FAQ, salir de la función
@@ -953,16 +953,16 @@ if (messageLower.trim() === "si_me_interesa" || messageLower.trim() === "si_me_i
 }*/
 
 // 2) Interceptar "si_me_interesa_sugerido" y "si_me_interesa"
-/*if (
+if (
   messageLower === "si_me_interesa_sugerido" || messageLower === "si_me_interesa") {
   // Verificamos estado
-  if (context.estado === "EsperandoConfirmacionPaquete" || context.estado === "EsperandoDudas") {
+  if (context.estado === "EsperandoServicios" || context.estado === "EsperandoDudas") {
     // olicitamos fecha
     context.estado = "EsperandoFecha";
     await solicitarFecha(from, context);
     return true; // Salimos
   }
-}*/
+}
 
     /* ============================================
    Interceptamos el botón "si_me_interesa"
@@ -1640,7 +1640,7 @@ async function handleTipoEvento(from, messageLower, context) {
     );
 
     // -> Unificación: pasamos directamente a "EsperandoConfirmacionPaquete"
-    context.estado = "EsperandoConfirmacionPaquete";
+    context.estado = "EsperandoServicios";
     return true;
   }
 
@@ -1678,7 +1678,7 @@ async function handleTipoEvento(from, messageLower, context) {
     );
 
     // -> Directamente a "EsperandoConfirmacionPaquete"
-    context.estado = "EsperandoConfirmacionPaquete";
+    context.estado = "EsperandoServicios";
     return true;
   }
 
@@ -1701,7 +1701,7 @@ async function handleTipoEvento(from, messageLower, context) {
     ]);
    
     // Actualizar el estado para manejar la respuesta en el siguiente flujo
-    context.estado = "EsperandoConfirmacionPaquete";
+    context.estado = "EsperandoServicios";
   } 
 } 
 
@@ -1758,7 +1758,9 @@ async function handleTipoEvento(from, messageLower, context) {
       return true;
     }
   }  */
-    if (context.estado === "EsperandoConfirmacionPaquete") {
+   
+   
+   /* if (context.estado === "EsperandoConfirmacionPaquete") {
       const msg = userMessage.toLowerCase();
     
       // a) si al usuario le interesa cualquier paquete
@@ -1788,7 +1790,7 @@ async function handleTipoEvento(from, messageLower, context) {
         return true;
       }
     }
-    
+    */
 
 /* ============================================
    Estado: EsperandoServicios
