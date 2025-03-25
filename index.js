@@ -2090,7 +2090,7 @@ if (context.estado === "EsperandoLugar") {
   // Rama para "letras gigantes" en otros flujos (si aplica)
   if (!["Contacto Inicial", "EsperandoTipoEvento", "OpcionesSeleccionadas", "EsperandoFecha", "EsperandoLugar", "EsperandoCantidadLetras"].includes(context.estado)) {
     if (messageLower.includes("letras gigantes")) {
-      await sendWhatsAppMessage(from, "¿Cuántas letras necesitas? 🔠");
+      await sendWhatsAppMessage(from, "¿Cuántas LETRAS necesitas? 🔠");
       context.estado = "EsperandoCantidadLetras";
       return true;
     }
