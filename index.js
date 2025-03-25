@@ -913,11 +913,34 @@ async function handleUserMessage(from, userMessage, messageLower) {
     }
   }
 
+   // 1) Interceptar "armar_paquete" de forma genérica
+  //    (si estás en un estado donde tiene sentido "armar mi paquete")
+  //    Usamos includes() para que coincida con "armar paquete", etc.
+  if (
+    messageLower.includes("armar_paquete") || messageLower.includes("armar mi paquete")) {
+    // Solo si el estado actual es uno de estos:
+    if ([
+      "EsperandoConfirmacionPaquete",
+      "EsperandoDudas",
+      "EsperandoTipoEvento"
+      // ...puedes agregar más si quieres
+    ].includes(context.estado)) {
+      // Lógica genérica de “Arma tu paquete”
+      await sendMessageWithTypingWithState(
+        from,
+        "¡Genial! 🤩🤩 ¡Vamos a personalizar tu paquete!\n\n✏️ *Escribe separado por comas*.\nPor ejemplo: cabina de fotos, cabina 360, 6 letras gigantes, 4 chisperos, ...",
+        2000,
+        context.estado
+      );
+      context.estado = "EsperandoServicios";
+      return true;
+    }
+  }
 
    /* ============================================
    Interceptamos el botón "si_me_interesa" o "si_me_interesa_sugerido"
    Botonoes de continuidad "WEDDING, XV y PAQUETES SUGERIDOS"
-   ============================================ */
+   ============================================ *
 if (messageLower.trim() === "si_me_interesa" || messageLower.trim() === "si_me_interesa_sugerido") {
     if (
         (context.estado === "EsperandoDudas" || context.estado === "EsperandoConfirmacionPaquete") ||
@@ -927,6 +950,26 @@ if (messageLower.trim() === "si_me_interesa" || messageLower.trim() === "si_me_i
         await solicitarFecha(from, context);
         return true;
     }
+}*/
+
+// 2) Interceptar "si_me_interesa_sugerido" y "si_me_interesa"
+if (messageLower === "si_me_interesa_sugerido" || messageLower === "si_me_interesa") {
+  // Revisar si su estado lo permite
+  if (
+    context.estado === "EsperandoConfirmacionPaquete" ||
+    context.estado === "EsperandoDudas"
+  ) {
+    if (messageLower === "si_me_interesa_sugerido") {
+      await sendWhatsAppMessage(from, "¡Excelente! Tomemos como base el paquete sugerido. 🤩");
+    } else {
+      // messageLower === "si_me_interesa"
+      await sendWhatsAppMessage(from, "¡Perfecto! Me alegra que te interese el paquete personalizado. 🙌");
+    }
+    // Ahora pasamos a pedir fecha
+    context.estado = "EsperandoFecha";
+    await solicitarFecha(from, context);
+    return true;
+  }
 }
     /* ============================================
    Interceptamos el botón "si_me_interesa"
@@ -1076,7 +1119,7 @@ if (context.estado === "Contacto Inicial") {
 }*/
   
 
-// 🟢 3. Opciones: paquete sugerido o armar paquete
+/*/ 🟢 3. Opciones: paquete sugerido o armar paquete
 if (context.estado === "OpcionesSeleccionadas") {
   console.log("Valor recibido en OpcionesSeleccionadas:", messageLower);
 
@@ -1153,7 +1196,7 @@ if (context.estado === "OpcionesSeleccionadas") {
 
     return true;
   }
-}
+}*/
 
 /**
  * Función para contar solo letras (ignorando números y caracteres especiales)
@@ -1394,7 +1437,7 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
 
 
 
-  async function handleTipoEvento(from, messageLower, context) {
+ /* async function handleTipoEvento(from, messageLower, context) {
     // Caso Boda
     if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
       context.tipoEvento = "Boda";
@@ -1555,11 +1598,120 @@ Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
       // Actualizar el estado para manejar la respuesta en el siguiente flujo
       context.estado = "EsperandoConfirmacionPaquete";
     } 
+  }*/
+
+
+    
+/***************************************************
+ * EJEMPLO: unificamos la lógica del "Caso XV" o "Caso Boda"
+ * para que terminen en EsperandoConfirmacionPaquete
+ ****************************************************/
+async function handleTipoEvento(from, messageLower, context) {
+  if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
+    context.tipoEvento = "Boda";
+
+    // 1) Texto 1
+    await sendMessageWithTypingWithState(
+      from,
+      "¡Muchas felicidades por tu Boda! 👏 Será un día inolvidable. ❤️",
+      2000,
+      context.estado
+    );
+
+    // 2) Texto 2
+    await delay(2000);
+    await sendMessageWithTypingWithState(
+      from,
+      "Te presento el *Paquete Wedding* que estamos promocionando: \n\nIncluye Cabina 360, iniciales decorativas, 2 chisperos y un carrito de shots con alcohol, por *$4,450*.",
+      2000,
+      context.estado
+    );
+
+    // 3) Video
+    await delay(2000);
+    await sendWhatsAppVideo(from, "URL_DE_TU_VIDEO_DE_BODA");
+
+    // 4) Imagen
+    await delay(2000);
+    await sendImageMessage(from, "URL_DE_TU_IMAGEN_DE_BODA");
+
+    // 5) Botones "si_me_interesa_sugerido" y "armar_paquete"
+    await delay(2000);
+    await sendInteractiveMessage(
+      from,
+      "¿Te interesa este *Paquete Wedding* o prefieres armar tu paquete?",
+      [
+        { id: "si_me_interesa_sugerido", title: "PAQUETE WEDDING" },
+        { id: "armar_paquete", title: "Armar mi paquete" }
+      ]
+    );
+
+    // -> Unificación: pasamos directamente a "EsperandoConfirmacionPaquete"
+    context.estado = "EsperandoConfirmacionPaquete";
+    return true;
   }
 
-/* ============================================
-   Estado: EsperandoConfirmacionPaquete
-   ============================================ */
+  else if (messageLower.includes("xv") || messageLower.includes("quince")) {
+    context.tipoEvento = "XV";
+
+    // PARTE 1
+    const textoA = "¡Muchas felicidades! ... [mensaje 1]";
+    const textoB = "¡¡Y eso no es todo!! ... [mensaje 2]";
+
+    // 1) Texto 1
+    await sendMessageWithTypingWithState(from, textoA, 2000, context.estado);
+
+    // 2) Texto 2
+    await delay(2000);
+    await sendMessageWithTypingWithState(from, textoB, 2000, context.estado);
+
+    // 3) Video
+    await delay(2000);
+    await sendWhatsAppVideo(from, "URL_DE_TU_VIDEO_XV");
+
+    // 4) Imagen
+    await delay(2000);
+    await sendImageMessage(from, "URL_DE_IMAGEN_XV");
+
+    // 5) Botones
+    await delay(2000);
+    await sendInteractiveMessage(
+      from,
+      "¿Te interesa este *Paquete Mis XV* o prefieres armar tu paquete?",
+      [
+        { id: "si_me_interesa_sugerido", title: "PAQUETE MIS XV" },
+        { id: "armar_paquete", title: "Armar mi paquete" }
+      ]
+    );
+
+    // -> Directamente a "EsperandoConfirmacionPaquete"
+    context.estado = "EsperandoConfirmacionPaquete";
+    return true;
+  }
+
+  // ... Caso "Otro evento" ...
+  else {
+    // Obtener la recomendación basada en el tipo de evento escrito por el usuario
+    const recomendacion = getOtherEventPackageRecommendation(messageLower);
+
+    // Guardar en el contexto el paquete recomendado para posteriores referencias
+    context.paqueteRecomendado = recomendacion;
+
+    // Enviar la recomendación de forma personalizada
+    const mensajeRecomendacion = `🎉 *${recomendacion.paquete}*\n${recomendacion.descripcion}\n\nTe interesa contratar el ${recomendacion.paquete} o prefieres Armar tu Paquete?`;
+    await sendMessageWithTypingWithState(from, mensajeRecomendacion, 2000, context.estado);
+
+    // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
+    await sendInteractiveMessage(from, "Elige una opción:", [
+      { id: "si_me_interesa", title: "CONTRATARrr" },
+      { id: "armar_paquete", title: "Armar mi paquete" }
+    ]);
+   
+    // Actualizar el estado para manejar la respuesta en el siguiente flujo
+    context.estado = "EsperandoConfirmacionPaquete";
+  } 
+}
+
 /* ============================================
    Estado: EsperandoConfirmacionPaquete
    ============================================ */
