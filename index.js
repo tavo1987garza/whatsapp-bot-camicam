@@ -1768,14 +1768,14 @@ async function handleTipoEvento(from, messageLower, context) {
         return true;
       }
       // b) si el usuario elige "armar mi paquete"
-      else if (messageLower === "armar_paquete" || messageLower === "armar mi paquete") {
+      else if (msg === "armar_paquete" || msg === "armar mi paquete") {
         await sendMessageWithTypingWithState(
           from,
           "¡Genial! Vamos a personalizar tu paquete.\n\n✏️ *Escribe separado por comas*...",
           2000,
           context.estado
         );
-        context.estado = "EsperandoServicios";
+        context.estado = "EsperandoDudas";
         return true;
       }
       // c) si el usuario elige "modificar cotizacion"
