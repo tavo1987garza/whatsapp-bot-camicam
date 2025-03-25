@@ -1008,7 +1008,7 @@ if (messageLower.trim() === "si_me_interesa" || messageLower.trim() === "si_me_i
 
     return true; // Evitamos procesar otros estados, ya que se manejó aquí
   }
-
+ 
 
   /* ============================================
    Interceptamos el botón "paquete_sugerido"
