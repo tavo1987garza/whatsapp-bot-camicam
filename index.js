@@ -916,7 +916,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
    // 1) Interceptar "armar_paquete" de forma genérica
   //    (si estás en un estado donde tiene sentido "armar mi paquete")
   //    Usamos includes() para que coincida con "armar paquete", etc.
-  if (
+  /*if (
     messageLower.includes("armar_paquete") || messageLower.includes("armar mi paquete")) {
     // Solo si el estado actual es uno de estos:
     if ([
@@ -935,7 +935,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
       context.estado = "EsperandoServicios";
       return true;
     }
-  }
+  } */
 
    /* ============================================
    Interceptamos el botón "si_me_interesa" o "si_me_interesa_sugerido"
