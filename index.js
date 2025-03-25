@@ -1789,7 +1789,6 @@ async function handleTipoEvento(from, messageLower, context) {
       }
     }
     
- 
 /* ============================================
    Estado: EsperandoServicios
    ============================================ */
