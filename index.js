@@ -1267,10 +1267,27 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
 }
 
 
- /* ============================================
+
+// Función para manejar el flujo de mensajes del usuario con tono natural
+async function handleUserMessage(from, userMessage, messageLower) {
+  if (!userContext[from]) {
+    userContext[from] = {
+      estado: "Contacto Inicial",
+      tipoEvento: null,
+      nombre: null,
+      fecha: null,
+      lugar: null,
+      serviciosSeleccionados: [],
+      total: 0,
+      mediosEnviados: new Set(), // Para evitar enviar medios repetidos
+    };
+  }
+  const context = userContext[from];
+
+  /* ============================================
    Si el estado es "EsperandoConfirmacionPaquete", no procesar FAQs
    ============================================ */
-   if (context.estado === "EsperandoConfirmacionPaquete") {
+  if (context.estado === "EsperandoConfirmacionPaquete") {
     // Procesar FAQs solo si no está en el estado "EsperandoConfirmacionPaquete"
     if (await handleFAQs(from, userMessage)) {
       return true; // Si se manejó una FAQ, salir de la función
@@ -1330,25 +1347,6 @@ if (
 
     return true; // Evitamos procesar otros estados, ya que se manejó aquí
   }
- 
-
-// Función para manejar el flujo de mensajes del usuario con tono natural
-async function handleUserMessage(from, userMessage, messageLower) {
-  if (!userContext[from]) {
-    userContext[from] = {
-      estado: "Contacto Inicial",
-      tipoEvento: null,
-      nombre: null,
-      fecha: null,
-      lugar: null,
-      serviciosSeleccionados: [],
-      total: 0,
-      mediosEnviados: new Set(), // Para evitar enviar medios repetidos
-    };
-  }
-  const context = userContext[from];
-
- 
 
 
 /*''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -1409,9 +1407,9 @@ if (context.estado === "Contacto Inicial") {
   return true;
 }   
 
-/*''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+/*''''''''''''''''''''''''''''''''''''''''''''
 🟢 3. ESPRAMOS LA CONFIRMACION DEL PAQUETE 🟢
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''*/
+''''''''''''''''''''''''''''''''''''''''''''*/
    if (context.estado === "EsperandoConfirmacionPaquete") {
     const msg = userMessage.toLowerCase();
   
@@ -1443,10 +1441,9 @@ if (context.estado === "Contacto Inicial") {
     }
   }
 
- 
-/* ============================================
-   Estado: EsperandoServicios
-   ============================================ */
+/*''''''''''''''''''''''''''''''''
+🟢 4. ESPRAMOS LOS SERVICIOS 🟢
+''''''''''''''''''''''''''''''''*/
    if (context.estado === "EsperandoServicios") {
     // Si el usuario indica agregar o quitar en su mensaje inicial:
     if (messageLower.includes("agregar")) {
@@ -1551,9 +1548,32 @@ if (context.estado === "Contacto Inicial") {
     return true;
   }
 
-/* ============================================
-   Estado: EsperandoCantidadLetras
-   ============================================ */
+/*''''''''''''''''''''''''''''''''''''''
+🟢 4.1 ESPRAMOS CANTIDAD DE CHISPEROS 🟢
+''''''''''''''''''''''''''''''''''''''*/
+if (context.estado === "EsperandoCantidadChisperos") {
+  const cantidad = parseInt(userMessage);
+  if (isNaN(cantidad) || cantidad <= 0) {
+    await sendWhatsAppMessage(from, "Por favor, ingresa un número válido para la cantidad de chisperos.");
+    return true;
+  }
+ 
+  // Regex para capturar "chisperos" con o sin número
+  const regex = /chisperos(\s*\d+)?/i;
+  if (regex.test(context.serviciosSeleccionados)) {
+    context.serviciosSeleccionados = context.serviciosSeleccionados.replace(regex, `chisperos ${cantidad}`);
+  } else {
+    context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `chisperos ${cantidad}`;
+  }
+  await sendWhatsAppMessage(from, `✅ Se han agregado ${cantidad} chisperos.`);
+  // Actualizar la cotización final
+  await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
+  return true;
+}
+
+/*'''''''''''''''''''''''''''''''''''
+🟢 4.2 ESPRAMOS CANTIDAD DE LETRAS 🟢
+'''''''''''''''''''''''''''''''''''*/
 if (context.estado === "EsperandoCantidadLetras") {
   const cantidad = parseInt(userMessage);
   if (isNaN(cantidad) || cantidad <= 0) {
@@ -1582,33 +1602,21 @@ if (context.estado === "EsperandoCantidadLetras") {
   return true;
 }
 
+/*''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+🟢 4.2.1 TRANSORMA A NUMERO DE LETRAS EN CASO DE ("Ocupo el nombre de...") 🟢
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''*/
+// Cuando el usuario escribe "Ocupo el nombre de [nombre]"
+if (context.estado === "EsperandoDudas" && messageLower.includes("ocupo el nombre de")) {
+  context.nombreCliente = userMessage.replace(/ocupo el nombre de/i, "").trim();
+  const cantidadLetras = contarLetras(context.nombreCliente);
+  context.estado = "ConfirmandoLetras";
+  await sendWhatsAppMessage(from, `De acuerdo, entiendo que ocupas ${cantidadLetras} letras gigantes. ¿Es correcto?`);
+  return true;
+}
 
-/* ============================================
-   Estado: EsperandoCantidadChisperos
-   ============================================ */
-     if (context.estado === "EsperandoCantidadChisperos") {
-    const cantidad = parseInt(userMessage);
-    if (isNaN(cantidad) || cantidad <= 0) {
-      await sendWhatsAppMessage(from, "Por favor, ingresa un número válido para la cantidad de chisperos.");
-      return true;
-    }
-   
-    // Regex para capturar "chisperos" con o sin número
-    const regex = /chisperos(\s*\d+)?/i;
-    if (regex.test(context.serviciosSeleccionados)) {
-      context.serviciosSeleccionados = context.serviciosSeleccionados.replace(regex, `chisperos ${cantidad}`);
-    } else {
-      context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `chisperos ${cantidad}`;
-    }
-    await sendWhatsAppMessage(from, `✅ Se han agregado ${cantidad} chisperos.`);
-    // Actualizar la cotización final
-    await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
-    return true;
-  }
-
-/* ============================================
-   Estado: ConfirmandoLetras (caso "Ocupo el nombre de ...")
-   ============================================ */
+/*''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+🟢 4.2.2 EL CLIENTE CONFIRMA EL NUMERO LETRAS EN CASO DE ("Ocupo el nombre de...") 🟢
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''*/
 if (context.estado === "ConfirmandoLetras") {
   if (messageLower.includes("sí") || messageLower.includes("si")) {
     const cantidadLetras = contarLetras(context.nombreCliente);
@@ -1628,23 +1636,10 @@ if (context.estado === "ConfirmandoLetras") {
   return true;
 }
 
-/* ============================================
-   Estado: Manejo de "Ocupo el nombre de ..."
-   ============================================ */
-// Cuando el usuario escribe "Ocupo el nombre de [nombre]"
-if (context.estado === "EsperandoDudas" && messageLower.includes("ocupo el nombre de")) {
-  context.nombreCliente = userMessage.replace(/ocupo el nombre de/i, "").trim();
-  const cantidadLetras = contarLetras(context.nombreCliente);
-  context.estado = "ConfirmandoLetras";
-  await sendWhatsAppMessage(from, `De acuerdo, entiendo que ocupas ${cantidadLetras} letras gigantes. ¿Es correcto?`);
-  return true;
-}
 
-
-
-/* ============================================
-   Estado: EsperandoTipoCarritoShots
-   ============================================ */
+/*'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+🟢 4.3 ESPRAMOS VARIANTE CARRITO DE SHOTS CON O SIN ALCOHOL 🟢
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''*/
 if (context.estado === "EsperandoTipoCarritoShots") {
   const respuesta = userMessage.toLowerCase();
   let varianteSeleccionada = "";
@@ -1704,9 +1699,10 @@ if (context.estado === "EsperandoTipoCarritoShots") {
 }
 
 
-/* ============================================
-   Estado: ConfirmarAgregarCarritoShotsCambio
-   ============================================ */
+
+/*''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+🟢 4.3.1 CONFIRMAMOS VARIANTE DEL CARRITO DE SHOTS CON O SIN ALCOHOL 🟢
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''*/
 if (context.estado === "ConfirmarAgregarCarritoShotsCambio") {
   const respuesta = userMessage.toLowerCase();
   if (respuesta.includes("si")) {
@@ -1728,9 +1724,9 @@ if (context.estado === "ConfirmarAgregarCarritoShotsCambio") {
   }
 }
 
-/* ============================================
-   Estado: EsperandoTipoCabina
-   ============================================ */
+/*'''''''''''''''''''''''''''''''''''
+🟢 4.4 ESPRAMOS EL TIPO DE CABINA 🟢
+'''''''''''''''''''''''''''''''''''*/
    if (context.estado === "EsperandoTipoCabina") {
     const respuesta = userMessage.toLowerCase().trim();
     let varianteSeleccionada = "";
@@ -1804,9 +1800,9 @@ if (context.estado === "ConfirmarAgregarCarritoShotsCambio") {
     }
   }
 
-  /* ============================================
-   Estado: ConfirmarAgregarCabinaCambio
-   ============================================ */
+/*'''''''''''''''''''''''''''''''''''
+🟢 4.4.1 CONFIRMAMOS EL TIPO DE CABINA 🟢
+'''''''''''''''''''''''''''''''''''*/
 if (context.estado === "ConfirmarAgregarCabinaCambio") {
   const respuesta = userMessage.toLowerCase();
   if (respuesta.includes("si")) {
@@ -1828,12 +1824,9 @@ if (context.estado === "ConfirmarAgregarCabinaCambio") {
   }
 }
 
-
-
-
-/* ============================================
-   Estado: EsperandoDudas – Manejo de dudas, agregar o quitar servicios, FAQs, etc.
-   ============================================ */
+/*'''''''''''''''''''''''''''''''''''''''''''''''''''
+🟢 5. ESPERANDO DUDAS, AGREGAR O QUITAR SERVICIOS 🟢
+'''''''''''''''''''''''''''''''''''''''''''''''''''*/
  if (context.estado === "EsperandoDudas") {
   // --- Manejo de quitar servicios ---
   if (messageLower.includes("quitar")) {
@@ -1971,7 +1964,9 @@ if (context.estado === "ConfirmarAgregarCabinaCambio") {
   }
 }
 
-// 🟢 6. Procesar la fecha del evento
+/*''''''''''''''''''''''''''''''''''''''
+🟢 6. PROCESAMOS LA FECHA DEL EVENTO 🟢
+''''''''''''''''''''''''''''''''''''''*/
 if (context.estado === "EsperandoFecha") {
   // Validar el formato extendido de la fecha (acepta "DD/MM/AAAA" o "20 de mayo 2025")
   if (!isValidDateExtended(userMessage)) {
@@ -2036,8 +2031,9 @@ if (context.estado === "EsperandoFecha") {
   return true;
 }
 
-
-// 🟢 7. Procesar la ubicación del evento
+/*''''''''''''''''''''''''''''''''''''''''''
+🟢 7. PROCESAMOS LA UBICACION DEL EVENTO 🟢
+''''''''''''''''''''''''''''''''''''''''''*/
 if (context.estado === "EsperandoLugar") {
   // Guardar el lugar ingresado
   context.lugar = userMessage;
