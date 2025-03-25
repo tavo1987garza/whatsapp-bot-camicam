@@ -1600,6 +1600,8 @@ Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
  * para que terminen en EsperandoConfirmacionPaquete
  ****************************************************/
 async function handleTipoEvento(from, messageLower, context) {
+
+  //CASO BODA
   if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
     context.tipoEvento = "Boda";
 
@@ -1632,7 +1634,7 @@ async function handleTipoEvento(from, messageLower, context) {
     await delay(2000);
     await sendInteractiveMessage(
       from,
-      "¿Te interesa este *Paquete Wedding* o prefieres armar tu paquete?",
+      "¿¿Te gustaría continuar con el *PAQUETE WEDDING*?\n\nO prefieres armar tu paquete?",
       [
         { id: "si_me_interesa", title: "PAQUETE WEDDING" },
         { id: "armar_paquete", title: "Armar mi paquete" }
@@ -1644,14 +1646,87 @@ async function handleTipoEvento(from, messageLower, context) {
     return true;
   }
 
+  //CASO XV
   else if (messageLower.includes("xv") || messageLower.includes("quince")) {
     context.tipoEvento = "XV";
 
-    // PARTE 1
-    const textoA = "¡Muchas felicidades! ... [mensaje 1]";
-    const textoB = "¡¡Y eso no es todo!! ... [mensaje 2]";
+ 
+      // PARTE 1
+  const textoA = `
+¡Muchas felicidades! 👏
+    
+Tu fiesta de XV años será Inolvidable!! ✨
+  
+Te presento el paquete que estamos promocionando:
+  
+  *PAQUETE MIS XV*
+  
+      Incluye: 
+🔸 Cabina de fotos (3 Horas) 
+🔸 6 letras Gigantes (5 Horas)
+🔸 Niebla de piso ó 
+    Lluvia de mariposas 
+     
+      por tan sólo
+  
+     ✨ $8,900 ✨
+  
+¡Contrata ahora y recibe de REGALO!
+    
+🔸 2 Chisperos de luz fría
+    
+Con un valor de $1,000
+    
+     *¡¡Pero espera!!*
+    
+¡Solo este mes disfruta de un *30% DE DESCUENTO*!
+`;
+    
+    const textoB = `
+¡¡Y eso no es todo!! 
+    
+A los primeros 10 contratos les estaremos Regalando 
+      
+🔸 1 Scrapbook personalizado para la cabina de fotos
+      
+Con un valor de $1,300
+    
+¡Te lo llevamos Completamente Gratis!
+    
+¡Será un recuerdo muy bonito de tu evento!
+      
+Si contrataras todo por separado el precio Regular sería de $11,200
+      
+*¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
+      
+      ✨ *$6,230* ✨
+      
+SIN COSTO DE FLETE!! a una distancia de 20 km del centro de Monterrey
+      
+    En Resumen:
+🔸 Cabina de fotos (3 Horas)
+🔸 6 letras Gigantes (5 Horas)
+🔸 Niebla de piso ó 
+    Lluvia de mariposas 
+🔸 2 Chisperos de luz fría
+🔸 1 Scrapbook
+🔸 Descuento de $2,670
+🔸 Flete Incluido
+      
+*¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
+      
+      ✨ *$6,230* ✨
+      
+¡¡Aprovecha esta oportunidad!!
+      
+Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
+      
+`;
 
     // 1) Texto 1
+    await sendImageMessage(from, "URL_DE_IMAGEN_XV");
+    
+    await delay(2000);
     await sendMessageWithTypingWithState(from, textoA, 2000, context.estado);
 
     // 2) Texto 2
@@ -1670,7 +1745,7 @@ async function handleTipoEvento(from, messageLower, context) {
     await delay(2000);
     await sendInteractiveMessage(
       from,
-      "¿Te interesa este *Paquete Mis XV* o prefieres armar tu paquete?",
+      "¿Te gustaría continuar con el *PAQUETE MIS XV*?\n\nO prefieres armar tu paquete?",
       [
         { id: "si_me_interesa", title: "PAQUETE MIS XV" },
         { id: "armar_paquete", title: "Armar mi paquete" }
@@ -1682,7 +1757,7 @@ async function handleTipoEvento(from, messageLower, context) {
     return true;
   }
 
-  // ... Caso "Otro evento" ...
+  // CASO OTRO
   else {
     // Obtener la recomendación basada en el tipo de evento escrito por el usuario
     const recomendacion = getOtherEventPackageRecommendation(messageLower);
