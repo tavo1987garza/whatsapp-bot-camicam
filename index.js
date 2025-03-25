@@ -1013,7 +1013,7 @@ if (
   /* ============================================
    Interceptamos el botón "paquete_sugerido"
    ============================================ */
-  if (messageLower === "paquete_sugerido") {
+  /* if (messageLower === "paquete_sugerido") {
     // Aquí reutilizamos la lógica que mostrabas en "OpcionesSeleccionadas" o "EsperandoConfirmacionPaquete"
     
     // Si no sabes el tipo de evento: 
@@ -1048,7 +1048,7 @@ if (
     // Ajustar estado al que usas para manejar esa respuesta
     context.estado = "EsperandoConfirmacionPaquete";
     return true;
-  }
+  }*/
 
 
 // 🟢 1. Inicio: dar la bienvenida y mostrar opciones con imagen
@@ -1665,19 +1665,18 @@ Te presento el paquete que estamos promocionando:
 🔸 Cabina de fotos (3 Horas) 
 🔸 6 letras Gigantes (5 Horas)
 🔸 Niebla de piso ó 
-    Lluvia de mariposas 
+   Lluvia de mariposas 
      
       por tan sólo
   
      ✨ $8,900 ✨
   
-¡Contrata ahora y recibe de REGALO!
+*¡Contrata ahora y recibe de REGALO!*
     
 🔸 2 Chisperos de luz fría
-    
 Con un valor de $1,000
     
-     *¡¡Pero espera!!*
+     *¡¡Además!!*
     
 ¡Solo este mes disfruta de un *30% DE DESCUENTO*!
 `;
@@ -1685,7 +1684,7 @@ Con un valor de $1,000
     const textoB = `
 ¡¡Y eso no es todo!! 
     
-A los primeros 10 contratos les estaremos Regalando 
+A los primeros 10 Quinceañeras les estaremos Regalando 
       
 🔸 1 Scrapbook personalizado para la cabina de fotos
       
@@ -1704,14 +1703,15 @@ Si contrataras todo por separado el precio Regular sería de $11,200
 SIN COSTO DE FLETE!! a una distancia de 20 km del centro de Monterrey
       
     En Resumen:
-🔸 Cabina de fotos (3 Horas)
-🔸 6 letras Gigantes (5 Horas)
-🔸 Niebla de piso ó 
-    Lluvia de mariposas 
-🔸 2 Chisperos de luz fría
-🔸 1 Scrapbook
-🔸 Descuento de $2,670
-🔸 Flete Incluido
+
+🔸 *Cabina de fotos* (3 Horas)
+🔸 *6 letras Gigantes* (5 Horas)
+🔸 *Niebla de piso* ó 
+    *Lluvia de mariposas* 
+🔸 *2 Chisperos de luz fría*
+🔸 *1 Scrapbook*
+🔸 *Descuento de $2,670*
+🔸 *Flete Incluido*
       
 *¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
       
@@ -1725,7 +1725,7 @@ Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
 
     // 1) Texto 1
     await sendImageMessage(from, "URL_DE_IMAGEN_XV");
-    
+
     await delay(2000);
     await sendMessageWithTypingWithState(from, textoA, 2000, context.estado);
 
@@ -1745,7 +1745,7 @@ Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
     await delay(2000);
     await sendInteractiveMessage(
       from,
-      "¿Te gustaría continuar con el *PAQUETE MIS XV*?\n\nO prefieres armar tu paquete?",
+      "¿Te gustaría continuar con el *PAQUETE MIS XV*?\n\nO prefieres armar tu Paquete Personalizado?",
       [
         { id: "si_me_interesa", title: "PAQUETE MIS XV" },
         { id: "armar_paquete", title: "Armar mi paquete" }
