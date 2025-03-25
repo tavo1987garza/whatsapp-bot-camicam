@@ -953,7 +953,7 @@ if (messageLower.trim() === "si_me_interesa" || messageLower.trim() === "si_me_i
 }*/
 
 // 2) Interceptar "si_me_interesa_sugerido" y "si_me_interesa"
-if (
+/*if (
   messageLower === "si_me_interesa_sugerido" || messageLower === "si_me_interesa") {
   // Verificamos estado
   if (context.estado === "EsperandoConfirmacionPaquete" || context.estado === "EsperandoDudas") {
@@ -962,7 +962,7 @@ if (
     await solicitarFecha(from, context);
     return true; // Salimos
   }
-}
+}*/
 
     /* ============================================
    Interceptamos el botón "si_me_interesa"
@@ -996,7 +996,7 @@ if (
     /* ============================================
    Interceptamos el botón "modificar_cotizacion"
    ============================================ */
-   if (messageLower === "modificar_cotizacion") {
+  /* if (messageLower === "modificar_cotizacion") {
     // Cambiamos el estado al que maneja "Agregar" y "Quitar"
     context.estado = "EsperandoDudas";
 
@@ -1007,7 +1007,7 @@ if (
     );
 
     return true; // Evitamos procesar otros estados, ya que se manejó aquí
-  }
+  }*/
 
 
   /* ============================================
@@ -1709,7 +1709,7 @@ async function handleTipoEvento(from, messageLower, context) {
    Estado: EsperandoConfirmacionPaquete
    ============================================ */
 
-   if (context.estado === "EsperandoConfirmacionPaquete") {
+  /* if (context.estado === "EsperandoConfirmacionPaquete") {
     const messageLower = userMessage.toLowerCase();
   
     // Si el usuario seleccionó "Sí, me interesa" (id: "aceptar_paquete")
@@ -1757,7 +1757,58 @@ async function handleTipoEvento(from, messageLower, context) {
       );
       return true;
     }
-  }  
+  }  */
+    if (context.estado === "EsperandoConfirmacionPaquete") {
+      const msg = userMessage.toLowerCase();
+    
+      // a) si al usuario le interesa cualquier paquete
+      if (msg === "si_me_interesa_sugerido" || "si_me_interesa") {
+        context.estado = "EsperandoFecha";
+        await solicitarFecha(from, context);
+        return true;
+      }
+      // b) si el usuario elige "armar mi paquete"
+      else if (msg === "armar_paquete" || msg === "armar mi paquete") {
+        await sendMessageWithTypingWithState(
+          from,
+          "¡Genial! Vamos a personalizar tu paquete.\n\n✏️ *Escribe separado por comas*...",
+          2000,
+          context.estado
+        );
+        context.estado = "EsperandoServicios";
+        return true;
+      }
+      // c) si el usuario elige "modificar cotizacion"
+      else if (msg === "modificar_cotizacion") {
+        // *** Aquí pones la lógica de modificar ***
+        context.estado = "EsperandoDudas";
+        await sendWhatsAppMessage(
+          from,
+          "😊 Para modificar Tuuuuuu cotización, escribe:\n\n'*Agregar* + servicio' ó '*Quitar* + servicio'"
+        );
+        return true;
+      } 
+      // d) cualquier otra respuesta
+      else {
+        await sendMessageWithTypingWithState(
+          from,
+          "No entendí tu respuesta. Por favor, selecciona una opción válida.",
+          2000,
+          context.estado
+        );
+        await sendInteractiveMessage(
+          from,
+          "Elige una opción:",
+          [
+            { id: "si_me_interesa", title: "Sí, me interesa" },
+            { id: "armar_paquete",  title: "Armar mi paquete" }
+          ]
+        );
+        return true;
+      }
+    }
+    
+
 /* ============================================
    Estado: EsperandoServicios
    ============================================ */
