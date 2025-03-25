@@ -903,7 +903,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
   }
   const context = userContext[from];
 
-    /* ============================================
+  /* ============================================
    Si el estado es "EsperandoConfirmacionPaquete", no procesar FAQs
    ============================================ */
   if (context.estado === "EsperandoConfirmacionPaquete") {
@@ -913,9 +913,9 @@ async function handleUserMessage(from, userMessage, messageLower) {
     }
   }
 
-   // 1) Interceptar "armar_paquete" de forma genérica
-  //    (si estás en un estado donde tiene sentido "armar mi paquete")
-  //    Usamos includes() para que coincida con "armar paquete", etc.
+  /* ============================================
+   Interceptamos el botón "armar_paquete"
+   ============================================ */
   if (
     messageLower.includes("armar_paquete") || messageLower.includes("armar mi paquete")) {
     // Solo si el estado actual es uno de estos:
@@ -937,63 +937,21 @@ async function handleUserMessage(from, userMessage, messageLower) {
     }
   } 
 
-   /* ============================================
-   Interceptamos el botón "si_me_interesa" o "si_me_interesa_sugerido"
-   Botonoes de continuidad "WEDDING, XV y PAQUETES SUGERIDOS"
-   ============================================ *
-if (messageLower.trim() === "si_me_interesa" || messageLower.trim() === "si_me_interesa_sugerido") {
-    if (
-        (context.estado === "EsperandoDudas" || context.estado === "EsperandoConfirmacionPaquete") ||
-        (context.estado === "OpcionesSeleccionadas" && messageLower.trim() === "si_me_interesa") ||
-        (context.estado === "EsperandoDudas" && messageLower.trim() === "si_me_interesa_sugerido")
-    ) {
-        await solicitarFecha(from, context);
-        return true;
-    }
-}*/
-
-// 2) Interceptar "si_me_interesa_sugerido" y "si_me_interesa"
+  /* ============================================
+   Interceptamos el botón "si_me_interesa_sugerido" y "si_me_interesa"
+   ============================================ */
 if (
   messageLower === "si_me_interesa_sugerido" || messageLower === "si_me_interesa") {
   // Verificamos estado
   if (context.estado === "EsperandoConfirmacionPaquete" || context.estado === "EsperandoDudas") {
-    // olicitamos fecha
+    // Solicitamos fecha
     context.estado = "EsperandoFecha";
     await solicitarFecha(from, context);
     return true; // Salimos
   }
 }
-
-    /* ============================================
-   Interceptamos el botón "si_me_interesa"
-   ============================================ *
-  if ((context.estado === "EsperandoDudas" || context.estado === "EsperandoConfirmacionPaquete") &&
-    messageLower.trim() === "si_me_interesa") {
-    await solicitarFecha(from, context); // Solicitar la fecha del evento
-    return true; // Salir de la función después de manejar la acción
-  }  
-
-
+  
   /* ============================================
-   ⚠️Interceptamos el botón "WEDDING Y XV"⚠️
-   ============================================ *
-   if ((context.estado === "OpcionesSeleccionadas") &&
-   messageLower.trim() === "si_me_interesa") {
-   await solicitarFecha(from, context); // Solicitar la fecha del evento
-   return true; // Salir de la función después de manejar la acción
- }  
-
- 
-
-   /* ============================================
-   ⚠️Interceptamos el botón "CUALQUIER OTRO PAQUETE"⚠️
-   ============================================ *
-   if ((context.estado === "EsperandoDudas") &&
-   messageLower.trim() === "si_me_interesa_sugerido") {
-   await solicitarFecha(from, context); // Solicitar la fecha del evento
-   return true; // Salir de la función después de manejar la acción
- }  
-    /* ============================================
    Interceptamos el botón "modificar_cotizacion"
    ============================================ */
   if (messageLower === "modificar_cotizacion") {
@@ -1008,50 +966,11 @@ if (
 
     return true; // Evitamos procesar otros estados, ya que se manejó aquí
   }
- 
-
-  /* ============================================
-   Interceptamos el botón "paquete_sugerido"
-   ============================================ */
-  /* if (messageLower === "paquete_sugerido") {
-    // Aquí reutilizamos la lógica que mostrabas en "OpcionesSeleccionadas" o "EsperandoConfirmacionPaquete"
-    
-    // Si no sabes el tipo de evento: 
-    if (!context.tipoEvento) {
-      await sendWhatsAppMessage(from, "¿Para qué evento lo necesitas? Boda, XV, etc.");
-      context.estado = "EsperandoTipoEvento";
-      return true;
-    }
-
-    // Si SÍ tenemos context.tipoEvento:
-    let paqueteSugerido;
-    if (context.tipoEvento === "Boda") {
-      paqueteSugerido = "🎉 *Paquete Wedding*: Incluye Cabina 360, iniciales decorativas, 2 chisperos y un carrito de shots con alcohol, todo por *$4,450*.";
-    } else if (context.tipoEvento === "XV") {
-      paqueteSugerido = "🎂 *Paquete Mis XV*: Incluye 6 letras gigantes, Cabina de fotos, Lluvia de mariposas y 2 chisperos, todo por *$5,600*.";
-    } else {
-      // algún manejo para "otro evento", etc.
-      paqueteSugerido = "Aquí iría tu paquete sugerido genérico, o uno especial para ese evento.";
-    }
-
-    await sendWhatsAppMessage(
-      from,
-      `Aquí tienes nuestro paquete sugerido para *${context.tipoEvento}*:\n\n${paqueteSugerido}\n\n¿Te interesa? o prefieres armar tu propio paquete?`
-    );
-
-    // Opcional: ofrecer botones de “sí me interesa” y “armar mi paquete”
-    await sendInteractiveMessage(from, "Elige una opción:", [
-      { id: "si_me_interesa", title: "Si, me interesa" },
-      { id: "armar_paquete", title: "Armar mi paquete" }
-    ]);
-
-    // Ajustar estado al que usas para manejar esa respuesta
-    context.estado = "EsperandoConfirmacionPaquete";
-    return true;
-  }*/
 
 
-// 🟢 1. Inicio: dar la bienvenida y mostrar opciones con imagen
+/*'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+🟢 1. INICIO: DAR LA BIENVENIDA, MOSTRAR UNA IMAGEN Y LAS OPCIONES
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''*/
 if (context.estado === "Contacto Inicial") {
   // Mensaje inicial explicando que es un asistente virtual
   await sendMessageWithTypingWithState(
@@ -1063,7 +982,7 @@ if (context.estado === "Contacto Inicial") {
 
   await sendMessageWithTypingWithState(
     from,
-    "Estos son los Servicios que ofrecemos 🤩",
+    "Te presento los Servicios que ofrecemos 🤩",
     2500, // Retraso de 2 segundos
     "Contacto Inicial"
   );  
@@ -1076,7 +995,7 @@ if (context.estado === "Contacto Inicial") {
   await delay(6000); // Retraso de 5 segundos antes de enviar los botones
   await sendInteractiveMessage(
     from,
-    "Puedes ver nuestro paquete sugerido👌\n\nO Personalizar tu Paquete a tu gusto.\n\nPara continuar selecciona el evento que tienes 👇",
+    "Revisa nuestro paquete que estamos promocionando👌\n\nO Arma tu Paquete a tu gusto.\n\nPara continuar selecciona el evento que tienes 👇",
     [
       { id: "evento_boda", title: "💍 Boda" },
       { id: "evento_xv", title: "🎉 XV Años" }
@@ -1105,111 +1024,25 @@ if (context.estado === "Contacto Inicial") {
   return true;
 }   
 
-/*if (context.estado === "EsperandoSubtipoOtroEvento") {
-  const messageLower = userMessage.toLowerCase();
-  await handleOtherEvent(from, context, messageLower);
-  return true;
-}*/
-  
 
-/*/ 🟢 3. Opciones: paquete sugerido o armar paquete
-if (context.estado === "OpcionesSeleccionadas") {
-  console.log("Valor recibido en OpcionesSeleccionadas:", messageLower);
-
-  if (messageLower === "armar_paquete" || messageLower === "armar mi paquete") {
-    // Mensaje con retraso para simular interacción humana
-    await sendMessageWithTypingWithState(
-      from,
-      "¡Genial! 😃 ¡Vamos a personalizar tu paquete!\n\n✏️ *Escribe separado por comas*,\n\nPor ejemplo: \ncabina de fotos, cabina 360, 6 letras gigantes, 4 chisperos, carrito de shots con alcohol, carrito de shots sin alcohol, lluvia de mariposas, lluvia metálica, niebla de piso, scrapbook, audio guest book",
-      2000, // Retraso de 2 segundos
-      "OpcionesSeleccionadas"
-    );
-    context.estado = "EsperandoServicios";
-    return true;
-  } else if (messageLower === "paquete_sugerido") {
-    // Determinar el paquete sugerido según el tipo de evento
-    let paqueteSugerido;
-    if (!context.tipoEvento) {
-      await sendMessageWithTypingWithState(
-        from,
-        "😕 No se ha seleccionado un tipo de evento. Por favor, elige un tipo de evento válido.",
-        2000,
-        "OpcionesSeleccionadas"
-      );
-      return true; 
-    }
-
-    if (context.tipoEvento === "Boda") {
-      paqueteSugerido = "🎉 *Paquete Wedding*: Incluye Cabina 360, iniciales decorativas, 2 chisperos y un carrito de shots con alcohol, todo por *$4,450*.";
-    } else if (context.tipoEvento === "XV") {
-      paqueteSugerido = "🎂 *Paquete Mis XV*: Incluye 6 letras gigantes, Cabina de fotos, Lluvia de mariposas y 2 chisperos, todo por *$5,600*.";
-    }
-
-    // Enviar mensaje con el paquete sugerido y la pregunta
-    await sendMessageWithTypingWithState(
-      from,
-      `Aquí tienes nuestro paquete para *${context.tipoEvento}*:\n\n${paqueteSugerido}\n\n¿Te interesa? o prefieres armar tu propio paquete`,
-      2000, // Retraso de 2 segundos
-      "OpcionesSeleccionadas"
-    );
-
-    // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
-    await sendInteractiveMessage(
-      from,
-      "Elige una opción:",
-      [
-        { id: "si_me_interesa", title: "Si, me interesa" },
-        { id: "armar_paquete", title: "Armar mi paquete" }
-      ]
-    );
-
-    // Actualizar el estado para manejar la respuesta en el siguiente flujo
-    context.estado = "EsperandoConfirmacionPaquete";
-    return true;
-    
-  } else {
-    // Mensaje de error si no se selecciona una opción válida
-    await sendMessageWithTypingWithState(
-      from,
-      "😕 No entendí tu respuesta. Por favor, selecciona una opción válida utilizando los botones:",
-      2000, // Retraso de 2 segundos
-      "OpcionesSeleccionadas"
-    );
-    
-
-    // Reenviar los botones para que el usuario seleccione nuevamente
-    await sendInteractiveMessage(
-      from,
-      "Elige una opción para continuar:",
-      [
-        { id: "armar_paquete", title: "✨ Armar mi paquete" },
-        { id: "paquete_sugerido", title: "📦 Ver paquete sugerido" }
-      ]
-    );
-
-    return true;
-  }
-}*/
-
-/**
- * Función para contar solo letras (ignorando números y caracteres especiales)
- */
+/***************************************************
+ FUNCION para contar solo letras (ignorando números y caracteres especiales)
+ ****************************************************/
 function contarLetras(texto) {
   return texto.replace(/[^a-zA-Z]/g, "").length;
 }
 
-/**
+
+
+/***************************************************
+ FUNCION para identificar el subtipo de evento 
+y devolver una recomendación de paquete.
+
  * Función unificada para recalcular y enviar la cotización
  * @param {string} from - Destinatario del mensaje
  * @param {object} context - Contexto de la conversación (incluye serviciosSeleccionados, estado, etc.)
  * @param {string} [mensajePreliminar] - Mensaje personalizado (opcional)
- */
-
-
-/**
- * Función para identificar el subtipo de evento 
- * y devolver una recomendación de paquete.
- */
+ ****************************************************/
 function getOtherEventPackageRecommendation(userMessage) {
   const mensaje = userMessage.toLowerCase();
 
@@ -1248,34 +1081,13 @@ function getOtherEventPackageRecommendation(userMessage) {
   };
 }
 
-/**
- * Función para manejar la lógica cuando el usuario selecciona "Otro evento".
- * Se solicita especificar el subtipo y se recomienda un paquete.
- *
-async function handleOtherEvent(from, context, userMessage) {
-  // Obtener la recomendación basándonos en el mensaje del usuario.
-  const recomendacion = getOtherEventPackageRecommendation(userMessage);
 
-  // Guardar en el contexto el paquete recomendado para posteriores referencias.
-  context.paqueteRecomendado = recomendacion;
 
-  // Enviar la recomendación de forma personalizada.
-  const mensajeRecomendacion = `🎉 *${recomendacion.paquete}*\n\n${recomendacion.descripcion}\n\n¿Te interesa? o prefieres armar tu ptopio paquete?`;
-  await sendMessageWithTypingWithState(from, mensajeRecomendacion, 2000, context.estado);
 
-  // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
-  await sendInteractiveMessage(from, "Elige una opción:", [ 
-    { id: "si_me_interesa", title: "CONTINUAR" },
-    { id: "armar_paquete", title: "Armar mi paquete" }
-  ]);
-
-  // Actualizar el estado para manejar la respuesta en el siguiente flujo.
-  context.estado = "EsperandoConfirmacionPaquete";
-}
-/*
-
-/**
- * Función que revisa el contexto actual y devuelve sugerencias de upsell
+/***************************************************
+ FUNCION que maneja la logica de las sugerencias
+ 
+ Revisa el contexto actual y devuelve sugerencias de upsell
  * basadas en los servicios seleccionados.
  *
  * Se aplican dos reglas:
@@ -1284,7 +1096,8 @@ async function handleOtherEvent(from, context, userMessage) {
  *    se sugiere agregar un tercer servicio (recordando que 3 servicios otorgan 30% y 4, hasta 40% de descuento).
  *
  * Se utiliza la bandera (context.upsellSuggested) para evitar repetir la sugerencia, pero se reinicia si las condiciones cambian.
- */
+
+ ****************************************************/
 function checkUpsellSuggestions(context) {
   let suggestions = [];
   const servicios = context.serviciosSeleccionados.toLowerCase();
@@ -1322,10 +1135,11 @@ function checkUpsellSuggestions(context) {
   return suggestions;
 }
 
-/**
- * Función actualizada para recalcular y enviar la cotización,
- * integrando las sugerencias de upsell y mostrando el video del scrapbook si aplica.
- */
+
+/***************************************************
+ FUNCION para actualizar la cotizacion
+ Muestra sugerencias
+ ****************************************************/
 async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   // 1) Calcular la cotización
   const cotizacion = calculateQuotation(context.serviciosSeleccionados);
@@ -1419,185 +1233,10 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
   context.estado = "EsperandoDudas";
 }
 
-
-/**
- * Función para manejar el tipo de evento, integrando Boda, XV y Otro evento.
- * 
-   if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
-    context.tipoEvento = "Boda";
-  } else if (messageLower.includes("xv") || messageLower.includes("quince")) {
- */
-
-
-
- /* async function handleTipoEvento(from, messageLower, context) {
-    // Caso Boda
-    if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
-      context.tipoEvento = "Boda";
-      // GUARDAR el objeto
-      context.paqueteRecomendado = {
-        paquete: "PAQUETE WEDDING",
-        descripcion: "🎉Incluye Cabina 360, iniciales decorativas, 2 chisperos y un carrito de shots con alcohol, todo por *$4,450*",
-        // puedes agregar más campos si gustas (precio, etc.)
-      };
-    
-      // Luego envías los botones
-      await sendInteractiveMessage(
-        from,
-        `¡Muchas felicidades! Tu Boda será increíble!! ✨\n\n
-    Te presento el paquete que estamos promocionando:\n\n🎉 *${context.paqueteRecomendado.paquete}*: ${context.paqueteRecomendado.descripcion}.\n\n
-    Te gustaría contratar el *${context.paqueteRecomendado.paquete}* o prefieres Armar tu Paquete?`,
-        [
-          { id: "si_me_interesa", title: "PAQUETE WEDDING" },
-          { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
-        ]
-      );
-      context.estado = "OpcionesSeleccionadas";
-    }
-    // Caso XV
-    else if (messageLower.includes("xv") || messageLower.includes("quince")) {
-      context.tipoEvento = "XV";
-    
-    
-      // Texto del PAQUETE MIS XV
-      context.paqueteRecomendado = {
-        paquete: "PAQUETE MIS XV"
-      };
-
-      
-  // PARTE 1
-  const textoA = `
-¡Muchas felicidades! 👏
-  
-Tu fiesta de XV años será Inolvidable!! ✨
-
-Te presento el paquete que estamos promocionando:
-
-*PAQUETE MIS XV*
-
-    Incluye: 
-🔸 Cabina de fotos (3 Horas) 
-🔸 6 letras Gigantes (5 Horas)
-🔸 Niebla de piso ó 
-    Lluvia de mariposas 
-   
-      por tan sólo
-
-     ✨ $8,900 ✨
-
-¡Contrata ahora y recibe de REGALO!
-  
-🔸 2 Chisperos de luz fría
-  
-Con un valor de $1,000
-  
-     *¡¡Pero espera!!*
-  
-¡Solo este mes disfruta de un *30% DE DESCUENTO*!
-`;
-  
-    // PARTE 2
-    const textoB = `
-¡¡Y eso no es todo!! 
-
-A los primeros 10 contratos les estaremos Regalando 
-  
-🔸 1 Scrapbook personalizado para la cabina de fotos
-  
-Con un valor de $1,300
-
-¡Te lo llevamos Completamente Gratis!
-
-¡Será un recuerdo muy bonito de tu evento!
-  
-Si contrataras todo por separado el precio Regular sería de $11,200
-  
-*¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
-  
-      ✨ *$6,230* ✨
-  
-Flete Incluido!! a una distancia de 20 km del centro de Monterrey
-  
-    En Resumen:
-🔸 Cabina de fotos (3 Horas)
-🔸 6 letras Gigantes (5 Horas)
-🔸 Niebla de piso ó 
-    Lluvia de mariposas 
-🔸 2 Chisperos de luz fría
-🔸 1 Scrapbook
-🔸 Descuento de $2,670
-🔸 Flete Incluido
-  
-*¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
-  
-      ✨ *$6,230* ✨
-  
-¡¡Aprovecha esta oportunidad!!
-  
-Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
-  
-  `;
-    
-      // (1) Enviar imagen (opcional)
-  await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg");
-  await delay(2000);
-
-  // 2) Enviar la primera parte de texto
-  await sendMessageWithTypingWithState(from, textoA, 2000, context.estado);
-
-  await delay(2000);
-
-  // 3) Enviar la segunda parte de texto
-  await sendMessageWithTypingWithState(from, textoB, 2000, context.estado);
-    
-   // Enviar imagenes u videos del paquete
-  await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg");
-  await delay(2000);
- 
-    
-    
-      // Al mostrar los botones, usas la misma propiedad
-      await sendInteractiveMessage(
-        from,
-        `Te gustaría continuar con el *PAQUETE MIS XV*?\n\nO prefieres Armar tu paquete? 👇`,
-        [
-          { id: "si_me_interesa", title: "PAQUETE MIS XV" },
-          { id: "armar_paquete", title: "🛠️ ARMAR MI PAQUETE" }
-        ]
-      );
-    
-      context.estado = "OpcionesSeleccionadas";
-      return true;
-    }
-    
-    // Caso "Otro"
-    else {
-      // Obtener la recomendación basada en el tipo de evento escrito por el usuario
-      const recomendacion = getOtherEventPackageRecommendation(messageLower);
-  
-      // Guardar en el contexto el paquete recomendado para posteriores referencias
-      context.paqueteRecomendado = recomendacion;
-  
-      // Enviar la recomendación de forma personalizada
-      const mensajeRecomendacion = `🎉 *${recomendacion.paquete}*\n${recomendacion.descripcion}\n\nTe interesa contratar el ${recomendacion.paquete} o prefieres Armar tu Paquete?`;
-      await sendMessageWithTypingWithState(from, mensajeRecomendacion, 2000, context.estado);
-  
-      // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
-      await sendInteractiveMessage(from, "Elige una opción:", [
-        { id: "si_me_interesa", title: "CONTRATAR" },
-        { id: "armar_paquete", title: "Armar mi paquete" }
-      ]);
-     
-      // Actualizar el estado para manejar la respuesta en el siguiente flujo
-      context.estado = "EsperandoConfirmacionPaquete";
-    } 
-  }*/
-
-
     
 /***************************************************
- * EJEMPLO: unificamos la lógica del "Caso XV" o "Caso Boda"
- * para que terminen en EsperandoConfirmacionPaquete
+ FUNCION para seleccionar el Tipo de evento: Boda, XV Años, Otros sugeridos
+ y enviar la información
  ****************************************************/
 async function handleTipoEvento(from, messageLower, context) {
 
