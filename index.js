@@ -2024,7 +2024,7 @@ if (context.estado === "EsperandoFecha") {
   // Solicitar el lugar del evento, mostrando la fecha registrada
   await sendMessageWithTypingWithState(
     from,
-    `¡Perfecto! La fecha ${formattedDate} está disponible. Ahora, ¿podrías decirme en qué lugar se realizará tu evento? 🏢`,
+    `¡Perfecto!\n\n${formattedDate}\nDISPONIBLE 👏👏👏\n\nAhora, indicame por favor el nombre del Salon donde se realizará tu evento 🏢`,
     2000,
     context.estado
   );
