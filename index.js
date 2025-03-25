@@ -121,179 +121,6 @@ Responde de forma profesional, clara, concisa y persuasiva, como un vendedor exp
   `;
 } 
 
-// Función para calcular la cotización y retornar los servicios reconocidos
-function calculateQuotation(servicesText) {
-  // Diccionario de precios
-  const prices = {
-    "cabina de fotos": 3500,
-    "cabina 360": 3500,
-    "lluvia de mariposas": 2500,
-    "carrito de shots con alcohol": 2800,
-    "carrito de shots sin alcohol": 2200,
-    "niebla de piso": 3000,
-    "lluvia matálica": 2000,
-    "scrapbook": 1300,
-    "audio guest book": 2000,
-    "letras gigantes": 400 // precio por letra
-  };
-
-  // Precios para chisperos según cantidad
-  const chisperosPrices = {
-    2: 1000,
-    4: 1500,
-    6: 2000,
-    8: 2500,
-    10: 3000
-  };
-
-  // Separar servicios (se asume que están separados por comas)
-  const servicesArr = servicesText.split(',').map(s => s.trim().toLowerCase()).filter(s => s.length > 0);
-
-  let subtotal = 0;
-  let serviceCount = 0; // para aplicar descuentos
-  let details = [];
-  let servicesRecognized = [];
-  let letrasCount = 0;
-
-  for (const service of servicesArr) {
-    // Caso de chisperos (o chispero)
-    if (/chispero[s]?\b/i.test(service)) {
-      const match = service.match(/chispero[s]?\s*(\d+)/i);
-      if (match && match[1]) {
-        // Si hay cantidad, procesar normalmente
-        const qty = parseInt(match[1]);
-        if (chisperosPrices[qty]) {
-          subtotal += chisperosPrices[qty];
-          serviceCount++;
-          details.push(`🔸 *${qty} Chisperos*: $${chisperosPrices[qty].toLocaleString()}`);
-          servicesRecognized.push("chisperos");
-        } else {
-          details.push(`🔸 Chisperos: cantidad inválida (${service})`);
-        }
-      } else {
-        // Si no hay cantidad, retornar un objeto indicando que falta la cantidad
-        return {
-          error: true,
-          needsInput: 'chisperos',
-          details: ["🔸 *Chisperos*: Por favor, indícanos cuántos chisperos necesitas."],
-          subtotal: 0,
-          discountPercent: 0,
-          discountAmount: 0,
-          total: 0,
-          servicesRecognized: []
-        };
-      }
-    }
-
-    // Caso de letras o letras gigantes
-    else if (/letras(?:\s*gigantes)?\b/.test(service)) {
-      const match = service.match(/letras(?:\s*gigantes)?\s*(\d+)/);
-      if (match && match[1]) {
-        const qty = parseInt(match[1]);
-        const precioLetras = qty * prices["letras gigantes"];
-        subtotal += precioLetras;
-        serviceCount++;
-        details.push(`🔸 *${qty} Letras Gigantes* (5 Horas): $${precioLetras.toLocaleString()}`);
-        servicesRecognized.push("letras gigantes");
-        letrasCount = qty;
-      } else {
-        // En este punto, gracias a la actualización, no debería ocurrir
-        details.push(`🔸 *Letras*: cantidad no especificada`);
-      }
-    }
-     // Caso de lluvia metálica (o lluvia metalica)
-    else if (/lluvia m(?:e|é)t(?:a|á)lica\b/i.test(service)) {
-        subtotal += prices["lluvia matálica"];
-        serviceCount++;
-        details.push(`🔸 *Lluvia Metálica*: $${prices["lluvia matálica"].toLocaleString()}`);
-        servicesRecognized.push("lluvia metálica");
-    }
-
-    // Otros servicios definidos
-    else {
-      let baseService;
-      let qty = 1;
-      // Primero comprobamos si el servicio completo coincide con alguna clave de precios
-      if (prices.hasOwnProperty(service)) {
-        baseService = service;
-      } else {
-        // Si no, intentamos extraer el nombre y la cantidad usando regex
-        const matchService = service.match(/^(.+?)(?:\s+(\d+))?$/);
-        if (matchService) {
-          baseService = matchService[1].trim();
-          qty = matchService[2] ? parseInt(matchService[2]) : 1;
-        }
-      }
-
-      if (prices[baseService] !== undefined) {
-        const precioTotal = prices[baseService] * qty;
-        subtotal += precioTotal;
-        serviceCount++;
-
-        // Formatear el nombre del servicio
-        let serviceNameFormatted = baseService.charAt(0).toUpperCase() + baseService.slice(1);
-
-        // Agregar "(3 horas)" para cabina de fotos y cabina 360
-        if (baseService.toLowerCase() === "cabina de fotos" || baseService.toLowerCase() === "cabina 360") {
-          serviceNameFormatted += " (3 horas)";
-        }
-
-        // Construir el detalle del servicio
-        let serviceDetail = "";
-        if (qty === 1) {
-          serviceDetail = `🔸 *${serviceNameFormatted}:* $${precioTotal.toLocaleString()}`;
-        } else {
-          serviceDetail = `🔸 *${serviceNameFormatted} ${qty}:* $${precioTotal.toLocaleString()}`;
-        }
-
-        details.push(serviceDetail);
-        servicesRecognized.push(baseService);
-      } else {
-        console.warn(`Servicio no reconocido: ${service}`);
-        details.push(`🔸 ${service}: servicio no reconocido`);
-      }
-    }
-  }
-
-  // Aplicar descuento según cantidad de servicios reconocidos
-  let discountPercent = 0;
-  if (serviceCount === 1) {
-    // Caso único: si es chisperos y la cantidad es exactamente 2, sin descuento.
-    if (/chispero[s]?\s*2\b/i.test(servicesArr[0])) {
-      discountPercent = 0;
-    }
-    // Si es letras (o letras gigantes) y se especifica la cantidad
-    else if (/letras(?:\s*gigantes)?\s*(\d+)/i.test(servicesArr[0])) {
-      const match = servicesArr[0].match(/letras(?:\s*gigantes)?\s*(\d+)/i);
-      const qty = parseInt(match[1]);
-      // Si la cantidad es 1, sin descuento; si es mayor (2 o más), se aplica 10%
-      discountPercent = (qty === 1) ? 0 : 10;
-    }
-    // Para cualquier otro servicio único, aplicar 10%
-    else {
-      discountPercent = 10;
-    }
-  } else if (serviceCount === 2) {
-    discountPercent = 25;
-  } else if (serviceCount === 3) {
-    discountPercent = 30;
-  } else if (serviceCount >= 4) {
-    discountPercent = 40;
-  }
-
-  const discountAmount = subtotal * (discountPercent / 100);
-  const total = subtotal - discountAmount;
-
-  return {
-    error: false,
-    subtotal,
-    discountPercent,
-    discountAmount,
-    total,
-    details,
-    servicesRecognized
-  };
-}
 
 
 
@@ -1072,16 +899,12 @@ Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
   } 
 } 
 
-
-
 /***************************************************
  FUNCION para contar solo letras (ignorando números y caracteres especiales)
  ****************************************************/
 function contarLetras(texto) {
   return texto.replace(/[^a-zA-Z]/g, "").length;
 }
-
-
 
 /***************************************************
  FUNCION para identificar el subtipo de evento 
@@ -1125,9 +948,6 @@ function getOtherEventPackageRecommendation(userMessage) {
   };
 }
 
-
-
-
 /***************************************************
  FUNCION que maneja la logica de las sugerencias
  ****************************************************/
@@ -1169,10 +989,185 @@ function checkUpsellSuggestions(context) {
 }
 
 
-/***************************************************
- FUNCION para actualizar la cotizacion
- Muestra sugerencias
- ****************************************************/
+/**************************************
+ FUNCION para CALCULAR la cotizacion
+ **************************************/
+function calculateQuotation(servicesText) {
+  // Diccionario de precios
+  const prices = {
+    "cabina de fotos": 3500,
+    "cabina 360": 3500,
+    "lluvia de mariposas": 2500,
+    "carrito de shots con alcohol": 2800,
+    "carrito de shots sin alcohol": 2200,
+    "niebla de piso": 3000,
+    "lluvia matálica": 2000,
+    "scrapbook": 1300,
+    "audio guest book": 2000,
+    "letras gigantes": 400 // precio por letra
+  };
+
+  // Precios para chisperos según cantidad
+  const chisperosPrices = {
+    2: 1000,
+    4: 1500,
+    6: 2000,
+    8: 2500,
+    10: 3000
+  };
+
+  // Separar servicios (se asume que están separados por comas)
+  const servicesArr = servicesText.split(',').map(s => s.trim().toLowerCase()).filter(s => s.length > 0);
+
+  let subtotal = 0;
+  let serviceCount = 0; // para aplicar descuentos
+  let details = [];
+  let servicesRecognized = [];
+  let letrasCount = 0;
+
+  for (const service of servicesArr) {
+    // Caso de chisperos (o chispero)
+    if (/chispero[s]?\b/i.test(service)) {
+      const match = service.match(/chispero[s]?\s*(\d+)/i);
+      if (match && match[1]) {
+        // Si hay cantidad, procesar normalmente
+        const qty = parseInt(match[1]);
+        if (chisperosPrices[qty]) {
+          subtotal += chisperosPrices[qty];
+          serviceCount++;
+          details.push(`🔸 *${qty} Chisperos*: $${chisperosPrices[qty].toLocaleString()}`);
+          servicesRecognized.push("chisperos");
+        } else {
+          details.push(`🔸 Chisperos: cantidad inválida (${service})`);
+        }
+      } else {
+        // Si no hay cantidad, retornar un objeto indicando que falta la cantidad
+        return {
+          error: true,
+          needsInput: 'chisperos',
+          details: ["🔸 *Chisperos*: Por favor, indícanos cuántos chisperos necesitas."],
+          subtotal: 0,
+          discountPercent: 0,
+          discountAmount: 0,
+          total: 0,
+          servicesRecognized: []
+        };
+      }
+    }
+
+    // Caso de letras o letras gigantes
+    else if (/letras(?:\s*gigantes)?\b/.test(service)) {
+      const match = service.match(/letras(?:\s*gigantes)?\s*(\d+)/);
+      if (match && match[1]) {
+        const qty = parseInt(match[1]);
+        const precioLetras = qty * prices["letras gigantes"];
+        subtotal += precioLetras;
+        serviceCount++;
+        details.push(`🔸 *${qty} Letras Gigantes* (5 Horas): $${precioLetras.toLocaleString()}`);
+        servicesRecognized.push("letras gigantes");
+        letrasCount = qty;
+      } else {
+        // En este punto, gracias a la actualización, no debería ocurrir
+        details.push(`🔸 *Letras*: cantidad no especificada`);
+      }
+    }
+     // Caso de lluvia metálica (o lluvia metalica)
+    else if (/lluvia m(?:e|é)t(?:a|á)lica\b/i.test(service)) {
+        subtotal += prices["lluvia matálica"];
+        serviceCount++;
+        details.push(`🔸 *Lluvia Metálica*: $${prices["lluvia matálica"].toLocaleString()}`);
+        servicesRecognized.push("lluvia metálica");
+    }
+
+    // Otros servicios definidos
+    else {
+      let baseService;
+      let qty = 1;
+      // Primero comprobamos si el servicio completo coincide con alguna clave de precios
+      if (prices.hasOwnProperty(service)) {
+        baseService = service;
+      } else {
+        // Si no, intentamos extraer el nombre y la cantidad usando regex
+        const matchService = service.match(/^(.+?)(?:\s+(\d+))?$/);
+        if (matchService) {
+          baseService = matchService[1].trim();
+          qty = matchService[2] ? parseInt(matchService[2]) : 1;
+        }
+      }
+
+      if (prices[baseService] !== undefined) {
+        const precioTotal = prices[baseService] * qty;
+        subtotal += precioTotal;
+        serviceCount++;
+
+        // Formatear el nombre del servicio
+        let serviceNameFormatted = baseService.charAt(0).toUpperCase() + baseService.slice(1);
+
+        // Agregar "(3 horas)" para cabina de fotos y cabina 360
+        if (baseService.toLowerCase() === "cabina de fotos" || baseService.toLowerCase() === "cabina 360") {
+          serviceNameFormatted += " (3 horas)";
+        }
+
+        // Construir el detalle del servicio
+        let serviceDetail = "";
+        if (qty === 1) {
+          serviceDetail = `🔸 *${serviceNameFormatted}:* $${precioTotal.toLocaleString()}`;
+        } else {
+          serviceDetail = `🔸 *${serviceNameFormatted} ${qty}:* $${precioTotal.toLocaleString()}`;
+        }
+
+        details.push(serviceDetail);
+        servicesRecognized.push(baseService);
+      } else {
+        console.warn(`Servicio no reconocido: ${service}`);
+        details.push(`🔸 ${service}: servicio no reconocido`);
+      }
+    }
+  }
+
+  // Aplicar descuento según cantidad de servicios reconocidos
+  let discountPercent = 0;
+  if (serviceCount === 1) {
+    // Caso único: si es chisperos y la cantidad es exactamente 2, sin descuento.
+    if (/chispero[s]?\s*2\b/i.test(servicesArr[0])) {
+      discountPercent = 0;
+    }
+    // Si es letras (o letras gigantes) y se especifica la cantidad
+    else if (/letras(?:\s*gigantes)?\s*(\d+)/i.test(servicesArr[0])) {
+      const match = servicesArr[0].match(/letras(?:\s*gigantes)?\s*(\d+)/i);
+      const qty = parseInt(match[1]);
+      // Si la cantidad es 1, sin descuento; si es mayor (2 o más), se aplica 10%
+      discountPercent = (qty === 1) ? 0 : 10;
+    }
+    // Para cualquier otro servicio único, aplicar 10%
+    else {
+      discountPercent = 10;
+    }
+  } else if (serviceCount === 2) {
+    discountPercent = 25;
+  } else if (serviceCount === 3) {
+    discountPercent = 30;
+  } else if (serviceCount >= 4) {
+    discountPercent = 40;
+  }
+
+  const discountAmount = subtotal * (discountPercent / 100);
+  const total = subtotal - discountAmount;
+
+  return {
+    error: false,
+    subtotal,
+    discountPercent,
+    discountAmount,
+    total,
+    details,
+    servicesRecognized
+  };
+}
+
+/**************************************
+ FUNCION para ACTUALIZAR la cotizacion
+ **************************************/
 async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   // 1) Calcular la cotización
   const cotizacion = calculateQuotation(context.serviciosSeleccionados);
@@ -1237,22 +1232,19 @@ async function actualizarCotizacion(from, context, mensajePreliminar = null) {
   }
 
     // OBTENER el nombre del paquete que guardaste en context.paqueteRecomendado
-// Si no existe, mostramos "Paquete Sugerido"
-//Sucede despues de seleccionar "Armar mi paquete" y presentar la cotizacion
-const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
+    // Si no existe, mostramos "Paquete Sugerido"
+    //Sucede despues de seleccionar "Armar mi paquete" y presentar la cotizacion
+    const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
 
-  // 8) Mensaje final con instrucción para agregar/quitar
-  await delay(2000);
-  await sendMessageWithTypingWithState(
+   await delay(2000);
+   await sendMessageWithTypingWithState(
     from,
     `Te gustaría continuar con el ${tituloPaquete}?`,
     2000,
     context.estado
-  );
+   );
 
-
-  // 9) Botón para continuar
-  await sendInteractiveMessage( 
+   await sendInteractiveMessage( 
     from,
     "O tu Paquete Personalizado?",
     [
@@ -1262,13 +1254,14 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
     ]
   );
 
-  // 10) Ajustar el estado si aplica
   context.estado = "EsperandoDudas";
 }
 
 
 
-// Función para manejar el flujo de mensajes del usuario con tono natural
+/*'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+🟢 FUNCION PARA MANEJAR EL FLUJO DE MENSAJES DEL USUARIO CON TONO NATURAL 🟢
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''*/
 async function handleUserMessage(from, userMessage, messageLower) {
   if (!userContext[from]) {
     userContext[from] = {
@@ -1309,7 +1302,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
       // Lógica genérica de “Arma tu paquete”
       await sendMessageWithTypingWithState(
         from,
-        "¡Genial! 🤩🤩 ¡Vamos a personalizar tu paquete!\n\n✏️ *Escribe separado por comas*.\nPor ejemplo: cabina de fotos, cabina 360, 6 letras gigantes, 4 chisperos, ...",
+        "¡Genial! 🤩 ¡Vamos a personalizar tu paquete!\n\n✏️ *Escribe separado por comas*.\n\nPor ejemplo:\ncabina de fotos, cabina 360, 6 letras gigantes, 4 chisperos, carrito de shots con alcohol, carrito de shots sin alcohol, lluvia de mariposas, lluvia metálica, niebla de piso, scrapbook, audio guest book",
         2000,
         context.estado
       );
