@@ -916,7 +916,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
    // 1) Interceptar "armar_paquete" de forma genérica
   //    (si estás en un estado donde tiene sentido "armar mi paquete")
   //    Usamos includes() para que coincida con "armar paquete", etc.
-  /*if (
+  if (
     messageLower.includes("armar_paquete") || messageLower.includes("armar mi paquete")) {
     // Solo si el estado actual es uno de estos:
     if ([
@@ -935,7 +935,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
       context.estado = "EsperandoServicios";
       return true;
     }
-  } */
+  } 
 
    /* ============================================
    Interceptamos el botón "si_me_interesa" o "si_me_interesa_sugerido"
@@ -1013,7 +1013,7 @@ if (messageLower.trim() === "si_me_interesa" || messageLower.trim() === "si_me_i
   /* ============================================
    Interceptamos el botón "paquete_sugerido"
    ============================================ */
-  /*if (messageLower === "paquete_sugerido") {
+  if (messageLower === "paquete_sugerido") {
     // Aquí reutilizamos la lógica que mostrabas en "OpcionesSeleccionadas" o "EsperandoConfirmacionPaquete"
     
     // Si no sabes el tipo de evento: 
@@ -1048,7 +1048,7 @@ if (messageLower.trim() === "si_me_interesa" || messageLower.trim() === "si_me_i
     // Ajustar estado al que usas para manejar esa respuesta
     context.estado = "EsperandoConfirmacionPaquete";
     return true;
-  }*/
+  }
 
 
 // 🟢 1. Inicio: dar la bienvenida y mostrar opciones con imagen
@@ -1767,7 +1767,7 @@ async function handleTipoEvento(from, messageLower, context) {
         await solicitarFecha(from, context);
         return true;
       }
-      // b) si el usuario elige "armar mi paquete"
+      /*/ b) si el usuario elige "armar mi paquete"
       else if (msg === "armar_paquete" || msg === "armar mi paquete") {
         await sendMessageWithTypingWithState(
           from,
@@ -1777,7 +1777,7 @@ async function handleTipoEvento(from, messageLower, context) {
         );
         context.estado = "EsperandoDudas";
         return true;
-      }
+      }*/
       // c) si el usuario elige "modificar cotizacion"
       else if (msg === "modificar_cotizacion") {
         // *** Aquí pones la lógica de modificar ***
