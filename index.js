@@ -1783,7 +1783,7 @@ async function handleTipoEvento(from, messageLower, context) {
         // *** Aquí pones la lógica de modificar ***
         context.estado = "EsperandoDudas";
         await sendWhatsAppMessage(
-          from,
+          from, 
           "😊 Para modificar Tuuuuuu cotización, escribe:\n\n'*Agregar* + servicio' ó '*Quitar* + servicio'"
         );
         return true;
