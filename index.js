@@ -2087,22 +2087,27 @@ if (context.estado === "EsperandoLugar") {
 }
 
 
-  // Rama para "letras gigantes" en otros flujos (si aplica)
+  /*/ Rama para "letras gigantes" en otros flujos (si aplica)
   if (!["Contacto Inicial", "EsperandoTipoEvento", "OpcionesSeleccionadas", "EsperandoFecha", "EsperandoLugar", "EsperandoCantidadLetras"].includes(context.estado)) {
     if (messageLower.includes("letras gigantes")) {
       await sendWhatsAppMessage(from, "¿Cuántas LETRAS necesitas? 🔠");
       context.estado = "EsperandoCantidadLetras";
       return true;
     }
-  }
+  }*/
 
-  // 🟢 Si el flujo está finalizado, ya NO respondemos con OpenAI
+
+/*''''''''''''''''''''''''''''''''''''''''''''''''''''
+🟢 8. FINALIZAMOS EL FLUJO, OPEN AI YA NO RESPONDE 🟢
+''''''''''''''''''''''''''''''''''''''''''''''''''''*/
 if (context.estado === "Finalizado") {
   console.log("El flujo está finalizado. No se enviará la pregunta a OpenAI.");
   return true; 
 }
 
-  // Otros casos: enviar consulta a OpenAI para respuestas adicionales
+/*''''''''''''''''''''''''''''''''''''''''''''''''
+🟢 9. EN OTROS CASOS, RESPONDEMOS CON OPEN AI 🟢
+''''''''''''''''''''''''''''''''''''''''''''''''*/
   try {
     function getCacheKey(query) {
       return query.toLowerCase();
@@ -2158,19 +2163,12 @@ if (context.estado === "Finalizado") {
     console.error("❌ Error en handleUserMessage:", error.message);
     await sendWhatsAppMessage(from, "😔 Perdona, ocurrió un error inesperado. Por favor, inténtalo de nuevo.");
     return false;
-  }
-  
-
-   
-
-
+  }  
 }
 
-
-
-
-
-// Iniciar el servidor
+/*''''''''''''''''''''''''
+🟢 INICIAR EL SERVIDOR 🟢
+''''''''''''''''''''''''*/
 app.listen(PORT, () => {
   console.log(`Servidor funcionando en http://localhost:${PORT}`);
 }).on('error', (err) => {
