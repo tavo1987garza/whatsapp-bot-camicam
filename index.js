@@ -996,7 +996,7 @@ if (messageLower.trim() === "si_me_interesa" || messageLower.trim() === "si_me_i
     /* ============================================
    Interceptamos el botón "modificar_cotizacion"
    ============================================ */
-  /* if (messageLower === "modificar_cotizacion") {
+  if (messageLower === "modificar_cotizacion") {
     // Cambiamos el estado al que maneja "Agregar" y "Quitar"
     context.estado = "EsperandoDudas";
 
@@ -1007,7 +1007,7 @@ if (messageLower.trim() === "si_me_interesa" || messageLower.trim() === "si_me_i
     );
 
     return true; // Evitamos procesar otros estados, ya que se manejó aquí
-  }*/
+  }
 
 
   /* ============================================
@@ -1767,27 +1767,8 @@ async function handleTipoEvento(from, messageLower, context) {
         await solicitarFecha(from, context);
         return true;
       }
-      /*/ b) si el usuario elige "armar mi paquete"
-      else if (msg === "armar_paquete" || msg === "armar mi paquete") {
-        await sendMessageWithTypingWithState(
-          from,
-          "¡Genial! Vamos a personalizar tu paquete.\n\n✏️ *Escribe separado por comas*...",
-          2000,
-          context.estado
-        );
-        context.estado = "EsperandoDudas";
-        return true;
-      }*/
-      // c) si el usuario elige "modificar cotizacion"
-      else if (msg === "modificar_cotizacion") {
-        // *** Aquí pones la lógica de modificar ***
-        context.estado = "EsperandoDudas";
-        await sendWhatsAppMessage(
-          from, 
-          "😊 Para modificar Tuuuuuu cotización, escribe:\n\n'*Agregar* + servicio' ó '*Quitar* + servicio'"
-        );
-        return true;
-      } 
+        
+     
       // d) cualquier otra respuesta
       else {
         await sendMessageWithTypingWithState(
