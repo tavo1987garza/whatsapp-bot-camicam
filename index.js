@@ -1267,27 +1267,10 @@ const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
 }
 
 
-
-// Función para manejar el flujo de mensajes del usuario con tono natural
-async function handleUserMessage(from, userMessage, messageLower) {
-  if (!userContext[from]) {
-    userContext[from] = {
-      estado: "Contacto Inicial",
-      tipoEvento: null,
-      nombre: null,
-      fecha: null,
-      lugar: null,
-      serviciosSeleccionados: [],
-      total: 0,
-      mediosEnviados: new Set(), // Para evitar enviar medios repetidos
-    };
-  }
-  const context = userContext[from];
-
-  /* ============================================
+ /* ============================================
    Si el estado es "EsperandoConfirmacionPaquete", no procesar FAQs
    ============================================ */
-  if (context.estado === "EsperandoConfirmacionPaquete") {
+   if (context.estado === "EsperandoConfirmacionPaquete") {
     // Procesar FAQs solo si no está en el estado "EsperandoConfirmacionPaquete"
     if (await handleFAQs(from, userMessage)) {
       return true; // Si se manejó una FAQ, salir de la función
@@ -1347,6 +1330,25 @@ if (
 
     return true; // Evitamos procesar otros estados, ya que se manejó aquí
   }
+
+
+// Función para manejar el flujo de mensajes del usuario con tono natural
+async function handleUserMessage(from, userMessage, messageLower) {
+  if (!userContext[from]) {
+    userContext[from] = {
+      estado: "Contacto Inicial",
+      tipoEvento: null,
+      nombre: null,
+      fecha: null,
+      lugar: null,
+      serviciosSeleccionados: [],
+      total: 0,
+      mediosEnviados: new Set(), // Para evitar enviar medios repetidos
+    };
+  }
+  const context = userContext[from];
+
+ 
 
 
 /*''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
