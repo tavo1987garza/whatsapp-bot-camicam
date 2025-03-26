@@ -1098,7 +1098,7 @@ function calculateQuotation(servicesText) {
     }
 
     // Caso de letras o letras gigantes
-    else if (/letras(?:\s*gigantes)?\b/.test(service)) {
+    /*else if (/letras(?:\s*gigantes)?\b/.test(service)) {
       const match = service.match(/letras(?:\s*gigantes)?\s*(\d+)/);
       if (match && match[1]) {
         const qty = parseInt(match[1]);
@@ -1112,7 +1112,33 @@ function calculateQuotation(servicesText) {
         // En este punto, gracias a la actualización, no debería ocurrir
         details.push(`🔸 *Letras*: cantidad no especificada`);
       }
-    }
+    }*/
+
+      else if (/letras(?:\s*gigantes)?\b/i.test(service)) {
+        const match = service.match(/letras(?:\s*gigantes)?\s*(\d+)/i);
+        
+        if (!match || !match[1]) {
+          return {
+            error: true,
+            needsInput: 'letras',
+            details: ["🔸 *Letras Gigantes*: Por favor, especifica cuántas letras necesitas (ej: '3 letras' o 'letras gigantes 5')."],
+            subtotal: 0,
+            discountPercent: 0,
+            discountAmount: 0,
+            total: 0,
+            servicesRecognized: []
+          };
+        }
+  
+        const qty = parseInt(match[1]);
+        const precioLetras = qty * PRICES["letras gigantes"];
+        subtotal += precioLetras;
+        serviceCount++;
+        details.push(`🔸 *${qty} Letras Gigantes* (5 Horas): $${precioLetras.toLocaleString()}`);
+        servicesRecognized.push("letras gigantes");
+        letrasCount = qty;
+        
+      }
      // Caso de lluvia metálica (o lluvia metalica)
     else if (/lluvia m(?:e|é)t(?:a|á)lica\b/i.test(service)) {
         subtotal += prices["lluvia matálica"];
@@ -1470,81 +1496,185 @@ if (context.estado === "Contacto Inicial") {
 /*''''''''''''''''''''''''''''''''
 🟢 4. ESPERAMOS LOS SERVICIOS 🟢
 ''''''''''''''''''''''''''''''''*/
-if (context.estado === "EsperandoServicios") {
-  // Función de normalización mejorada
-  const normalizarServicios = (input) => {
-      return input
-          // Letras (todas las variantes a "letras gigantes X")
-          .replace(/(\d+)\s+letras(?:\s*gigantes)?/gi, 'letras gigantes $1')
-          .replace(/letras(?:\s*gigantes)?\s+(\d+)/gi, 'letras gigantes $1')
-          .replace(/\bletras\b/gi, 'letras gigantes 1') // Default 1 si no especifica
-          // Chisperos (mantiene tu lógica existente)
-          .replace(/(\d+)\s+chisperos?/gi, 'chisperos $1')
-          .replace(/chisperos?\s+(\d+)/gi, 'chisperos $1');
-  };
+   /*if (context.estado === "EsperandoServicios") {
+    // Si el usuario indica agregar o quitar en su mensaje inicial:
+    if (messageLower.includes("agregar")) {
+      const serviciosAAgregar = userMessage.replace(/agregar/i, "").trim();
+      
+      // 🟢 TRANSFORMACIÓN: "6 letras" => "letras gigantes 6", "4 chisperos" => "chisperos 4"
+      serviciosAAgregar = serviciosAAgregar
+        .replace(/\b(\d+)\s+letras(?:\s*gigantes)?\b/gi, 'letras gigantes $1')
+        .replace(/\b(\d+)\s+chisperos?\b/gi, 'chisperos $1');
 
-  // Procesamiento inicial del mensaje
-  if (messageLower.includes("agregar")) {
-      let serviciosAAgregar = normalizarServicios(userMessage.replace(/agregar/i, "").trim());
       context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + serviciosAAgregar;
       await sendWhatsAppMessage(from, `✅ Se ha agregado: ${serviciosAAgregar}`);
-  } else if (messageLower.includes("quitar")) {
-      let serviciosAQuitar = normalizarServicios(userMessage.replace(/quitar/i, "").trim());
+
+    } else if (messageLower.includes("quitar")) {
+      const serviciosAQuitar = userMessage.replace(/quitar/i, "").trim();
       context.serviciosSeleccionados = context.serviciosSeleccionados
-          .split(",")
-          .map(s => s.trim())
-          .filter(s => !s.toLowerCase().includes(serviciosAQuitar.toLowerCase()))
-          .join(", ");
+        .split(",")
+        .map(s => s.trim())
+        .filter(s => !s.toLowerCase().includes(serviciosAQuitar.toLowerCase()))
+        .join(", ");
       await sendWhatsAppMessage(from, `✅ Se ha quitado: ${serviciosAQuitar}`);
-  } else {
-      context.serviciosSeleccionados = normalizarServicios(userMessage);
-  }
-
-  // Detección mejorada de campos incompletos
-  context.faltanLetras = /letras(?:\s*gigantes)?(?!\s*\d+)/i.test(context.serviciosSeleccionados);
-  context.faltanChisperos = /chisperos(?!\s*\d+)/i.test(context.serviciosSeleccionados);
-  context.faltaVarianteCarritoShots = /carrito de shots(?!\s+(con|sin)\s*alcohol)/i.test(context.serviciosSeleccionados);
-  context.faltaTipoCabina = /cabina(?!\s*(de fotos|360))/i.test(context.serviciosSeleccionados);
-
-  // Manejo de servicios incompletos (orden de prioridad)
-  if (context.faltaTipoCabina) {
-      context.serviciosSeleccionados = context.serviciosSeleccionados
+    } else {
+      // Si el usuario pone directamente la lista sin "agregar"
+      // => También se hace la TRANSFORMACIÓN antes de asignar.
+      let listaServicios = userMessage;
+      
+      listaServicios = listaServicios
+        .replace(/\b(\d+)\s+letras(?:\s*gigantes)?\b/gi, 'letras gigantes $1')
+        .replace(/\b(\d+)\s+chisperos?\b/gi, 'chisperos $1');
+      
+      context.serviciosSeleccionados = listaServicios;
+    }
+  
+    // Inicializamos flags para servicios sin cantidad
+    context.faltanLetras = false;
+    context.faltanChisperos = false;
+    context.faltaVarianteCarritoShots = false;
+  
+    // Verificar si "letras" está presente sin cantidad
+    if (/letras(?:\s*gigantes)?(?!\s*\d+)/i.test(context.serviciosSeleccionados)) {
+      context.faltanLetras = true;
+    }
+    // Verificar si "chisperos" está presente sin cantidad
+    if (/chisperos(?!\s*\d+)/i.test(context.serviciosSeleccionados)) {
+      context.faltanChisperos = true;
+    }
+    //Verifica si carrito de shots se escribio con la variable
+    if (/carrito de shots/i.test(context.serviciosSeleccionados)) {
+      if (!/carrito de shots\s+(con|sin)\s*alcohol/i.test(context.serviciosSeleccionados)) {
+        context.faltaVarianteCarritoShots = true;
+        // Eliminar la entrada "carrito de shots" sin variante de la cotización
+        context.serviciosSeleccionados = context.serviciosSeleccionados
           .split(",")
           .map(s => s.trim())
-          .filter(s => !/^cabina$/i.test(s))
+          .filter(s => !/^carrito de shots$/i.test(s))  // Filtra entradas exactas sin variante
           .join(", ");
-      context.estado = "EsperandoTipoCabina";
-      await sendWhatsAppMessage(from, "¿Deseas agregar Cabina de fotos o Cabina 360?");
-      return true;
-  }
+        
+        // Cambiar el estado para preguntar la variante
+        context.estado = "EsperandoTipoCarritoShots";
+        await sendWhatsAppMessage(from, "¿El carrito de shots lo deseas CON alcohol o SIN alcohol? 🍹");
+        return true; // Detener el flujo actual y esperar la respuesta del cliente.
+      }
+    } 
+    // Verificar si se incluye "cabina" sin especificar tipo (de fotos o 360)
+    if (/cabina(?!\s*(de fotos|360))/i.test(context.serviciosSeleccionados)) {
+       context.faltaTipoCabina = true;
+       // Eliminar la entrada "cabina" sin especificar de la cotización
+       context.serviciosSeleccionados = context.serviciosSeleccionados
+         .split(",")
+         .map(s => s.trim())
+         .filter(s => !/^cabina$/i.test(s))
+         .join(", ");
   
-  if (context.faltanLetras) {
+        context.estado = "EsperandoTipoCabina";
+        await sendWhatsAppMessage(from, "¿Deseas agregar Cabina de fotos o Cabina 360?");
+        return true;
+    }
+
+    // Priorizar preguntar primero por las letras si faltan
+    if (context.faltanLetras) {
       context.estado = "EsperandoCantidadLetras";
       await sendWhatsAppMessage(from, "¿Cuántas letras necesitas? 🔠");
       return true;
-  }
-
-  if (context.faltanChisperos) {
+    }
+  
+    // Si no faltan letras pero faltan chisperos, preguntar por ellos
+    if (context.faltanChisperos) {
       context.estado = "EsperandoCantidadChisperos";
       await sendWhatsAppMessage(from, "¿Cuántos chisperos ocupas? 🔥 Opciones: 2, 4, 6, 8, 10, etc");
       return true;
-  }
-
-  if (context.faltaVarianteCarritoShots) {
-      context.serviciosSeleccionados = context.serviciosSeleccionados
-          .split(",")
-          .map(s => s.trim())
-          .filter(s => !/^carrito de shots$/i.test(s))
-          .join(", ");
+    }
+  
+    // Finalmente, si ya se resolvieron letras y chisperos pero falta la variante del carrito de shots
+    if (context.faltaVarianteCarritoShots) {
       context.estado = "EsperandoTipoCarritoShots";
       await sendWhatsAppMessage(from, "¿El carrito de shots lo deseas CON alcohol o SIN alcohol? 🍹");
       return true;
-  }
+    }
+  
+    // Si ya se especificaron cantidades para ambos, actualizar la cotización
+    await actualizarCotizacion(from, context);
+    return true;
+  }*/
 
-  // Si todo está completo
-  await actualizarCotizacion(from, context);
-  return true;
-}
+    if (context.estado === "EsperandoServicios") {
+      // Función de normalización mejorada
+      const normalizarServicios = (input) => {
+          return input
+              // Letras (todas las variantes a "letras gigantes X")
+              .replace(/(\d+)\s+letras(?:\s*gigantes)?/gi, 'letras gigantes $1')
+              .replace(/letras(?:\s*gigantes)?\s+(\d+)/gi, 'letras gigantes $1')
+              .replace(/\bletras\b/gi, 'letras gigantes 1') // Default 1 si no especifica
+              // Chisperos (mantiene tu lógica existente)
+              .replace(/(\d+)\s+chisperos?/gi, 'chisperos $1')
+              .replace(/chisperos?\s+(\d+)/gi, 'chisperos $1');
+      };
+  
+      // Procesamiento inicial del mensaje
+      if (messageLower.includes("agregar")) {
+          let serviciosAAgregar = normalizarServicios(userMessage.replace(/agregar/i, "").trim());
+          context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + serviciosAAgregar;
+          await sendWhatsAppMessage(from, `✅ Se ha agregado: ${serviciosAAgregar}`);
+      } else if (messageLower.includes("quitar")) {
+          let serviciosAQuitar = normalizarServicios(userMessage.replace(/quitar/i, "").trim());
+          context.serviciosSeleccionados = context.serviciosSeleccionados
+              .split(",")
+              .map(s => s.trim())
+              .filter(s => !s.toLowerCase().includes(serviciosAQuitar.toLowerCase()))
+              .join(", ");
+          await sendWhatsAppMessage(from, `✅ Se ha quitado: ${serviciosAQuitar}`);
+      } else {
+          context.serviciosSeleccionados = normalizarServicios(userMessage);
+      }
+  
+      // Detección mejorada de campos incompletos
+      context.faltanLetras = /letras(?:\s*gigantes)?(?!\s*\d+)/i.test(context.serviciosSeleccionados);
+      context.faltanChisperos = /chisperos(?!\s*\d+)/i.test(context.serviciosSeleccionados);
+      context.faltaVarianteCarritoShots = /carrito de shots(?!\s+(con|sin)\s*alcohol)/i.test(context.serviciosSeleccionados);
+      context.faltaTipoCabina = /cabina(?!\s*(de fotos|360))/i.test(context.serviciosSeleccionados);
+  
+      // Manejo de servicios incompletos (orden de prioridad)
+      if (context.faltaTipoCabina) {
+          context.serviciosSeleccionados = context.serviciosSeleccionados
+              .split(",")
+              .map(s => s.trim())
+              .filter(s => !/^cabina$/i.test(s))
+              .join(", ");
+          context.estado = "EsperandoTipoCabina";
+          await sendWhatsAppMessage(from, "¿Deseas agregar Cabina de fotos o Cabina 360?");
+          return true;
+      }
+      
+      if (context.faltanLetras) {
+          context.estado = "EsperandoCantidadLetras";
+          await sendWhatsAppMessage(from, "¿Cuántas letras necesitas? 🔠");
+          return true;
+      }
+  
+      if (context.faltanChisperos) {
+          context.estado = "EsperandoCantidadChisperos";
+          await sendWhatsAppMessage(from, "¿Cuántos chisperos ocupas? 🔥 Opciones: 2, 4, 6, 8, 10, etc");
+          return true;
+      }
+  
+      if (context.faltaVarianteCarritoShots) {
+          context.serviciosSeleccionados = context.serviciosSeleccionados
+              .split(",")
+              .map(s => s.trim())
+              .filter(s => !/^carrito de shots$/i.test(s))
+              .join(", ");
+          context.estado = "EsperandoTipoCarritoShots";
+          await sendWhatsAppMessage(from, "¿El carrito de shots lo deseas CON alcohol o SIN alcohol? 🍹");
+          return true;
+      }
+  
+      // Si todo está completo
+      await actualizarCotizacion(from, context);
+      return true;
+  }
 
 /*''''''''''''''''''''''''''''''''''''''
 🟢 4.1 ESPRAMOS CANTIDAD DE CHISPEROS 🟢
