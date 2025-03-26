@@ -1631,7 +1631,7 @@ if (context.estado === "EsperandoCantidadLetras") {
   }
   
   // Si no faltan chisperos, actualizar la cotización
-  await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
+  await actualizarCotizacion(from, context);
   return true;
 }
 
