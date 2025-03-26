@@ -826,12 +826,14 @@ Con un valor de $1,000
      *¡¡Además!!*
     
 ¡Solo este mes disfruta de un *30% DE DESCUENTO*!
+
+¡¡Un Gran Ahorro que puedes ocupar en otras cosas!!
 `;
     
     const textoB = `
 ¡¡Y eso no es todo!! 
     
-A los primeros 10 Quinceañeras les estaremos Regalando 
+A las primeras 10 Quinceañeras les estaremos Regalando 
       
 🔸 1 Scrapbook personalizado para la cabina de fotos
       
@@ -843,11 +845,9 @@ Con un valor de $1,300
       
 Si contrataras todo por separado el precio Regular sería de $11,200
       
-*¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
+*¡¡SOLO HOY CONTRATA TODO POR UN EXCELENTE PRECIO!!*
       
-      ✨ *$6,230* ✨
-      
-SIN COSTO DE FLETE!! a una distancia de 20 km del centro de Monterrey
+Y no te preocupes que nosotros cubrimos los gastos DE FLETE y transportacion!! a una distancia de hasta 20 km del centro de Monterrey
       
     En Resumen:
 
