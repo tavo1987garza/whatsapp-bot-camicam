@@ -1600,7 +1600,7 @@ if (context.estado === "EsperandoCantidadChisperos") {
   }
   await sendWhatsAppMessage(from, `✅ Se han agregado ${cantidad} chisperos.`);
   // Actualizar la cotización final
-  await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
+  await actualizarCotizacion(from, context);
   return true;
 }
 
