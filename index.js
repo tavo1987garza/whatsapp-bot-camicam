@@ -981,7 +981,7 @@ else if (/graduación|grad|class|gen\b/.test(mensaje)) {
 
 // Si no se detecta un subtipo específico
 return {
-  paquete: "Paq. Otro",
+  paquete: "OTRO PAQUETE",
   descripcion: "Tenemos varias opciones personalizadas. ¿Podrías contarnos un poco más sobre tu evento para ofrecerte la mejor recomendación?",
   media: {
     images: ["http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg"],
@@ -1278,7 +1278,7 @@ function calculateQuotation(servicesText) {
     //Sucede despues de seleccionar "Armar mi paquete" y presentar la cotizacion
     const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete👏Sugerido";
 
-   await delay(2000);
+   await delay(3000);
    await sendInteractiveMessage( 
     from,
     `Te gustaría continuar con el ${tituloPaquete}?\n\nO tu Paquete Personalizado?`,
