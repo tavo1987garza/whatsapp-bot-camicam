@@ -1279,16 +1279,9 @@ function calculateQuotation(servicesText) {
     const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete👏Sugerido";
 
    await delay(2000);
-   await sendMessageWithTypingWithState(
-    from,
-    `Te gustaría continuar con el ${tituloPaquete}?`,
-    2000,
-    context.estado
-   );
-
    await sendInteractiveMessage( 
     from,
-    `Te gustaría continuar con el ${tituloPaquete}\n\n?O tu Paquete Personalizado?`,
+    `Te gustaría continuar con el ${tituloPaquete}?\n\nO tu Paquete Personalizado?`,
     [
       { id: "si_me_interesa_sugerido", title: tituloPaquete },
       { id: "si_me_interesa", title: "PAQ. PERSONALIZADO" },
