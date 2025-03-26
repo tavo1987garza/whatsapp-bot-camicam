@@ -729,31 +729,6 @@ async function handleFAQs(from, userMessage) {
  ****************************************************/
  async function handleTipoEvento(from, messageLower, context) {
 
-   // Verificar si el mensaje es una selección válida de botón
-   const opcionesValidas = ["boda", "evento_boda", "xv", "quince", "otro", "otros"];
-   const esOpcionValida = opcionesValidas.some(opcion => messageLower.includes(opcion));
- 
-   // Si no es una opción válida, mostrar mensaje de error y botones nuevamente
-   if (!esOpcionValida) {
-     await sendMessageWithTypingWithState(
-       from,
-       "⚠️ Por favor, selecciona una de las opciones disponibles usando los botones:",
-       2000,
-       context.estado
-     );
-     
-     await sendInteractiveMessage(
-       from,
-       "¿Qué tipo de evento estás planeando?",
-       [
-         { id: "evento_boda", title: "Boda 👰" },
-         { id: "xv", title: "XV Años 🎀" },
-         { id: "otros", title: "Otro Evento 🎉" }
-       ]
-     );
-     return false;
-   }
-
   //CASO BODA
   if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
     context.tipoEvento = "Boda";
@@ -1487,23 +1462,26 @@ if (context.estado === "Contacto Inicial") {
 
   // Enviar los botones con otro retraso
   await delay(6000); // Retraso de 5 segundos antes de enviar los botones
+
+  // Mensaje adicional para eventos no listados
+  await delay(1500); // Retraso de 1.5 segundos antes de enviar el mensaje
+  await sendMessageWithTypingWithState(
+    from,
+    "Para continuar *Escribe* qué tipo de evento estás organizando 🥳\n\nEjemplo:\n*Revelacion*\n*Propuesta*\n*Graduacion* ó\n*Números*, Si es lo que ocupas\n\nY Revisa el paquete que estamos promocionando👌\n\nO Arma tu Paquete a tu gusto.",
+    2000,
+    "Contacto Inicial"
+  );
+
   await sendInteractiveMessage(
     from,
-    "Revisa el paquete que estamos promocionando👌\n\nO Arma tu Paquete a tu gusto.\n\nPara continuar selecciona el evento que tienes 👇",
+    "O selecciona una Opción 👇",
     [
       { id: "evento_boda", title: "💍 Boda" },
       { id: "evento_xv", title: "🎉 XV Años" }
     ]
   );
 
-  // Mensaje adicional para eventos no listados
-  await delay(1500); // Retraso de 1.5 segundos antes de enviar el mensaje
-  await sendMessageWithTypingWithState(
-    from,
-    "O dime qué tipo de evento estás organizando? 🥳 ",
-    2000,
-    "Contacto Inicial"
-  );
+  
 
   // Actualizar el estado del contexto
   context.estado = "EsperandoTipoEvento";
