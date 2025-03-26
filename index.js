@@ -1,3 +1,7 @@
+
+//CODIGO FUNCIONANDO YA CON LA VARIANTE DE CABINA DE FOTOS O CABINA 360, PERO TODAVIA HAY UN ERROR, 
+//CYUANDO EL CLIENTE ESCRIBE "CABINA DE FOTOS" EL BOT LO TOMA COMO PREGUNTA FRECUENTE NO COMO RESPUESTA 
+//PARA AGREGAR A LA COTIZACION
 // Importar dependencias en modo ES Modules
 import dotenv from 'dotenv'; // Para cargar variables de entorno
 import express from 'express';
@@ -25,6 +29,7 @@ const userContext = {};
 
 // Instancia global de caché para respuestas de OpenAI (disponible en todo el código)
 const responseCache = new NodeCache({ stdTTL: 3600 });
+
 
 // Objeto para asociar servicios a medios (imágenes y videos)
 const mediaMapping = {
@@ -118,7 +123,183 @@ Ofrecemos los siguientes servicios:
 Atendemos el centro de Monterrey, Nuevo León y el área metropolitana hasta 25 km a la redonda. 
 Responde de forma profesional, clara, concisa y persuasiva, como un vendedor experto en nuestros servicios.
   `;
-} 
+}
+
+// Función para calcular la cotización y retornar los servicios reconocidos
+function calculateQuotation(servicesText) {
+  // Diccionario de precios
+  const prices = {
+    "cabina de fotos": 3500,
+    "cabina 360": 3500,
+    "lluvia de mariposas": 2500,
+    "carrito de shots con alcohol": 2800,
+    "carrito de shots sin alcohol": 2200,
+    "niebla de piso": 3000,
+    "lluvia matálica": 2000,
+    "scrapbook": 1300,
+    "audio guest book": 2000,
+    "letras gigantes": 400 // precio por letra
+  };
+
+  // Precios para chisperos según cantidad
+  const chisperosPrices = {
+    2: 1000,
+    4: 1500,
+    6: 2000,
+    8: 2500,
+    10: 3000
+  };
+
+  // Separar servicios (se asume que están separados por comas)
+  const servicesArr = servicesText.split(',').map(s => s.trim().toLowerCase()).filter(s => s.length > 0);
+
+  let subtotal = 0;
+  let serviceCount = 0; // para aplicar descuentos
+  let details = [];
+  let servicesRecognized = [];
+  let letrasCount = 0;
+
+  for (const service of servicesArr) {
+    // Caso de chisperos (o chispero)
+    if (/chispero[s]?\b/i.test(service)) {
+      const match = service.match(/chispero[s]?\s*(\d+)/i);
+      if (match && match[1]) {
+        // Si hay cantidad, procesar normalmente
+        const qty = parseInt(match[1]);
+        if (chisperosPrices[qty]) {
+          subtotal += chisperosPrices[qty];
+          serviceCount++;
+          details.push(`🔸 *${qty} Chisperos*: $${chisperosPrices[qty].toLocaleString()}`);
+          servicesRecognized.push("chisperos");
+        } else {
+          details.push(`🔸 Chisperos: cantidad inválida (${service})`);
+        }
+      } else {
+        // Si no hay cantidad, retornar un objeto indicando que falta la cantidad
+        return {
+          error: true,
+          needsInput: 'chisperos',
+          details: ["🔸 *Chisperos*: Por favor, indícanos cuántos chisperos necesitas."],
+          subtotal: 0,
+          discountPercent: 0,
+          discountAmount: 0,
+          total: 0,
+          servicesRecognized: []
+        };
+      }
+    }
+
+    // Caso de letras o letras gigantes
+    else if (/letras(?:\s*gigantes)?\b/.test(service)) {
+      const match = service.match(/letras(?:\s*gigantes)?\s*(\d+)/);
+      if (match && match[1]) {
+        const qty = parseInt(match[1]);
+        const precioLetras = qty * prices["letras gigantes"];
+        subtotal += precioLetras;
+        serviceCount++;
+        details.push(`🔸 *${qty} Letras Gigantes* (5 Horas): $${precioLetras.toLocaleString()}`);
+        servicesRecognized.push("letras gigantes");
+        letrasCount = qty;
+      } else {
+        // En este punto, gracias a la actualización, no debería ocurrir
+        details.push(`🔸 *Letras*: cantidad no especificada`);
+      }
+    }
+     // Caso de lluvia metálica (o lluvia metalica)
+    else if (/lluvia m(?:e|é)t(?:a|á)lica\b/i.test(service)) {
+        subtotal += prices["lluvia matálica"];
+        serviceCount++;
+        details.push(`🔸 *Lluvia Metálica*: $${prices["lluvia matálica"].toLocaleString()}`);
+        servicesRecognized.push("lluvia metálica");
+    }
+
+    // Otros servicios definidos
+    else {
+      let baseService;
+      let qty = 1;
+      // Primero comprobamos si el servicio completo coincide con alguna clave de precios
+      if (prices.hasOwnProperty(service)) {
+        baseService = service;
+      } else {
+        // Si no, intentamos extraer el nombre y la cantidad usando regex
+        const matchService = service.match(/^(.+?)(?:\s+(\d+))?$/);
+        if (matchService) {
+          baseService = matchService[1].trim();
+          qty = matchService[2] ? parseInt(matchService[2]) : 1;
+        }
+      }
+
+      if (prices[baseService] !== undefined) {
+        const precioTotal = prices[baseService] * qty;
+        subtotal += precioTotal;
+        serviceCount++;
+
+        // Formatear el nombre del servicio
+        let serviceNameFormatted = baseService.charAt(0).toUpperCase() + baseService.slice(1);
+
+        // Agregar "(3 horas)" para cabina de fotos y cabina 360
+        if (baseService.toLowerCase() === "cabina de fotos" || baseService.toLowerCase() === "cabina 360") {
+          serviceNameFormatted += " (3 horas)";
+        }
+
+        // Construir el detalle del servicio
+        let serviceDetail = "";
+        if (qty === 1) {
+          serviceDetail = `🔸 *${serviceNameFormatted}:* $${precioTotal.toLocaleString()}`;
+        } else {
+          serviceDetail = `🔸 *${serviceNameFormatted} ${qty}:* $${precioTotal.toLocaleString()}`;
+        }
+
+        details.push(serviceDetail);
+        servicesRecognized.push(baseService);
+      } else {
+        console.warn(`Servicio no reconocido: ${service}`);
+        details.push(`🔸 ${service}: servicio no reconocido`);
+      }
+    }
+  }
+
+  // Aplicar descuento según cantidad de servicios reconocidos
+  let discountPercent = 0;
+  if (serviceCount === 1) {
+    // Caso único: si es chisperos y la cantidad es exactamente 2, sin descuento.
+    if (/chispero[s]?\s*2\b/i.test(servicesArr[0])) {
+      discountPercent = 0;
+    }
+    // Si es letras (o letras gigantes) y se especifica la cantidad
+    else if (/letras(?:\s*gigantes)?\s*(\d+)/i.test(servicesArr[0])) {
+      const match = servicesArr[0].match(/letras(?:\s*gigantes)?\s*(\d+)/i);
+      const qty = parseInt(match[1]);
+      // Si la cantidad es 1, sin descuento; si es mayor (2 o más), se aplica 10%
+      discountPercent = (qty === 1) ? 0 : 10;
+    }
+    // Para cualquier otro servicio único, aplicar 10%
+    else {
+      discountPercent = 10;
+    }
+  } else if (serviceCount === 2) {
+    discountPercent = 25;
+  } else if (serviceCount === 3) {
+    discountPercent = 30;
+  } else if (serviceCount >= 4) {
+    discountPercent = 40;
+  }
+
+  const discountAmount = subtotal * (discountPercent / 100);
+  const total = subtotal - discountAmount;
+
+  return {
+    error: false,
+    subtotal,
+    discountPercent,
+    discountAmount,
+    total,
+    details,
+    servicesRecognized
+  };
+}
+
+
 
 // Rutas (webhook, raíz, etc.)
 app.get('/webhook', (req, res) => {
@@ -183,23 +364,10 @@ app.post('/webhook', async (req, res) => {
   console.log("🔘 Botón presionado:", buttonReply);
   console.log("📄 Lista seleccionada:", listReply);
   
-  // Si el usuario ya está en un flujo específico, se omite el chequeo de FAQs 
-  if (
-    !userContext[from] ||
-    ![
-      "EsperandoServicios",
-      "EsperandoFecha",
-      "EsperandoLugar",
-      "EsperandoCantidadLetras",
-      "EsperandoDudas",
-      "EsperandoTipoCabina",
-      "ConfirmarAgregarCabinaCambio",
-      "EsperandoTipoCarritoShots"
-    ].includes(userContext[from].estado)
-  ) {
+  // Si el usuario ya está en un flujo específico, se omite el chequeo de FAQs (excepto en dudas)
+  if (!userContext[from] || !["EsperandoServicios", "EsperandoFecha", "EsperandoLugar", "EsperandoCantidadLetras", "EsperandoDudas"].includes(userContext[from].estado)) {
     if (await handleFAQs(from, userMessage)) return res.sendStatus(200);
   }
-  
   
   try {
     const handledFlow = await handleUserMessage(from, userMessage, messageLower);
@@ -249,10 +417,10 @@ const faqs = [
     question: /con cuánto se separa|con cuanto separo|como se separa|como separo|para separar|cuanto de anticipo/i, 
     answer: "⏰ Puedes separar tu fecha en cualquier momento, siempre y cuando esté disponible.\n\nSeparamos fecha con $500, el resto puede ser ese dia, al inicio del evento.\n\nUna vez acreditado el anticipo solo pedire Nombre y los datos del evento, lleno tu contrato y te envío foto.\n\nSi tienes una vuelta para el centro de Monterrey me avisas para entregarte tu contrato original"    
   },
-  /*{
-    question: /me interesa\b/i, // Coincide con "me interesa" pero no con "Sí, me interesa"
-    answer: "Genial!! \n\nPara continuar por favor indicame la fecha de tu evento para revisar disponibilidad "
-  },*/  
+  { 
+    question: /me interesa/i, 
+    answer: "Genial!! \n\nPara continuar por favor indicame la fecha de tu evento para revisar disponibilidad "    
+  },
   { 
     question: /para depositarte|datos para deposito|transfiero|transferencia|depositar|depósito/i, 
     imageUrl: "http://cami-cam.com/wp-content/uploads/2025/03/Datos-Transferencia-1.jpeg", 
@@ -322,14 +490,10 @@ async function handleFAQs(from, userMessage) {
         await sendWhatsAppVideo(from, videoUrl);
       }
     }
-    return true; // Indicar que se manejó una FAQ
+    return true;
   }
-  return false; // No se manejó ninguna FAQ
+  return false;
 }
-
-
-
-
 
 // Función para reportar mensajes al CRM
 async function reportMessageToCRM(to, message, tipo = "enviado") {
@@ -578,59 +742,7 @@ async function deactivateTypingIndicator(to) {
   }
 }
 
-//Funcion para solicitar fecha
-async function solicitarFecha(from, context) {
-  await sendMessageWithTypingWithState(
-    from,
-    "De acuerdo\n\nPara continuar, por favor indícame la fecha de tu evento\n\nFormato: DD/MM/AAAA 📆\n\nEjemplo: 30/04/2025",
-    2000, // Retraso de 2 segundos
-    context.estado
-  );
-  context.estado = "EsperandoFecha";
-}
-
-// Función para parsear fechas en formato textual (e.g., "20 de mayo 2025")
-function parseFecha(dateString) {
-  // Si ya está en formato DD/MM/AAAA, la retornamos limpia
-  const regexStandard = /^\d{2}\/\d{2}\/\d{4}$/;
-  if (regexStandard.test(dateString.trim())) {
-    return dateString.trim();
-  }
-  
-  // Expresión regular para fechas en formato "20 de mayo 2025" o variantes similares
-  const regexText = /^(\d{1,2})\s*(?:de\s+)?([a-záéíóú]+)\s*(?:de\s+)?(\d{4})$/i;
-  const match = dateString.match(regexText);
-  if (!match) return null; // No se pudo parsear
-  
-  // Extraer día, mes y año
-  let day = match[1].padStart(2, '0'); // Se asegura que el día tenga 2 dígitos
-  const monthName = match[2].toLowerCase();
-  const year = match[3];
-  
-  // Mapeo de nombres de meses en español a números
-  const monthMap = {
-    'enero': '01',
-    'febrero': '02',
-    'marzo': '03',
-    'abril': '04',
-    'mayo': '05',
-    'junio': '06',
-    'julio': '07',
-    'agosto': '08',
-    'septiembre': '09',
-    'setiembre': '09', // variante
-    'octubre': '10',
-    'noviembre': '11',
-    'diciembre': '12'
-  };
-  
-  const month = monthMap[monthName];
-  if (!month) return null; // Mes no reconocido
-  
-  return `${day}/${month}/${year}`;
-}
-
-// Función para validar formato y existencia de la fecha (DD/MM/AAAA)
+// Función para validar el formato de la fecha (DD/MM/AAAA)
 function isValidDate(dateString) {
   const regex = /^\d{2}\/\d{2}\/\d{4}$/; // Formato DD/MM/AAAA
   if (!regex.test(dateString)) return false;
@@ -643,58 +755,12 @@ function isValidDate(dateString) {
   );
 }
 
-// Función extendida para validar la fecha (acepta formatos numérico o textual)
-function isValidDateExtended(dateString) {
-  const formattedDate = parseFecha(dateString);
-  if (!formattedDate) return false;
-  return isValidDate(formattedDate);
-}
-
-// Función para validar que la fecha no esté en el pasado
-function isValidFutureDate(dateString) {
-  const formattedDate = parseFecha(dateString);
-  if (!formattedDate) return false;
-  if (!isValidDate(formattedDate)) return false;
-  
-  // Extraer día, mes y año y crear objeto Date
-  const [day, month, year] = formattedDate.split('/').map(Number);
-  const inputDate = new Date(year, month - 1, day);
-  
-  // Fecha actual sin considerar hora, minutos, etc.
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  return inputDate >= today;
-}
-
-// Función para validar que la fecha esté dentro de los próximos 2 años
-function isWithinTwoYears(dateString) {
-  const formattedDate = parseFecha(dateString);
-  if (!formattedDate) return false;
-  if (!isValidDate(formattedDate)) return false;
-  
-  const [day, month, year] = formattedDate.split('/').map(Number);
-  const inputDate = new Date(year, month - 1, day);
-  
-  // Fecha actual sin horas
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  // Fecha máxima permitida: hoy + 2 años
-  const maxDate = new Date(today);
-  maxDate.setFullYear(maxDate.getFullYear() + 2);
-  
-  return inputDate <= maxDate;
-}
-
-// Función original para verificar disponibilidad (simulada)
+// Función para verificar disponibilidad (simulada)
 function checkAvailability(dateString) {
-  // Simulación de fechas ocupadas (en formato DD/MM/AAAA)
-  const occupiedDates = ["15/02/2024", "20/02/2024"];
+  const occupiedDates = ['15/02/2024', '20/02/2024'];
   return !occupiedDates.includes(dateString);
 }
 
-// Función para enviar mensjae al administrador
 async function sendMessageToAdmin(message) {
   const adminNumber = process.env.ADMIN_WHATSAPP_NUMBER;
   if (!adminNumber) {
@@ -709,290 +775,223 @@ async function sendMessageToAdmin(message) {
   }
 }
 
-/***************************************************
- FUNCION para seleccionar el Tipo de evento: Boda, XV Años, Otros sugeridos
- y enviar la información
- ****************************************************/
- async function handleTipoEvento(from, messageLower, context) {
 
-  //CASO BODA
+async function solicitarFecha(from, context) {
+  await sendMessageWithTypingWithState(
+    from,
+    "Para continuar, por favor indícame la fecha de tu evento (Formato DD/MM/AAAA) 📆.",
+    2000, // Retraso de 2 segundos
+    context.estado
+  );
+  context.estado = "EsperandoFecha";
+}
+
+// Función para manejar el flujo de mensajes del usuario con tono natural
+async function handleUserMessage(from, userMessage, messageLower) {
+  if (!userContext[from]) {
+    userContext[from] = {
+      estado: "Contacto Inicial",
+      tipoEvento: null,
+      nombre: null,
+      fecha: null,
+      lugar: null,
+      serviciosSeleccionados: [],
+      total: 0,
+      mediosEnviados: new Set(), // Para evitar enviar medios repetidos
+    };
+  }
+  const context = userContext[from];
+
+  // Manejar la acción del botón "CONTINUAR"
+  if (context.estado === "EsperandoDudas" && messageLower === "continuar") {
+    await solicitarFecha(from, context); // Solicitar la fecha del evento
+    return true; // Salir de la función después de manejar la acción
+  }
+
+   // Manejar la acción del botón "COMENZAR"
+   if (context.estado === "introduccion" && messageLower === "✨ SI ✨") {
+    await sendWhatsAppMessage(
+      from,
+      "Perfecto!!. Comencemos",
+      2000,
+      context.estado
+    );
+    context.estado = "Contacto Inicial";
+  }
+
+
+  // 0. Introduccion al cliente
+  if (context.estado === "Introduccion") {
+    // Mensaje inicial explicando que es un asistente virtual
+    await sendMessageWithTypingWithState(
+      from,
+      "¡Hola! 👋 Te damos la Bienvenida a *Camicam Photobooth* 🤩",
+      2000, // Retraso de 3 segundos
+      "Introduccion"
+    );
+
+  await sendWhatsAppMessage(
+    from,
+    "Este es un asistente Virtual, donde podrás cotizar los servicios que necesitas en tu evento para que luzca Extraordinario",
+    2000,
+  )
+
+  await sendInteractiveMessage(
+    from,
+    "Para una mejor experiencia, por favor interactúa con los botones que te estaré mostrarando 👇 Empezamos?",
+    [
+      {id: "comenzar", title: "✨ SI ✨"}
+    ]
+  )
+   // Actualizar el estado del contexto
+   context.estado = "Contacto Inicial";
+   return true;
+}
+
+// 1. Inicio: dar la bienvenida y mostrar opciones con imagen
+if (context.estado === "Contacto Inicial") {
+  // Mensaje inicial explicando que es un asistente virtual
+  await sendMessageWithTypingWithState(
+    from,
+    "¡Hola! 👋 Te damos la Bienvenida a *Camicam Photobooth*. \n\n📍Atendemos el Centro de Monterrey y hasta 30 km a la redonda \n\nConoce los Servicios que ofrecemos 🤩",
+    2000, // Retraso de 3 segundos
+    "Contacto Inicial"
+  );
+
+  // Enviar la imagen de servicios con un retraso
+  await delay(5000); // Retraso de 5 segundos antes de enviar la imagen
+  await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
+
+  // Enviar los botones con otro retraso
+  await delay(6000); // Retraso de 5 segundos antes de enviar los botones
+  await sendInteractiveMessage(
+    from,
+    "Para una mejor experiencia, por favor interactúa con los botones que te mostraré a continuación 😊\n\nSelecciona el tipo de evento que tienes: 👇",
+    [
+      { id: "evento_boda", title: "💍 Boda" },
+      { id: "evento_xv", title: "🎉 XV Años" },
+      { id: "evento_otro", title: "🎊 Otro" }
+    ]
+  );
+
+  // Actualizar el estado del contexto
+  context.estado = "EsperandoTipoEvento";
+  return true;
+}
+
+ // 2. Capturar el tipo de evento
+ if (context.estado === "EsperandoTipoEvento") {
   if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
     context.tipoEvento = "Boda";
-
-    // Titulo del PAQUETE WEDDING
-    context.paqueteRecomendado = {
-      paquete: "PAQUETE WEDDING"
-    };
-
-    // 1) Texto 1
-    await sendMessageWithTypingWithState(
-      from,
-      "¡Muchas felicidades por tu Boda! 👏 Será un día inolvidable. ❤️",
-      2000,
-      context.estado
-    );
-
-    // 2) Texto 2
-    await delay(2000);
-    await sendMessageWithTypingWithState(
-      from,
-      "Te presento el *Paquete Wedding* que estamos promocionando: \n\nIncluye Cabina 360, iniciales decorativas, 2 chisperos y un carrito de shots con alcohol, por *$4,450*.",
-      2000,
-      context.estado
-    );
-
-    // 3) Video
-    await delay(2000);
-    await sendWhatsAppVideo(from, "URL_DE_TU_VIDEO_DE_BODA");
-
-    // 4) Imagen
-    await delay(2000);
-    await sendImageMessage(from, "URL_DE_TU_IMAGEN_DE_BODA");
-
-    // 5) Botones "si_me_interesa_sugerido" y "armar_paquete"
-    await delay(2000);
-    await sendInteractiveMessage(
-      from,
-      "¿Te gustaría continuar con el *PAQUETE WEDDING*?\n\nO prefieres armar tu paquete?",
-      [
-        { id: "si_me_interesa", title: "PAQUETE WEDDING" },
-        { id: "armar_paquete", title: "Armar mi paquete" }
-      ]
-    );
-
-    // -> Unificación: pasamos directamente a "EsperandoConfirmacionPaquete"
-    context.estado = "EsperandoConfirmacionPaquete";
-    return true;
-  }
-
-  //CASO XV
-  else if (messageLower.includes("xv") || messageLower.includes("quince")) {
+  } else if (messageLower.includes("xv") || messageLower.includes("quince")) {
     context.tipoEvento = "XV";
+  } else {
+    context.tipoEvento = "Otro";
+  }
+  // Enviar botones para elegir entre paquete sugerido o armar paquete
+  await sendInteractiveMessage(from, `¡Qué emoción! 👏👏\n\n¡Muchas felicidades por tu celebración! ✨ \n\nAhora, ¿qué te gustaría hacer?`, [
+    { id: "paquete_sugerido", title: "Ver paquete sugerido" },
+    { id: "armar_paquete", title: "🛠️ Armar mi paquete" }
+  ]);
+  context.estado = "OpcionesSeleccionadas";
+  return true;
+}
 
-    // Texto del PAQUETE MIS XV
-    context.paqueteRecomendado = {
-      paquete: "PAQUETE MIS XV"
-    };
+// 3. Opciones: paquete sugerido o armar paquete
+if (context.estado === "OpcionesSeleccionadas") {
+  console.log("Valor recibido en OpcionesSeleccionadas:", messageLower);
 
-      // PARTE 1
-  const textoA = `
-¡Muchas felicidades! 👏
-    
-Tu fiesta de XV años será Inolvidable!! ✨
-  
-Te presento el paquete que estamos promocionando:
-  
-  *PAQUETE MIS XV*
-  
-      Incluye: 
-🔸 Cabina de fotos (3 Horas) 
-🔸 6 letras Gigantes (5 Horas)
-🔸 Niebla de piso ó 
-    Lluvia de mariposas 
-     
-      por tan sólo
-  
-     ✨ $8,900 ✨
-  
-*¡Contrata ahora y recibe de REGALO!*
-    
-🔸 2 Chisperos de luz fría
-Con un valor de $1,000
-    
-     *¡¡Además!!*
-    
-¡Solo este mes disfruta de un *30% DE DESCUENTO*!
-`;
-    
-    const textoB = `
-¡¡Y eso no es todo!! 
-    
-A los primeros 10 Quinceañeras les estaremos Regalando 
-      
-🔸 1 Scrapbook personalizado para la cabina de fotos
-      
-Con un valor de $1,300
-    
-¡Te lo llevamos Completamente Gratis!
-    
-¡Será un recuerdo muy bonito de tu evento!
-      
-Si contrataras todo por separado el precio Regular sería de $11,200
-      
-*¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
-      
-      ✨ *$6,230* ✨
-      
-SIN COSTO DE FLETE!! a una distancia de 20 km del centro de Monterrey
-      
-    En Resumen:
+  if (messageLower === "armar_paquete") {
+    // Mensaje con retraso para simular interacción humana
+    await sendMessageWithTypingWithState(
+      from,
+      "¡Genial! 😃 Vamos a armar tu paquete personalizado.\n\nPor favor, indícame los servicios que deseas incluir.\n\n✏️ Escribe separado por comas, por ejemplo: \n\ncabina de fotos, niebla de piso, scrapbook, chisperos 4, letras gigantes 4",
+      2000, // Retraso de 2 segundos
+      "OpcionesSeleccionadas"
+    );
+    context.estado = "EsperandoServicios";
+    return true;
+  } else if (messageLower === "paquete_sugerido") {
+    // Determinar el paquete sugerido según el tipo de evento
+    let paqueteSugerido;
+    if (!context.tipoEvento) {
+      await sendMessageWithTypingWithState(
+        from,
+        "😕 No se ha seleccionado un tipo de evento. Por favor, elige un tipo de evento válido.",
+        2000,
+        "OpcionesSeleccionadas"
+      );
+      return true;
+    }
 
-🔸 *Cabina de fotos* (3 Horas)
-🔸 *6 letras Gigantes* (5 Horas)
-🔸 *Niebla de piso* ó 
-    *Lluvia de mariposas* 
-🔸 *2 Chisperos de luz fría*
-🔸 *1 Scrapbook*
-🔸 *Descuento de $2,670*
-🔸 *Flete Incluido*
-      
-*¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
-      
-      ✨ *$6,230* ✨
-      
-¡¡Aprovecha esta oportunidad!!
-      
-Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
-      
-`;
+    if (context.tipoEvento === "Boda") {
+      paqueteSugerido = "🎉 *Paquete Wedding*: Incluye Cabina 360, iniciales decorativas, 2 chisperos y un carrito de shots con alcohol, todo por *$4,450*.";
+    } else if (context.tipoEvento === "XV") {
+      paqueteSugerido = "🎂 *Paquete Mis XV*: Incluye 6 letras gigantes, Cabina de fotos, Lluvia de mariposas y 2 chisperos, todo por *$5,600*.";
+    } else {
+      paqueteSugerido = "🎈 *Paquete Party*: Incluye Cabina de fotos, 4 letras gigantes y un carrito de shots con alcohol, todo por *$4,450*.";
+    }
 
-    // 1) Texto 1
-    await sendImageMessage(from, "URL_DE_IMAGEN_XV");
+    // Enviar mensaje con el paquete sugerido
+    await sendMessageWithTypingWithState(
+      from,
+      `¡Perfecto! 🎊 Has seleccionado el paquete sugerido para *${context.tipoEvento}*: ${paqueteSugerido}`,
+      2000, // Retraso de 2 segundos
+      "OpcionesSeleccionadas"
+    );
 
-    await delay(2000);
-    await sendMessageWithTypingWithState(from, textoA, 2000, context.estado);
+    // Solicitar la fecha del evento
+    await solicitarFecha(from, context);
+    return true;
+  } else {
+    // Mensaje de error si no se selecciona una opción válida
+    await sendMessageWithTypingWithState(
+      from,
+      "😕 No entendí tu respuesta. Por favor, selecciona una opción válida utilizando los botones:",
+      2000, // Retraso de 2 segundos
+      "OpcionesSeleccionadas"
+    );
 
-    // 2) Texto 2
-    await delay(2000);
-    await sendMessageWithTypingWithState(from, textoB, 2000, context.estado);
-
-    // 3) Video
-    await delay(2000);
-    await sendWhatsAppVideo(from, "URL_DE_TU_VIDEO_XV");
-
-    // 4) Imagen
-    await delay(2000);
-    await sendImageMessage(from, "URL_DE_IMAGEN_XV");
-
-    // 5) Botones
-    await delay(2000);
+    // Reenviar los botones para que el usuario seleccione nuevamente
     await sendInteractiveMessage(
       from,
-      "¿Te gustaría continuar con el *PAQUETE MIS XV*?\n\nO prefieres armar tu Paquete Personalizado?",
+      "Elige una opción para continuar:",
       [
-        { id: "si_me_interesa", title: "PAQUETE MIS XV" },
-        { id: "armar_paquete", title: "Armar mi paquete" }
+        { id: "armar_paquete", title: "✨ Armar mi paquete" },
+        { id: "paquete_sugerido", title: "📦 Ver paquete sugerido" }
       ]
     );
 
-    // -> Directamente a "EsperandoConfirmacionPaquete"
-    context.estado = "EsperandoConfirmacionPaquete";
     return true;
   }
-
-  // CASO OTRO
-  else {
-    // Obtener la recomendación basada en el tipo de evento escrito por el usuario
-    const recomendacion = getOtherEventPackageRecommendation(messageLower);
-
-    // Guardar en el contexto el paquete recomendado para posteriores referencias
-    context.paqueteRecomendado = recomendacion;
-
-    // Enviar primero la imagen si existe
-if (recomendacion.media?.images?.length > 0) {
-  for (const imageUrl of recomendacion.media.images) {
-    await sendImageMessage(from, imageUrl);
-    await delay(2500); // Pequeño delay entre imágenes
-  }
 }
 
-// Luego enviar el video si existe
-if (recomendacion.media?.videos?.length > 0) {
-  for (const videoUrl of recomendacion.media.videos) {
-    await sendWhatsAppVideo(from, videoUrl);
-    await delay(2500); // Pequeño delay entre videos
-  }
-}
-
-    // Enviar la recomendación de forma personalizada
-    const mensajeRecomendacion = `🎉 *${recomendacion.paquete}*\n${recomendacion.descripcion}`;
-    await sendMessageWithTypingWithState(from, mensajeRecomendacion, 3000, context.estado);
-
-    // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
-    await sendInteractiveMessage(from, `Te gustaría continuar con el ${recomendacion.paquete}?\n\nO prefieres Armar tu Paquete?`, 
-      [
-      { id: "si_me_interesa", title: recomendacion.paquete },
-      { id: "armar_paquete", title: "Armar mi paquete" }
-    ]);
-   
-    // Actualizar el estado para manejar la respuesta en el siguiente flujo
-    context.estado = "EsperandoConfirmacionPaquete";
-  } 
-} 
- 
-/***************************************************
- FUNCION para contar solo letras (ignorando números y caracteres especiales)
- ****************************************************/
+/**
+ * Función para contar solo letras (ignorando números y caracteres especiales)
+ */
 function contarLetras(texto) {
   return texto.replace(/[^a-zA-Z]/g, "").length;
 }
 
-/***************************************************
-FUNCION para identificar el subtipo de evento 
-y devolver una recomendación de paquete.
- ****************************************************/
-function getOtherEventPackageRecommendation(userMessage) {
-  const mensaje = userMessage.toLowerCase();
+/**
+ * Función unificada para recalcular y enviar la cotización
+ * @param {string} from - Destinatario del mensaje
+ * @param {object} context - Contexto de la conversación (incluye serviciosSeleccionados, estado, etc.)
+ * @param {string} [mensajePreliminar] - Mensaje personalizado (opcional)
+ */
 
-  // Detectar cumpleaños: se pueden buscar números o palabras como "cumpleaños"
-   if (/cumpleaños|numero|numeros|#|número|números|birthday|\b\d+\b/.test(mensaje)) {
-    return {
-      paquete: "PAQUETE NÚMEROS",
-      descripcion: "Nuestros números son ideales para cumpleaños. Miden 1.20 mts de alto, están pintados de blanco y los focos son de luz led con 83 secuencias de distintos colores, también se pueden programar en una sola secuencia. El 'Paquete Números' incluye 2 números gigantes por un precio de $600, más flete dependiendo de la ubicación de tu evento.",
-      media: {
-        images: ["http://cami-cam.com/wp-content/uploads/2025/03/Letras-Gigantes.jpeg"],
-        videos: ["http://cami-cam.com/wp-content/uploads/2025/02/LETRAS-GIGANTES-ILUMINADAS.mp4"]
-      }
-    };
-  }
-  // Detectar revelación de género
- else if (/revelación de género|revelacion|baby|oh baby|girl|boy/.test(mensaje)) {
-  return {
-    paquete: "PAQUETE REVELACION",
-    descripcion: "Ideal para eventos de revelación de género, con letras decorativas y opciones que resaltan 'BABY', 'OH BABY' o 'GIRL BOY'.",
-    media: {
-      images: ["http://cami-cam.com/wp-content/uploads/2025/03/Letras-Gigantes.jpeg"],
-      videos: ["http://cami-cam.com/wp-content/uploads/2025/02/LETRAS-GIGANTES-ILUMINADAS.mp4"]
-    }
-  };
-}
-// Detectar propuesta
-else if (/propuesta|casate|casar|cásate conmigo|pedir matrimonio|marry me/.test(mensaje)) {
-  return {
-    paquete: "PAQUETE MARRY ME",
-    descripcion: "Perfecto para una propuesta inolvidable, con letras románticas y personalizadas que dicen 'MARRY ME'.",
-    media: {
-      images: ["http://cami-cam.com/wp-content/uploads/2025/03/Letras-Gigantes.jpeg"],
-      videos: ["http://cami-cam.com/wp-content/uploads/2025/02/LETRAS-GIGANTES-ILUMINADAS.mp4"]
-    }
-  };
-}
-// Detectar graduación
-else if (/graduación|grad|class|gen\b/.test(mensaje)) {
-  return {
-    paquete: "PAQUETE GRADUACION",
-    descripcion: "Ofrece letras gigantes modernas ideales para graduaciones, por ejemplo, 'CLASS 2025', 'GRAD 25' o 'GEN 2022'.",
-    media: {
-      images: ["http://cami-cam.com/wp-content/uploads/2025/03/Letras-Gigantes.jpeg"],
-      videos: ["http://cami-cam.com/wp-content/uploads/2025/02/LETRAS-GIGANTES-ILUMINADAS.mp4"]
-    }
-  };
-}
 
-// Si no se detecta un subtipo específico
-return {
-  paquete: "OTRO PAQUETE",
-  descripcion: "Tenemos varias opciones personalizadas. ¿Podrías contarnos un poco más sobre tu evento para ofrecerte la mejor recomendación?",
-  media: {
-    images: ["http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg"],
-    videos: []
-  }
-};
-}
-
-/***************************************************
- FUNCION que maneja la logica de las sugerencias
- ****************************************************/
+/**
+ * Función que revisa el contexto actual y devuelve sugerencias de upsell
+ * basadas en los servicios seleccionados.
+ *
+ * Se aplican dos reglas:
+ * 1. Si se seleccionó "cabina de fotos" pero no "scrapbook", se sugiere agregar Scrapbook y se activa un flag para mostrar su video.
+ * 2. Si ya se agregó *Scrapbook* (o no se cumple la regla 1) y se tienen exactamente 2 servicios, se sugiere agregar un tercer servicio
+ *    (recordando que 3 servicios otorgan 30% de descuento y 4, hasta 40%).
+ *
+ * Se utiliza la bandera (context.upsellSuggested) para evitar repetir la sugerencia, pero se reinicia si las condiciones cambian.
+ */
 function checkUpsellSuggestions(context) {
   let suggestions = [];
   const servicios = context.serviciosSeleccionados.toLowerCase();
@@ -1016,220 +1015,38 @@ function checkUpsellSuggestions(context) {
 
   // Regla 1: Si se seleccionó "cabina de fotos" pero no "scrapbook"
   if (servicios.includes("cabina de fotos") && !servicios.includes("scrapbook")) {
-    suggestions.push("👉 Sugerencia: Al agregar *Scrapbook*, tu evento se verá aún más espectacular\n¡Además, podrías aprovechar un mayor descuento!🤩\n\nEscribe *Agregar Scrapbook* si lo deseas");
+    suggestions.push("👉 ¿Sabías que al agregar *Scrapbook* tu evento se verá aún más espectacular? ¡Además, podrías aprovechar un mayor descuento!");
     // Activar flag para enviar el video del scrapbook
     context.suggestScrapbookVideo = true;
     context.upsellSuggested = true;
   }
   // Regla 2: Si ya se agregó Scrapbook (o no aplica la Regla 1) y se tienen exactamente 2 servicios
   else if (serviceCount === 2) {
-    suggestions.push("¡Sugerencia! Si agregas un tercer servicio, obtendrás un 30% de descuento, y con 4 servicios, ¡hasta un 40%!");
+    suggestions.push("¡Buen inicio! Si agregas un tercer servicio, obtendrás un 30% de descuento, y con 4 servicios, ¡hasta un 40%!");
     context.upsellSuggested = true;
   }
 
   return suggestions;
 }
 
+/**
+ * Función actualizada para recalcular y enviar la cotización,
+ * integrando las sugerencias de upsell y mostrando el video del scrapbook si aplica.
+ */
+async function actualizarCotizacion(from, context, mensajePreliminar = null) {
+  const cotizacion = calculateQuotation(context.serviciosSeleccionados);
+  const cabecera = mensajePreliminar ? mensajePreliminar : "💰 *Tu cotización:*";
+  const mensajeDetalles = `${cabecera}\n\n` + cotizacion.details.join("\n");
 
-/**************************************
- FUNCION para CALCULAR la cotizacion
- **************************************/
-function calculateQuotation(servicesText) {
-  // Diccionario de precios
-  const prices = {
-    "cabina de fotos": 3500,
-    "cabina 360": 3500,
-    "lluvia de mariposas": 2500,
-    "carrito de shots con alcohol": 2800,
-    "carrito de shots sin alcohol": 2200,
-    "niebla de piso": 3000,
-    "lluvia matálica": 2000,
-    "scrapbook": 1300,
-    "audio guest book": 2000,
-    "letras gigantes": 400 // precio por letra
-  };
+  await sendMessageWithTypingWithState(from, mensajeDetalles, 2000, context.estado);
+  await delay(2000);
 
-  // Precios para chisperos según cantidad
-  const chisperosPrices = {
-    2: 1000,
-    4: 1500,
-    6: 2000,
-    8: 2500,
-    10: 3000
-  };
+  const mensajeResumen = `Subtotal: $${cotizacion.subtotal.toLocaleString()}\nDescuento (${cotizacion.discountPercent}%): -$${cotizacion.discountAmount.toLocaleString()}\n\n*TOTAL A PAGAR: $${cotizacion.total.toLocaleString()}*`;
+  await sendMessageWithTypingWithState(from, mensajeResumen, 2000, context.estado);
 
-  // Separar servicios (se asume que están separados por comas)
-  const servicesArr = servicesText.split(',').map(s => s.trim().toLowerCase()).filter(s => s.length > 0);
-
-  let subtotal = 0;
-  let serviceCount = 0; // para aplicar descuentos
-  let details = [];
-  let servicesRecognized = [];
-  let letrasCount = 0;
-
-  for (const service of servicesArr) {
-    // Caso de chisperos (o chispero)
-    if (/chispero[s]?\b/i.test(service)) {
-      const match = service.match(/chispero[s]?\s*(\d+)/i);
-      if (match && match[1]) {
-        // Si hay cantidad, procesar normalmente
-        const qty = parseInt(match[1]);
-        if (chisperosPrices[qty]) {
-          subtotal += chisperosPrices[qty];
-          serviceCount++;
-          details.push(`🔸 *${qty} Chisperos*: $${chisperosPrices[qty].toLocaleString()}`);
-          servicesRecognized.push("chisperos");
-        } else {
-          details.push(`🔸 Chisperos: cantidad inválida (${service})`);
-        }
-      } else {
-        // Si no hay cantidad, retornar un objeto indicando que falta la cantidad
-        return {
-          error: true,
-          needsInput: 'chisperos',
-          details: ["🔸 *Chisperos*: Por favor, indícanos cuántos chisperos necesitas."],
-          subtotal: 0,
-          discountPercent: 0,
-          discountAmount: 0,
-          total: 0,
-          servicesRecognized: []
-        };
-      }
-    }
-
-    // Caso de letras o letras gigantes
-    else if (/letras(?:\s*gigantes)?\b/.test(service)) {
-      const match = service.match(/letras(?:\s*gigantes)?\s*(\d+)/);
-      if (match && match[1]) {
-        const qty = parseInt(match[1]);
-        const precioLetras = qty * prices["letras gigantes"];
-        subtotal += precioLetras;
-        serviceCount++;
-        details.push(`🔸 *${qty} Letras Gigantes* (5 Horas): $${precioLetras.toLocaleString()}`);
-        servicesRecognized.push("letras gigantes");
-        letrasCount = qty;
-      } else {
-        // En este punto, gracias a la actualización, no debería ocurrir
-        details.push(`🔸 *Letras*: cantidad no especificada`);
-      }
-    }
-
-     
-     // Caso de lluvia metálica (o lluvia metalica)
-    else if (/lluvia m(?:e|é)t(?:a|á)lica\b/i.test(service)) {
-        subtotal += prices["lluvia matálica"];
-        serviceCount++;
-        details.push(`🔸 *Lluvia Metálica*: $${prices["lluvia matálica"].toLocaleString()}`);
-        servicesRecognized.push("lluvia metálica");
-    }
-
-    // Otros servicios definidos
-    else {
-      let baseService;
-      let qty = 1;
-      // Primero comprobamos si el servicio completo coincide con alguna clave de precios
-      if (prices.hasOwnProperty(service)) {
-        baseService = service;
-      } else {
-        // Si no, intentamos extraer el nombre y la cantidad usando regex
-        const matchService = service.match(/^(.+?)(?:\s+(\d+))?$/);
-        if (matchService) {
-          baseService = matchService[1].trim();
-          qty = matchService[2] ? parseInt(matchService[2]) : 1;
-        }
-      }
-
-      if (prices[baseService] !== undefined) {
-        const precioTotal = prices[baseService] * qty;
-        subtotal += precioTotal;
-        serviceCount++;
-
-        // Formatear el nombre del servicio
-        let serviceNameFormatted = baseService.charAt(0).toUpperCase() + baseService.slice(1);
-
-        // Agregar "(3 horas)" para cabina de fotos y cabina 360
-        if (baseService.toLowerCase() === "cabina de fotos" || baseService.toLowerCase() === "cabina 360") {
-          serviceNameFormatted += " (3 horas)";
-        }
-
-        // Construir el detalle del servicio
-        let serviceDetail = "";
-        if (qty === 1) {
-          serviceDetail = `🔸 *${serviceNameFormatted}:* $${precioTotal.toLocaleString()}`;
-        } else {
-          serviceDetail = `🔸 *${serviceNameFormatted} ${qty}:* $${precioTotal.toLocaleString()}`;
-        }
-
-        details.push(serviceDetail);
-        servicesRecognized.push(baseService);
-      } else {
-        console.warn(`Servicio no reconocido: ${service}`);
-        details.push(`🔸 ${service}: servicio no reconocido`);
-      }
-    }
-  }
-
-  // Aplicar descuento según cantidad de servicios reconocidos
-  let discountPercent = 0;
-  if (serviceCount === 1) {
-    // Caso único: si es chisperos y la cantidad es exactamente 2, sin descuento.
-    if (/chispero[s]?\s*2\b/i.test(servicesArr[0])) {
-      discountPercent = 0;
-    }
-    // Si es letras (o letras gigantes) y se especifica la cantidad
-    else if (/letras(?:\s*gigantes)?\s*(\d+)/i.test(servicesArr[0])) {
-      const match = servicesArr[0].match(/letras(?:\s*gigantes)?\s*(\d+)/i);
-      const qty = parseInt(match[1]);
-      // Si la cantidad es 1, sin descuento; si es mayor (2 o más), se aplica 10%
-      discountPercent = (qty === 1) ? 0 : 10;
-    }
-    // Para cualquier otro servicio único, aplicar 10%
-    else {
-      discountPercent = 10;
-    }
-  } else if (serviceCount === 2) {
-    discountPercent = 25;
-  } else if (serviceCount === 3) {
-    discountPercent = 30;
-  } else if (serviceCount >= 4) {
-    discountPercent = 40;
-  }
-
-  const discountAmount = subtotal * (discountPercent / 100);
-  const total = subtotal - discountAmount;
-
-  return {
-    error: false,
-    subtotal,
-    discountPercent,
-    discountAmount,
-    total,
-    details,
-    servicesRecognized
-  };
-}
-
-/**************************************
- FUNCION para ACTUALIZAR la cotizacion
- **************************************/
- async function actualizarCotizacion(from, context, mensajePreliminar = null) {
-   // 1) Calcular la cotización
-   const cotizacion = calculateQuotation(context.serviciosSeleccionados);
-
-   // 2) Mensajes de cabecera (si lo deseas)
-   const cabecera = mensajePreliminar ? mensajePreliminar : "*PAQUETE PERSONALIZADO*";
-   // Este mensaje se puede enviar antes o después. 
-   // Si quieres enviarlo luego de las imágenes, puedes omitirlo aquí.
-  
-   // 3) Preparar texto de detalles y texto de resumen
-   const mensajeDetalles = `${cabecera}\n\n` + cotizacion.details.join("\n");
-   const mensajeResumen = `Subtotal: $${cotizacion.subtotal.toLocaleString()}\nDescuento (${cotizacion.discountPercent}%): -$${cotizacion.discountAmount.toLocaleString()}\n\n*TOTAL A PAGAR: $${cotizacion.total.toLocaleString()}*`;
-
-   // 4) Enviar primero las imágenes y videos (en base a los servicios reconocidos) 
-   //    antes de mostrar la descripción textual de la cotización.
-   if (cotizacion.servicesRecognized && cotizacion.servicesRecognized.length > 0) {
+  // Envío de imágenes y videos para cada servicio, si no se han enviado antes
+  if (cotizacion.servicesRecognized && cotizacion.servicesRecognized.length > 0) {
     for (const service of cotizacion.servicesRecognized) {
-      // Verifica si ya se enviaron medios previamente
       if (mediaMapping[service] && (!context.mediosEnviados || !context.mediosEnviados.has(service))) {
         if (mediaMapping[service].images && mediaMapping[service].images.length > 0) {
           for (const img of mediaMapping[service].images) {
@@ -1243,248 +1060,58 @@ function calculateQuotation(servicesText) {
             await delay(1000);
           }
         }
-        // Marcar como enviado
         if (!context.mediosEnviados) context.mediosEnviados = new Set();
         context.mediosEnviados.add(service);
       }
     }
-   }
+  }
 
-   // 5) Después de mostrar los archivos, se envían los detalles de la cotización (servicios)
-   await sendMessageWithTypingWithState(from, mensajeDetalles, 2000, context.estado);
-   await delay(2000);
-
-   // 6) Y finalmente el resumen (subtotal, descuento y total)
-   await sendMessageWithTypingWithState(from, mensajeResumen, 2000, context.estado);
-
-   // 7) Checar si hay sugerencias de upsell
-   const upsellSuggestions = checkUpsellSuggestions(context);
-   if (upsellSuggestions.length > 0) {
+  // Integrar las sugerencias de upsell de manera sutil
+  const upsellSuggestions = checkUpsellSuggestions(context);
+  if (upsellSuggestions.length > 0) {
     const mensajeUpsell = upsellSuggestions.join("\n");
     await delay(2000);
     await sendMessageWithTypingWithState(from, mensajeUpsell, 2000, context.estado);
-
-    // Si había que mostrar video de scrapbook
+    // Si se activó el flag, enviar el video del scrapbook
     if (context.suggestScrapbookVideo) {
       const scrapbookMedia = mediaMapping["scrapbook"];
       if (scrapbookMedia && scrapbookMedia.videos && scrapbookMedia.videos.length > 0) {
         await delay(2000);
         await sendWhatsAppVideo(from, scrapbookMedia.videos[0]);
       }
+      // Reiniciar el flag para no volver a sugerir en el mismo flujo
       context.suggestScrapbookVideo = false;
     }
-   }
-
-    // OBTENER el nombre del paquete que guardaste en context.paqueteRecomendado
-    // Si no existe, mostramos "Paquete Sugerido"
-    //Sucede despues de seleccionar "Armar mi paquete" y presentar la cotizacion
-    const tituloPaquete = context.paqueteRecomendado?.paquete || "Paquete👏Sugerido";
-
-   await delay(3000);
-   await sendInteractiveMessage( 
-    from,
-    `Te gustaría continuar con el ${tituloPaquete}?\n\nO tu Paquete Personalizado?`,
-    [
-      { id: "si_me_interesa_sugerido", title: tituloPaquete },
-      { id: "si_me_interesa", title: "PAQ. PERSONALIZADO" },
-      { id: "modificar_cotizacion", title: "Modificar Cotización" }
-    ]
-   );
-
-   context.estado = "EsperandoDudas";
   }
 
-/*'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-🟢 FUNCION PARA MANEJAR EL FLUJO DE MENSAJES DEL USUARIO CON TONO NATURAL 🟢
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''*/
-async function handleUserMessage(from, userMessage, messageLower) {
-  if (!userContext[from]) {
-    userContext[from] = {
-      estado: "Contacto Inicial",
-      tipoEvento: null,
-      nombre: null,
-      fecha: null,
-      lugar: null,
-      serviciosSeleccionados: [],
-      total: 0,
-      mediosEnviados: new Set(), // Para evitar enviar medios repetidos
-    };
-  }
-  const context = userContext[from];
-
-  /* ============================================
-   Si el estado es "EsperandoConfirmacionPaquete", no procesar FAQs
-   ============================================ */
-  if (context.estado === "EsperandoConfirmacionPaquete") {
-    // Procesar FAQs solo si no está en el estado "EsperandoConfirmacionPaquete"
-    if (await handleFAQs(from, userMessage)) {
-      return true; // Si se manejó una FAQ, salir de la función
-    }
-  }
-
-  /* ============================================
-   Interceptamos el botón "armar_paquete"
-   ============================================ */
-  if (
-    messageLower.includes("armar_paquete") || messageLower.includes("armar mi paquete")) {
-    // Solo si el estado actual es uno de estos:
-    if ([
-      "EsperandoConfirmacionPaquete",
-      "EsperandoDudas",
-      "EsperandoTipoEvento"
-      // ...puedes agregar más si quieres
-    ].includes(context.estado)) {
-      // Lógica genérica de “Arma tu paquete”
-      await sendMessageWithTypingWithState(
-        from,
-        "¡Genial! 🤩 ¡Vamos a personalizar tu paquete!\n\n✏️ *Escribe separado por comas*.\n\nPor ejemplo:\ncabina de fotos, cabina 360, 6 letras gigantes, 4 chisperos, carrito de shots con alcohol, carrito de shots sin alcohol, lluvia de mariposas, lluvia metálica, niebla de piso, scrapbook, audio guest book",
-        2000,
-        context.estado
-      );
-      context.estado = "EsperandoServicios";
-      return true;
-    }
-  } 
-
-  /* ============================================
-   Interceptamos el botón "si_me_interesa_sugerido" y "si_me_interesa"
-   ============================================ */
-if (
-  messageLower === "si_me_interesa_sugerido" || messageLower === "si_me_interesa") {
-  // Verificamos estado
-  if (context.estado === "EsperandoConfirmacionPaquete" || context.estado === "EsperandoDudas") {
-    // Solicitamos fecha
-    context.estado = "EsperandoFecha";
-    await solicitarFecha(from, context);
-    return true; // Salimos
-  }
-}
-  
-  /* ============================================
-   Interceptamos el botón "modificar_cotizacion"
-   ============================================ */
-  if (messageLower === "modificar_cotizacion") {
-    // Cambiamos el estado al que maneja "Agregar" y "Quitar"
-    context.estado = "EsperandoDudas";
-
-    // Enviamos las instrucciones
-    await sendWhatsAppMessage(
-      from,
-      "😊 Para modificar tu cotización\nEscribe:\n\n'*Agregar* y el nombre del servicio' ó\n\n'*Quitar* y el nombre del servicio'"
-    );
-
-    return true; // Evitamos procesar otros estados, ya que se manejó aquí
-  }
-
-
-/*''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-🟢 1. INICIO: DAR LA BIENVENIDA, MOSTRAR UNA IMAGEN Y LAS OPCIONES 🟢
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''*/
-if (context.estado === "Contacto Inicial") {
-  // Mensaje inicial explicando que es un asistente virtual
+  await delay(2000);
   await sendMessageWithTypingWithState(
     from,
-    "¡Hola! 👋\n\nBienvenid@ a *Camicam Photobooth*.",
-    2000, // Retraso de 2 segundos
-    "Contacto Inicial"
+    "Para modificar tu cotización, escribe: \n\n'*Agregar* y el nombre del servicio que quieras agregar' ó\n\n'*Quitar* y el nombre del servicio que quieras quitar' 😊",
+    2000,
+    context.estado
   );
-
-  await sendMessageWithTypingWithState(
-    from,
-    "Te presento los Servicios que ofrecemos 🤩",
-    2500, // Retraso de 2 segundos
-    "Contacto Inicial"
-  );  
-
-  // Enviar la imagen de servicios con un retraso
-  await delay(3000); // Retraso de 3 segundos antes de enviar la imagen
-  await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
-
-  // Enviar los botones con otro retraso
-  await delay(6000); // Retraso de 5 segundos antes de enviar los botones
+  // Enviar mensaje con botón "CONTINUAR"
   await sendInteractiveMessage(
     from,
-    "Revisa el paquete que estamos promocionando👌\n\nO Arma tu Paquete a tu gusto.\n\nPara continuar selecciona el evento que tienes 👇",
+    "O toca el botón para continuar:",
     [
-      { id: "evento_boda", title: "💍 Boda" },
-      { id: "evento_xv", title: "🎉 XV Años" }
+      { id: "continuar", title: "CONTINUAR" }
     ]
   );
-
-  // Mensaje adicional para eventos no listados
-  await delay(1500); // Retraso de 1.5 segundos antes de enviar el mensaje
-  await sendMessageWithTypingWithState(
-    from,
-    "O dime qué tipo de evento estás organizando? 🥳 ",
-    2000,
-    "Contacto Inicial"
-  );
-
-  // Actualizar el estado del contexto
-  context.estado = "EsperandoTipoEvento";
-  return true;
+  context.estado = "EsperandoDudas";
 }
 
-/*''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-🟢 2. CAPTURAMOS EK TIPO DE EVENTO 🟢
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''*/
- if (context.estado === "EsperandoTipoEvento" || context.estado === "EsperandoSubtipoOtroEvento") {
-  // Se invoca la función que procesa la elección del cliente
-  const messageLower = userMessage.toLowerCase();
-  await handleTipoEvento(from, messageLower, context);
-  return true;
-}   
 
-/*''''''''''''''''''''''''''''''''''''''''''''
-🟢 3. ESPRAMOS LA CONFIRMACION DEL PAQUETE 🟢
-''''''''''''''''''''''''''''''''''''''''''''*/
-   if (context.estado === "EsperandoConfirmacionPaquete") {
-    const msg = userMessage.toLowerCase();
-  
-    // a) si al usuario le interesa cualquier paquete
-    if (msg === "si_me_interesa_sugerido" || "si_me_interesa") {
-      context.estado = "EsperandoFecha";
-      await solicitarFecha(from, context);
-      return true;
-    }
-      
-   
-    // d) cualquier otra respuesta
-    else {
-      await sendMessageWithTypingWithState(
-        from,
-        "No entendí tu respuesta. Por favor, selecciona una opción válida.",
-        2000,
-        context.estado
-      );
-      await sendInteractiveMessage(
-        from,
-        "Elige una opción:",
-        [
-          { id: "si_me_interesa", title: "Sí, me interesa" },
-          { id: "armar_paquete",  title: "Armar mi paquete" }
-        ]
-      );
-      return true;
-    }
-  }
-
-/*''''''''''''''''''''''''''''''''
-🟢 4. ESPERAMOS LOS SERVICIOS 🟢
-''''''''''''''''''''''''''''''''*/
+/* ============================================
+   Estado: EsperandoServicios
+   ============================================ */
    if (context.estado === "EsperandoServicios") {
     // Si el usuario indica agregar o quitar en su mensaje inicial:
     if (messageLower.includes("agregar")) {
       const serviciosAAgregar = userMessage.replace(/agregar/i, "").trim();
-      
-      // 🟢 TRANSFORMACIÓN: "6 letras" => "letras gigantes 6", "4 chisperos" => "chisperos 4"
-      serviciosAAgregar = serviciosAAgregar
-        .replace(/\b(\d+)\s+letras(?:\s*gigantes)?\b/gi, 'letras gigantes $1')
-        .replace(/\b(\d+)\s+chisperos?\b/gi, 'chisperos $1');
-
       context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + serviciosAAgregar;
       await sendWhatsAppMessage(from, `✅ Se ha agregado: ${serviciosAAgregar}`);
-
     } else if (messageLower.includes("quitar")) {
       const serviciosAQuitar = userMessage.replace(/quitar/i, "").trim();
       context.serviciosSeleccionados = context.serviciosSeleccionados
@@ -1496,19 +1123,7 @@ if (context.estado === "Contacto Inicial") {
     } else {
       // Se toma el mensaje completo como lista de servicios
       context.serviciosSeleccionados = userMessage;
-    } 
-    
-    /*else {
-      // Si el usuario pone directamente la lista sin "agregar"
-      // => También se hace la TRANSFORMACIÓN antes de asignar.
-      let listaServicios = userMessage;
-      
-      listaServicios = listaServicios
-        .replace(/\b(\d+)\s+letras(?:\s*gigantes)?\b/gi, 'letras gigantes $1')
-        .replace(/\b(\d+)\s+chisperos?\b/gi, 'chisperos $1');
-      
-      context.serviciosSeleccionados = listaServicios;
-    }*/
+    }
   
     // Inicializamos flags para servicios sin cantidad
     context.faltanLetras = false;
@@ -1555,10 +1170,15 @@ if (context.estado === "Contacto Inicial") {
         return true;
     }
 
+
+    
+
+   
+  
     // Priorizar preguntar primero por las letras si faltan
     if (context.faltanLetras) {
       context.estado = "EsperandoCantidadLetras";
-      await sendWhatsAppMessage(from, "¿Cuántas letrassss necesitas? 🔠");
+      await sendWhatsAppMessage(from, "¿Cuántas letras necesitas? 🔠");
       return true;
     }
   
@@ -1581,117 +1201,9 @@ if (context.estado === "Contacto Inicial") {
     return true;
   }
 
-
-
-
-
-
-
-
-
-
-   /* if (context.estado === "EsperandoServicios") {
-      // Función de normalización mejorada
-      const normalizarServicios = (input) => {
-          return input
-              // Letras (todas las variantes a "letras gigantes X")
-              .replace(/(\d+)\s+letras(?:\s*gigantes)?/gi, 'letras gigantes $1')
-              .replace(/letras(?:\s*gigantes)?\s+(\d+)/gi, 'letras gigantes $1')
-              .replace(/\bletras\b/gi, 'letras gigantes 1') // Default 1 si no especifica
-              // Chisperos (mantiene tu lógica existente)
-              .replace(/(\d+)\s+chisperos?/gi, 'chisperos $1')
-              .replace(/chisperos?\s+(\d+)/gi, 'chisperos $1');
-      };
-  
-      // Procesamiento inicial del mensaje
-      if (messageLower.includes("agregar")) {
-          let serviciosAAgregar = normalizarServicios(userMessage.replace(/agregar/i, "").trim());
-          context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + serviciosAAgregar;
-          await sendWhatsAppMessage(from, `✅ Se ha agregado: ${serviciosAAgregar}`);
-      } else if (messageLower.includes("quitar")) {
-          let serviciosAQuitar = normalizarServicios(userMessage.replace(/quitar/i, "").trim());
-          context.serviciosSeleccionados = context.serviciosSeleccionados
-              .split(",")
-              .map(s => s.trim())
-              .filter(s => !s.toLowerCase().includes(serviciosAQuitar.toLowerCase()))
-              .join(", ");
-          await sendWhatsAppMessage(from, `✅ Se ha quitado: ${serviciosAQuitar}`);
-      } else {
-          context.serviciosSeleccionados = normalizarServicios(userMessage);
-      }
-  
-      // Detección mejorada de campos incompletos
-      context.faltanLetras = /letras(?:\s*gigantes)?(?!\s*\d+)/i.test(context.serviciosSeleccionados);
-      context.faltanChisperos = /chisperos(?!\s*\d+)/i.test(context.serviciosSeleccionados);
-      context.faltaVarianteCarritoShots = /carrito de shots(?!\s+(con|sin)\s*alcohol)/i.test(context.serviciosSeleccionados);
-      context.faltaTipoCabina = /cabina(?!\s*(de fotos|360))/i.test(context.serviciosSeleccionados);
-  
-      // Manejo de servicios incompletos (orden de prioridad)
-      if (context.faltaTipoCabina) {
-          context.serviciosSeleccionados = context.serviciosSeleccionados
-              .split(",")
-              .map(s => s.trim())
-              .filter(s => !/^cabina$/i.test(s))
-              .join(", ");
-          context.estado = "EsperandoTipoCabina";
-          await sendWhatsAppMessage(from, "¿Deseas agregar Cabina de fotos o Cabina 360?");
-          return true;
-      }
-      
-      if (context.faltanLetras) {
-          context.estado = "EsperandoCantidadLetras";
-          await sendWhatsAppMessage(from, "¿Cuántas letras necesitas? 🔠");
-          return true;
-      }
-  
-      if (context.faltanChisperos) {
-          context.estado = "EsperandoCantidadChisperos";
-          await sendWhatsAppMessage(from, "¿Cuántos chisperos ocupas? 🔥 Opciones: 2, 4, 6, 8, 10, etc");
-          return true;
-      }
-  
-      if (context.faltaVarianteCarritoShots) {
-          context.serviciosSeleccionados = context.serviciosSeleccionados
-              .split(",")
-              .map(s => s.trim())
-              .filter(s => !/^carrito de shots$/i.test(s))
-              .join(", ");
-          context.estado = "EsperandoTipoCarritoShots";
-          await sendWhatsAppMessage(from, "¿El carrito de shots lo deseas CON alcohol o SIN alcohol? 🍹");
-          return true;
-      }
-  
-      // Si todo está completo
-      await actualizarCotizacion(from, context);
-      return true;
-  }*/
-
-/*''''''''''''''''''''''''''''''''''''''
-🟢 4.1 ESPRAMOS CANTIDAD DE CHISPEROS 🟢
-''''''''''''''''''''''''''''''''''''''*/
-if (context.estado === "EsperandoCantidadChisperos") {
-  const cantidad = parseInt(userMessage);
-  if (isNaN(cantidad) || cantidad <= 0) {
-    await sendWhatsAppMessage(from, "Por favor, ingresa un número válido para la cantidad de chisperos.");
-    return true;
-  }
- 
-  // Regex para capturar "chisperos" con o sin número
-  const regex = /chisperos(\s*\d+)?/i;
-  if (regex.test(context.serviciosSeleccionados)) {
-    context.serviciosSeleccionados = context.serviciosSeleccionados.replace(regex, `chisperos ${cantidad}`);
-  } else {
-    context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `chisperos ${cantidad}`;
-  }
-  await sendWhatsAppMessage(from, `✅ Se han agregado ${cantidad} chisperos.`);
-  // Actualizar la cotización final
-  await actualizarCotizacion(from, context);
-  return true;
-}
-
-/*'''''''''''''''''''''''''''''''''''
-🟢 4.2 ESPRAMOS CANTIDAD DE LETRAS 🟢
-'''''''''''''''''''''''''''''''''''*/
+/* ============================================
+   Estado: EsperandoCantidadLetras
+   ============================================ */
 if (context.estado === "EsperandoCantidadLetras") {
   const cantidad = parseInt(userMessage);
   if (isNaN(cantidad) || cantidad <= 0) {
@@ -1716,25 +1228,40 @@ if (context.estado === "EsperandoCantidadLetras") {
   }
   
   // Si no faltan chisperos, actualizar la cotización
-  await actualizarCotizacion(from, context);
+  await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
   return true;
 }
 
-/*''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-🟢 4.2.1 TRANSORMA A NUMERO DE LETRAS EN CASO DE ("Ocupo el nombre de...") 🟢
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''*/
-// Cuando el usuario escribe "Ocupo el nombre de [nombre]"
-if (context.estado === "EsperandoDudas" && messageLower.includes("ocupo el nombre de")) {
-  context.nombreCliente = userMessage.replace(/ocupo el nombre de/i, "").trim();
-  const cantidadLetras = contarLetras(context.nombreCliente);
-  context.estado = "ConfirmandoLetras";
-  await sendWhatsAppMessage(from, `De acuerdo, entiendo que ocupas ${cantidadLetras} letras gigantes. ¿Es correcto?`);
-  return true;
-}
 
-/*''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-🟢 4.2.2 EL CLIENTE CONFIRMA EL NUMERO LETRAS EN CASO DE ("Ocupo el nombre de...") 🟢
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''*/
+/* ============================================
+   Estado: EsperandoCantidadChisperos
+   ============================================ */
+     if (context.estado === "EsperandoCantidadChisperos") {
+    const cantidad = parseInt(userMessage);
+    if (isNaN(cantidad) || cantidad <= 0) {
+      await sendWhatsAppMessage(from, "Por favor, ingresa un número válido para la cantidad de chisperos.");
+      return true;
+    }
+   
+    // Regex para capturar "chisperos" con o sin número
+    const regex = /chisperos(\s*\d+)?/i;
+    if (regex.test(context.serviciosSeleccionados)) {
+      context.serviciosSeleccionados = context.serviciosSeleccionados.replace(regex, `chisperos ${cantidad}`);
+    } else {
+      context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `chisperos ${cantidad}`;
+    }
+    await sendWhatsAppMessage(from, `✅ Se han agregado ${cantidad} chisperos.`);
+    // Actualizar la cotización final
+    await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
+    return true;
+  }
+  
+
+
+
+/* ============================================
+   Estado: ConfirmandoLetras (caso "Ocupo el nombre de ...")
+   ============================================ */
 if (context.estado === "ConfirmandoLetras") {
   if (messageLower.includes("sí") || messageLower.includes("si")) {
     const cantidadLetras = contarLetras(context.nombreCliente);
@@ -1745,7 +1272,7 @@ if (context.estado === "ConfirmandoLetras") {
       context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `letras gigantes ${cantidadLetras}`;
     }
     await sendWhatsAppMessage(from, `✅ Se han agregado ${cantidadLetras} letras gigantes basadas en el nombre '${context.nombreCliente}'.`);
-    await actualizarCotizacion(from, context);
+    await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
   } else {
     // Si la respuesta es negativa, se solicita la cantidad manualmente
     context.estado = "EsperandoCantidadLetras";
@@ -1754,10 +1281,23 @@ if (context.estado === "ConfirmandoLetras") {
   return true;
 }
 
+/* ============================================
+   Estado: Manejo de "Ocupo el nombre de ..."
+   ============================================ */
+// Cuando el usuario escribe "Ocupo el nombre de [nombre]"
+if (context.estado === "EsperandoDudas" && messageLower.includes("ocupo el nombre de")) {
+  context.nombreCliente = userMessage.replace(/ocupo el nombre de/i, "").trim();
+  const cantidadLetras = contarLetras(context.nombreCliente);
+  context.estado = "ConfirmandoLetras";
+  await sendWhatsAppMessage(from, `De acuerdo, entiendo que ocupas ${cantidadLetras} letras gigantes. ¿Es correcto?`);
+  return true;
+}
 
-/*'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-🟢 4.3 ESPERAMOS VARIANTE CARRITO DE SHOTS CON O SIN ALCOHOL 🟢
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''*/
+
+
+/* ============================================
+   Estado: EsperandoTipoCarritoShots
+   ============================================ */
 if (context.estado === "EsperandoTipoCarritoShots") {
   const respuesta = userMessage.toLowerCase();
   let varianteSeleccionada = "";
@@ -1810,17 +1350,16 @@ if (context.estado === "EsperandoTipoCarritoShots") {
     }
 
     // Si no faltan letras ni chisperos, mostrar la cotización
-    await actualizarCotizacion(from, context);
+    await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
     context.estado = "EsperandoDudas";
     return true;
   }
 }
 
 
-
-/*''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-🟢 4.3.1 CONFIRMAMOS VARIANTE DEL CARRITO DE SHOTS CON O SIN ALCOHOL 🟢
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''*/
+/* ============================================
+   Estado: ConfirmarAgregarCarritoShotsCambio
+   ============================================ */
 if (context.estado === "ConfirmarAgregarCarritoShotsCambio") {
   const respuesta = userMessage.toLowerCase();
   if (respuesta.includes("si")) {
@@ -1829,7 +1368,7 @@ if (context.estado === "ConfirmarAgregarCarritoShotsCambio") {
     if (!context.serviciosSeleccionados.toLowerCase().includes(variante)) {
       context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + variante;
       await sendWhatsAppMessage(from, `✅ Se ha agregado ${variante}.`);
-      await actualizarCotizacion(from, context, "¡Paquete Personalizado actualizado!");
+      await actualizarCotizacion(from, context, "¡Cotización actualizada!");
     }
     context.estado = "EsperandoDudas";
     return true;
@@ -1842,33 +1381,24 @@ if (context.estado === "ConfirmarAgregarCarritoShotsCambio") {
   }
 }
 
-/*'''''''''''''''''''''''''''''''''''
-🟢 4.4 ESPERAMOS EL TIPO DE CABINA 🟢
-'''''''''''''''''''''''''''''''''''*/
+/* ============================================
+   Estado: EsperandoTipoCabina
+   ============================================ */
    if (context.estado === "EsperandoTipoCabina") {
-    const respuesta = userMessage.toLowerCase().trim();
+    const respuesta = userMessage.toLowerCase();
     let varianteSeleccionada = "";
   
-    // 1) Verificar primero si el usuario escribió "cabina de fotos" textual
-    if (respuesta.includes("cabina de fotos")) {
+    // Mapear las posibles respuestas: "fotos" o "inflable" para cabina de fotos;
+    // "360" o "giratoria" para cabina 360.
+    if (respuesta.includes("fotos") || respuesta.includes("inflable") || respuesta.includes("Cabina de fotos") || respuesta.includes("Cabina inflable")) {
       varianteSeleccionada = "cabina de fotos";
-    }
-    // 2) Verificar si escribió solo "fotos", "inflable" (que a veces lo tomas también como cabina de fotos)
-    else if (respuesta.includes("fotos") || respuesta.includes("inflable")) {
-      varianteSeleccionada = "cabina de fotos";
-    }
-    // 3) Verificar primero si el usuario escribió "cabina 360" textual
-    else if (respuesta.includes("cabina 360")) {
-      varianteSeleccionada = "cabina 360";
-    }
-    // 4) Verificar si escribió solo "360", "giratoria"
-    else if (respuesta.includes("360") || respuesta.includes("giratoria")) {
+    } else if (respuesta.includes("360") || respuesta.includes("giratoria") || respuesta.includes("Cabina 360") || respuesta.includes("Cabina giratoria")) {
       varianteSeleccionada = "cabina 360";
     } else {
       await sendWhatsAppMessage(from, "Por favor, responde 'fotos' o '360' para seleccionar el tipo de cabina.");
       return true;
     }
-      
+    
     // Verificar si la variante seleccionada ya está en la cotización.
     if (context.serviciosSeleccionados.toLowerCase().includes(varianteSeleccionada)) {
       // Si ya está, se determina la otra variante.
@@ -1912,15 +1442,16 @@ if (context.estado === "ConfirmarAgregarCarritoShotsCambio") {
       }
   
       // Si ya se tienen todos los datos, se actualiza la cotización.
-      await actualizarCotizacion(from, context);
+      await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
       context.estado = "EsperandoDudas";
       return true;
     }
   }
+  
 
-/*'''''''''''''''''''''''''''''''''''
-🟢 4.4.1 CONFIRMAMOS EL TIPO DE CABINA 🟢
-'''''''''''''''''''''''''''''''''''*/
+  /* ============================================
+   Estado: ConfirmarAgregarCabinaCambio
+   ============================================ */
 if (context.estado === "ConfirmarAgregarCabinaCambio") {
   const respuesta = userMessage.toLowerCase();
   if (respuesta.includes("si")) {
@@ -1929,7 +1460,7 @@ if (context.estado === "ConfirmarAgregarCabinaCambio") {
     if (!context.serviciosSeleccionados.toLowerCase().includes(variante)) {
       context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + variante;
       await sendWhatsAppMessage(from, `✅ Se ha agregado ${variante}.`);
-      await actualizarCotizacion(from, context, "¡Paquete Personalizado actualizado!");
+      await actualizarCotizacion(from, context, "¡Cotización actualizada!");
     }
     context.estado = "EsperandoDudas";
     return true;
@@ -1942,9 +1473,12 @@ if (context.estado === "ConfirmarAgregarCabinaCambio") {
   }
 }
 
-/*'''''''''''''''''''''''''''''''''''''''''''''''''''
-🟢 5. ESPERANDO DUDAS, AGREGAR O QUITAR SERVICIOS 🟢
-'''''''''''''''''''''''''''''''''''''''''''''''''''*/
+
+
+
+/* ============================================
+   Estado: EsperandoDudas – Manejo de dudas, agregar o quitar servicios, FAQs, etc.
+   ============================================ */
  if (context.estado === "EsperandoDudas") {
   // --- Manejo de quitar servicios ---
   if (messageLower.includes("quitar")) {
@@ -1996,7 +1530,7 @@ if (context.estado === "ConfirmarAgregarCabinaCambio") {
           .join(", ");
         await sendWhatsAppMessage(from, `✅ ${servicioAQuitar.charAt(0).toUpperCase() + servicioAQuitar.slice(1)} eliminado de tu cotización.`);
       }
-      await actualizarCotizacion(from, context, "¡Paquete Personalizado actualizado!");
+      await actualizarCotizacion(from, context, "¡Cotización actualizada!");
       return true;
     } else {
       await sendWhatsAppMessage(from, "No entendí qué servicio deseas quitar. Por favor, escribe: 'Quitar y el servicio que deseas quitar'");
@@ -2072,7 +1606,7 @@ if (context.estado === "ConfirmarAgregarCabinaCambio") {
       // Se agrega el servicio a la cotización
       context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `${servicioAAgregar} ${cantidadAAgregar}`;
       await sendWhatsAppMessage(from, `✅ Se ha agregado ${cantidadAAgregar} ${servicioAAgregar}.`);
-      await actualizarCotizacion(from, context);
+      await actualizarCotizacion(from, context, "¡Cotización actualizada!");
       return true;
     } else {
       // Si no se reconoce el servicio a agregar
@@ -2080,152 +1614,54 @@ if (context.estado === "ConfirmarAgregarCabinaCambio") {
       return true;
     }
   }
-}
 
-/*''''''''''''''''''''''''''''''''''''''
-🟢 6. PROCESAMOS LA FECHA DEL EVENTO 🟢
-''''''''''''''''''''''''''''''''''''''*/
-if (context.estado === "EsperandoFecha") {
-  // Validar el formato extendido de la fecha (acepta "DD/MM/AAAA" o "20 de mayo 2025")
-  if (!isValidDateExtended(userMessage)) {
-    await sendMessageWithTypingWithState(
-      from,
-      "😕 El formato de la fecha es incorrecto. Por favor, utiliza el formato DD/MM/AAAA o '20 de mayo 2025'.",
-      2000,
-      context.estado
-    );
-    return true; // Se mantiene en "EsperandoFecha"
-  }
-
-  // Validar que la fecha sea futura (no haya pasado)
-  if (!isValidFutureDate(userMessage)) {
-    await sendMessageWithTypingWithState(
-      from,
-      "La fecha ingresada ya pasó. Por favor, ingresa una fecha futura.",
-      2000,
-      context.estado
-    );
-    return true;
-  }
-
-  // Validar que la fecha esté dentro de los próximos 2 años
-  if (!isWithinTwoYears(userMessage)) {
-    await sendMessageWithTypingWithState(
-      from,
-      "La agenda aún no está abierta para esa fecha. Por favor, ingresa una fecha dentro de los próximos 2 años.",
-      2000,
-      context.estado
-    );
-    return true;
-  }
-
-  // Convertir la fecha al formato DD/MM/AAAA utilizando parseFecha
-  const formattedDate = parseFecha(userMessage);
-
-  // Verificar disponibilidad de la fecha (simulado)
-  if (!checkAvailability(formattedDate)) {
-    await sendMessageWithTypingWithState(
-      from,
-      "😔 Lo siento, esa fecha ya está reservada. Prueba con otra o contáctanos para más detalles.",
-      2000,
-      context.estado
-    );
-    return true;
-  }
-
-  // Si todas las validaciones son exitosas, guardar la fecha en el contexto
-  context.fecha = formattedDate;
   
-  // Cambiar el estado para solicitar el lugar del evento
-  context.estado = "EsperandoLugar";
 
-  // Solicitar el lugar del evento, mostrando la fecha registrada
-  await sendMessageWithTypingWithState(
-    from,
-    `¡Perfecto!\n\n${formattedDate}\nDISPONIBLE 👏👏👏\n\nAhora, indicame por favor el nombre del Salon donde se realizará tu evento 🏢`,
-    2000,
-    context.estado
-  );
+  
+  // --- Manejo de FAQs o dudas generales ---
+  if (await handleFAQs(from, userMessage)) return true;
+  
+  await sendWhatsAppMessage(from, "¿Podrías especificar tu duda o si deseas agregar algún servicio adicional? 😊\n\nSi deseas agregar algo, escribe *Agregar* y lo que necesites.\nSi deseas quitar algo, escribe *Quitar* y lo que necesites quitar.");
   return true;
 }
 
-/*''''''''''''''''''''''''''''''''''''''''''
-🟢 7. PROCESAMOS LA UBICACION DEL EVENTO 🟢
-''''''''''''''''''''''''''''''''''''''''''*/
-if (context.estado === "EsperandoLugar") {
-  // Guardar el lugar ingresado
-  context.lugar = userMessage;
+  // 6. Procesar la fecha del evento
   
- 
-  // Mensaje 1: Explicación del anticipo para separar la fecha
-  await sendMessageWithTypingWithState(
-    from,
-    "Para separar la fecha solicitamos un anticipo de $500, el resto puede ser el día del evento.",
-    2000,
-    context.estado
-  );
-  
-  // Enviar mensaje con datos para transferencia y una imagen (ajusta la URL y texto según convenga)
- 
-  await sendImageMessage(
-    from,
-    "http://cami-cam.com/wp-content/uploads/2025/03/Datos-Transferencia-1.jpeg", "722969010494399671",
-    3000,
-    context.estado
-  );
-  
-  
-  // Mensaje 2: Explicación del siguiente paso una vez acreditado el anticipo
-  await sendMessageWithTypingWithState(
-    from,
-    "Una vez acreditado el anticipo, pediré tu nombre completo y los datos que hagan falta.\n\nLleno tu contrato y te envío foto.",
-    4000,
-    context.estado
-  );
-  
-  // Enviar mensaje interactivo con botón "Preguntas frecuentes"
-  await sendWhatsAppMessage(
-    from,
-    "❓ Aqui puedes consultar algunas Preguntas Frecuentes:👇\nhttps://cami-cam.com/preguntas-frecuentes/",
-    4000,
-    context.estado
-  );
-  
-  // Mensaje final de cierre del flujo
-  await sendMessageWithTypingWithState(
-    from,
-    "Y si tienes alguna duda adicional, por favor con toda confianza.\n\nMi nombre es Gustavo González y estoy a tus órdenes 😀",
-    4000,
-    context.estado
-  );
-  
-  // Actualizar el estado para finalizar el flujo
-  context.estado = "Finalizado";
-  return true;
-}
+  if (context.estado === "EsperandoFecha") {
+    if (!isValidDate(userMessage)) {
+      await sendWhatsAppMessage(from, "😕 El formato de la fecha es incorrecto. Por favor utiliza el formato DD/MM/AAAA.");
+      return true;
+    }
+    if (!checkAvailability(userMessage)) {
+      await sendWhatsAppMessage(from, "😔 Lo siento, esa fecha ya está reservada. Prueba con otra o contáctanos para más detalles.");
+      context.estado = "Finalizado";
+      return true;
+    }
+    context.fecha = userMessage;
+    await sendWhatsAppMessage(from, "¡Perfecto! La fecha está disponible. Ahora, ¿podrías decirme en qué lugar se realizará tu evento? 🏢");
+    context.estado = "EsperandoLugar";
+    return true;
+  }
 
+  // 7. Procesar la ubicación del evento
+  if (context.estado === "EsperandoLugar") {
+    context.lugar = userMessage;
+    await sendWhatsAppMessage(from, "¡Genial! Ya tenemos la fecha y el lugar. Un agente se pondrá en contacto contigo para ultimar los detalles. \n\nSi tienes alguna duda adicional por favor hazme saber y en breve te responderemos.\n\n¡Gracias por confiar en Camicam Photobooth! 🎉");
+    context.estado = "Finalizado";
+    return true;
+  }
 
-  /*/ Rama para "letras gigantes" en otros flujos (si aplica)
+  // Rama para "letras gigantes" en otros flujos (si aplica)
   if (!["Contacto Inicial", "EsperandoTipoEvento", "OpcionesSeleccionadas", "EsperandoFecha", "EsperandoLugar", "EsperandoCantidadLetras"].includes(context.estado)) {
     if (messageLower.includes("letras gigantes")) {
-      await sendWhatsAppMessage(from, "¿Cuántas LETRAS necesitas? 🔠");
+      await sendWhatsAppMessage(from, "¿Cuántas letras necesitas? 🔠");
       context.estado = "EsperandoCantidadLetras";
       return true;
     }
-  }*/
+  }
 
-
-/*''''''''''''''''''''''''''''''''''''''''''''''''''''
-🟢 8. FINALIZAMOS EL FLUJO, OPEN AI YA NO RESPONDE 🟢
-''''''''''''''''''''''''''''''''''''''''''''''''''''*/
-if (context.estado === "Finalizado") {
-  console.log("El flujo está finalizado. No se enviará la pregunta a OpenAI.");
-  return true; 
-}
-
-/*''''''''''''''''''''''''''''''''''''''''''''''''
-🟢 9. EN OTROS CASOS, RESPONDEMOS CON OPEN AI 🟢
-''''''''''''''''''''''''''''''''''''''''''''''''*/
+  
+  // Otros casos: enviar consulta a OpenAI para respuestas adicionales
   try {
     function getCacheKey(query) {
       return query.toLowerCase();
@@ -2236,7 +1672,7 @@ if (context.estado === "Finalizado") {
   ${contextoPaquetes}
   
   El cliente dice: "${query}"
-  Responde de forma clara y corta, profesional y cercana, utilizando el contexto proporcionado.
+  Responde de forma clara, profesional y cercana, utilizando el contexto proporcionado.
       `;
       const key = getCacheKey(fullQuery);
       const cachedResponse = responseCache.get(key);  // Uso de la instancia global
@@ -2281,12 +1717,14 @@ if (context.estado === "Finalizado") {
     console.error("❌ Error en handleUserMessage:", error.message);
     await sendWhatsAppMessage(from, "😔 Perdona, ocurrió un error inesperado. Por favor, inténtalo de nuevo.");
     return false;
-  }  
+  }
 }
 
-/*''''''''''''''''''''''''
-🟢 INICIAR EL SERVIDOR 🟢
-''''''''''''''''''''''''*/
+
+
+
+
+// Iniciar el servidor
 app.listen(PORT, () => {
   console.log(`Servidor funcionando en http://localhost:${PORT}`);
 }).on('error', (err) => {
