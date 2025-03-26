@@ -26,7 +26,6 @@ const userContext = {};
 // Instancia global de caché para respuestas de OpenAI (disponible en todo el código)
 const responseCache = new NodeCache({ stdTTL: 3600 });
 
-
 // Objeto para asociar servicios a medios (imágenes y videos)
 const mediaMapping = {
   "cabina de fotos": {
@@ -120,9 +119,6 @@ Atendemos el centro de Monterrey, Nuevo León y el área metropolitana hasta 25 
 Responde de forma profesional, clara, concisa y persuasiva, como un vendedor experto en nuestros servicios.
   `;
 } 
-
-
-
 
 // Rutas (webhook, raíz, etc.)
 app.get('/webhook', (req, res) => {
@@ -757,7 +753,7 @@ async function sendMessageToAdmin(message) {
     await delay(2000);
     await sendInteractiveMessage(
       from,
-      "¿¿Te gustaría continuar con el *PAQUETE WEDDING*?\n\nO prefieres armar tu paquete?",
+      "¿Te gustaría continuar con el *PAQUETE WEDDING*?\n\nO prefieres armar tu paquete?",
       [
         { id: "si_me_interesa", title: "PAQUETE WEDDING" },
         { id: "armar_paquete", title: "Armar mi paquete" }
@@ -1266,8 +1262,6 @@ function calculateQuotation(servicesText) {
    context.estado = "EsperandoDudas";
   }
 
-
-
 /*'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 🟢 FUNCION PARA MANEJAR EL FLUJO DE MENSAJES DEL USUARIO CON TONO NATURAL 🟢
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''*/
@@ -1640,7 +1634,7 @@ if (context.estado === "ConfirmandoLetras") {
 
 
 /*'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-🟢 4.3 ESPRAMOS VARIANTE CARRITO DE SHOTS CON O SIN ALCOHOL 🟢
+🟢 4.3 ESPERAMOS VARIANTE CARRITO DE SHOTS CON O SIN ALCOHOL 🟢
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''*/
 if (context.estado === "EsperandoTipoCarritoShots") {
   const respuesta = userMessage.toLowerCase();
@@ -1727,7 +1721,7 @@ if (context.estado === "ConfirmarAgregarCarritoShotsCambio") {
 }
 
 /*'''''''''''''''''''''''''''''''''''
-🟢 4.4 ESPRAMOS EL TIPO DE CABINA 🟢
+🟢 4.4 ESPERAMOS EL TIPO DE CABINA 🟢
 '''''''''''''''''''''''''''''''''''*/
    if (context.estado === "EsperandoTipoCabina") {
     const respuesta = userMessage.toLowerCase().trim();
