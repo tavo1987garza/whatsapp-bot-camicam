@@ -909,7 +909,7 @@ if (recomendacion.media?.videos?.length > 0) {
     await sendMessageWithTypingWithState(from, mensajeRecomendacion, 3000, context.estado);
 
     // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
-    await sendInteractiveMessage(from, `Te gustaría continuar con el ${recomendacion.paquete}? O prefieres Armar tu Paquete?`, 
+    await sendInteractiveMessage(from, `Te gustaría continuar con el ${recomendacion.paquete}?\n\nO prefieres Armar tu Paquete?`, 
       [
       { id: "si_me_interesa", title: recomendacion.paquete },
       { id: "armar_paquete", title: "Armar mi paquete" }
@@ -1288,7 +1288,7 @@ function calculateQuotation(servicesText) {
 
    await sendInteractiveMessage( 
     from,
-    "O tu Paquete Personalizado?",
+    `Te gustaría continuar con el ${tituloPaquete}\n\n?O tu Paquete Personalizado?`,
     [
       { id: "si_me_interesa_sugerido", title: tituloPaquete },
       { id: "si_me_interesa", title: "PAQ. PERSONALIZADO" },
@@ -1660,7 +1660,7 @@ if (context.estado === "ConfirmandoLetras") {
       context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `letras gigantes ${cantidadLetras}`;
     }
     await sendWhatsAppMessage(from, `✅ Se han agregado ${cantidadLetras} letras gigantes basadas en el nombre '${context.nombreCliente}'.`);
-    await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
+    await actualizarCotizacion(from, context);
   } else {
     // Si la respuesta es negativa, se solicita la cantidad manualmente
     context.estado = "EsperandoCantidadLetras";
@@ -1725,7 +1725,7 @@ if (context.estado === "EsperandoTipoCarritoShots") {
     }
 
     // Si no faltan letras ni chisperos, mostrar la cotización
-    await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
+    await actualizarCotizacion(from, context);
     context.estado = "EsperandoDudas";
     return true;
   }
@@ -1827,7 +1827,7 @@ if (context.estado === "ConfirmarAgregarCarritoShotsCambio") {
       }
   
       // Si ya se tienen todos los datos, se actualiza la cotización.
-      await actualizarCotizacion(from, context, "¡Perfecto! Hemos actualizado tu cotización:");
+      await actualizarCotizacion(from, context);
       context.estado = "EsperandoDudas";
       return true;
     }
@@ -1987,7 +1987,7 @@ if (context.estado === "ConfirmarAgregarCabinaCambio") {
       // Se agrega el servicio a la cotización
       context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `${servicioAAgregar} ${cantidadAAgregar}`;
       await sendWhatsAppMessage(from, `✅ Se ha agregado ${cantidadAAgregar} ${servicioAAgregar}.`);
-      await actualizarCotizacion(from, context, "¡Paquete Personalizado actualizado!");
+      await actualizarCotizacion(from, context);
       return true;
     } else {
       // Si no se reconoce el servicio a agregar
