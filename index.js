@@ -978,7 +978,7 @@ if (recomendacion.media?.videos?.length > 0) {
     // Actualizar el estado para manejar la respuesta en el siguiente flujo
     context.estado = "EsperandoConfirmacionPaquete";
   } 
-} 
+}  
  
 
 /***************************************************
