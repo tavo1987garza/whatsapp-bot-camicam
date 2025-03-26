@@ -1555,7 +1555,7 @@ if (context.estado === "Contacto Inicial") {
     // Priorizar preguntar primero por las letras si faltan
     if (context.faltanLetras) {
       context.estado = "EsperandoCantidadLetras";
-      await sendWhatsAppMessage(from, "¿Cuántas letrasssss necesitas? 🔠");
+      await sendWhatsAppMessage(from, "¿Cuántas letras necesitas? 🔠");
       return true;
     }
   
