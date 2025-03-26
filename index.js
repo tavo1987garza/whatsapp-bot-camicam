@@ -1723,7 +1723,6 @@ if (context.estado === "ConfirmarAgregarCabinaCambio") {
 
 
 
-
 // Iniciar el servidor
 app.listen(PORT, () => {
   console.log(`Servidor funcionando en http://localhost:${PORT}`);
