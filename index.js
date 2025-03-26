@@ -1098,7 +1098,7 @@ function calculateQuotation(servicesText) {
     }
 
     // Caso de letras o letras gigantes
-    /*else if (/letras(?:\s*gigantes)?\b/.test(service)) {
+    else if (/letras(?:\s*gigantes)?\b/.test(service)) {
       const match = service.match(/letras(?:\s*gigantes)?\s*(\d+)/);
       if (match && match[1]) {
         const qty = parseInt(match[1]);
@@ -1112,33 +1112,9 @@ function calculateQuotation(servicesText) {
         // En este punto, gracias a la actualización, no debería ocurrir
         details.push(`🔸 *Letras*: cantidad no especificada`);
       }
-    }*/
+    }
 
-      else if (/letras(?:\s*gigantes)?\b/i.test(service)) {
-        const match = service.match(/letras(?:\s*gigantes)?\s*(\d+)/i);
-        
-        if (!match || !match[1]) {
-          return {
-            error: true,
-            needsInput: 'letras',
-            details: ["🔸 *Letras Gigantes*: Por favor, especifica cuántas letras necesitas (ej: '3 letras' o 'letras gigantes 5')."],
-            subtotal: 0,
-            discountPercent: 0,
-            discountAmount: 0,
-            total: 0,
-            servicesRecognized: []
-          };
-        }
-  
-        const qty = parseInt(match[1]);
-        const precioLetras = qty * PRICES["letras gigantes"];
-        subtotal += precioLetras;
-        serviceCount++;
-        details.push(`🔸 *${qty} Letras Gigantes* (5 Horas): $${precioLetras.toLocaleString()}`);
-        servicesRecognized.push("letras gigantes");
-        letrasCount = qty;
-        
-      }
+     
      // Caso de lluvia metálica (o lluvia metalica)
     else if (/lluvia m(?:e|é)t(?:a|á)lica\b/i.test(service)) {
         subtotal += prices["lluvia matálica"];
@@ -1496,7 +1472,7 @@ if (context.estado === "Contacto Inicial") {
 /*''''''''''''''''''''''''''''''''
 🟢 4. ESPERAMOS LOS SERVICIOS 🟢
 ''''''''''''''''''''''''''''''''*/
-   /*if (context.estado === "EsperandoServicios") {
+   if (context.estado === "EsperandoServicios") {
     // Si el usuario indica agregar o quitar en su mensaje inicial:
     if (messageLower.includes("agregar")) {
       const serviciosAAgregar = userMessage.replace(/agregar/i, "").trim();
@@ -1504,6 +1480,7 @@ if (context.estado === "Contacto Inicial") {
       // 🟢 TRANSFORMACIÓN: "6 letras" => "letras gigantes 6", "4 chisperos" => "chisperos 4"
       serviciosAAgregar = serviciosAAgregar
         .replace(/\b(\d+)\s+letras(?:\s*gigantes)?\b/gi, 'letras gigantes $1')
+        .replace(/letras(?:\s*gigantes)?\s+(\d+)/gi, 'letras gigantes $1')
         .replace(/\b(\d+)\s+chisperos?\b/gi, 'chisperos $1');
 
       context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + serviciosAAgregar;
@@ -1524,6 +1501,7 @@ if (context.estado === "Contacto Inicial") {
       
       listaServicios = listaServicios
         .replace(/\b(\d+)\s+letras(?:\s*gigantes)?\b/gi, 'letras gigantes $1')
+        .replace(/letras(?:\s*gigantes)?\s+(\d+)/gi, 'letras gigantes $1')
         .replace(/\b(\d+)\s+chisperos?\b/gi, 'chisperos $1');
       
       context.serviciosSeleccionados = listaServicios;
@@ -1598,9 +1576,18 @@ if (context.estado === "Contacto Inicial") {
     // Si ya se especificaron cantidades para ambos, actualizar la cotización
     await actualizarCotizacion(from, context);
     return true;
-  }*/
+  }
 
-    if (context.estado === "EsperandoServicios") {
+
+
+
+
+
+
+
+
+
+   /* if (context.estado === "EsperandoServicios") {
       // Función de normalización mejorada
       const normalizarServicios = (input) => {
           return input
@@ -1674,7 +1661,7 @@ if (context.estado === "Contacto Inicial") {
       // Si todo está completo
       await actualizarCotizacion(from, context);
       return true;
-  }
+  }*/
 
 /*''''''''''''''''''''''''''''''''''''''
 🟢 4.1 ESPRAMOS CANTIDAD DE CHISPEROS 🟢
