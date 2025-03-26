@@ -945,32 +945,49 @@ function getOtherEventPackageRecommendation(userMessage) {
       }
     };
   }
-  // Detectar revelación de género: se buscan palabras clave
-  else if (/revelación de género|revelacion|baby|oh baby|girl|boy/.test(mensaje)) {
-    return {
-      paquete: "PAQUETE REVELACION",
-      descripcion: "Ideal para eventos de revelación de género, con letras decorativas y opciones que resaltan 'BABY', 'OH BABY' o 'GIRL BOY'."
-    };
-  }
-  // Detectar propuesta: palabras relacionadas con propuesta o 'marry me'
-  else if (/propuesta|pedir matrimonio|marry me/.test(mensaje)) {
-    return {
-      paquete: "PAQUETE MARRY ME",
-      descripcion: "Perfecto para una propuesta inolvidable, con letras románticas y personalizadas que dicen 'MARRY ME'."
-    };
-  }
-  // Detectar graduación: se buscan palabras como "grad", "class" o números de generación
-  else if (/graduación|grad|class|gen\b/.test(mensaje)) {
-    return {
-      paquete: "PAQUETE GRADUACION",
-      descripcion: "Ofrece letras gigantes modernas ideales para graduaciones, por ejemplo, 'CLASS 2025', 'GRAD 25' o 'GEN 2022'."
-    };
-  }
-  // Si no se detecta un subtipo específico
+  // Detectar revelación de género
+ else if (/revelación de género|revelacion|baby|oh baby|girl|boy/.test(mensaje)) {
   return {
-    paquete: "Paq. Otro",
-    descripcion: "Tenemos varias opciones personalizadas. ¿Podrías contarnos un poco más sobre tu evento para ofrecerte la mejor recomendación?"
+    paquete: "PAQUETE REVELACION",
+    descripcion: "Ideal para eventos de revelación de género, con letras decorativas y opciones que resaltan 'BABY', 'OH BABY' o 'GIRL BOY'.",
+    media: {
+      images: ["http://cami-cam.com/wp-content/uploads/2025/03/Letras-Gigantes.jpeg"],
+      videos: ["http://cami-cam.com/wp-content/uploads/2025/02/LETRAS-GIGANTES-ILUMINADAS.mp4"]
+    }
   };
+}
+// Detectar propuesta
+else if (/propuesta|pedir matrimonio|marry me/.test(mensaje)) {
+  return {
+    paquete: "PAQUETE MARRY ME",
+    descripcion: "Perfecto para una propuesta inolvidable, con letras románticas y personalizadas que dicen 'MARRY ME'.",
+    media: {
+      images: ["http://cami-cam.com/wp-content/uploads/2025/03/Letras-Gigantes.jpeg"],
+      videos: ["http://cami-cam.com/wp-content/uploads/2025/02/LETRAS-GIGANTES-ILUMINADAS.mp4"]
+    }
+  };
+}
+// Detectar graduación
+else if (/graduación|grad|class|gen\b/.test(mensaje)) {
+  return {
+    paquete: "PAQUETE GRADUACION",
+    descripcion: "Ofrece letras gigantes modernas ideales para graduaciones, por ejemplo, 'CLASS 2025', 'GRAD 25' o 'GEN 2022'.",
+    media: {
+      images: ["http://cami-cam.com/wp-content/uploads/2025/03/Letras-Gigantes.jpeg"],
+      videos: ["http://cami-cam.com/wp-content/uploads/2025/02/LETRAS-GIGANTES-ILUMINADAS.mp4"]
+    }
+  };
+}
+
+// Si no se detecta un subtipo específico
+return {
+  paquete: "Paq. Otro",
+  descripcion: "Tenemos varias opciones personalizadas. ¿Podrías contarnos un poco más sobre tu evento para ofrecerte la mejor recomendación?",
+  media: {
+    images: ["http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg"],
+    videos: []
+  }
+};
 }
 
 /***************************************************
