@@ -892,7 +892,7 @@ Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
 if (recomendacion.media?.images?.length > 0) {
   for (const imageUrl of recomendacion.media.images) {
     await sendImageMessage(from, imageUrl);
-    await delay(1000); // Pequeño delay entre imágenes
+    await delay(2500); // Pequeño delay entre imágenes
   }
 }
 
@@ -900,13 +900,13 @@ if (recomendacion.media?.images?.length > 0) {
 if (recomendacion.media?.videos?.length > 0) {
   for (const videoUrl of recomendacion.media.videos) {
     await sendWhatsAppVideo(from, videoUrl);
-    await delay(1000); // Pequeño delay entre videos
+    await delay(2500); // Pequeño delay entre videos
   }
 }
 
     // Enviar la recomendación de forma personalizada
     const mensajeRecomendacion = `🎉 *${recomendacion.paquete}*\n${recomendacion.descripcion}\n\nTe gustaría continuar con el ${recomendacion.paquete}?`;
-    await sendMessageWithTypingWithState(from, mensajeRecomendacion, 2000, context.estado);
+    await sendMessageWithTypingWithState(from, mensajeRecomendacion, 3000, context.estado);
 
     // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
     await sendInteractiveMessage(from, "O prefieres Armar tu Paquete?", 
