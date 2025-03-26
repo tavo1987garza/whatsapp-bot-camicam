@@ -809,29 +809,32 @@ Te presento el paquete que estamos promocionando:
   *PAQUETE MIS XV*
   
       Incluye: 
-🔸 Cabina de fotos (3 Horas) 
-Impresion ilimitada de fotos en calidad Kodak
+🔸*Cabina de fotos* (3 Horas) 
+Impresion ilimitada de fotos en calidad Kodak.
+¡Tus invitados se divertirán con los accesorios chuzcos que ponemos dentro de la cabina!
 
-🔸 6 letras Gigantes (5 Horas)
-de 1.20 mts de alto y luces led con secuencias multicolor
+🔸*6 letras Gigantes* (5 Horas)
+De 1.20 mts de alto y luces led con secuencias multicolor.
+¡Para que tu nombre se vea espectacular!
 
 y Escoge
 
-🔸 Niebla de piso
-Que cubre TODA la pista de baile durante TODO el vals principal
+🔸*Niebla de piso*
+Que cubre TODA la pista de baile durante TODO el vals principal.
+¡Lucirás hermosa con tu papá!
 
 Ó
 
-🔸Lluvia de mariposas 
-Durante el vals principal realizamos 4 detonaciones de papel china cortado en forma de mariposa 
-     
-      por tan sólo
-  
-     ✨ $8,900 ✨
+🔸*Lluvia de mariposas* 
+Durante el vals principal realizamos 4 detonaciones de papel china cortado en forma de mariposa
+¡Tus invitados quedár sorprendidos!
+
   
 *¡Contrata ahora y recibe de REGALO!*
     
-🔸 2 Chisperos de Luz Fría De 2.5 mts
+🔸*2 Chisperos* de Luz Fría De 2.5 mts
+Ideales para la presentación
+
 Con un valor de $1,000
 `;
     
@@ -840,14 +843,14 @@ Con un valor de $1,000
     
 A las primeras 10 Quinceañeras les estaremos Regalando 
       
-🔸 1 Scrapbook personalizado para la cabina de fotos
+🔸*1 Scrapbook* personalizado para la cabina de fotos
 Donde tus invitados pegarán una foto y escribirán un lindo mensaje
 con la posibilidad de personalizarlo con nuestra plantilla de Stickers
 exclusiva para XV años
       
 Con un valor de $1,300
     
-¡Te lo llevamos Completamente Gratis!
+¡Te lo llevamos también Completamente Gratis!
     
 ¡Será un recuerdo muy bonito de tu evento!
       
@@ -859,7 +862,7 @@ Y no te preocupes que nosotros cubrimos los gastos DE FLETE y transportacion!! a
 
  *¡¡Aprovecha!!*
     
-¡Solo este mes disfruta de un *30% DE DESCUENTO*!
+¡Solo este mes disfruta de un *45% DE DESCUENTO*!
 
 ¡¡Un Gran Ahorro que puedes ocupar en otras cosas!!
 
@@ -871,12 +874,12 @@ Y no te preocupes que nosotros cubrimos los gastos DE FLETE y transportacion!! a
     *Lluvia de mariposas* 
 🔸 *2 Chisperos de luz fría*
 🔸 *1 Scrapbook*
-🔸 *Descuento de $2,670*
+🔸 *Descuento de $5,040*
 🔸 *Flete Incluido*
       
 *¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
       
-      ✨ *$6,230* ✨
+      ✨ *$6,160* ✨
       
 ¡¡Aprovecha esta oportunidad!!
 
