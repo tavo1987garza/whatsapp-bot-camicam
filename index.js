@@ -37,10 +37,15 @@ const mediaMapping = {
   "cabina de fotos": {
     images: [
       "http://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-1.jpg",
-      "http://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-2.jpg"
+      "http://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-2.jpg",
+      "http://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-3.jpg",
+      "http://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-4.jpg",
+      "http://cami-cam.com/wp-content/uploads/2025/03/Cabina-multicolor-2.jpeg"
     ],
     videos: [
-      "http://cami-cam.com/wp-content/uploads/2025/03/Cabina-Blanca.mp4"
+      "http://cami-cam.com/wp-content/uploads/2025/03/Cabina-Blanca.mp4",
+      "http://cami-cam.com/wp-content/uploads/2025/03/Cabina-Rosa.mp4",
+      "http://cami-cam.com/wp-content/uploads/2025/03/cabina-multicolor.mp4"
     ]
   },
   "cabina 360": {
@@ -71,7 +76,12 @@ const mediaMapping = {
   },
   "scrapbook": {
     images: [
-      "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-4.jpeg"
+      "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-4.jpeg",
+      "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-3.jpeg",
+      "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-2.jpeg",
+      "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-5.jpeg",
+      "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-7.jpeg",
+      "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-6.jpeg"
     ],
     videos: [
       "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook.mp4"
@@ -749,11 +759,12 @@ async function sendMessageToAdmin(message) {
 
     // 3) Video
     await delay(2000);
-    await sendWhatsAppVideo(from, "URL_DE_TU_VIDEO_DE_BODA");
+    await sendWhatsAppVideo(from, mediaMapping["cabina de fotos"].videos[0]);
 
     // 4) Imagen
     await delay(2000);
-    await sendImageMessage(from, "URL_DE_TU_IMAGEN_DE_BODA");
+    await sendImageMessage(from, mediaMapping["cabina de fotos"].images);
+    
 
     // 5) Botones "si_me_interesa_sugerido" y "armar_paquete"
     await delay(2000);
@@ -847,6 +858,8 @@ SIN COSTO DE FLETE!! a una distancia de 20 km del centro de Monterrey
       ✨ *$6,230* ✨
       
 ¡¡Aprovecha esta oportunidad!!
+
+y separa tu fecha con $500, el resto puede ser el dia de tu evento
       
 Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
       
