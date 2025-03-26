@@ -801,13 +801,13 @@ async function handleFAQs(from, userMessage) {
       // PARTE 1
   const textoA = `
 ¡Muchas felicidades! 👏
-    
+
 Tu fiesta de XV años será Inolvidable!! ✨
-  
+
 Te presento el paquete que estamos promocionando:
-  
+
   *PAQUETE MIS XV*
-  
+
       Incluye: 
 
 🔸*Cabina de fotos* (3 Horas) 
@@ -831,37 +831,40 @@ Durante el vals principal realizamos 4 detonaciones de papel china cortado en fo
 ¡Tus invitados quedarán sorprendidos!
 
 Todo esto con un valor de $8,900
-  
+`;
+
+ // PARTE 2
+ const textoB = `  
 *¡Contrata ahora y recibe de REGALO!*
-    
+
 🔸*2 Chisperos* de Luz Fría De 2.5 mts
 Ideales para la presentación
 
 Con un valor de $1,000
-`;
-    
-    const textoB = `
+
 ¡¡Y eso no es todo!! 
-    
+
 A las primeras 10 Quinceañeras que contraten éste paquete les estaremos Regalando 
-      
+
 🔸*1 Scrapbook* personalizado para la cabina de fotos
 Donde tus invitados pegarán una de sus fotos y escribirán un lindo mensaje que podrán personalizar con nuestra plantilla de Stickers exclusiva para XV años
-      
+
 Con un valor de $1,300
-    
+
 ¡Te lo llevamos también Completamente Gratis!
-    
+
 ¡Será un recuerdo muy bonito de tu evento!
-      
+
 Si contrataras todo esto por separado, el precio Regular sería de $11,200
-      
+
 *¡¡SOLO HOY CONTRATA TODO POR UN EXCELENTE PRECIO!!*
-      
+ `;
+    
+    const textoC = `
 Y no te preocupes que nosotros cubrimos los gastos DE FLETE y transportacion!! a una distancia de hasta 20 km del centro de Monterrey
 
  *¡¡Aprovecha!!*
-    
+
 ¡Solo este mes disfruta de un *45% DE DESCUENTO*!
 
 ¡¡Un Gran Ahorro que puedes ocupar en otras cosas!!
@@ -876,18 +879,19 @@ Y no te preocupes que nosotros cubrimos los gastos DE FLETE y transportacion!! a
 🔸 *1 Scrapbook*
 🔸 *Descuento de $5,040*
 🔸 *Flete Incluido*
-      
+
 *¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
-      
+
       ✨ *$6,160* ✨
-      
+
 ¡¡Aprovecha esta oportunidad!!
 
 y separa tu fecha con $500, el resto puede ser el dia de tu evento
-      
-Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen tu fecha 😱
-      
+
+Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen tu fecha 😱      
 `;
+
+
 
     // Enviamos imagen de presentacion
     await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg");
@@ -899,6 +903,10 @@ Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen tu fecha 
     // Segundo mensaje
     await delay(2000);
     await sendMessageWithTypingWithState(from, textoB, 2000, context.estado);
+
+    // Tercer mensaje
+    await delay(2000);
+    await sendMessageWithTypingWithState(from, textoC, 2000, context.estado);
 
     // Archivos multimedia
     await delay(2000);
