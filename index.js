@@ -1496,7 +1496,7 @@ if (context.estado === "Contacto Inicial") {
     } else {
       // Se toma el mensaje completo como lista de servicios
       context.serviciosSeleccionados = userMessage;
-    }
+    } 
     
     /*else {
       // Si el usuario pone directamente la lista sin "agregar"
