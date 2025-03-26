@@ -1467,19 +1467,19 @@ if (context.estado === "Contacto Inicial") {
   await delay(1500); // Retraso de 1.5 segundos antes de enviar el mensaje
   await sendMessageWithTypingWithState(
     from,
-    "Para continuar *Escribe* qué tipo de evento estás organizando 🥳\n\nEjemplo:\n*Revelacion*\n*Propuesta*\n*Graduacion* ó\n*Números*, Si es lo que ocupas\n\nY Revisa el paquete que estamos promocionando👌\n\nO Arma tu Paquete a tu gusto.",
+    "Atendemos estos eventos 🥳\n\n*Boda*\n*XV*\n*Revelacion*\n*Propuesta*\n*Graduacion* ó\n*Números*, si es lo que ocupas\n\n*Escribe* el tuyo y revisa el paquete que estamos promocionando👌\n\nO Arma tu Paquete a tu gusto.",
     2000,
     "Contacto Inicial"
   );
 
-  await sendInteractiveMessage(
+  /*await sendInteractiveMessage(
     from,
     "O selecciona una Opción 👇",
     [
       { id: "evento_boda", title: "💍 Boda" },
       { id: "evento_xv", title: "🎉 XV Años" }
     ]
-  );
+  );*/
 
   
 
