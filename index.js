@@ -919,10 +919,10 @@ function getOtherEventPackageRecommendation(userMessage) {
   const mensaje = userMessage.toLowerCase();
 
   // Detectar cumpleaños: se pueden buscar números o palabras como "cumpleaños"
-  if (/cumpleaños|birthday|\b\d+\b/.test(mensaje)) {
+  if (/cumpleaños|numero|numeros|#|número|números|birthday|\b\d+\b/.test(mensaje)) {
     return {
-      paquete: "PAQUETE CUMPLEAÑOS",
-      descripcion: "Incluye letras gigantes personalizadas, números brillantes y una ambientación festiva perfecta para celebrar esa edad especial."
+      paquete: "PAQUETE NÚMEROS",
+      descripcion: "Nuestros números son ideales para cumpleaños. Miden 1.20 mts de alto, están pintados de blanco y los focos son de luz led con 83 secuencias de distintos colores, tambien se pueden programar en una sola secuencia. el 'Paquete Números' incluye 2 numeros gigantes por un precio de %600, m{as flete dependindop donde sea tu evento"
     };
   }
   // Detectar revelación de género: se buscan palabras clave
