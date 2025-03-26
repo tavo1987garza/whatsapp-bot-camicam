@@ -1444,20 +1444,20 @@ if (context.estado === "Contacto Inicial") {
   // Mensaje inicial explicando que es un asistente virtual
   await sendMessageWithTypingWithState(
     from,
-    "¡Hola! 👋\n\nBienvenid@ a\n*CAMICAM Photobooth*",
+    "¡Hola! 👋\n\nBienvenid@ a\n\n   *CAMICAM\nPhotobooth*",
     2000, // Retraso de 2 segundos
     "Contacto Inicial"
   );
 
-  await sendMessageWithTypingWithState(
+  /*await sendMessageWithTypingWithState(
     from,
     "Te presento los Servicios que ofrecemos 🤩",
     2500, // Retraso de 2 segundos
     "Contacto Inicial"
-  );  
+  );*/
 
   // Enviar la imagen de servicios con un retraso
-  await delay(3000); // Retraso de 3 segundos antes de enviar la imagen
+  /*await delay(3000); */// Retraso de 3 segundos antes de enviar la imagen
   await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
 
   // Enviar los botones con otro retraso
