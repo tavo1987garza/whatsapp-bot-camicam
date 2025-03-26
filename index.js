@@ -1480,7 +1480,6 @@ if (context.estado === "Contacto Inicial") {
       // 🟢 TRANSFORMACIÓN: "6 letras" => "letras gigantes 6", "4 chisperos" => "chisperos 4"
       serviciosAAgregar = serviciosAAgregar
         .replace(/\b(\d+)\s+letras(?:\s*gigantes)?\b/gi, 'letras gigantes $1')
-        .replace(/letras(?:\s*gigantes)?\s+(\d+)/gi, 'letras gigantes $1')
         .replace(/\b(\d+)\s+chisperos?\b/gi, 'chisperos $1');
 
       context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + serviciosAAgregar;
@@ -1501,7 +1500,6 @@ if (context.estado === "Contacto Inicial") {
       
       listaServicios = listaServicios
         .replace(/\b(\d+)\s+letras(?:\s*gigantes)?\b/gi, 'letras gigantes $1')
-        .replace(/letras(?:\s*gigantes)?\s+(\d+)/gi, 'letras gigantes $1')
         .replace(/\b(\d+)\s+chisperos?\b/gi, 'chisperos $1');
       
       context.serviciosSeleccionados = listaServicios;
