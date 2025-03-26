@@ -888,6 +888,22 @@ Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
     // Guardar en el contexto el paquete recomendado para posteriores referencias
     context.paqueteRecomendado = recomendacion;
 
+    // Enviar primero la imagen si existe
+if (recomendacion.media?.images?.length > 0) {
+  for (const imageUrl of recomendacion.media.images) {
+    await sendImageMessage(from, imageUrl);
+    await delay(1000); // Pequeño delay entre imágenes
+  }
+}
+
+// Luego enviar el video si existe
+if (recomendacion.media?.videos?.length > 0) {
+  for (const videoUrl of recomendacion.media.videos) {
+    await sendWhatsAppVideo(from, videoUrl);
+    await delay(1000); // Pequeño delay entre videos
+  }
+}
+
     // Enviar la recomendación de forma personalizada
     const mensajeRecomendacion = `🎉 *${recomendacion.paquete}*\n${recomendacion.descripcion}\n\nTe gustaría continuar con el ${recomendacion.paquete}?`;
     await sendMessageWithTypingWithState(from, mensajeRecomendacion, 2000, context.estado);
@@ -919,10 +935,14 @@ function getOtherEventPackageRecommendation(userMessage) {
   const mensaje = userMessage.toLowerCase();
 
   // Detectar cumpleaños: se pueden buscar números o palabras como "cumpleaños"
-  if (/cumpleaños|numero|numeros|#|número|números|birthday|\b\d+\b/.test(mensaje)) {
+   if (/cumpleaños|numero|numeros|#|número|números|birthday|\b\d+\b/.test(mensaje)) {
     return {
       paquete: "PAQUETE NÚMEROS",
-      descripcion: "Nuestros números son ideales para cumpleaños. Miden 1.20 mts de alto, están pintados de blanco y los focos son de luz led con 83 secuencias de distintos colores, tambien se pueden programar en una sola secuencia. el 'Paquete Números' incluye 2 numeros gigantes por un precio de %600, m{as flete dependindop donde sea tu evento"
+      descripcion: "Nuestros números son ideales para cumpleaños. Miden 1.20 mts de alto, están pintados de blanco y los focos son de luz led con 83 secuencias de distintos colores, también se pueden programar en una sola secuencia. El 'Paquete Números' incluye 2 números gigantes por un precio de $600, más flete dependiendo de la ubicación de tu evento.",
+      media: {
+        images: ["http://cami-cam.com/wp-content/uploads/2025/03/Letras-Gigantes.jpeg"],
+        videos: ["http://cami-cam.com/wp-content/uploads/2025/02/LETRAS-GIGANTES-ILUMINADAS.mp4"]
+      }
     };
   }
   // Detectar revelación de género: se buscan palabras clave
