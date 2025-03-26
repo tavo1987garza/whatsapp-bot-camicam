@@ -872,25 +872,34 @@ Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
       
 `;
 
-    // 1) Texto 1
+    // Enviamos imagen de presentacion
     await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg");
-
+    
+    // Primer mensaje
     await delay(2000);
     await sendMessageWithTypingWithState(from, textoA, 2000, context.estado);
 
-    // 2) Texto 2
+    // Segundo mensaje
     await delay(2000);
     await sendMessageWithTypingWithState(from, textoB, 2000, context.estado);
 
-    // 3) Video
+    // Archivos multimedia
     await delay(2000);
-    await sendWhatsAppVideo(from, "URL_DE_TU_VIDEO_XV");
+    await sendWhatsAppVideo(from, mediaMapping["cabina de fotos"].videos[0]);
 
-    // 4) Imagen
     await delay(2000);
-    await sendImageMessage(from, "URL_DE_IMAGEN_XV");
+    await sendImageMessage(from, mediaMapping["cabina de fotos"].images[0]);
 
-    // 5) Botones
+    await delay(2000);
+    await sendImageMessage(from, mediaMapping["cabina de fotos"].images[1]);
+
+    await delay(2000);
+    await sendImageMessage(from, mediaMapping["cabina de fotos"].images[2]);
+
+    await delay(2000);
+    await sendImageMessage(from, mediaMapping["cabina de fotos"].images[3]);
+    
+    // Botones
     await delay(2000);
     await sendInteractiveMessage(
       from,
@@ -946,12 +955,6 @@ if (recomendacion.media?.videos?.length > 0) {
   } 
 } 
  
-/***************************************************
- FUNCION para contar solo letras (ignorando números y caracteres especiales)
- ****************************************************/
-function contarLetras(texto) {
-  return texto.replace(/[^a-zA-Z]/g, "").length;
-}
 
 /***************************************************
 FUNCION para identificar el subtipo de evento 
@@ -1056,6 +1059,12 @@ function checkUpsellSuggestions(context) {
   return suggestions;
 }
 
+/***************************************************
+ FUNCION para contar solo letras (ignorando números y caracteres especiales)
+ ****************************************************/
+ function contarLetras(texto) {
+  return texto.replace(/[^a-zA-Z]/g, "").length;
+}
 
 /**************************************
  FUNCION para CALCULAR la cotizacion
@@ -1410,7 +1419,7 @@ if (context.estado === "Contacto Inicial") {
   // Mensaje inicial explicando que es un asistente virtual
   await sendMessageWithTypingWithState(
     from,
-    "¡Hola! 👋\n\nBienvenid@ a *Camicam Photobooth*.",
+    "¡Hola! 👋\n\nBienvenid@ a\n*CAMICAM Photobooth*",
     2000, // Retraso de 2 segundos
     "Contacto Inicial"
   );
