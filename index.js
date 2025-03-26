@@ -1494,6 +1494,11 @@ if (context.estado === "Contacto Inicial") {
         .join(", ");
       await sendWhatsAppMessage(from, `✅ Se ha quitado: ${serviciosAQuitar}`);
     } else {
+      // Se toma el mensaje completo como lista de servicios
+      context.serviciosSeleccionados = userMessage;
+    }
+    
+    /*else {
       // Si el usuario pone directamente la lista sin "agregar"
       // => También se hace la TRANSFORMACIÓN antes de asignar.
       let listaServicios = userMessage;
@@ -1503,7 +1508,7 @@ if (context.estado === "Contacto Inicial") {
         .replace(/\b(\d+)\s+chisperos?\b/gi, 'chisperos $1');
       
       context.serviciosSeleccionados = listaServicios;
-    }
+    }*/
   
     // Inicializamos flags para servicios sin cantidad
     context.faltanLetras = false;
