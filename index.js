@@ -1461,13 +1461,14 @@ if (context.estado === "Contacto Inicial") {
   await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
 
   // Enviar los botones con otro retraso
-  await delay(6000); // Retraso de 5 segundos antes de enviar los botones
+  await delay(6000);
+  await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2024/08/Visita.jpg");
 
   // Mensaje adicional para eventos no listados
   await delay(1500); // Retraso de 1.5 segundos antes de enviar el mensaje
   await sendMessageWithTypingWithState(
     from,
-    "Nuestra area de servicio es el centro de Monterrey y hasta 30 km a la redonda 📍\n\nAtendemos:\n\n*Boda*\n*XV*\n*Revelacion*\n*Propuesta*\n*Graduacion* ó\n*Números*, si es lo que ocupas\n\n*Escribe* el tuyo y revisa el paquete que estamos promocionando👌\n\nO Arma tu Paquete a tu gusto.",
+    "Que tipo de evento tienes?",
     2000,
     "Contacto Inicial"
   );
