@@ -763,7 +763,16 @@ async function sendMessageToAdmin(message) {
 
     // 4) Imagen
     await delay(2000);
-    await sendImageMessage(from, mediaMapping["cabina de fotos"].images);
+    await sendImageMessage(from, mediaMapping["cabina de fotos"].images[0]);
+
+    await delay(2000);
+    await sendImageMessage(from, mediaMapping["cabina de fotos"].images[1]);
+
+    await delay(2000);
+    await sendImageMessage(from, mediaMapping["cabina de fotos"].images[2]);
+
+    await delay(2000);
+    await sendImageMessage(from, mediaMapping["cabina de fotos"].images[3]);
     
 
     // 5) Botones "si_me_interesa_sugerido" y "armar_paquete"
