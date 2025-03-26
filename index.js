@@ -729,6 +729,31 @@ async function handleFAQs(from, userMessage) {
  ****************************************************/
  async function handleTipoEvento(from, messageLower, context) {
 
+   // Verificar si el mensaje es una selección válida de botón
+   const opcionesValidas = ["boda", "evento_boda", "xv", "quince", "otro", "otros"];
+   const esOpcionValida = opcionesValidas.some(opcion => messageLower.includes(opcion));
+ 
+   // Si no es una opción válida, mostrar mensaje de error y botones nuevamente
+   if (!esOpcionValida) {
+     await sendMessageWithTypingWithState(
+       from,
+       "⚠️ Por favor, selecciona una de las opciones disponibles usando los botones:",
+       2000,
+       context.estado
+     );
+     
+     await sendInteractiveMessage(
+       from,
+       "¿Qué tipo de evento estás planeando?",
+       [
+         { id: "evento_boda", title: "Boda 👰" },
+         { id: "xv", title: "XV Años 🎀" },
+         { id: "otros", title: "Otro Evento 🎉" }
+       ]
+     );
+     return false;
+   }
+
   //CASO BODA
   if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
     context.tipoEvento = "Boda";
