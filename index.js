@@ -1444,7 +1444,7 @@ if (context.estado === "Contacto Inicial") {
   // Mensaje inicial explicando que es un asistente virtual
   await sendMessageWithTypingWithState(
     from,
-    "¡Hola! 👋\n\nBienvenid@ a\n\n   *CAMICAM\nPhotobooth*",
+    "¡Hola! 👋\n\nBienvenid@ a\n\n*CAMICAM Photobooth*",
     2000, // Retraso de 2 segundos
     "Contacto Inicial"
   );
@@ -1467,7 +1467,7 @@ if (context.estado === "Contacto Inicial") {
   await delay(1500); // Retraso de 1.5 segundos antes de enviar el mensaje
   await sendMessageWithTypingWithState(
     from,
-    "Atendemos estos eventos 🥳\n\n*Boda*\n*XV*\n*Revelacion*\n*Propuesta*\n*Graduacion* ó\n*Números*, si es lo que ocupas\n\n*Escribe* el tuyo y revisa el paquete que estamos promocionando👌\n\nO Arma tu Paquete a tu gusto.",
+    "Nuestra area de servicio es el centro de Monterrey y hasta 30 km a la redonda 📍\n\nAtendemos:\n\n*Boda*\n*XV*\n*Revelacion*\n*Propuesta*\n*Graduacion* ó\n*Números*, si es lo que ocupas\n\n*Escribe* el tuyo y revisa el paquete que estamos promocionando👌\n\nO Arma tu Paquete a tu gusto.",
     2000,
     "Contacto Inicial"
   );
