@@ -912,7 +912,7 @@ function contarLetras(texto) {
 }
 
 /***************************************************
- FUNCION para identificar el subtipo de evento 
+FUNCION para identificar el subtipo de evento 
 y devolver una recomendación de paquete.
  ****************************************************/
 function getOtherEventPackageRecommendation(userMessage) {
