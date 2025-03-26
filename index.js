@@ -905,11 +905,11 @@ if (recomendacion.media?.videos?.length > 0) {
 }
 
     // Enviar la recomendación de forma personalizada
-    const mensajeRecomendacion = `🎉 *${recomendacion.paquete}*\n${recomendacion.descripcion}\n\nTe gustaría continuar con el ${recomendacion.paquete}?`;
+    const mensajeRecomendacion = `🎉 *${recomendacion.paquete}*\n${recomendacion.descripcion}`;
     await sendMessageWithTypingWithState(from, mensajeRecomendacion, 3000, context.estado);
 
     // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
-    await sendInteractiveMessage(from, "O prefieres Armar tu Paquete?", 
+    await sendInteractiveMessage(from, `Te gustaría continuar con el ${recomendacion.paquete}? O prefieres Armar tu Paquete?`, 
       [
       { id: "si_me_interesa", title: recomendacion.paquete },
       { id: "armar_paquete", title: "Armar mi paquete" }
