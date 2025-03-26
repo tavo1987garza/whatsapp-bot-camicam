@@ -957,7 +957,7 @@ function getOtherEventPackageRecommendation(userMessage) {
   };
 }
 // Detectar propuesta
-else if (/propuesta|pedir matrimonio|marry me/.test(mensaje)) {
+else if (/propuesta|casate|casar|pedir matrimonio|marry me/.test(mensaje)) {
   return {
     paquete: "PAQUETE MARRY ME",
     descripcion: "Perfecto para una propuesta inolvidable, con letras románticas y personalizadas que dicen 'MARRY ME'.",
