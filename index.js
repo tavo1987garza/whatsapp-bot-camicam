@@ -809,6 +809,7 @@ Te presento el paquete que estamos promocionando:
   *PAQUETE MIS XV*
   
       Incluye: 
+
 🔸*Cabina de fotos* (3 Horas) 
 Impresion ilimitada de fotos en calidad Kodak.
 ¡Tus invitados se divertirán mucho con los accesorios chuzcos que ponemos dentro de la cabina!
@@ -829,7 +830,7 @@ Que cubre TODA la pista de baile durante TODO el vals principal.
 Durante el vals principal realizamos 4 detonaciones de papel china cortado en forma de mariposa
 ¡Tus invitados quedarán sorprendidos!
 
-Todo esto con un valos de $8,900
+Todo esto con un valor de $8,900
   
 *¡Contrata ahora y recibe de REGALO!*
     
