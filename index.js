@@ -810,9 +810,20 @@ Te presento el paquete que estamos promocionando:
   
       Incluye: 
 🔸 Cabina de fotos (3 Horas) 
+Impresion ilimitada de fotos en calidad Kodak
+
 🔸 6 letras Gigantes (5 Horas)
-🔸 Niebla de piso ó 
-    Lluvia de mariposas 
+de 1.20 mts de alto y luces led con secuencias multicolor
+
+y Escoge
+
+🔸 Niebla de piso
+Que cubre TODA la pista de baile durante TODO el vals principal
+
+Ó
+
+🔸Lluvia de mariposas 
+Durante el vals principal realizamos 4 detonaciones de papel china cortado en forma de mariposa 
      
       por tan sólo
   
@@ -820,14 +831,8 @@ Te presento el paquete que estamos promocionando:
   
 *¡Contrata ahora y recibe de REGALO!*
     
-🔸 2 Chisperos de luz fría
+🔸 2 Chisperos de Luz Fría De 2.5 mts
 Con un valor de $1,000
-    
-     *¡¡Además!!*
-    
-¡Solo este mes disfruta de un *30% DE DESCUENTO*!
-
-¡¡Un Gran Ahorro que puedes ocupar en otras cosas!!
 `;
     
     const textoB = `
@@ -836,6 +841,9 @@ Con un valor de $1,000
 A las primeras 10 Quinceañeras les estaremos Regalando 
       
 🔸 1 Scrapbook personalizado para la cabina de fotos
+Donde tus invitados pegarán una foto y escribirán un lindo mensaje
+con la posibilidad de personalizarlo con nuestra plantilla de Stickers
+exclusiva para XV años
       
 Con un valor de $1,300
     
@@ -843,12 +851,18 @@ Con un valor de $1,300
     
 ¡Será un recuerdo muy bonito de tu evento!
       
-Si contrataras todo por separado el precio Regular sería de $11,200
+Si contrataras todo esto por separado, el precio Regular sería de $11,200
       
 *¡¡SOLO HOY CONTRATA TODO POR UN EXCELENTE PRECIO!!*
       
 Y no te preocupes que nosotros cubrimos los gastos DE FLETE y transportacion!! a una distancia de hasta 20 km del centro de Monterrey
-      
+
+ *¡¡Aprovecha!!*
+    
+¡Solo este mes disfruta de un *30% DE DESCUENTO*!
+
+¡¡Un Gran Ahorro que puedes ocupar en otras cosas!!
+
     En Resumen:
 
 🔸 *Cabina de fotos* (3 Horas)
@@ -868,7 +882,7 @@ Y no te preocupes que nosotros cubrimos los gastos DE FLETE y transportacion!! a
 
 y separa tu fecha con $500, el resto puede ser el dia de tu evento
       
-Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen la fecha
+Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen tu fecha 😱
       
 `;
 
