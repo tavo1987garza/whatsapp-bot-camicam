@@ -811,7 +811,7 @@ Te presento el paquete que estamos promocionando:
       Incluye: 
 🔸*Cabina de fotos* (3 Horas) 
 Impresion ilimitada de fotos en calidad Kodak.
-¡Tus invitados se divertirán con los accesorios chuzcos que ponemos dentro de la cabina!
+¡Tus invitados se divertirán mucho con los accesorios chuzcos que ponemos dentro de la cabina!
 
 🔸*6 letras Gigantes* (5 Horas)
 De 1.20 mts de alto y luces led con secuencias multicolor.
@@ -827,8 +827,9 @@ Que cubre TODA la pista de baile durante TODO el vals principal.
 
 🔸*Lluvia de mariposas* 
 Durante el vals principal realizamos 4 detonaciones de papel china cortado en forma de mariposa
-¡Tus invitados quedár sorprendidos!
+¡Tus invitados quedarán sorprendidos!
 
+Todo esto con un valos de $8,900
   
 *¡Contrata ahora y recibe de REGALO!*
     
@@ -841,12 +842,10 @@ Con un valor de $1,000
     const textoB = `
 ¡¡Y eso no es todo!! 
     
-A las primeras 10 Quinceañeras les estaremos Regalando 
+A las primeras 10 Quinceañeras que contraten éste paquete les estaremos Regalando 
       
 🔸*1 Scrapbook* personalizado para la cabina de fotos
-Donde tus invitados pegarán una foto y escribirán un lindo mensaje
-con la posibilidad de personalizarlo con nuestra plantilla de Stickers
-exclusiva para XV años
+Donde tus invitados pegarán una de sus fotos y escribirán un lindo mensaje que podrán personalizar con nuestra plantilla de Stickers exclusiva para XV años
       
 Con un valor de $1,300
     
