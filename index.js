@@ -919,7 +919,7 @@ if (recomendacion.media?.videos?.length > 0) {
     context.estado = "EsperandoConfirmacionPaquete";
   } 
 } 
-
+ 
 /***************************************************
  FUNCION para contar solo letras (ignorando números y caracteres especiales)
  ****************************************************/
