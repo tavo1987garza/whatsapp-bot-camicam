@@ -729,36 +729,7 @@ async function handleFAQs(from, userMessage) {
  ****************************************************/
  async function handleTipoEvento(from, messageLower, context) {
 
-  //CASO BODA
-  if (messageLower === "paquete_wedding" || messageLower.includes("Paquete Boda")) {
-    await sendMessageWithTypingWithState(
-      from,
-      "Te presento el *Paquete Wedding* que estamos promocionando: \n\nIncluye Cabina 360, iniciales decorativas, 2 chisperos y un carrito de shots con alcohol, por *$4,450*.",
-      2000,
-      context.estado
-    );
-    await delay(2000);
-    await sendWhatsAppVideo(from, mediaMapping["cabina de fotos"].videos[0]);
-    await delay(2000);
-    await sendImageMessage(from, mediaMapping["cabina de fotos"].images[0]);
-    await delay(2000);
-    await sendImageMessage(from, mediaMapping["cabina de fotos"].images[1]);
-    await delay(2000);
-    await sendImageMessage(from, mediaMapping["cabina de fotos"].images[2]);
-    await delay(2000);
-    await sendImageMessage(from, mediaMapping["cabina de fotos"].images[3]);
-    await delay(2000);
-    await sendInteractiveMessage(
-      from,
-      "¿Te gustaría continuar con el *PAQUETE WEDDING*?\n\nO prefieres armar tu paquete?",
-      [
-        { id: "si_me_interesa", title: "PAQUETE WEDDING" },
-        { id: "armar_paquete", title: "Armar mi paquete" }
-      ]
-    );
-    context.estado = "EsperandoConfirmacionPaquete";
-    return true;
-  }
+
 
   // Caso: Boda (cuando el usuario indica "boda" o "evento_boda")
   if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
@@ -1437,6 +1408,36 @@ if (
     return true; // Evitamos procesar otros estados, ya que se manejó aquí
   }
 
+  //CASO BODA
+  if (messageLower === "paquete_wedding" || messageLower.includes("Paquete Boda")) {
+    await sendMessageWithTypingWithState(
+      from,
+      "Te presento el *Paquete Wedding* que estamos promocionando: \n\nIncluye Cabina 360, iniciales decorativas, 2 chisperos y un carrito de shots con alcohol, por *$4,450*.",
+      2000,
+      context.estado
+    );
+    await delay(2000);
+    await sendWhatsAppVideo(from, mediaMapping["cabina de fotos"].videos[0]);
+    await delay(2000);
+    await sendImageMessage(from, mediaMapping["cabina de fotos"].images[0]);
+    await delay(2000);
+    await sendImageMessage(from, mediaMapping["cabina de fotos"].images[1]);
+    await delay(2000);
+    await sendImageMessage(from, mediaMapping["cabina de fotos"].images[2]);
+    await delay(2000);
+    await sendImageMessage(from, mediaMapping["cabina de fotos"].images[3]);
+    await delay(2000);
+    await sendInteractiveMessage(
+      from,
+      "¿Te gustaría continuar con el *PAQUETE WEDDING*?\n\nO prefieres armar tu paquete?",
+      [
+        { id: "si_me_interesa", title: "PAQUETE WEDDING" },
+        { id: "armar_paquete", title: "Armar mi paquete" }
+      ]
+    );
+    context.estado = "EsperandoConfirmacionPaquete";
+    return true;
+  }
 
 /*''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 🟢 1. INICIO: DAR LA BIENVENIDA, MOSTRAR UNA IMAGEN Y LAS OPCIONES 🟢
