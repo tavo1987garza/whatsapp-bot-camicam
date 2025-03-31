@@ -728,9 +728,6 @@ async function handleFAQs(from, userMessage) {
  y enviar la información
  ****************************************************/
  async function handleTipoEvento(from, messageLower, context) {
-
-
-
   // Caso: Boda (cuando el usuario indica "boda" o "evento_boda")
   if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
     context.tipoEvento = "Boda";
@@ -741,17 +738,19 @@ async function handleFAQs(from, userMessage) {
       context.estado
     );
     await delay(2000);
+    await sendWhatsAppMessage (from, "Mira, éstos son los sevicios que ofrecemos en Camicam Photobooth");
+    await delay(2000);
     await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
     await delay(2000);
     await sendMessageWithTypingWithState(
       from,
-      "Puedes armar tu paquete a tu gusto, con todo lo que necesites, o si prefieres, puedes ver la información de nuestro Paquete exclusivo para Bodas.\n\n¿Cómo quieres continuar? Por favor selecciona una opción:",
+      "Puedes armar tu paquete a tu gusto, con todo lo que necesites\n\nO si prefieres, puedes ver nuestro Paquete exclusivo para Bodas.\n\n¿Cómo quieres continuar?",
       2000,
       context.estado
     );
     await sendInteractiveMessage(
       from,
-      "Elige una opción:",
+      "Selecciona una opción: 👇",
       [
         { id: "armar_paquete", title: "Armar mi paquete" },
         { id: "paquete_wedding", title: "Paquete Boda" }
@@ -1408,7 +1407,10 @@ if (
     return true; // Evitamos procesar otros estados, ya que se manejó aquí
   }
 
-  //CASO BODA
+  /* ============================================
+   Interceptamos el botón "paquete_wedding"
+   CASO BODA
+   ============================================ */
   if (messageLower === "paquete_wedding" || messageLower.includes("Paquete Boda")) {
     await sendMessageWithTypingWithState(
       from,
@@ -1446,8 +1448,8 @@ if (context.estado === "Contacto Inicial") {
   // Mensaje inicial explicando que es un asistente virtual
   await sendMessageWithTypingWithState(
     from,
-    "¡Hola! 👋\n\nBienvenid@ a\n*CAMICAM Photobooth*\n",
-    2000, // Retraso de 2 segundos
+    "¡Hola! 👋\n\nEncantado en ayudarte",
+    1500, // Retraso de 2 segundos
     "Contacto Inicial"
   );
 
@@ -1460,17 +1462,17 @@ if (context.estado === "Contacto Inicial") {
 
   // Enviar la imagen de servicios con un retraso
   /*await delay(3000); */// Retraso de 3 segundos antes de enviar la imagen
-  await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
+  /*await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
 
   // Enviar los botones con otro retraso
   await delay(6000);
-  await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2024/08/Visita.jpg");
+  await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2024/08/Visita.jpg");*/
 
   // Mensaje adicional para eventos no listados
-  await delay(1500); // Retraso de 1.5 segundos antes de enviar el mensaje
+  await delay(500); // Retraso de 1.5 segundos antes de enviar el mensaje
   await sendMessageWithTypingWithState(
     from,
-    "Que tipo de evento tienes?",
+    "Para comenzar, ¿Qué tipo de evento tienes?",
     2000,
     "Contacto Inicial"
   );
