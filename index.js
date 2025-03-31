@@ -730,50 +730,23 @@ async function handleFAQs(from, userMessage) {
  async function handleTipoEvento(from, messageLower, context) {
 
   //CASO BODA
-  if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
-    context.tipoEvento = "Boda";
-
-    // Titulo del PAQUETE WEDDING
-    context.paqueteRecomendado = {
-      paquete: "PAQUETE WEDDING"
-    };
-
-    // 1) Texto 1
-    await sendMessageWithTypingWithState(
-      from,
-      "¡Muchas felicidades por tu Boda! 👏 Será un día inolvidable. ❤️",
-      2000,
-      context.estado
-    );
-
-    // 2) Texto 2
-    await delay(2000);
+  if (messageLower === "paquete_wedding") {
     await sendMessageWithTypingWithState(
       from,
       "Te presento el *Paquete Wedding* que estamos promocionando: \n\nIncluye Cabina 360, iniciales decorativas, 2 chisperos y un carrito de shots con alcohol, por *$4,450*.",
       2000,
       context.estado
     );
-
-    // 3) Video
     await delay(2000);
     await sendWhatsAppVideo(from, mediaMapping["cabina de fotos"].videos[0]);
-
-    // 4) Imagen
     await delay(2000);
     await sendImageMessage(from, mediaMapping["cabina de fotos"].images[0]);
-
     await delay(2000);
     await sendImageMessage(from, mediaMapping["cabina de fotos"].images[1]);
-
     await delay(2000);
     await sendImageMessage(from, mediaMapping["cabina de fotos"].images[2]);
-
     await delay(2000);
     await sendImageMessage(from, mediaMapping["cabina de fotos"].images[3]);
-    
-
-    // 5) Botones "si_me_interesa_sugerido" y "armar_paquete"
     await delay(2000);
     await sendInteractiveMessage(
       from,
@@ -783,8 +756,36 @@ async function handleFAQs(from, userMessage) {
         { id: "armar_paquete", title: "Armar mi paquete" }
       ]
     );
+    context.estado = "EsperandoConfirmacionPaquete";
+    return true;
+  }
 
-    // -> Unificación: pasamos directamente a "EsperandoConfirmacionPaquete"
+  // Caso: Boda (cuando el usuario indica "boda" o "evento_boda")
+  if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
+    context.tipoEvento = "Boda";
+    await sendMessageWithTypingWithState(
+      from,
+      "¡Muchas felicidades por tu Boda! 👏 Será un día inolvidable. ❤️",
+      2000,
+      context.estado
+    );
+    await delay(2000);
+    await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
+    await delay(2000);
+    await sendMessageWithTypingWithState(
+      from,
+      "Puedes armar tu paquete a tu gusto, con todo lo que necesites, o si prefieres, puedes ver la información de nuestro Paquete exclusivo para Bodas.\n\n¿Cómo quieres continuar? Por favor selecciona una opción:",
+      2000,
+      context.estado
+    );
+    await sendInteractiveMessage(
+      from,
+      "Elige una opción:",
+      [
+        { id: "armar_paquete", title: "Armar mi paquete" },
+        { id: "paquete_wedding", title: "Paquete Wedding" }
+      ]
+    );
     context.estado = "EsperandoConfirmacionPaquete";
     return true;
   }
@@ -1506,7 +1507,8 @@ if (context.estado === "Contacto Inicial") {
     const msg = userMessage.toLowerCase();
   
     // a) si al usuario le interesa cualquier paquete
-    if (msg === "si_me_interesa_sugerido" || "si_me_interesa") {
+      if (msg === "si_me_interesa_sugerido" || msg === "si_me_interesa") {
+
       context.estado = "EsperandoFecha";
       await solicitarFecha(from, context);
       return true;
