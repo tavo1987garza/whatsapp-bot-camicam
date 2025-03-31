@@ -745,13 +745,13 @@ async function handleFAQs(from, userMessage) {
     );
     await delay(2000);
     await sendWhatsAppMessage (from, "Mira, éstos son los sevicios que ofrecemos en Camicam Photobooth");
-    await delay(2000);
+    await delay(4000);
     await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
-    await delay(2000);
+    await delay(6000);
     await sendMessageWithTypingWithState(
       from,
       "Puedes armar tu paquete a tu gusto, con todo lo que necesites\n\nO si prefieres, puedes ver nuestro Paquete exclusivo para Bodas.\n\n¿Cómo quieres continuar?",
-      2000,
+      3000,
       context.estado
     );
     await sendInteractiveMessage(
@@ -759,7 +759,7 @@ async function handleFAQs(from, userMessage) {
       "Selecciona una opción: 👇",
       [
         { id: "armar_paquete", title: "Armar mi paquete" },
-        { id: "paquete_wedding", title: "Paquete Boda" }
+        { id: "paquete_wedding", title: "Paquete Para Bodas" }
       ]
     );
     context.estado = "EsperandoConfirmacionPaquete";
@@ -775,140 +775,29 @@ async function handleFAQs(from, userMessage) {
       paquete: "PAQUETE MIS XV"
     };
 
-      // PARTE 1
-  const textoA = `
-¡Muchas felicidades! 👏
-
-Tu fiesta de XV años será Inolvidable!! ✨
-
-Te presento el paquete que estamos promocionando:
-
-  *PAQUETE MIS XV*
-
-      Incluye: 
-
-🔸*Cabina de fotos* (3 Horas) 
-Impresion ilimitada de fotos en calidad Kodak.
-¡Tus invitados se divertirán mucho con los accesorios chuzcos que ponemos dentro de la cabina!
-
-🔸*6 letras Gigantes* (5 Horas)
-De 1.20 mts de alto y luces led con secuencias multicolor.
-¡Para que tu nombre se vea espectacular!
-
-y Escoge
-
-🔸*Niebla de piso*
-Que cubre TODA la pista de baile durante TODO el vals principal.
-¡Lucirás hermosa con tu papá!
-
-Ó
-
-🔸*Lluvia de mariposas* 
-Durante el vals principal realizamos 4 detonaciones de papel china cortado en forma de mariposa
-¡Tus invitados quedarán sorprendidos!
-
-Todo esto con un valor de $8,900
-`;
-
- // PARTE 2
- const textoB = `  
-*¡Contrata ahora y recibe de REGALO!*
-
-🔸*2 Chisperos* de Luz Fría De 2.5 mts
-Ideales para la presentación
-
-Con un valor de $1,000
-
-¡¡Y eso no es todo!! 
-
-A las primeras 10 Quinceañeras que contraten éste paquete les estaremos Regalando 
-
-🔸*1 Scrapbook* personalizado para la cabina de fotos
-Donde tus invitados pegarán una de sus fotos y escribirán un lindo mensaje que podrán personalizar con nuestra plantilla de Stickers exclusiva para XV años
-
-Con un valor de $1,300
-
-¡Te lo llevamos también Completamente Gratis!
-
-¡Será un recuerdo muy bonito de tu evento!
-
-Si contrataras todo esto por separado, el precio Regular sería de $11,200
-
-*¡¡SOLO HOY CONTRATA TODO POR UN EXCELENTE PRECIO!!*
- `;
-    
-    const textoC = `
-Y no te preocupes que nosotros cubrimos los gastos DE FLETE y transportacion!! a una distancia de hasta 20 km del centro de Monterrey
-
- *¡¡Aprovecha!!*
-
-¡Solo este mes disfruta de un *45% DE DESCUENTO*!
-
-¡¡Un Gran Ahorro que puedes ocupar en otras cosas!!
-
-    En Resumen:
-
-🔸 *Cabina de fotos* (3 Horas)
-🔸 *6 letras Gigantes* (5 Horas)
-🔸 *Niebla de piso* ó 
-    *Lluvia de mariposas* 
-🔸 *2 Chisperos de luz fría*
-🔸 *1 Scrapbook*
-🔸 *Descuento de $5,040*
-🔸 *Flete Incluido*
-
-*¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
-
-      ✨ *$6,160* ✨
-
-¡¡Aprovecha esta oportunidad!!
-
-y separa tu fecha con $500, el resto puede ser el dia de tu evento
-
-Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen tu fecha 😱      
-`;
-
-
-
-    // Enviamos imagen de presentacion
-    await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg");
-    
-    // Primer mensaje
+    await sendMessageWithTypingWithState(
+      from,
+      "¡Muchas felicidades por tu Boda! 👏 Será un día inolvidable. ❤️",
+      2000,
+      context.estado
+    );
     await delay(2000);
-    await sendMessageWithTypingWithState(from, textoA, 2000, context.estado);
-
-    // Segundo mensaje
-    await delay(2000);
-    await sendMessageWithTypingWithState(from, textoB, 2000, context.estado);
-
-    // Tercer mensaje
-    await delay(2000);
-    await sendMessageWithTypingWithState(from, textoC, 2000, context.estado);
-
-    // Archivos multimedia
-    await delay(2000);
-    await sendWhatsAppVideo(from, mediaMapping["cabina de fotos"].videos[0]);
-
-    await delay(2000);
-    await sendImageMessage(from, mediaMapping["cabina de fotos"].images[0]);
-
-    await delay(2000);
-    await sendImageMessage(from, mediaMapping["cabina de fotos"].images[1]);
-
-    await delay(2000);
-    await sendImageMessage(from, mediaMapping["cabina de fotos"].images[2]);
-
-    await delay(2000);
-    await sendImageMessage(from, mediaMapping["cabina de fotos"].images[3]);
-    
-    // Botones
-    await delay(2000);
+    await sendWhatsAppMessage (from, "Mira, éstos son los sevicios que ofrecemos en Camicam Photobooth");
+    await delay(4000);
+    await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
+    await delay(6000);
+    await sendMessageWithTypingWithState(
+      from,
+      "Puedes armar tu paquete a tu gusto, con todo lo que necesites\n\nO si prefieres, puedes ver nuestro Paquete exclusivo para Bodas.\n\n¿Cómo quieres continuar?",
+      3000,
+      context.estado
+    );
     await sendInteractiveMessage(
       from,
-      "¿Te gustaría continuar con el *PAQUETE MIS XV*?\n\nO prefieres armar tu Paquete Personalizado?",
+      "Selecciona una opción: 👇",
       [
-        { id: "si_me_interesa", title: "PAQUETE MIS XV" },
-        { id: "armar_paquete", title: "Armar mi paquete" }
+        { id: "armar_paquete", title: "Armar mi paquete" },
+        { id: "paquete_xv", title: "Paquete Para XV" }
       ]
     );
 
@@ -1417,7 +1306,7 @@ if (
    Interceptamos el botón "paquete_wedding"
    CASO BODA
    ============================================ */
-  if (messageLower === "paquete_wedding" || messageLower.includes("Paquete Boda")) {
+  if (messageLower === "paquete_wedding" || messageLower.includes("Paquete Para Bodas")) {
     await sendMessageWithTypingWithState(
       from,
       "Te presento el *Paquete Wedding* que estamos promocionando: \n\nIncluye Cabina 360, iniciales decorativas, 2 chisperos y un carrito de shots con alcohol, por *$4,450*.",
@@ -1447,6 +1336,155 @@ if (
     return true;
   }
 
+
+  /* ============================================
+   Interceptamos el botón "paquete_xv"
+   CASO BODA
+   ============================================ */
+   if (messageLower === "paquete_xv" || messageLower.includes("Paquete Para XV")) {
+
+
+    
+      // PARTE 1
+  const textoA = `
+  ¡Muchas felicidades! 👏
+  
+  Tu fiesta de XV años será Inolvidable!! ✨
+  
+  Te presento el paquete que estamos promocionando:
+  
+    *PAQUETE MIS XV*
+  
+        Incluye: 
+  
+  🔸*Cabina de fotos* (3 Horas) 
+  Impresion ilimitada de fotos en calidad Kodak.
+  ¡Tus invitados se divertirán mucho con los accesorios chuzcos que ponemos dentro de la cabina!
+  
+  🔸*6 letras Gigantes* (5 Horas)
+  De 1.20 mts de alto y luces led con secuencias multicolor.
+  ¡Para que tu nombre se vea espectacular!
+  
+  y Escoge
+  
+  🔸*Niebla de piso*
+  Que cubre TODA la pista de baile durante TODO el vals principal.
+  ¡Lucirás hermosa con tu papá!
+  
+  Ó
+  
+  🔸*Lluvia de mariposas* 
+  Durante el vals principal realizamos 4 detonaciones de papel china cortado en forma de mariposa
+  ¡Tus invitados quedarán sorprendidos!
+  
+  Todo esto con un valor de $8,900
+  `;
+  
+   // PARTE 2
+   const textoB = `  
+  *¡Contrata ahora y recibe de REGALO!*
+  
+  🔸*2 Chisperos* de Luz Fría De 2.5 mts
+  Ideales para la presentación
+  
+  Con un valor de $1,000
+  
+  ¡¡Y eso no es todo!! 
+  
+  A las primeras 10 Quinceañeras que contraten éste paquete les estaremos Regalando 
+  
+  🔸*1 Scrapbook* personalizado para la cabina de fotos
+  Donde tus invitados pegarán una de sus fotos y escribirán un lindo mensaje que podrán personalizar con nuestra plantilla de Stickers exclusiva para XV años
+  
+  Con un valor de $1,300
+  
+  ¡Te lo llevamos también Completamente Gratis!
+  
+  ¡Será un recuerdo muy bonito de tu evento!
+  
+  Si contrataras todo esto por separado, el precio Regular sería de $11,200
+  
+  *¡¡SOLO HOY CONTRATA TODO POR UN EXCELENTE PRECIO!!*
+   `;
+      
+      const textoC = `
+  Y no te preocupes que nosotros cubrimos los gastos DE FLETE y transportacion!! a una distancia de hasta 20 km del centro de Monterrey
+  
+   *¡¡Aprovecha!!*
+  
+  ¡Solo este mes disfruta de un *45% DE DESCUENTO*!
+  
+  ¡¡Un Gran Ahorro que puedes ocupar en otras cosas!!
+  
+      En Resumen:
+  
+  🔸 *Cabina de fotos* (3 Horas)
+  🔸 *6 letras Gigantes* (5 Horas)
+  🔸 *Niebla de piso* ó 
+      *Lluvia de mariposas* 
+  🔸 *2 Chisperos de luz fría*
+  🔸 *1 Scrapbook*
+  🔸 *Descuento de $5,040*
+  🔸 *Flete Incluido*
+  
+  *¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
+  
+        ✨ *$6,160* ✨
+  
+  ¡¡Aprovecha esta oportunidad!!
+  
+  y separa tu fecha con $500, el resto puede ser el dia de tu evento
+  
+  Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen tu fecha 😱      
+  `;
+  
+  
+  
+      // Enviamos imagen de presentacion
+      await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg");
+      
+      // Primer mensaje
+      await delay(2000);
+      await sendMessageWithTypingWithState(from, textoA, 2000, context.estado);
+  
+      // Segundo mensaje
+      await delay(2000);
+      await sendMessageWithTypingWithState(from, textoB, 2000, context.estado);
+  
+      // Tercer mensaje
+      await delay(2000);
+      await sendMessageWithTypingWithState(from, textoC, 2000, context.estado);
+  
+      // Archivos multimedia
+      await delay(2000);
+      await sendWhatsAppVideo(from, mediaMapping["cabina de fotos"].videos[0]);
+  
+      await delay(2000);
+      await sendImageMessage(from, mediaMapping["cabina de fotos"].images[0]);
+  
+      await delay(2000);
+      await sendImageMessage(from, mediaMapping["cabina de fotos"].images[1]);
+  
+      await delay(2000);
+      await sendImageMessage(from, mediaMapping["cabina de fotos"].images[2]);
+  
+      await delay(2000);
+      await sendImageMessage(from, mediaMapping["cabina de fotos"].images[3]);
+      
+      // Botones
+      await delay(2000);
+      await sendInteractiveMessage(
+        from,
+        "¿Te gustaría continuar con el *PAQUETE MIS XV*?\n\nO prefieres armar tu Paquete Personalizado?",
+        [
+          { id: "si_me_interesa", title: "PAQUETE MIS XV" },
+          { id: "armar_paquete", title: "Armar mi paquete" }
+        ]
+      );
+    context.estado = "EsperandoConfirmacionPaquete";
+    return true;
+  }
+
 /*''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 🟢 1. INICIO: DAR LA BIENVENIDA, MOSTRAR UNA IMAGEN Y LAS OPCIONES 🟢
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''*/
@@ -1454,7 +1492,7 @@ if (context.estado === "Contacto Inicial") {
   // Mensaje inicial explicando que es un asistente virtual
   await sendMessageWithTypingWithState(
     from,
-    "¡Hola! 👋\n\nEncantado en ayudarte",
+    "¡Hola! 👋\n\nEstoy para ayudarte",
     1500, // Retraso de 2 segundos
     "Contacto Inicial"
   );
@@ -1478,7 +1516,7 @@ if (context.estado === "Contacto Inicial") {
   await delay(500); // Retraso de 1.5 segundos antes de enviar el mensaje
   await sendMessageWithTypingWithState(
     from,
-    "Para comenzar, ¿Qué tipo de evento tienes?",
+    "Para iniciar, indicame por favor ¿Qué tipo de evento tienes?",
     2000,
     "Contacto Inicial"
   );
