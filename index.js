@@ -1495,9 +1495,37 @@ if (context.estado === "Contacto Inicial") {
  if (context.estado === "EsperandoTipoEvento" || context.estado === "EsperandoSubtipoOtroEvento") {
   // Se invoca la función que procesa la elección del cliente
   const messageLower = userMessage.toLowerCase();
-  await handleTipoEvento(from, messageLower, context);
+  console.log("Tipo de evento recibido:", messageLower);
+  if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
+    context.tipoEvento = "Boda";
+    // Mensaje de confirmación para bodas
+    await sendMessageWithTypingWithState(
+      from,
+      "¡Perfecto!! Hagamos de tu evento, ¡la boda del año!",
+      2000,
+      "EsperandoTipoEvento"
+    );
+    // Enviar imagen con los servicios
+    await delay(3000);
+    await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
+    // Explicar opciones y enviar botones
+    await sendInteractiveMessage(
+      from,
+      "Puedes armar tu paquete a tu gusto, o ver la información de nuestro *Paquete Wedding* exclusivo para bodas.\n\n¿Cómo quieres continuar? Selecciona una opción:",
+      [
+        { id: "armar_paquete", title: "Armar mi paquete" },
+        { id: "paquete_wedding", title: "Paquete Wedding" }
+      ]
+    );
+    context.estado = "EsperandoConfirmacionPaquete";
+  }
+  /*await handleTipoEvento(from, messageLower, context);*/
   return true;
 }   
+
+
+
+
 
 /*''''''''''''''''''''''''''''''''''''''''''''
 🟢 3. ESPRAMOS LA CONFIRMACION DEL PAQUETE 🟢
