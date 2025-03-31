@@ -730,7 +730,7 @@ async function handleFAQs(from, userMessage) {
  async function handleTipoEvento(from, messageLower, context) {
 
   //CASO BODA
-  if (messageLower === "paquete_wedding") {
+  if (messageLower === "paquete_wedding" || messageLower.includes("Paquete Wedding")) {
     await sendMessageWithTypingWithState(
       from,
       "Te presento el *Paquete Wedding* que estamos promocionando: \n\nIncluye Cabina 360, iniciales decorativas, 2 chisperos y un carrito de shots con alcohol, por *$4,450*.",
