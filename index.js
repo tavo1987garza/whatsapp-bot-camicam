@@ -1035,8 +1035,8 @@ else if (/graduación|grad|class|gen\b/.test(mensaje)) {
 
 // Si no se detecta un subtipo específico
 return {
-  paquete: "OTRO PAQUETE",
-  descripcion: "Tenemos varias opciones personalizadas. ¿Podrías contarnos un poco más sobre tu evento para ofrecerte la mejor recomendación?",
+  paquete: "ARMA TU PAQUETE",
+  descripcion: "Estos son los ervicios que ofrecemos en Camicam Photobooth. ¿Podrías contarnos un poco más sobre tu evento para ofrecerte la mejor recomendación?",
   media: {
     images: ["http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg"],
     videos: []
@@ -1444,7 +1444,7 @@ if (context.estado === "Contacto Inicial") {
   // Mensaje inicial explicando que es un asistente virtual
   await sendMessageWithTypingWithState(
     from,
-    "¡Hola! 👋",
+    "¡Hola! 👋 Encantado de ayudarte!!",
     1000, // Retraso de 2 segundos
     "Contacto Inicial"
   );
@@ -1468,7 +1468,7 @@ if (context.estado === "Contacto Inicial") {
   await delay(500); // Retraso de 1.5 segundos antes de enviar el mensaje
   await sendMessageWithTypingWithState(
     from,
-    "Que tipo de evento tienes?",
+    "Para comenzar, ¿Qué tipo de evento tienes?",
     2000,
     "Contacto Inicial"
   );
