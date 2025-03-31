@@ -1444,8 +1444,8 @@ if (context.estado === "Contacto Inicial") {
   // Mensaje inicial explicando que es un asistente virtual
   await sendMessageWithTypingWithState(
     from,
-    "¡Hola! 👋\n\nBienvenid@ a\n\n*CAMICAM Photobooth*",
-    2000, // Retraso de 2 segundos
+    "¡Hola! 👋",
+    1000, // Retraso de 2 segundos
     "Contacto Inicial"
   );
 
@@ -1457,15 +1457,15 @@ if (context.estado === "Contacto Inicial") {
   );*/
 
   // Enviar la imagen de servicios con un retraso
-  /*await delay(3000); */// Retraso de 3 segundos antes de enviar la imagen
+  /*await delay(3000); /// Retraso de 3 segundos antes de enviar la imagen
   await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
 
   // Enviar los botones con otro retraso
   await delay(6000);
-  await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2024/08/Visita.jpg");
+  await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2024/08/Visita.jpg");*/
 
   // Mensaje adicional para eventos no listados
-  await delay(1500); // Retraso de 1.5 segundos antes de enviar el mensaje
+  await delay(500); // Retraso de 1.5 segundos antes de enviar el mensaje
   await sendMessageWithTypingWithState(
     from,
     "Que tipo de evento tienes?",
