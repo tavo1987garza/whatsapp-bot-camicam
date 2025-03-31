@@ -732,7 +732,11 @@ async function handleFAQs(from, userMessage) {
   if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
     context.tipoEvento = "Boda";
 
-    
+        // Paquete Recomendado PAQUETE WEDDING
+    context.paqueteRecomendado = {
+      paquete: "PAQUETE WEDDING"
+    };
+
     await sendMessageWithTypingWithState(
       from,
       "¡Muchas felicidades por tu Boda! 👏 Será un día inolvidable. ❤️",
