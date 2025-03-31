@@ -731,6 +731,8 @@ async function handleFAQs(from, userMessage) {
   // Caso: Boda (cuando el usuario indica "boda" o "evento_boda")
   if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
     context.tipoEvento = "Boda";
+
+    
     await sendMessageWithTypingWithState(
       from,
       "¡Muchas felicidades por tu Boda! 👏 Será un día inolvidable. ❤️",
@@ -764,7 +766,7 @@ async function handleFAQs(from, userMessage) {
   else if (messageLower.includes("xv") || messageLower.includes("quince")) {
     context.tipoEvento = "XV";
 
-    // Texto del PAQUETE MIS XV
+    // Paquete Recomendado PAQUETE MIS XV
     context.paqueteRecomendado = {
       paquete: "PAQUETE MIS XV"
     };
@@ -1368,7 +1370,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
       // Lógica genérica de “Arma tu paquete”
       await sendMessageWithTypingWithState(
         from,
-        "¡Genial! 🤩 ¡Vamos a personalizar tu paquete!\n\n✏️ *Escribe separado por comas*.\n\nPor ejemplo:\ncabina de fotos, cabina 360, 6 letras gigantes, 4 chisperos, carrito de shots con alcohol, carrito de shots sin alcohol, lluvia de mariposas, lluvia metálica, niebla de piso, scrapbook, audio guest book",
+        "¡Genial! 🤩 ¡Vamos a personalizar tu paquete!\n\n✏️ *Escribe lo que necestas separado por comas*.\n\nPor ejemplo:\ncabina de fotos, cabina 360, 6 letras gigantes, 4 chisperos, carrito de shots con alcohol, carrito de shots sin alcohol, lluvia de mariposas, lluvia metálica, niebla de piso, scrapbook, audio guest book",
         2000,
         context.estado
       );
