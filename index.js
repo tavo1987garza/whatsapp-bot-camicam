@@ -750,7 +750,7 @@ async function handleFAQs(from, userMessage) {
     await delay(6000);
     await sendMessageWithTypingWithState(
       from,
-      "Puedes armar tu paquete a tu gusto, con todo lo que necesites\n\nO si prefieres, puedes ver nuestro Paquete exclusivo para Bodas.\n\n¿Cómo quieres continuar?",
+      "Puedes armar tu paquete a tu gusto, con todo lo que necesites, (igual si necesitas un solo servicio)\n\nO si prefieres, puedes ver nuestro Paquete Exclusivo para Bodas.\n\n¿Cómo quieres continuar?",
       3000,
       context.estado
     );
@@ -788,7 +788,7 @@ async function handleFAQs(from, userMessage) {
     await delay(6000);
     await sendMessageWithTypingWithState(
       from,
-      "Puedes armar tu paquete a tu gusto, con todo lo que necesites\n\nO si prefieres, puedes ver nuestro Paquete exclusivo para XV.\n\n¿Cómo quieres continuar?",
+      "Puedes armar tu paquete a tu gusto, con todo lo que necesites, (igual si necesitas un solo servicio)\n\nO si prefieres, puedes ver nuestro Paquete exclusivo para XV.\n\n¿Cómo quieres continuar?",
       3000,
       context.estado
     );
