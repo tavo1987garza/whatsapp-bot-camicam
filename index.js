@@ -777,7 +777,7 @@ async function handleFAQs(from, userMessage) {
 
     await sendMessageWithTypingWithState(
       from,
-      "¡Muchas felicidades por tu Boda! 👏 Será un día inolvidable. ❤️",
+      "¡Muchas felicidades! 👏\n\nTu fiesta de XV Años será un día inolvidable ✨",
       2000,
       context.estado
     );
@@ -788,7 +788,7 @@ async function handleFAQs(from, userMessage) {
     await delay(6000);
     await sendMessageWithTypingWithState(
       from,
-      "Puedes armar tu paquete a tu gusto, con todo lo que necesites\n\nO si prefieres, puedes ver nuestro Paquete exclusivo para Bodas.\n\n¿Cómo quieres continuar?",
+      "Puedes armar tu paquete a tu gusto, con todo lo que necesites\n\nO si prefieres, puedes ver nuestro Paquete exclusivo para XV.\n\n¿Cómo quieres continuar?",
       3000,
       context.estado
     );
@@ -1346,11 +1346,7 @@ if (
 
     
       // PARTE 1
-  const textoA = `
-  ¡Muchas felicidades! 👏
-  
-  Tu fiesta de XV años será Inolvidable!! ✨
-  
+  const textoA = `  
   Te presento el paquete que estamos promocionando:
   
     *PAQUETE MIS XV*
