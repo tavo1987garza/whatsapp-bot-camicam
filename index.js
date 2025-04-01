@@ -766,7 +766,7 @@ async function handleFAQs(from, userMessage) {
     return true;
   }
 
-  //CASO XV
+  //CASO XV 
   else if (messageLower.includes("xv") || messageLower.includes("quince")) {
     context.tipoEvento = "XV";
 
