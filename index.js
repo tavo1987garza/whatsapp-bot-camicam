@@ -1694,6 +1694,12 @@ if (context.estado === "EsperandoCantidadChisperos") {
     await sendWhatsAppMessage(from, "Por favor, ingresa un número válido para la cantidad de chisperos.");
     return true;
   }
+
+  // Verificar que la cantidad sea par
+  if (cantidad % 2 !== 0) {
+    await sendWhatsAppMessage(from, "Cantidad inválida. Las opciones válidas para los chisperos son cantidades pares: 2, 4, 6, 8, 10, etc.");
+    return true;
+  }
  
   // Regex para capturar "chisperos" con o sin número
   const regex = /chisperos(\s*\d+)?/i;
@@ -1997,6 +2003,13 @@ if (context.estado === "ConfirmarAgregarCabinaCambio") {
           return true;
         }
         const nuevaCantidad = cantidadActual - cantidadAQuitar;
+       
+        // Si se trata de chisperos, la nueva cantidad debe ser 0 o par
+      if (servicioAQuitar === "chisperos" && nuevaCantidad > 0 && nuevaCantidad % 2 !== 0) {
+        await sendWhatsAppMessage(from, "Cantidad inválida. Las opciones válidas para los chisperos son cantidades pares: 2, 4, 6, 8, 10, etc. No se ha actualizado la cotización.");
+        return true;
+      }
+
         if (nuevaCantidad > 0) {
           context.serviciosSeleccionados = context.serviciosSeleccionados.replace(regex, `${servicioAQuitar} ${nuevaCantidad}`);
           await sendWhatsAppMessage(from, `✅ Se han quitado ${cantidadAQuitar} ${servicioAQuitar}. Ahora tienes ${nuevaCantidad}.`);
