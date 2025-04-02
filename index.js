@@ -469,6 +469,17 @@ function parseFecha(dateString) {
   return `${day}/${month}/${year}`;
 }
 
+function formatFechaEnEspanol(fechaStr) {
+  // Suponiendo que fechaStr es "DD/MM/AAAA"
+  const [dia, mes, anio] = fechaStr.split("/");
+  const meses = [
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+  ];
+  const mesNombre = meses[parseInt(mes, 10) - 1];
+  return `${dia} de ${mesNombre} ${anio}`;
+}
+
 // Función para validar formato y existencia de la fecha (DD/MM/AAAA)
 function isValidDate(dateString) {
   const regex = /^\d{2}\/\d{2}\/\d{4}$/; // Formato DD/MM/AAAA
@@ -2226,7 +2237,9 @@ if (context.estado === "EsperandoFecha") {
   }
 
   // Convertir la fecha al formato DD/MM/AAAA utilizando parseFecha
-  const formattedDate = parseFecha(userMessage);
+  const fechaDDMMYYYY = parseFecha(userMessage);
+  // Formatear la fecha a "DD de Mes AAAA"
+  const formattedDate = formatFechaEnEspanol(fechaDDMMYYYY);
 
   // Verificar disponibilidad de la fecha (simulado)
   if (!checkAvailability(formattedDate)) {
