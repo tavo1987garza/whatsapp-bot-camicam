@@ -1640,7 +1640,7 @@ if (context.estado === "Contacto Inicial") {
         from,
         "Elige una opción:",
         [
-          { id: "si_me_interesa", title: "Sí, me interesa" },
+          { id: "si_me_interesa", title: context.paqueteRecomendado?.paquete},
           { id: "armar_paquete",  title: "Armar mi paquete" }
         ]
       );
