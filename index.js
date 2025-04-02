@@ -1263,7 +1263,7 @@ async function handleUserMessage(from, userMessage, messageLower) {
       // Lógica genérica de “Arma tu paquete”
       await sendMessageWithTypingWithState(
         from,
-        "¡Genial! 🤩 ¡Vamos a personalizar tu paquete!\n\n✏️ *Escribe lo que necestas separado por comas*.\n\nPor ejemplo:\ncabina de fotos, cabina 360, 6 letras gigantes, 4 chisperos, carrito de shots con alcohol, carrito de shots sin alcohol, lluvia de mariposas, lluvia metálica, niebla de piso, scrapbook, audio guest book",
+        "¡Genial! 🤩 ¡Vamos a personalizar tu paquete!\n\n✏️ *Escribe lo que necesitas separado por comas*.\n\nPor ejemplo:\ncabina de fotos, cabina 360, 6 letras gigantes, 4 chisperos, carrito de shots con alcohol, carrito de shots sin alcohol, lluvia de mariposas, lluvia metálica, niebla de piso, scrapbook, audio guest book",
         2000,
         context.estado
       );
@@ -1488,7 +1488,7 @@ if (context.estado === "Contacto Inicial") {
   // Mensaje inicial explicando que es un asistente virtual
   await sendMessageWithTypingWithState(
     from,
-    "¡Hola! 👋\n\nEstoy para ayudarte",
+    "¡Hola! 👋\n\nEstoy aquí para ayudarte",
     1500, // Retraso de 2 segundos
     "Contacto Inicial"
   );
@@ -1512,7 +1512,7 @@ if (context.estado === "Contacto Inicial") {
   await delay(500); // Retraso de 1.5 segundos antes de enviar el mensaje
   await sendMessageWithTypingWithState(
     from,
-    "Para iniciar, indicame por favor ¿Qué tipo de evento tienes?",
+    "Para iniciar, dime por favor\n¿Qué tipo de evento tienes?",
     2000,
     "Contacto Inicial"
   );
@@ -1723,14 +1723,29 @@ if (context.estado === "EsperandoCantidadLetras") {
     await sendWhatsAppMessage(from, "Por favor, ingresa un número válido para la cantidad de letras.");
     return true;
   }
-  // Regex para capturar "letras" o "letras gigantes", con o sin número
-  const regex = /letras(?:\s*gigantes)?(\s*\d+)?/i;
-  if (regex.test(context.serviciosSeleccionados)) {
-    // Reemplaza cualquier mención de "letras" sin cantidad o con cantidad antigua
-    context.serviciosSeleccionados = context.serviciosSeleccionados.replace(regex, `letras gigantes ${cantidad}`);
-  } else {
-    context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `letras gigantes ${cantidad}`;
+  
+  // Separar la lista de servicios por coma y limpiar espacios
+  let serviciosArray = context.serviciosSeleccionados.split(",").map(s => s.trim());
+  let encontrado = false;
+  
+  // Buscar una entrada que contenga "letras" (sin cantidad) para actualizarla
+  serviciosArray = serviciosArray.map(service => {
+    // Si coincide exactamente con "letras" o "letras gigantes" sin número
+    if (/^letras(\s*gigantes)?$/i.test(service)) {
+      encontrado = true;
+      return `letras gigantes ${cantidad}`;
+    }
+    return service;
+  });
+  
+  // Si no se encontró ninguna entrada para "letras", se agrega al final
+  if (!encontrado) {
+    serviciosArray.push(`letras gigantes ${cantidad}`);
   }
+  
+  // Actualizar la variable de servicios con la lista modificada
+  context.serviciosSeleccionados = serviciosArray.join(", ");
+  
   await sendWhatsAppMessage(from, `✅ Se han agregado ${cantidad} letras gigantes.`);
   
   // Si además faltan chisperos, cambia el estado para solicitarlos
@@ -1740,7 +1755,7 @@ if (context.estado === "EsperandoCantidadLetras") {
     return true;
   }
   
-  // Si no faltan chisperos, actualizar la cotización
+  // Si ya se tienen todos los datos, actualiza la cotización
   await actualizarCotizacion(from, context);
   return true;
 }
