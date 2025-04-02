@@ -1494,42 +1494,50 @@ if (
    Interceptamos el botón "paquete_xv"
    CASO BODA
    ============================================ */
-   if (messageLower === "paquete_otro" || messageLower.includes("recomendacion.paquete")) {
-
+   if (messageLower === "paquete_otro") {
+    // Aseguramos que la recomendación esté en el contexto
+    const recomendacion = context.paqueteRecomendado;
+    
+    if (recomendacion) {
+      // Enviar primero la imagen si existe
+      if (recomendacion.media?.images?.length > 0) {
+        for (const imageUrl of recomendacion.media.images) {
+          await sendImageMessage(from, imageUrl);
+          await delay(2500); // Pequeño delay entre imágenes
+        }
+      }
+    
+      // Luego enviar el video si existe
+      if (recomendacion.media?.videos?.length > 0) {
+        for (const videoUrl of recomendacion.media.videos) {
+          await sendWhatsAppVideo(from, videoUrl);
+          await delay(2500); // Pequeño delay entre videos
+        }
+      }
+    
+      // Enviar la recomendación de forma personalizada
+      const mensajeRecomendacion = `🎉 *${recomendacion.paquete}*\n${recomendacion.descripcion}`;
+      await sendMessageWithTypingWithState(from, mensajeRecomendacion, 3000, context.estado);
+    
+      // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
+      await sendInteractiveMessage(
+        from,
+        `Te gustaría continuar con el ${recomendacion.paquete}?\n\nO prefieres Armar tu Paquete?`,
+        [
+          { id: "si_me_interesa", title: recomendacion.paquete },
+          { id: "armar_paquete", title: "Armar mi paquete" }
+        ]
+      );
+    
+      // Actualizar el estado para manejar la respuesta en el siguiente flujo
+      context.estado = "EsperandoConfirmacionPaquete";
+      return true;
+    } else {
+      await sendWhatsAppMessage(from, "No se encontró una recomendación para este paquete. Por favor, intenta nuevamente.");
+      return true;
+    }
+  }
   
-
-    // Enviar primero la imagen si existe
-if (recomendacion.media?.images?.length > 0) {
-  for (const imageUrl of recomendacion.media.images) {
-    await sendImageMessage(from, imageUrl);
-    await delay(2500); // Pequeño delay entre imágenes
-  }
-}
-
-// Luego enviar el video si existe
-if (recomendacion.media?.videos?.length > 0) {
-  for (const videoUrl of recomendacion.media.videos) {
-    await sendWhatsAppVideo(from, videoUrl);
-    await delay(2500); // Pequeño delay entre videos
-  }
-}
-
-    // Enviar la recomendación de forma personalizada
-    const mensajeRecomendacion = `🎉 *${recomendacion.paquete}*\n${recomendacion.descripcion}`;
-    await sendMessageWithTypingWithState(from, mensajeRecomendacion, 3000, context.estado);
-
-    // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
-    await sendInteractiveMessage(from, `Te gustaría continuar con el ${recomendacion.paquete}?\n\nO prefieres Armar tu Paquete?`, 
-      [
-      { id: "si_me_interesa", title: recomendacion.paquete },
-      { id: "armar_paquete", title: "Armar mi paquete" }
-    ]);
-   
-    // Actualizar el estado para manejar la respuesta en el siguiente flujo
-    context.estado = "EsperandoConfirmacionPaquete";
-    return true;
-  } 
-
 
 
 /*''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
