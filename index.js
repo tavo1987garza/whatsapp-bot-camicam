@@ -2279,7 +2279,7 @@ if (context.estado === "EsperandoLugar") {
   // Mensaje 1: Explicación del anticipo para separar la fecha
   await sendMessageWithTypingWithState(
     from,
-    "Para separar la fecha solicitamos un anticipo de $500, el resto puede ser el día del evento.",
+    "ℹ️ IMPORTANTE ℹ️\n\nPara separar la fecha solicitamos un anticipo de $500, el resto puede ser el día del evento.",
     2000,
     context.estado
   );
