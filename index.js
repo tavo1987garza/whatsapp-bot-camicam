@@ -1,9 +1,14 @@
 
 //CODIGO FUNCIONANDO YA CON LA VARIANTE DE CABINA DE FOTOS O CABINA 360, YA NO HAY ERROR, 
-//CYUANDO EL CLIENTE ESCRIBE "CABINA DE FOTOS" EL BOT YA NO LO TOMA COMO PREGUNTA FRECUENTE 
+//CUANDO EL CLIENTE ESCRIBE "CABINA DE FOTOS" EL BOT YA NO LO TOMA COMO PREGUNTA FRECUENTE 
 //AHORA SI LO  AGREGA A LA COTIZACION. YA NO HAY DUDAS CON EL FLUJO FINAL
-//SE ACOMODARON LAS FUNCIONES Y SE DEPURÓ, TENEMOS EL PROBLEMA DE ARMAR PAQUETE----> NO ACPTA NI LETRAS, NI 5 LETRAS, LETRAS 5 ACEPTA,
+//SE ACOMODARON LAS FUNCIONES Y SE DEPURÓ, YA SE ARREGLO EL PROBLEMA DE ARMAR PAQUETE----> NO ACPTABA NI LETRAS, NI 5 LETRAS, LETRAS 5 ACEPTA,
 //PREGUNTA CUANTAS LETRAS OCUPAS?
+//ESTO YA SE CORRIGIÓ, 
+//TAMBIEN SE CORRIGIO LA VERIFICACION DE QUE CHISPEROS SE INGRESE EN PARES
+//SE AJUSTÓ EL FORMATO DE FECHA: "20 DE MARZO 2025 DISPONIBLE"
+//PQTE BODA, XV Y OTRO SIGUEN EL MISMO FORMATO DE PRESENTACION
+//OBSERVACION, CUANDO EL CLINETE NO CONTESTA, SE VUELVE A ENVIAR EL MENSAJE, HAY QUE PONER ATENCION A ESTO
 // Importar dependencias en modo ES Modules
 import dotenv from 'dotenv'; // Para cargar variables de entorno
 import express from 'express';
@@ -761,7 +766,7 @@ async function handleFAQs(from, userMessage) {
     await delay(6000);
     await sendMessageWithTypingWithState(
       from,
-      "Puedes armar tu paquete a tu gusto, con todo lo que necesites, incluso si requieres un solo servicio.\n\nO si prefieres, puedes ver nuestro Paquete Exclusivo para Bodas.\n\n¿Cómo quieres continuar?",
+      "Puedes armar tu paquete a tu gusto, con todo lo que necesites, incluso si requieres un solo servicio,\n\nO si prefieres, puedes ver nuestro Paquete Exclusivo para Bodas.\n\n¿Cómo quieres continuar?",
       3000,
       context.estado
     );
@@ -799,7 +804,7 @@ async function handleFAQs(from, userMessage) {
     await delay(6000);
     await sendMessageWithTypingWithState(
       from,
-      "Puedes armar tu paquete a tu gusto, con todo lo que necesites, incluso si requieres un solo servicio.\n\nO si prefieres, puedes ver nuestro Paquete exclusivo para XV.\n\n¿Cómo quieres continuar?",
+      "Puedes armar tu paquete a tu gusto, con todo lo que necesites, incluso si requieres un solo servicio,\n\nO si prefieres, puedes ver nuestro Paquete exclusivo para XV.\n\n¿Cómo quieres continuar?",
       3000,
       context.estado
     );
@@ -839,7 +844,7 @@ async function handleFAQs(from, userMessage) {
   await delay(6000);
   await sendMessageWithTypingWithState(
     from,
-    "Puedes armar tu paquete a tu gusto, con todo lo que necesites, incluso si requieres un solo servicio.\n\nO si prefieres, puedes ver la información de nuestro Paquete exclusivo para este tipo de evento.\n\n¿Cómo quieres continuar?",
+    "Puedes armar tu paquete a tu gusto, con todo lo que necesites, incluso si requieres un solo servicio,\n\nO si prefieres, puedes ver la información de nuestro Paquete exclusivo para este tipo de evento.\n\n¿Cómo quieres continuar?",
     3000,
     context.estado
   );
@@ -1613,68 +1618,40 @@ if (context.estado === "Contacto Inicial") {
   return true;
 }   
 
-
 /*''''''''''''''''''''''''''''''''''''''''''''
 🟢 3. ESPRAMOS LA CONFIRMACION DEL PAQUETE 🟢
 ''''''''''''''''''''''''''''''''''''''''''''*/
+   if (context.estado === "EsperandoConfirmacionPaquete") {
+    const msg = userMessage.toLowerCase();
+  
+    // a) si al usuario le interesa cualquier paquete
+      if (msg === "si_me_interesa_sugerido" || msg === "si_me_interesa") {
 
-// Cuando entras al estado de "EsperandoConfirmacionPaquete", inicias el temporizador.
-context.estado = "EsperandoConfirmacionPaquete";
-context.reminderTimeout = setTimeout(async () => {
-  // Verificamos que el usuario aún esté en ese estado
-  if (context.estado === "EsperandoConfirmacionPaquete") {
-    await sendMessageWithTypingWithState(
-      from,
-      "No entendí tu respuesta. Por favor, selecciona una opción válida.",
-      2000,
-      context.estado
-    );
-    await sendInteractiveMessage(
-      from,
-      "Elige una opción:",
-      [
-        { id: "si_me_interesa", title: "Sí, me interesa" },
-        { id: "armar_paquete", title: "Armar mi paquete" }
-      ]
-    );
+      context.estado = "EsperandoFecha";
+      await solicitarFecha(from, context);
+      return true;
+    }
+      
+   
+    // d) cualquier otra respuesta
+    else {
+      await sendMessageWithTypingWithState(
+        from,
+        "No entendí tu respuesta. Por favor, selecciona una opción válida.",
+        2000,
+        context.estado
+      );
+      await sendInteractiveMessage(
+        from,
+        "Elige una opción:",
+        [
+          { id: "si_me_interesa", title: "Sí, me interesa" },
+          { id: "armar_paquete",  title: "Armar mi paquete" }
+        ]
+      );
+      return true;
+    }
   }
-}, 20000); // 120000 ms = 2 minutos
-
-// Al recibir un mensaje en este estado:
-if (context.estado === "EsperandoConfirmacionPaquete") {
-  const msg = userMessage.toLowerCase();
-
-  // Si se recibe una respuesta válida, cancelamos el temporizador
-  if (context.reminderTimeout) {
-    clearTimeout(context.reminderTimeout);
-    delete context.reminderTimeout;
-  }
-
-  // a) Si al usuario le interesa cualquier paquete
-  if (msg === "si_me_interesa_sugerido" || msg === "si_me_interesa") {
-    context.estado = "EsperandoFecha";
-    await solicitarFecha(from, context);
-    return true;
-  } else {
-    // d) Cualquier otra respuesta
-    await sendMessageWithTypingWithState(
-      from,
-      "No entendí tu respuesta. Por favor, selecciona una opción válida.",
-      2000,
-      context.estado
-    );
-    await sendInteractiveMessage(
-      from,
-      "Elige una opción:",
-      [
-        { id: "si_me_interesa", title: "Sí, me interesa" },
-        { id: "armar_paquete",  title: "Armar mi paquete" }
-      ]
-    );
-    return true;
-  }
-}
-
 
 /*''''''''''''''''''''''''''''''''
 🟢 4. ESPERAMOS LOS SERVICIOS 🟢
