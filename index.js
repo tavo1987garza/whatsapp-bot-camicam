@@ -750,8 +750,8 @@ async function handleFAQs(from, userMessage) {
 
     await sendMessageWithTypingWithState(
       from,
-      "¡Muchas felicidades por tu Boda! 👏 Será un día inolvidable. ❤️",
-      2000,
+      "¡Muchas felicidades por tu Boda! 👏 Hagámos que sea un día inolvidable!! ❤️",
+      3000,
       context.estado
     );
     await delay(2000);
@@ -761,7 +761,7 @@ async function handleFAQs(from, userMessage) {
     await delay(6000);
     await sendMessageWithTypingWithState(
       from,
-      "Puedes armar tu paquete a tu gusto, con todo lo que necesites, (igual si necesitas un solo servicio)\n\nO si prefieres, puedes ver nuestro Paquete Exclusivo para Bodas.\n\n¿Cómo quieres continuar?",
+      "Puedes armar tu paquete a tu gusto, con todo lo que necesites, incluso si requieres un solo servicio,\n\nO si prefieres, puedes ver nuestro Paquete Exclusivo para Bodas.\n\n¿Cómo quieres continuar?",
       3000,
       context.estado
     );
@@ -788,8 +788,8 @@ async function handleFAQs(from, userMessage) {
 
     await sendMessageWithTypingWithState(
       from,
-      "¡Muchas felicidades! 👏\n\nTu fiesta de XV Años será un día inolvidable ✨",
-      2000,
+      "¡Muchas felicidades! 👏\n\nHagámos que tu fiesta de XV Años sea un día maravilloso!! ✨",
+      3000,
       context.estado
     );
     await delay(2000);
@@ -799,7 +799,7 @@ async function handleFAQs(from, userMessage) {
     await delay(6000);
     await sendMessageWithTypingWithState(
       from,
-      "Puedes armar tu paquete a tu gusto, con todo lo que necesites, (igual si necesitas un solo servicio)\n\nO si prefieres, puedes ver nuestro Paquete exclusivo para XV.\n\n¿Cómo quieres continuar?",
+      "Puedes armar tu paquete a tu gusto, con todo lo que necesites, incluso si requieres un solo servicio,\n\nO si prefieres, puedes ver nuestro Paquete exclusivo para XV.\n\n¿Cómo quieres continuar?",
       3000,
       context.estado
     );
@@ -828,8 +828,8 @@ async function handleFAQs(from, userMessage) {
       // Mensaje de felicitación y presentación de servicios
   await sendMessageWithTypingWithState(
     from,
-    "¡Muchas felicidades! 👏\n\nTu evento será único y especial. ✨",
-    2000,
+    "¡Muchas felicidades! 👏\n\nHagámos que tu evento sea único y especial!! ✨",
+    3000,
     context.estado
   );
   await delay(2000);
@@ -839,7 +839,7 @@ async function handleFAQs(from, userMessage) {
   await delay(6000);
   await sendMessageWithTypingWithState(
     from,
-    "Puedes armar tu paquete a tu gusto, con todo lo que necesites (incluso si requieres un solo servicio),\n\nO si prefieres, puedes ver la información de nuestro Paquete exclusivo para este tipo de evento.\n\n¿Cómo quieres continuar?",
+    "Puedes armar tu paquete a tu gusto, con todo lo que necesites, incluso si requieres un solo servicio,\n\nO si prefieres, puedes ver la información de nuestro Paquete exclusivo para este tipo de evento.\n\n¿Cómo quieres continuar?",
     3000,
     context.estado
   );
@@ -1362,92 +1362,92 @@ if (
     
       // PARTE 1
   const textoA = `  
-  Te presento el paquete que estamos promocionando:
-  
+Te presento el paquete que estamos promocionando:
+
     *PAQUETE MIS XV*
-  
+
         Incluye: 
-  
-  🔸*Cabina de fotos* (3 Horas) 
-  Impresion ilimitada de fotos en calidad Kodak.
-  ¡Tus invitados se divertirán mucho con los accesorios chuzcos que ponemos dentro de la cabina!
-  
-  🔸*6 letras Gigantes* (5 Horas)
-  De 1.20 mts de alto y luces led con secuencias multicolor.
-  ¡Para que tu nombre se vea espectacular!
-  
-  y Escoge
-  
-  🔸*Niebla de piso*
-  Que cubre TODA la pista de baile durante TODO el vals principal.
-  ¡Lucirás hermosa con tu papá!
-  
-  Ó
-  
-  🔸*Lluvia de mariposas* 
-  Durante el vals principal realizamos 4 detonaciones de papel china cortado en forma de mariposa
-  ¡Tus invitados quedarán sorprendidos!
-  
-  Todo esto con un valor de $8,900
-  `;
+
+🔸*Cabina de fotos* (3 Horas) 
+Impresion ilimitada de fotos en calidad Kodak.
+¡Tus invitados se divertirán mucho con los accesorios chuzcos que ponemos dentro de la cabina!
+
+🔸*6 letras Gigantes* (5 Horas)
+De 1.20 mts de alto y luces led con secuencias multicolor.
+¡Para que tu nombre se vea espectacular!
+
+y Escoge
+
+🔸*Niebla de piso*
+Que cubre TODA la pista de baile durante TODO el vals principal.
+¡Lucirás hermosa con tu papá!
+
+Ó
+
+🔸*Lluvia de mariposas* 
+Durante el vals principal realizamos 4 detonaciones de papel china cortado en forma de mariposa
+¡Tus invitados quedarán sorprendidos!
+
+Todo esto con un valor de $8,900
+`;
   
    // PARTE 2
    const textoB = `  
-  *¡Contrata ahora y recibe de REGALO!*
-  
-  🔸*2 Chisperos* de Luz Fría De 2.5 mts
-  Ideales para la presentación
-  
-  Con un valor de $1,000
-  
-  ¡¡Y eso no es todo!! 
-  
-  A las primeras 10 Quinceañeras que contraten éste paquete les estaremos Regalando 
-  
-  🔸*1 Scrapbook* personalizado para la cabina de fotos
-  Donde tus invitados pegarán una de sus fotos y escribirán un lindo mensaje que podrán personalizar con nuestra plantilla de Stickers exclusiva para XV años
-  
-  Con un valor de $1,300
-  
-  ¡Te lo llevamos también Completamente Gratis!
-  
-  ¡Será un recuerdo muy bonito de tu evento!
-  
-  Si contrataras todo esto por separado, el precio Regular sería de $11,200
-  
-  *¡¡SOLO HOY CONTRATA TODO POR UN EXCELENTE PRECIO!!*
-   `;
+*¡Contrata ahora y recibe de REGALO!*
+
+🔸*2 Chisperos* de Luz Fría De 2.5 mts
+Ideales para la presentación
+
+Con un valor de $1,000
+
+¡¡Y eso no es todo!! 
+
+A las primeras 10 Quinceañeras que contraten éste paquete les estaremos Regalando 
+
+🔸*1 Scrapbook* personalizado para la cabina de fotos
+Donde tus invitados pegarán una de sus fotos y escribirán un lindo mensaje que podrán personalizar con nuestra plantilla de Stickers exclusiva para XV años
+
+Con un valor de $1,300
+
+¡Te lo llevamos también Completamente Gratis!
+
+¡Será un recuerdo muy bonito de tu evento!
+
+Si contrataras todo esto por separado, el precio Regular sería de $11,200
+
+*¡¡SOLO HOY CONTRATA TODO POR UN EXCELENTE PRECIO!!*
+`;
       
       const textoC = `
-  Y no te preocupes que nosotros cubrimos los gastos DE FLETE y transportacion!! a una distancia de hasta 20 km del centro de Monterrey
-  
+Y no te preocupes que nosotros cubrimos los gastos DE FLETE y transportacion!! a una distancia de hasta 20 km del centro de Monterrey
+
    *¡¡Aprovecha!!*
-  
-  ¡Solo este mes disfruta de un *45% DE DESCUENTO*!
-  
-  ¡¡Un Gran Ahorro que puedes ocupar en otras cosas!!
+
+¡Solo este mes disfruta de un *45% DE DESCUENTO* sobre el precio regular!
+
+¡¡Un Gran Ahorro que puedes ocupar en otras cosas!!
   
       En Resumen:
   
-  🔸 *Cabina de fotos* (3 Horas)
-  🔸 *6 letras Gigantes* (5 Horas)
-  🔸 *Niebla de piso* ó 
-      *Lluvia de mariposas* 
-  🔸 *2 Chisperos de luz fría*
-  🔸 *1 Scrapbook*
-  🔸 *Descuento de $5,040*
-  🔸 *Flete Incluido*
-  
-  *¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
-  
+🔸 *Cabina de fotos* (3 Horas)
+🔸 *6 letras Gigantes* (5 Horas)
+🔸 *Niebla de piso* ó 
+    *Lluvia de mariposas* 
+🔸 *2 Chisperos de luz fría*
+🔸 *1 Scrapbook*
+🔸 *Descuento de $5,040*
+🔸 *Flete Incluido*
+
+*¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
+
         ✨ *$6,160* ✨
-  
-  ¡¡Aprovecha esta oportunidad!!
-  
-  y separa tu fecha con $500, el resto puede ser el dia de tu evento
-  
-  Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen tu fecha 😱      
-  `;
+
+¡¡Aprovecha esta oportunidad!!
+
+Separa tu fecha con $500, el resto puede ser el dia de tu evento
+
+Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen tu fecha 😱      
+`;
   
   
   
@@ -2207,7 +2207,7 @@ if (context.estado === "EsperandoFecha") {
   if (!isValidDateExtended(userMessage)) {
     await sendMessageWithTypingWithState(
       from,
-      "😕 El formato de la fecha es incorrecto. Por favor, utiliza el formato DD/MM/AAAA o '20 de mayo 2025'.",
+      "😕 El formato de la fecha es incorrecto. Por favor, utiliza el formato:\n\nDD/MM/AAAA o\n\n*20 de mayo 2025*",
       2000,
       context.estado
     );
@@ -2261,7 +2261,7 @@ if (context.estado === "EsperandoFecha") {
   // Solicitar el lugar del evento, mostrando la fecha registrada
   await sendMessageWithTypingWithState(
     from,
-    `¡Perfecto!\n\n${formattedDate}\nDISPONIBLE 👏👏👏\n\nAhora, indicame por favor el nombre del Salon donde se realizará tu evento 🏢`,
+    `¡Perfecto!\n\n*${formattedDate}*\nDISPONIBLE 👏👏👏\n\nAhora, indicame por favor el nombre del Salon donde se realizará tu evento 🏢`,
     2000,
     context.estado
   );
@@ -2279,8 +2279,8 @@ if (context.estado === "EsperandoLugar") {
   // Mensaje 1: Explicación del anticipo para separar la fecha
   await sendMessageWithTypingWithState(
     from,
-    "ℹ️ IMPORTANTE ℹ️\n\nPara separar la fecha solicitamos un anticipo de $500, el resto puede ser el día del evento.",
-    2000,
+    "ℹ️ IMPORTANTE\n\nPara separar la fecha ✅ solicitamos un anticipo de $500, el resto puede ser el día del evento.",
+    4000,
     context.estado
   );
   
@@ -2289,7 +2289,7 @@ if (context.estado === "EsperandoLugar") {
   await sendImageMessage(
     from,
     "http://cami-cam.com/wp-content/uploads/2025/03/Datos-Transferencia-1.jpeg", "722969010494399671",
-    3000,
+    5000,
     context.estado
   );
   
@@ -2297,8 +2297,8 @@ if (context.estado === "EsperandoLugar") {
   // Mensaje 2: Explicación del siguiente paso una vez acreditado el anticipo
   await sendMessageWithTypingWithState(
     from,
-    "Una vez acreditado el anticipo, pediré tu nombre completo y los datos que hagan falta.\n\nLleno tu contrato y te envío foto.",
-    4000,
+    "Una vez acreditado el anticipo, pediré tu nombre completo y los datos que hagan falta.\n\nLleno tu contrato 📃 y te envío foto.",
+    5000,
     context.estado
   );
   
@@ -2322,17 +2322,6 @@ if (context.estado === "EsperandoLugar") {
   context.estado = "Finalizado";
   return true;
 }
-
-
-  /*/ Rama para "letras gigantes" en otros flujos (si aplica)
-  if (!["Contacto Inicial", "EsperandoTipoEvento", "OpcionesSeleccionadas", "EsperandoFecha", "EsperandoLugar", "EsperandoCantidadLetras"].includes(context.estado)) {
-    if (messageLower.includes("letras gigantes")) {
-      await sendWhatsAppMessage(from, "¿Cuántas LETRAS necesitas? 🔠");
-      context.estado = "EsperandoCantidadLetras";
-      return true;
-    }
-  }*/
-
 
 /*''''''''''''''''''''''''''''''''''''''''''''''''''''
 🟢 8. FINALIZAMOS EL FLUJO, OPEN AI YA NO RESPONDE 🟢
