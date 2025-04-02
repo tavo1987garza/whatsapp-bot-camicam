@@ -2036,7 +2036,7 @@ if (context.estado === "ConfirmarAgregarCabinaCambio") {
     }
   }
   
-  // --- Manejo de agregar servicios ---
+  // --- Manejo de agregar servicios --- 
   if (messageLower.includes("agregar")) {
     const serviciosDisponibles = [
       "cabina de fotos", "cabina 360", "lluvia de mariposas", "carrito de shots con alcohol", "carrito de shots sin alcohol",
