@@ -1638,7 +1638,7 @@ context.reminderTimeout = setTimeout(async () => {
       ]
     );
   }
-}, 30000); // 120000 ms = 2 minutos
+}, 20000); // 120000 ms = 2 minutos
 
 // Al recibir un mensaje en este estado:
 if (context.estado === "EsperandoConfirmacionPaquete") {
@@ -1667,7 +1667,7 @@ if (context.estado === "EsperandoConfirmacionPaquete") {
       from,
       "Elige una opción:",
       [
-        { id: "si_me_interesa", title: context.paqueteRecomendado?.paquete || "Sí, me interesa" },
+        { id: "si_me_interesa", title: "Sí, me interesa" },
         { id: "armar_paquete",  title: "Armar mi paquete" }
       ]
     );
