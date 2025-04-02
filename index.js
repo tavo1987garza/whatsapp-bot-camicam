@@ -814,36 +814,40 @@ async function handleFAQs(from, userMessage) {
     // Guardar en el contexto el paquete recomendado para posteriores referencias
     context.paqueteRecomendado = recomendacion;
 
-    // Enviar primero la imagen si existe
-if (recomendacion.media?.images?.length > 0) {
-  for (const imageUrl of recomendacion.media.images) {
-    await sendImageMessage(from, imageUrl);
-    await delay(2500); // Pequeño delay entre imágenes
-  }
+      // Mensaje de felicitación y presentación de servicios
+  await sendMessageWithTypingWithState(
+    from,
+    "¡Muchas felicidades! 👏\n\nTu evento será único y especial. ✨",
+    2000,
+    context.estado
+  );
+  await delay(2000);
+  await sendWhatsAppMessage(from, "Mira, éstos son los servicios que ofrecemos en Camicam Photobooth");
+  await delay(4000);
+  await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
+  await delay(6000);
+  await sendMessageWithTypingWithState(
+    from,
+    "Puedes armar tu paquete a tu gusto, con todo lo que necesites (incluso si requieres un solo servicio),\n\nO si prefieres, puedes ver la información de nuestro Paquete exclusivo para este tipo de evento.\n\n¿Cómo quieres continuar?",
+    3000,
+    context.estado
+  );
+  
+  // Enviar botones interactivos: "Armar mi paquete" y "Paquete Para Este Evento"
+  await sendInteractiveMessage(
+    from,
+    "Selecciona una opción: 👇",
+    [
+      { id: "armar_paquete", title: "Armar mi paquete" },
+      { id: "paquete_otro", title: context.paqueteRecomendado?.paquete || "Paq Para Este Evento" }
+
+    ]
+  );
+  
+  // Se actualiza el estado para esperar la confirmación
+  context.estado = "EsperandoConfirmacionPaquete";
+  return true;
 }
-
-// Luego enviar el video si existe
-if (recomendacion.media?.videos?.length > 0) {
-  for (const videoUrl of recomendacion.media.videos) {
-    await sendWhatsAppVideo(from, videoUrl);
-    await delay(2500); // Pequeño delay entre videos
-  }
-}
-
-    // Enviar la recomendación de forma personalizada
-    const mensajeRecomendacion = `🎉 *${recomendacion.paquete}*\n${recomendacion.descripcion}`;
-    await sendMessageWithTypingWithState(from, mensajeRecomendacion, 3000, context.estado);
-
-    // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
-    await sendInteractiveMessage(from, `Te gustaría continuar con el ${recomendacion.paquete}?\n\nO prefieres Armar tu Paquete?`, 
-      [
-      { id: "si_me_interesa", title: recomendacion.paquete },
-      { id: "armar_paquete", title: "Armar mi paquete" }
-    ]);
-   
-    // Actualizar el estado para manejar la respuesta en el siguiente flujo
-    context.estado = "EsperandoConfirmacionPaquete";
-  } 
 }  
  
 
@@ -1480,6 +1484,53 @@ if (
     context.estado = "EsperandoConfirmacionPaquete";
     return true;
   }
+
+
+
+
+
+
+  /* ============================================
+   Interceptamos el botón "paquete_xv"
+   CASO BODA
+   ============================================ */
+   if (messageLower === "paquete_otro" || messageLower.includes("recomendacion.paquete")) {
+
+  
+
+    // Enviar primero la imagen si existe
+if (recomendacion.media?.images?.length > 0) {
+  for (const imageUrl of recomendacion.media.images) {
+    await sendImageMessage(from, imageUrl);
+    await delay(2500); // Pequeño delay entre imágenes
+  }
+}
+
+// Luego enviar el video si existe
+if (recomendacion.media?.videos?.length > 0) {
+  for (const videoUrl of recomendacion.media.videos) {
+    await sendWhatsAppVideo(from, videoUrl);
+    await delay(2500); // Pequeño delay entre videos
+  }
+}
+
+    // Enviar la recomendación de forma personalizada
+    const mensajeRecomendacion = `🎉 *${recomendacion.paquete}*\n${recomendacion.descripcion}`;
+    await sendMessageWithTypingWithState(from, mensajeRecomendacion, 3000, context.estado);
+
+    // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
+    await sendInteractiveMessage(from, `Te gustaría continuar con el ${recomendacion.paquete}?\n\nO prefieres Armar tu Paquete?`, 
+      [
+      { id: "si_me_interesa", title: recomendacion.paquete },
+      { id: "armar_paquete", title: "Armar mi paquete" }
+    ]);
+   
+    // Actualizar el estado para manejar la respuesta en el siguiente flujo
+    context.estado = "EsperandoConfirmacionPaquete";
+    return true;
+  } 
+
+
 
 /*''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 🟢 1. INICIO: DAR LA BIENVENIDA, MOSTRAR UNA IMAGEN Y LAS OPCIONES 🟢
