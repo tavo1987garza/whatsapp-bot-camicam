@@ -1,4 +1,5 @@
 
+
 //CODIGO FUNCIONANDO YA CON LA VARIANTE DE CABINA DE FOTOS O CABINA 360, YA NO HAY ERROR, 
 //CUANDO EL CLIENTE ESCRIBE "CABINA DE FOTOS" EL BOT YA NO LO TOMA COMO PREGUNTA FRECUENTE 
 //AHORA SI LO  AGREGA A LA COTIZACION. YA NO HAY DUDAS CON EL FLUJO FINAL
@@ -15,6 +16,10 @@ import express from 'express';
 import axios from 'axios';
 import OpenAI from 'openai';
 import NodeCache from 'node-cache';
+import AWS from 'aws-sdk';
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 // Cargar variables de entorno
 dotenv.config();
@@ -22,6 +27,35 @@ dotenv.config();
 // Crear instancia de Express
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// 🔸 Configurar AWS (S3) con credenciales
+AWS.config.update({
+  region: process.env.AWS_REGION,
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+});
+
+// Crear instancia de S3
+const s3 = new AWS.S3();
+
+// Función para subir a S3
+async function uploadToS3(fileBuffer, mimeType="image/jpeg") {
+  const bucketName = process.env.S3_BUCKET_NAME;
+  const nombreArchivo = `${uuidv4()}.jpg`;
+
+  const params = {
+    Bucket: bucketName,
+    Key: nombreArchivo,
+    Body: fileBuffer,
+    ContentType: mimeType,
+    // Si usas Bucket Owner Enforced y una bucket policy para acceso público,
+    // no necesitas ACL. De lo contrario, podrías usar: 
+    // ACL: 'public-read',
+  };
+
+  const data = await s3.upload(params).promise();
+  return data.Location; // URL pública o de acceso según tu configuración
+}
 
 // Configurar cliente de OpenAI
 const openai = new OpenAI({
@@ -95,9 +129,74 @@ app.get('/', async (req, res) => {
 // Webhook para manejar mensajes de WhatsApp
 app.post('/webhook', async (req, res) => {
   console.log("📩 Webhook activado:", JSON.stringify(req.body, null, 2));
-  
+
+  // 1) Extraemos el mensaje
   const message = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
   if (!message) return res.sendStatus(404);
+
+  // 2) Checamos si es imagen
+  if (message.type === "image") {
+    try {
+      // a) Obtener el media_id
+      const mediaId = message.image.id;
+      const from = message.from; // teléfono remitente
+
+      // b) Obtener la URL de descarga de la Cloud API
+      const respMedia = await axios.get(
+        `https://graph.facebook.com/v13.0/${mediaId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`
+          }
+        }
+      );
+      const directUrl = respMedia.data.url; // la URL temporal
+
+      // c) Descargar los bytes de la imagen
+      const respImagen = await axios.get(directUrl, {
+        headers: {
+          Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`
+        },
+        responseType: 'arraybuffer'
+      });
+      const bufferImagen = respImagen.data;
+
+       // d) Subir la imagen a S3
+       const { v4: uuidv4 } = require('uuid');
+       const fileName = `${uuidv4()}.jpg`;       // nombre único
+       const bucketName = process.env.S3_BUCKET_NAME;  // tu bucket
+ 
+       // Subida con 'upload' (retorna una promesa)
+       const uploadResult = await s3.upload({
+         Bucket: bucketName,
+         Key: fileName,
+         Body: bufferImagen,
+         ContentType: 'image/jpeg',
+         // Si usas Bucket Owner Enforced + bucket policy, no necesitas ACL
+         // ACL: 'public-read',
+       }).promise();
+ 
+       // uploadResult.Location es la URL pública del objeto
+       const urlPublica = uploadResult.Location;
+ 
+       console.log("✅ Imagen subida a S3:", urlPublica);
+ 
+       // e) Enviar al CRM para que se guarde como "recibido_imagen"
+       await axios.post("https://camicam-crm-d78af2926170.herokuapp.com/recibir_mensaje", {
+         plataforma: "WhatsApp",
+         remitente: message.from, // "521xxxxxx"
+         mensaje: urlPublica,      // la URL en S3
+         tipo: "recibido_imagen"
+       });
+       console.log("✅ Imagen recibida y reportada al CRM:", urlPublica);
+ 
+     } catch (error) {
+       console.error("❌ Error al manejar la imagen:", error.message);
+     }
+     
+     // Finalmente, responde 200 al webhook
+     return res.sendStatus(200);
+   }
   
   const from = message.from;
   let userMessage = "";
@@ -120,6 +219,8 @@ app.post('/webhook', async (req, res) => {
   } catch (error) {
     console.error("❌ Error al enviar mensaje al CRM:", error.message);
   }
+
+
   const buttonReply = message?.interactive?.button_reply?.id || '';
   const listReply = message?.interactive?.list_reply?.id || '';
   const messageLower = buttonReply ? buttonReply.toLowerCase() : listReply ? listReply.toLowerCase() : userMessage.toLowerCase();
@@ -153,7 +254,7 @@ app.post('/webhook', async (req, res) => {
     await sendWhatsAppMessage(from, "😔 Perdona, hubo un problema al procesar tu solicitud. ¿Podrías intentarlo de nuevo?");
   }
   res.sendStatus(200);
-});
+ });
 
   // 📌 Endpoint para recibir mensajes desde el CRM y enviarlos a WhatsApp
   app.post('/enviar_mensaje', async (req, res) => {
@@ -174,6 +275,31 @@ app.post('/webhook', async (req, res) => {
       res.status(500).json({ error: 'Error al enviar mensaje a WhatsApp' });
     }
   });
+
+  // 📌 Endpoint para recibir imagenes desde el CRM y enviarlos a WhatsApp
+  app.post('/enviar_imagen', async (req, res) => {
+    try {
+      const { telefono, imageUrl, caption } = req.body;
+      if (!telefono || !imageUrl) {
+        return res.status(400).json({ error: 'Faltan datos (telefono, imageUrl)' });
+      }
+  
+      console.log(`Enviando imagen a ${telefono}: ${imageUrl}`);
+  
+      // Reutilizar la función 'sendImageMessage' que tuviste en tu código:
+      await sendImageMessage(telefono, imageUrl, caption);
+  
+      // Podrías también reportar al CRM con "enviado" si quieres,
+      // aunque en tu caso lo hace el CRM.
+      // await reportMessageToCRM(telefono, `<img src="${imageUrl}">`, "enviado");
+  
+      res.status(200).json({ mensaje: 'Imagen enviada a WhatsApp correctamente' });
+    } catch (error) {
+      console.error('❌ Error al enviar imagen a WhatsApp:', error.message);
+      res.status(500).json({ error: 'Error al enviar imagen a WhatsApp' });
+    }
+  });
+  
 
 // Función para reportar mensajes al CRM
 async function reportMessageToCRM(to, message, tipo = "enviado") {
