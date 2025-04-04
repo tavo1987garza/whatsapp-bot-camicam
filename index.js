@@ -143,7 +143,7 @@ app.post('/webhook', async (req, res) => {
 
       // b) Obtener la URL de descarga de la Cloud API
       const respMedia = await axios.get(
-        `https://graph.facebook.com/v13.0/${mediaId}`,
+        `https://graph.facebook.com/v21.0/${mediaId}`,
         {
           headers: {
             Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`
@@ -359,6 +359,39 @@ async function sendWhatsAppMessage(to, message) {
   }
 }
 
+// Función para enviar imágenes
+async function sendImageMessage(to, imageUrl, caption) {
+  const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+  const data = {
+    messaging_product: 'whatsapp',
+    to: to,
+    type: 'image',
+    image: {
+      link: imageUrl,
+      caption: caption
+    }
+  };
+  try {
+    const response = await axios.post(url, data, {
+      headers: {
+        Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    console.log('Imagen enviada:', response.data);
+    const resumen = `
+      <div>
+        <img src="${imageUrl}" alt="Imagen enviada" style="max-width:200px;">
+        ${ caption ? `<p>Caption: ${caption}</p>` : '' }
+      </div>
+    `;
+    await reportMessageToCRM(to, resumen, "enviado");
+  } catch (error) {
+    console.error('Error al enviar imagen:', error.response?.data || error.message);
+  }
+}
+
+
 // Función para enviar mensajes interactivos con botones
 async function sendInteractiveMessage(to, body, buttons) {
   const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
@@ -448,37 +481,6 @@ async function sendWhatsAppVideo(to, videoUrl, caption) {
   }
 }
 
-// Función para enviar imágenes
-async function sendImageMessage(to, imageUrl, caption) {
-  const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
-  const data = {
-    messaging_product: 'whatsapp',
-    to: to,
-    type: 'image',
-    image: {
-      link: imageUrl,
-      caption: caption
-    }
-  };
-  try {
-    const response = await axios.post(url, data, {
-      headers: {
-        Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    console.log('Imagen enviada:', response.data);
-    const resumen = `
-      <div>
-        <img src="${imageUrl}" alt="Imagen enviada" style="max-width:200px;">
-        ${ caption ? `<p>Caption: ${caption}</p>` : '' }
-      </div>
-    `;
-    await reportMessageToCRM(to, resumen, "enviado");
-  } catch (error) {
-    console.error('Error al enviar imagen:', error.response?.data || error.message);
-  }
-}
 
 // Función para enviar mensajes con indicador de escritura
 async function sendMessageWithTyping(from, message, delayTime) {
