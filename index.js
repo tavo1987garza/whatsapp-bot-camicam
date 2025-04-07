@@ -11,14 +11,14 @@
 //PQTE BODA, XV Y OTRO SIGUEN EL MISMO FORMATO DE PRESENTACION
 //OBSERVACION, CUANDO EL CLINETE NO CONTESTA, SE VUELVE A ENVIAR EL MENSAJE, HAY QUE PONER ATENCION A ESTO
 // Importar dependencias en modo ES Modules
-import dotenv from 'dotenv'; // Para cargar variables de entorno
+import dotenv from 'dotenv';  // Para cargar variables de entorno
 import express from 'express';
 import axios from 'axios';
 import OpenAI from 'openai';
 import NodeCache from 'node-cache';
 import AWS from 'aws-sdk';
 import { v4 as uuidv4 } from 'uuid';
-
+import multer from 'multer';
 
 
 // Cargar variables de entorno
@@ -28,75 +28,61 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 🔸 Configurar AWS (S3) con credenciales
+// Middleware para manejar JSON
+app.use(express.json());
+
+
+// 🔹 Configurar AWS (S3)
 AWS.config.update({
   region: process.env.AWS_REGION,
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
 });
-
-// Crear instancia de S3
 const s3 = new AWS.S3();
 
-// Función para subir a S3
-async function uploadToS3(fileBuffer, mimeType="image/jpeg") {
-  const bucketName = process.env.S3_BUCKET_NAME;
-  const nombreArchivo = `${uuidv4()}.jpg`;
+// 🔹 Configurar multer con almacenamiento en memoria
+const upload = multer({ storage: multer.memoryStorage() });
 
-  const params = {
-    Bucket: bucketName,
-    Key: nombreArchivo,
-    Body: fileBuffer,
-    ContentType: mimeType,
-    // Si usas Bucket Owner Enforced y una bucket policy para acceso público,
-    // no necesitas ACL. De lo contrario, podrías usar: 
-    // ACL: 'public-read',
-  };
+// 🔹 Endpoint para subir la imagen a S3 desde FormData
+app.post('/upload_imagen', upload.single('imagen'), async (req, res) => {
+  try {
+    // Verificar si llegó el archivo
+    if (!req.file) {
+      return res.status(400).json({ error: "No se recibió archivo en la key 'imagen'" });
+    }
 
-  const data = await s3.upload(params).promise();
-  return data.Location; // URL pública o de acceso según tu configuración
-}
+    const fileBuffer = req.file.buffer;        // El contenido binario
+    const originalName = req.file.originalname; // Nombre del archivo original
+    const mimeType = req.file.mimetype || 'application/octet-stream';
 
-// Configurar cliente de OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+    const bucketName = process.env.S3_BUCKET_NAME;
+    if (!bucketName) {
+      return res.status(500).json({ error: "No está configurado S3_BUCKET_NAME" });
+    }
+
+    // Generar un nombre único en el bucket
+    const nombreArchivo = `${uuidv4()}_${originalName}`;
+
+    // Subir a S3
+    const uploadResult = await s3.upload({
+      Bucket: bucketName,
+      Key: nombreArchivo,
+      Body: fileBuffer,
+      ContentType: mimeType
+      // ACL: 'public-read' si tu bucket policy lo requiere
+    }).promise();
+
+    // uploadResult.Location = URL del objeto subido
+    console.log("✅ Imagen subida a S3:", uploadResult.Location);
+
+    // Retornamos la URL al frontend
+    return res.json({ url: uploadResult.Location });
+
+  } catch (error) {
+    console.error("❌ Error en /upload_imagen:", error);
+    return res.status(500).json({ error: error.message });
+  }
 });
-
-// Middleware para manejar JSON
-app.use(express.json());
-
-// Objeto para almacenar el contexto de cada usuario
-const userContext = {};
-
-// Instancia global de caché para respuestas de OpenAI (disponible en todo el código)
-const responseCache = new NodeCache({ stdTTL: 3600 });
-
-// Función para construir el contexto para OpenAI (ajustado para sonar más humano)
-function construirContexto() {
-  return `
-Eres un agente de ventas de "Camicam Photobooth" 😃. 
-Nos dedicamos a la renta de servicios para eventos sociales, con especialización en bodas y XV años. 
-Ofrecemos los siguientes servicios:
-  - Cabina de fotos: $3,500
-  - Cabina 360: $3,500
-  - Lluvia de mariposas: $2,500
-  - Carrito de shots con alcohol: $2,800
-  - Letras gigantes: $400 cada una
-  - Niebla de piso: $3,000
-  - Lluvia matalica: $2,000
-  - Scrapbook: $1,300
-  - Audio Guest Book: $2,000
-  - Chisperos (por pares):
-       • 2 chisperos = $1,000  
-       • 4 chisperos = $1,500  
-       • 6 chisperos = $2,000  
-       • 8 chisperos = $2,500  
-       • 10 chisperos = $3,000
-  
-Atendemos el centro de Monterrey, Nuevo León y el área metropolitana hasta 25 km a la redonda. 
-Responde de forma profesional, clara, concisa y persuasiva, como un vendedor experto en nuestros servicios.
-  `;
-} 
 
 // Rutas (webhook, raíz, etc.)
 app.get('/webhook', (req, res) => {
@@ -391,6 +377,43 @@ async function sendImageMessage(to, imageUrl, caption) {
   }
 }
 
+// Configurar cliente de OpenAI
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+// Objeto para almacenar el contexto de cada usuario
+const userContext = {};
+
+// Instancia global de caché para respuestas de OpenAI (disponible en todo el código)
+const responseCache = new NodeCache({ stdTTL: 3600 });
+
+// Función para construir el contexto para OpenAI (ajustado para sonar más humano)
+function construirContexto() {
+  return `
+Eres un agente de ventas de "Camicam Photobooth" 😃. 
+Nos dedicamos a la renta de servicios para eventos sociales, con especialización en bodas y XV años. 
+Ofrecemos los siguientes servicios:
+  - Cabina de fotos: $3,500
+  - Cabina 360: $3,500
+  - Lluvia de mariposas: $2,500
+  - Carrito de shots con alcohol: $2,800
+  - Letras gigantes: $400 cada una
+  - Niebla de piso: $3,000
+  - Lluvia matalica: $2,000
+  - Scrapbook: $1,300
+  - Audio Guest Book: $2,000
+  - Chisperos (por pares):
+       • 2 chisperos = $1,000  
+       • 4 chisperos = $1,500  
+       • 6 chisperos = $2,000  
+       • 8 chisperos = $2,500  
+       • 10 chisperos = $3,000
+  
+Atendemos el centro de Monterrey, Nuevo León y el área metropolitana hasta 25 km a la redonda. 
+Responde de forma profesional, clara, concisa y persuasiva, como un vendedor experto en nuestros servicios.
+  `;
+} 
 
 // Función para enviar mensajes interactivos con botones
 async function sendInteractiveMessage(to, body, buttons) {
