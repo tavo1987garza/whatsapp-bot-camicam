@@ -10,8 +10,10 @@
 //SE AJUSTÓ EL FORMATO DE FECHA: "20 DE MARZO 2025 DISPONIBLE"
 //PQTE BODA, XV Y OTRO SIGUEN EL MISMO FORMATO DE PRESENTACION
 //OBSERVACION, CUANDO EL CLINETE NO CONTESTA, SE VUELVE A ENVIAR EL MENSAJE, HAY QUE PONER ATENCION A ESTO
+
+
 // Importar dependencias en modo ES Modules
-import dotenv from 'dotenv';  // Para cargar variables de entorno
+import dotenv from 'dotenv'; 
 import express from 'express';
 import axios from 'axios';
 import OpenAI from 'openai';
@@ -43,7 +45,10 @@ const s3 = new AWS.S3();
 // 🔹 Configurar multer con almacenamiento en memoria
 const upload = multer({ storage: multer.memoryStorage() });
 
-// 🔹 Endpoint para subir la imagen a S3 desde FormData
+  
+/*===================================================
+📌 Endpoint para subir la imagen a S3 desde FormData
+=====================================================*/
 app.post('/upload_imagen', upload.single('imagen'), async (req, res) => {
   try {
     // Verificar si llegó el archivo
@@ -84,7 +89,10 @@ app.post('/upload_imagen', upload.single('imagen'), async (req, res) => {
   }
 });
 
-// Rutas (webhook, raíz, etc.)
+  
+/*============================
+📌 Rutas (webhook, raíz, etc.)
+==============================*/ 
 app.get('/webhook', (req, res) => {
   const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
   const mode = req.query['hub.mode'];
@@ -112,7 +120,10 @@ app.get('/', async (req, res) => {
   }
 });
 
-// Webhook para manejar mensajes de WhatsApp
+  
+/*===========================================
+📌 Webhook para manejar mensajes de WhatsApp
+=============================================*/ 
 app.post('/webhook', async (req, res) => {
   console.log("📩 Webhook activado:", JSON.stringify(req.body, null, 2));
 
@@ -241,7 +252,10 @@ app.post('/webhook', async (req, res) => {
   res.sendStatus(200);
  });
 
-  // 📌 Endpoint para recibir mensajes desde el CRM y enviarlos a WhatsApp
+  
+/*====================================================================
+📌 Endpoint para recibir mensajes desde el CRM y enviarlos a WhatsApp
+======================================================================*/ 
   app.post('/enviar_mensaje', async (req, res) => {
     try {
       const { telefono, mensaje } = req.body;
@@ -261,7 +275,10 @@ app.post('/webhook', async (req, res) => {
     }
   });
 
-  // 📌 Endpoint para recibir imagenes desde el CRM y enviarlos a WhatsApp
+  
+/*====================================================================
+📌 Endpoint para recibir imagenes desde el CRM y enviarlos a WhatsApp
+======================================================================*/ 
   app.post('/enviar_imagen', async (req, res) => {
     try {
       const { telefono, imageUrl, caption } = req.body;
@@ -274,10 +291,6 @@ app.post('/webhook', async (req, res) => {
       // Reutilizar la función 'sendImageMessage' que tuviste en tu código:
       await sendImageMessage(telefono, imageUrl, caption);
   
-      // Podrías también reportar al CRM con "enviado" si quieres,
-      // aunque en tu caso lo hace el CRM.
-      // await reportMessageToCRM(telefono, `<img src="${imageUrl}">`, "enviado");
-  
       res.status(200).json({ mensaje: 'Imagen enviada a WhatsApp correctamente' });
     } catch (error) {
       console.error('❌ Error al enviar imagen a WhatsApp:', error.message);
@@ -286,7 +299,9 @@ app.post('/webhook', async (req, res) => {
   });
   
 
-// Función para reportar mensajes al CRM
+/*************************************
+FUNCION para reportar mensajes al CRM.
+*************************************/ 
 async function reportMessageToCRM(to, message, tipo = "enviado") {
   const crmUrl = "https://camicam-crm-d78af2926170.herokuapp.com/recibir_mensaje";
   const crmData = {
@@ -305,7 +320,10 @@ async function reportMessageToCRM(to, message, tipo = "enviado") {
   }
 }
 
-// Función para enviar mensajes simples con emojis
+
+/***********************************************
+FUNCION para enviar mensajes simples con emojis.
+***********************************************/ 
 async function sendWhatsAppMessage(to, message) {
   if (!process.env.WHATSAPP_PHONE_NUMBER_ID || !process.env.WHATSAPP_ACCESS_TOKEN) {
     console.error("❌ ERROR: Credenciales de WhatsApp no configuradas correctamente.");
@@ -344,7 +362,10 @@ async function sendWhatsAppMessage(to, message) {
   }
 }
 
-// Función para enviar imágenes
+
+/****************************
+FUNCION para enviar Imagenes.
+*****************************/ 
 async function sendImageMessage(to, imageUrl, caption) {
   const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
   const data = {
