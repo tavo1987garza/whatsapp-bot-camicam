@@ -19,9 +19,12 @@ import axios from 'axios';
 import OpenAI from 'openai';
 import NodeCache from 'node-cache';
 import AWS from 'aws-sdk';
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from 'uuid'; 
 import multer from 'multer';
+import cors from 'cors';
 
+// Configuración básica para permitir todas las solicitudes
+app.use(cors());
 
 // Cargar variables de entorno
 dotenv.config();
