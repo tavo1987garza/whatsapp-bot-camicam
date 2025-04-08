@@ -148,7 +148,6 @@ app.post('/webhook', async (req, res) => {
       const bufferImagen = respImagen.data;
 
        // d) Subir la imagen a S3
-       const { v4: uuidv4 } = require('uuid');
        const fileName = `${uuidv4()}.jpg`;       // nombre único
        const bucketName = process.env.S3_BUCKET_NAME;  // tu bucket
  
