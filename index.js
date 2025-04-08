@@ -2521,7 +2521,7 @@ if (context.estado === "Finalizado") {
       if (!answer || answer.trim() === "") {
         throw new Error("Respuesta vacía");
       }
-      responseCache.set(key, answer);
+      responseCache.set(key, answer); 
       return answer;
     }
     async function handleOpenAIResponse(from, userMessage) {
