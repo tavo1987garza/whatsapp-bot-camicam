@@ -26,6 +26,9 @@ import cors from 'cors';
 // Configuración básica para permitir todas las solicitudes
 app.use(cors());
 
+// Habilitar CORS para todas las peticiones (o con opciones)
+app.use(cors({ origin: "https://camicam-crm-d78af2926170.herokuapp.com" }));
+
 // Cargar variables de entorno
 dotenv.config();
 
@@ -149,7 +152,7 @@ app.post('/webhook', async (req, res) => {
             Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`
           }
         }
-      );
+      ); 
       const directUrl = respMedia.data.url; // la URL temporal
 
       // c) Descargar los bytes de la imagen
