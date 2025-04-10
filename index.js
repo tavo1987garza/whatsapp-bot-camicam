@@ -23,18 +23,15 @@ import { v4 as uuidv4 } from 'uuid';
 import multer from 'multer';
 import cors from 'cors';
 
-// Configuración básica para permitir todas las solicitudes
-app.use(cors());
-
-// Habilitar CORS para todas las peticiones (o con opciones)
-app.use(cors({ origin: "https://camicam-crm-d78af2926170.herokuapp.com" }));
-
 // Cargar variables de entorno
 dotenv.config();
 
 // Crear instancia de Express
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Habilitar CORS para todas las peticiones (o con opciones)
+app.use(cors({ origin: "https://camicam-crm-d78af2926170.herokuapp.com" }));
 
 // Middleware para manejar JSON
 app.use(express.json());
