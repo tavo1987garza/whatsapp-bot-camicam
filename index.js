@@ -28,7 +28,7 @@ dotenv.config();
 
 // Crear instancia de Express
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000; 
 
 // Habilitar CORS para todas las peticiones (o con opciones)
 app.use(cors({ origin: "https://camicam-crm-d78af2926170.herokuapp.com" }));
