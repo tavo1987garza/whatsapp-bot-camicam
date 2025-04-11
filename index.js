@@ -734,6 +734,15 @@ async function checkAvailability(dateYYYYMMDD) {
   }
 }
 
+// Convierte "DD/MM/AAAA" a "YYYY-MM-DD"
+function convertirDDMMAAAAaISO(ddmmyyyy) {
+  // Ejemplo de ddmmyyyy = "09/08/2025"
+  // Descomponemos
+  const [dd, mm, yyyy] = ddmmyyyy.split('/');
+  // Retornamos "2025-08-09"
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 // Función para enviar mensjae al administrador
 async function sendMessageToAdmin(message) {
   const adminNumber = process.env.ADMIN_WHATSAPP_NUMBER;
@@ -2437,7 +2446,7 @@ const fechaISO = convertirDDMMAAAAaISO(fechaDDMMYYYY);
 // => "2025-08-09"
 
 // (e) Llamar al CRM para verificar si está disponible
-const estaDisponible = await checkAvailabilityEnCRM(fechaISO);
+const estaDisponible = await checkAvailability(fechaISO);
 if (!estaDisponible) {
   await sendMessageWithTypingWithState(
       from,
