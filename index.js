@@ -10,6 +10,8 @@
 //SE AJUSTÓ EL FORMATO DE FECHA: "20 DE MARZO 2025 DISPONIBLE"
 //PQTE BODA, XV Y OTRO SIGUEN EL MISMO FORMATO DE PRESENTACION
 //OBSERVACION, CUANDO EL CLINETE NO CONTESTA, SE VUELVE A ENVIAR EL MENSAJE, HAY QUE PONER ATENCION A ESTO
+//SE HA CORREGIDO PA PARTE DE ENVIO DE TEXTO E IMAGEN, YA SE MUESTRAN CORRECTAMENTE EN EL CRM
+//SE USA AWS S3 PARA GENERAR LA URL DE LAS IMAGENES Y SE PUEDA MOSTRAR EN EL CRM
 
 
 // Importar dependencias en modo ES Modules
@@ -255,7 +257,6 @@ app.post('/webhook', async (req, res) => {
   res.sendStatus(200);
  });
 
-  
 /*====================================================================
 📌 Endpoint para recibir mensajes desde el CRM y enviarlos a WhatsApp
 ======================================================================*/ 
@@ -278,7 +279,6 @@ app.post('/webhook', async (req, res) => {
     }
   });
 
-  
 /*====================================================================
 📌 Endpoint para recibir imagenes desde el CRM y enviarlos a WhatsApp
 ======================================================================*/ 
@@ -300,7 +300,6 @@ app.post('/webhook', async (req, res) => {
       res.status(500).json({ error: 'Error al enviar imagen a WhatsApp' });
     }
   });
-  
 
 /*************************************
 FUNCION para reportar mensajes al CRM.
@@ -322,7 +321,6 @@ async function reportMessageToCRM(to, message, tipo = "enviado") {
     throw error;
   }
 }
-
 
 /***********************************************
 FUNCION para enviar mensajes simples con emojis.
@@ -364,7 +362,6 @@ async function sendWhatsAppMessage(to, message) {
     }
   }
 }
-
 
 /****************************
 FUNCION para enviar Imagenes.
@@ -717,10 +714,24 @@ function isWithinTwoYears(dateString) {
 }
 
 // Función original para verificar disponibilidad (simulada)
-function checkAvailability(dateString) {
+//function checkAvailability(dateString) {
   // Simulación de fechas ocupadas (en formato DD/MM/AAAA)
-  const occupiedDates = ["15/02/2024", "20/02/2024"];
-  return !occupiedDates.includes(dateString);
+  //const occupiedDates = ["15/02/2024", "20/02/2024"];
+  //return !occupiedDates.includes(dateString);
+//}
+
+const CRM_BASE_URL = "https://camicam-crm-d78af2926170.herokuapp.com";
+async function checkAvailability(dateYYYYMMDD) {
+  try {
+    const resp = await axios.get(
+      `${CRM_BASE_URL}/calendario/check?fecha=${dateYYYYMMDD}`
+    );
+    return resp.data.available; 
+  } catch (e) {
+    console.error("Error consultando disponibilidad:", e.message);
+    // Si hay error de red, para no romper, devolveremos que NO está disponible:
+    return false;
+  }
 }
 
 // Función para enviar mensjae al administrador
@@ -2417,12 +2428,18 @@ if (context.estado === "EsperandoFecha") {
 
   // Convertir la fecha al formato DD/MM/AAAA utilizando parseFecha
   const fechaDDMMYYYY = parseFecha(userMessage);
+ 
   // Formatear la fecha a "DD de Mes AAAA"
   const formattedDate = formatFechaEnEspanol(fechaDDMMYYYY);
 
-  // Verificar disponibilidad de la fecha (simulado)
-  if (!checkAvailability(formattedDate)) {
-    await sendMessageWithTypingWithState(
+  // (d) Convertir a YYYY-MM-DD para consultar en la DB
+const fechaISO = convertirDDMMAAAAaISO(fechaDDMMYYYY); 
+// => "2025-08-09"
+
+// (e) Llamar al CRM para verificar si está disponible
+const estaDisponible = await checkAvailabilityEnCRM(fechaISO);
+if (!estaDisponible) {
+  await sendMessageWithTypingWithState(
       from,
       "😔 Lo siento, esa fecha ya está reservada. Prueba con otra o contáctanos para más detalles.",
       2000,
@@ -2431,6 +2448,9 @@ if (context.estado === "EsperandoFecha") {
     return true;
   }
 
+    // (f) Si está disponible, guardamos en el contexto
+  //     - Podrías guardar la versión ISO para luego reservar
+  context.fechaISO = fechaISO;
   // Si todas las validaciones son exitosas, guardar la fecha en el contexto
   context.fecha = formattedDate;
   
@@ -2458,7 +2478,7 @@ if (context.estado === "EsperandoLugar") {
   // Mensaje 1: Explicación del anticipo para separar la fecha
   await sendMessageWithTypingWithState(
     from,
-    "ℹ️ IMPORTANTE\n\nPara separar la fecha ✅ solicitamos un anticipo de $500, el resto puede ser el día del evento.",
+    "Para separar la fecha ✅ solicitamos un anticipo de $500, el resto puede ser el día del evento.",
     4000,
     context.estado
   );
