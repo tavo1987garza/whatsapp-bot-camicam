@@ -1646,8 +1646,9 @@ Y no te preocupes que nosotros cubrimos los gastos DE FLETE y transportacion!! a
 Separa tu fecha con $500, el resto puede ser el dia de tu evento
 
 Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen tu fecha 😱      
-`;
-  
+`
+ 
+//OJO PONER EL ; ACA ARRIBA
   
   
       // Enviamos imagen de presentacion
