@@ -400,7 +400,7 @@ async function sendImageMessage(to, imageUrl, caption) {
 // Configurar cliente de OpenAI
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-});
+}); 
 
 // Objeto para almacenar el contexto de cada usuario
 const userContext = {};
