@@ -1562,93 +1562,17 @@ if (
       // PARTE 1
   const textoA = `  
 Te presento el paquete que estamos promocionando:
-
-    *PAQUETE MIS XV*
-
-        Incluye: 
-
-🔸*Cabina de fotos* (3 Horas) 
-Impresion ilimitada de fotos en calidad Kodak.
-¡Tus invitados se divertirán mucho con los accesorios chuzcos que ponemos dentro de la cabina!
-
-🔸*6 letras Gigantes* (5 Horas)
-De 1.20 mts de alto y luces led con secuencias multicolor.
-¡Para que tu nombre se vea espectacular!
-
-y Escoge
-
-🔸*Niebla de piso*
-Que cubre TODA la pista de baile durante TODO el vals principal.
-¡Lucirás hermosa con tu papá!
-
-Ó
-
-🔸*Lluvia de mariposas* 
-Durante el vals principal realizamos 4 detonaciones de papel china cortado en forma de mariposa
-¡Tus invitados quedarán sorprendidos!
-
-Todo esto con un valor de $8,900
 `;
   
    // PARTE 2
    const textoB = `  
-*¡Contrata ahora y recibe de REGALO!*
-
-🔸*2 Chisperos* de Luz Fría De 2.5 mts
-Ideales para la presentación
-
-Con un valor de $1,000
-
-¡¡Y eso no es todo!! 
-
-A las primeras 10 Quinceañeras que contraten éste paquete les estaremos Regalando 
-
-🔸*1 Scrapbook* personalizado para la cabina de fotos
-Donde tus invitados pegarán una de sus fotos y escribirán un lindo mensaje que podrán personalizar con nuestra plantilla de Stickers exclusiva para XV años
-
-Con un valor de $1,300
-
-¡Te lo llevamos también Completamente Gratis!
-
-¡Será un recuerdo muy bonito de tu evento!
-
-Si contrataras todo esto por separado, el precio Regular sería de $11,200
-
-*¡¡SOLO HOY CONTRATA TODO POR UN EXCELENTE PRECIO!!*
+Revisa los detalles de los servicios en el siguiente sitio web:
 `;
       
       const textoC = `
-Y no te preocupes que nosotros cubrimos los gastos DE FLETE y transportacion!! a una distancia de hasta 20 km del centro de Monterrey
-
-   *¡¡Aprovecha!!*
-
-¡Solo este mes disfruta de un *45% DE DESCUENTO* sobre el precio regular!
-
-¡¡Un Gran Ahorro que puedes ocupar en otras cosas!!
-  
-      En Resumen:
-  
-🔸 *Cabina de fotos* (3 Horas)
-🔸 *6 letras Gigantes* (5 Horas)
-🔸 *Niebla de piso* ó 
-    *Lluvia de mariposas* 
-🔸 *2 Chisperos de luz fría*
-🔸 *1 Scrapbook*
-🔸 *Descuento de $5,040*
-🔸 *Flete Incluido*
-
-*¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
-
-        ✨ *$6,160* ✨
-
-¡¡Aprovecha esta oportunidad!!
-
-Separa tu fecha con $500, el resto puede ser el dia de tu evento
-
-Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen tu fecha 😱      
-`
+https://cami-cam.com/paquete-mis-xv/     
+`;
  
-//OJO PONER EL ; ACA ARRIBA
   
   
       // Enviamos imagen de presentacion
@@ -1657,6 +1581,10 @@ Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen tu fecha 
       // Primer mensaje
       await delay(2000);
       await sendMessageWithTypingWithState(from, textoA, 2000, context.estado);
+
+      // Enviamos imagen con la informacion del paquete Mis XV
+      await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/04/Paq-Mis-XV-Inform.jpg");
+      
   
       // Segundo mensaje
       await delay(2000);
