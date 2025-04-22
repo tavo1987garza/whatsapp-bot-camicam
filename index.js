@@ -1688,7 +1688,7 @@ if (context.estado === "Contacto Inicial") {
   // Mensaje inicial explicando que es un asistente virtual
   await sendMessageWithTypingWithState(
     from,
-    "¡Hola! 👋\n\nEstoy aquí para ayudarte",
+    "¡Hola! 👋\n\nSoy Gustavo, a tus órdenes",
     1500, // Retraso de 2 segundos
     "Contacto Inicial"
   );
@@ -1712,7 +1712,7 @@ if (context.estado === "Contacto Inicial") {
   await delay(500); // Retraso de 1.5 segundos antes de enviar el mensaje
   await sendMessageWithTypingWithState(
     from,
-    "Para iniciar, dime por favor\n¿Qué tipo de evento tienes?",
+    "Por favor indícame: Qué tipo de evento tienes?",
     2000,
     "Contacto Inicial"
   );
