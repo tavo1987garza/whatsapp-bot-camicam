@@ -937,7 +937,7 @@ async function handleFAQs(from, userMessage) {
  FUNCION para seleccionar el Tipo de evento: Boda, XV Años, Otros sugeridos
  y enviar la información
  ****************************************************/
- async function handleTipoEvento(from, messageLower, context) {
+ /*async function handleTipoEvento(from, messageLower, context) {
   // Caso: Boda (cuando el usuario indica "boda" o "evento_boda")
   if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
     context.tipoEvento = "Boda";
@@ -992,13 +992,13 @@ async function handleFAQs(from, userMessage) {
       context.estado
     );
     await delay(2000);
-    await sendWhatsAppMessage (from, "Mira, éstos son los sevicios que ofrecemos en Camicam Photobooth");
+    await sendWhatsAppMessage (from, "Mira, éstos son nuestros sevicios");
     await delay(4000);
     await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
     await delay(6000);
     await sendMessageWithTypingWithState(
       from,
-      "Puedes armar tu paquete a tu gusto, con todo lo que necesites, incluso si requieres un solo servicio,\n\nO si prefieres, puedes ver nuestro Paquete exclusivo para XV.\n\n¿Cómo quieres continuar?",
+      "Quieres armar un paquete a tu gusto?\n\nO prefieres informacion del Paquete Mis XV?",
       3000,
       context.estado
     );
@@ -1007,7 +1007,7 @@ async function handleFAQs(from, userMessage) {
       "Selecciona una opción: 👇",
       [
         { id: "armar_paquete", title: "Armar mi paquete" },
-        { id: "paquete_xv", title: "Paquete Para XV" }
+        { id: "paquete_xv", title: "Paquete MIS XV" }
       ]
     );
 
@@ -1058,8 +1058,134 @@ async function handleFAQs(from, userMessage) {
   context.estado = "EsperandoConfirmacionPaquete";
   return true;
 }
-}  
+}  */
  
+
+/***************************************************
+//FUNCION para seleccionar el Tipo de evento: Boda, XV Años, Otros sugeridos
+ //y enviar la información
+ /****************************************************/
+ async function handleTipoEvento(from, messageLower, context) {
+  // Caso: Boda (cuando el usuario indica "boda" o "evento_boda")
+  if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
+    context.tipoEvento = "Boda";
+
+    // Paquete Recomendado PAQUETE WEDDING
+    context.paqueteRecomendado = {
+      paquete: "PAQUETE WEDDING"
+    };
+
+    await sendMessageWithTypingWithState(
+      from,
+      "¡Muchas felicidades por tu Boda! 👏 Hagámos que sea un día inolvidable!! ❤️",
+      3000,
+      context.estado
+    );
+    await delay(2000);
+    await sendWhatsAppMessage(from, "Mira, éstos son los servicios que ofrecemos en Camicam Photobooth");
+    await delay(4000);
+    await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
+    await delay(6000);
+    await sendMessageWithTypingWithState(
+      from,
+      "Puedes armar tu paquete a tu gusto, con todo lo que necesites, incluso si requieres un solo servicio,\n\nO si prefieres, puedes ver nuestro Paquete Exclusivo para Bodas.\n\n¿Cómo quieres continuar?",
+      3000,
+      context.estado
+    );
+    await sendInteractiveMessage(
+      from,
+      "Selecciona una opción: 👇",
+      [
+        { id: "armar_paquete", title: "Armar mi paquete" },
+        { id: "paquete_wedding", title: "Paquete Para Bodas" }
+      ]
+    );
+    context.estado = "EsperandoConfirmacionPaquete";
+    return true;
+  }
+
+  // CASO XV
+  else if (messageLower.includes("xv") || messageLower.includes("quince")) {
+    context.tipoEvento = "XV";
+
+    // Paquete Recomendado PAQUETE MIS XV
+    context.paqueteRecomendado = {
+      paquete: "PAQUETE MIS XV"
+    };
+
+    await sendMessageWithTypingWithState(
+      from,
+      "¡Muchas felicidades! 👏\n\nHagamos que tu fiesta de XV Años sea un día maravilloso!! ✨",
+      3000,
+      context.estado
+    );
+    await delay(2000);
+    await sendWhatsAppMessage(from, "Mira, éstos son nuestros servicios");
+    await delay(4000);
+    await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
+    await delay(6000);
+    await sendMessageWithTypingWithState(
+      from,
+      "Quieres armar un paquete a tu gusto?\n\nO prefieres informacion del Paquete Mis XV?",
+      3000,
+      context.estado
+    );
+    await sendInteractiveMessage(
+      from,
+      "Selecciona una opción: 👇",
+      [
+        { id: "armar_paquete", title: "Armar mi paquete" },
+        { id: "paquete_xv", title: "Paquete MIS XV" }
+      ]
+    );
+
+    // -> Directamente a "EsperandoConfirmacionPaquete"
+    context.estado = "EsperandoConfirmacionPaquete";
+    return true;
+  }
+
+  // CASO OTRO
+  else {
+    // Obtener la recomendación basada en el tipo de evento escrito por el usuario
+    const recomendacion = getOtherEventPackageRecommendation(messageLower);
+
+    // Guardar en el contexto el paquete recomendado para posteriores referencias
+    context.paqueteRecomendado = recomendacion;
+
+    // Mensaje de felicitación y presentación de servicios
+    await sendMessageWithTypingWithState(
+      from,
+      "¡Muchas felicidades! 👏\n\nHagamos que tu evento sea único y especial!! ✨",
+      3000,
+      context.estado
+    );
+    await delay(2000);
+    await sendWhatsAppMessage(from, "Mira, éstos son los servicios que ofrecemos en Camicam Photobooth");
+    await delay(4000);
+    await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
+    await delay(6000);
+    await sendMessageWithTypingWithState(
+      from,
+      "Puedes armar tu paquete a tu gusto, con todo lo que necesites, incluso si requieres un solo servicio,\n\nO si prefieres, puedes ver la información de nuestro Paquete exclusivo para este tipo de evento.\n\n¿Cómo quieres continuar?",
+      3000,
+      context.estado
+    );
+    
+    // Enviar botones interactivos: "Armar mi paquete" y "Paquete Para Este Evento"
+    await sendInteractiveMessage(
+      from,
+      "Selecciona una opción: 👇",
+      [
+        { id: "armar_paquete", title: "Armar mi paquete" },
+        { id: "paquete_otro", title: context.paqueteRecomendado?.paquete || "Paq Para Este Evento" }
+      ]
+    );
+    
+    // Se actualiza el estado para esperar la confirmación
+    context.estado = "EsperandoConfirmacionPaquete";
+    return true;
+  }
+}
 
 /***************************************************
 FUNCION para identificar el subtipo de evento 
@@ -1689,7 +1815,7 @@ if (context.estado === "Contacto Inicial") {
   await sendMessageWithTypingWithState(
     from,
     "¡Hola! 👋\n\nSoy Gustavo, a tus órdenes",
-    1500, // Retraso de 2 segundos
+    500, // Retraso de medio segundo
     "Contacto Inicial"
   );
 
@@ -1709,7 +1835,7 @@ if (context.estado === "Contacto Inicial") {
   await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2024/08/Visita.jpg");*/
 
   // Mensaje adicional para eventos no listados
-  await delay(500); // Retraso de 1.5 segundos antes de enviar el mensaje
+  await delay(500); // Retraso de .5 segundos antes de enviar el mensaje
   await sendMessageWithTypingWithState(
     from,
     "Por favor indícame: Qué tipo de evento tienes?",
