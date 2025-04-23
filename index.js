@@ -1681,7 +1681,12 @@ if (
    CASO XV
    ============================================ */
    if (messageLower === "paquete_xv" || messageLower.includes("Paquete Para XV")) {
-
+    await sendMessageWithTypingWithState(
+      from,
+      "Te presento el *Paquete Mis XV* que estamos promocionando:",
+      2000,
+      context.estado
+    );
   
     
       // PARTE 1
