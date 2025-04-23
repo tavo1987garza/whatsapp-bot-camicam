@@ -1688,12 +1688,6 @@ if (
       context.estado
     );
   
-    
-      // PARTE 1
-  const textoA = `  
-Te presento el paquete que estamos promocionando:
-`;
-  
    // PARTE 2
    const textoB = `  
 Revisa los detalles de los servicios en el siguiente sitio web:
@@ -1703,14 +1697,6 @@ Revisa los detalles de los servicios en el siguiente sitio web:
 https://cami-cam.com/paquete-mis-xv/     
 `;
  
-  
-  
-      // Enviamos imagen de presentacion
-      await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2023/10/PAQUETE-MIS-XV-2.jpg");
-      
-      // Primer mensaje
-      await delay(2000);
-      await sendMessageWithTypingWithState(from, textoA, 2000, context.estado);
 
       // Enviamos imagen con la informacion del paquete Mis XV
       await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/04/Paq-Mis-XV-Inform.jpg");
