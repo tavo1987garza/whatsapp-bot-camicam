@@ -712,13 +712,6 @@ function isWithinTwoYears(dateString) {
   return inputDate <= maxDate;
 }
 
-// Función original para verificar disponibilidad (simulada)
-//function checkAvailability(dateString) {
-  // Simulación de fechas ocupadas (en formato DD/MM/AAAA)
-  //const occupiedDates = ["15/02/2024", "20/02/2024"];
-  //return !occupiedDates.includes(dateString);
-//}
-
 const CRM_BASE_URL = "https://camicam-crm-d78af2926170.herokuapp.com";
 async function checkAvailability(dateYYYYMMDD) {
   try {
@@ -1159,7 +1152,7 @@ async function handleFAQs(from, userMessage) {
     await delay(6000);
     await sendMessageWithTypingWithState(
       from,
-      "Quieres armar un paquete a tu gusto?\n\nO prefieres ver el Paquete exclusivo para este tipo de evento",
+      `Quieres armar un paquete a tu gusto?\n\nO prefieres ver el Paquete exclusivo para ${context.paqueteRecomendado?.paquete || "este evento"}`,
       3000,
       context.estado
     );
@@ -2483,7 +2476,7 @@ const estaDisponible = await checkAvailability(fechaISO);
 if (!estaDisponible) {
   await sendMessageWithTypingWithState(
     from,
-    `😔 Lo siento, ${formattedDate} ya no tengo Disponible. Una disculpa por no poder atenderte.`,
+    `😔 Lo siento, ${formattedDate} ya no tengo Disponible.\n\nUna disculpa por no poder atenderte.`,
     2000,
     context.estado
   );
