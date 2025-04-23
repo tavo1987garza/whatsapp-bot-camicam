@@ -1953,7 +1953,7 @@ if (context.estado === "Contacto Inicial") {
          .split(",")
          .map(s => s.trim())
          .filter(s => !/^cabina$/i.test(s))
-         .join(", ");
+         .join(", "); 
   
         context.estado = "EsperandoTipoCabina";
         await sendWhatsAppMessage(from, "¿Deseas agregar Cabina de fotos o Cabina 360?");
