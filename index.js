@@ -12,6 +12,7 @@
 //SE HA CORREGIDO PA PARTE DE ENVIO DE TEXTO E IMAGEN, YA SE MUESTRAN CORRECTAMENTE EN EL CRM
 //SE USA AWS S3 PARA GENERAR LA URL DE LAS IMAGENES Y SE PUEDA MOSTRAR EN EL CRM
 //DESPUES DE LOS CAMBIOS QUE HICIMOS CON EL FLUJO DEL PAQUETE MIS XV SE PUSO LOCO ESTE BOT
+//SE HA COMPUESTO LO LOCO, AHORA NO ME RECONOCE CABINA DE FOTOS AL ARMAR EL PAQUETE
 
 // Importar dependencias en modo ES Modules
 import dotenv from 'dotenv'; 
@@ -1970,6 +1971,13 @@ if (context.estado === "Contacto Inicial") {
       .join(", ");
   }
 
+   // Preguntar primero por el tipo de cabina si falta
+   if (context.faltaTipoCabina) {
+    context.estado = "EsperandoTipoCabina";
+    await sendWhatsAppMessage(from, "¿Deseas agregar Cabina de fotos o Cabina 360?");
+    return true;
+  }
+
     // Priorizar preguntar primero por las letras si faltan
     if (context.faltanLetras) {
       context.estado = "EsperandoCantidadLetras";
@@ -1988,12 +1996,6 @@ if (context.estado === "Contacto Inicial") {
     if (context.faltaVarianteCarritoShots) {
       context.estado = "EsperandoTipoCarritoShots";
       await sendWhatsAppMessage(from, "¿El carrito de shots lo deseas CON alcohol o SIN alcohol? 🍹");
-      return true;
-    }
-
-    if (context.faltaTipoCabina) {
-      context.estado = "EsperandoTipoCabina";
-      await sendWhatsAppMessage(from, "¿Deseas agregar Cabina de fotos o Cabina 360?");
       return true;
     }
   
