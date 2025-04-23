@@ -1,7 +1,4 @@
 
-
-
-
 //CODIGO FUNCIONANDO YA CON LA VARIANTE DE CABINA DE FOTOS O CABINA 360, YA NO HAY ERROR, 
 //CUANDO EL CLIENTE ESCRIBE "CABINA DE FOTOS" EL BOT YA NO LO TOMA COMO PREGUNTA FRECUENTE 
 //AHORA SI LO  AGREGA A LA COTIZACION. YA NO HAY DUDAS CON EL FLUJO FINAL
@@ -14,7 +11,7 @@
 //OBSERVACION, CUANDO EL CLINETE NO CONTESTA, SE VUELVE A ENVIAR EL MENSAJE, HAY QUE PONER ATENCION A ESTO
 //SE HA CORREGIDO PA PARTE DE ENVIO DE TEXTO E IMAGEN, YA SE MUESTRAN CORRECTAMENTE EN EL CRM
 //SE USA AWS S3 PARA GENERAR LA URL DE LAS IMAGENES Y SE PUEDA MOSTRAR EN EL CRM
-
+//DESPUES DE LOS CAMBIOS QUE HICIMOS CON EL FLUJO DEL PAQUETE MIS XV SE PUSO LOCO ESTE BOT
 
 // Importar dependencias en modo ES Modules
 import dotenv from 'dotenv'; 
@@ -402,7 +399,7 @@ async function sendImageMessage(to, imageUrl, caption) {
 // Configurar cliente de OpenAI
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-});
+}); 
 
 // Objeto para almacenar el contexto de cada usuario
 const userContext = {};
@@ -716,10 +713,33 @@ function isWithinTwoYears(dateString) {
 }
 
 // Función original para verificar disponibilidad (simulada)
-function checkAvailability(dateString) {
+//function checkAvailability(dateString) {
   // Simulación de fechas ocupadas (en formato DD/MM/AAAA)
-  const occupiedDates = ["15/02/2024", "20/02/2024"];
-  return !occupiedDates.includes(dateString);
+  //const occupiedDates = ["15/02/2024", "20/02/2024"];
+  //return !occupiedDates.includes(dateString);
+//}
+
+const CRM_BASE_URL = "https://camicam-crm-d78af2926170.herokuapp.com";
+async function checkAvailability(dateYYYYMMDD) {
+  try {
+    const resp = await axios.get(
+      `${CRM_BASE_URL}/calendario/check?fecha=${dateYYYYMMDD}`
+    );
+    return resp.data.available; 
+  } catch (e) {
+    console.error("Error consultando disponibilidad:", e.message);
+    // Si hay error de red, para no romper, devolveremos que NO está disponible:
+    return false;
+  }
+}
+
+// Convierte "DD/MM/AAAA" a "YYYY-MM-DD"
+function convertirDDMMAAAAaISO(ddmmyyyy) {
+  // Ejemplo de ddmmyyyy = "09/08/2025"
+  // Descomponemos
+  const [dd, mm, yyyy] = ddmmyyyy.split('/');
+  // Retornamos "2025-08-09"
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 // Función para enviar mensjae al administrador
@@ -916,7 +936,7 @@ async function handleFAQs(from, userMessage) {
  FUNCION para seleccionar el Tipo de evento: Boda, XV Años, Otros sugeridos
  y enviar la información
  ****************************************************/
- async function handleTipoEvento(from, messageLower, context) {
+ /*async function handleTipoEvento(from, messageLower, context) {
   // Caso: Boda (cuando el usuario indica "boda" o "evento_boda")
   if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
     context.tipoEvento = "Boda";
@@ -971,13 +991,13 @@ async function handleFAQs(from, userMessage) {
       context.estado
     );
     await delay(2000);
-    await sendWhatsAppMessage (from, "Mira, éstos son los sevicios que ofrecemos en Camicam Photobooth");
+    await sendWhatsAppMessage (from, "Mira, éstos son nuestros sevicios");
     await delay(4000);
     await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
     await delay(6000);
     await sendMessageWithTypingWithState(
       from,
-      "Puedes armar tu paquete a tu gusto, con todo lo que necesites, incluso si requieres un solo servicio,\n\nO si prefieres, puedes ver nuestro Paquete exclusivo para XV.\n\n¿Cómo quieres continuar?",
+      "Quieres armar un paquete a tu gusto?\n\nO prefieres informacion del Paquete Mis XV?",
       3000,
       context.estado
     );
@@ -986,7 +1006,7 @@ async function handleFAQs(from, userMessage) {
       "Selecciona una opción: 👇",
       [
         { id: "armar_paquete", title: "Armar mi paquete" },
-        { id: "paquete_xv", title: "Paquete Para XV" }
+        { id: "paquete_xv", title: "Paquete MIS XV" }
       ]
     );
 
@@ -1037,8 +1057,134 @@ async function handleFAQs(from, userMessage) {
   context.estado = "EsperandoConfirmacionPaquete";
   return true;
 }
-}  
+}  */
  
+
+/***************************************************
+//FUNCION para seleccionar el Tipo de evento: Boda, XV Años, Otros sugeridos
+ //y enviar la información
+ /****************************************************/
+ async function handleTipoEvento(from, messageLower, context) {
+  // Caso: Boda (cuando el usuario indica "boda" o "evento_boda")
+  if (messageLower.includes("boda") || messageLower.includes("evento_boda")) {
+    context.tipoEvento = "Boda";
+
+    // Paquete Recomendado PAQUETE WEDDING
+    context.paqueteRecomendado = {
+      paquete: "PAQUETE WEDDING"
+    };
+
+    await sendMessageWithTypingWithState(
+      from,
+      "¡Muchas felicidades por tu Boda! 👏 Hagámos que sea un día inolvidable!! ❤️",
+      3000,
+      context.estado
+    );
+    await delay(2000);
+    await sendWhatsAppMessage(from, "Mira, éstos son los servicios que ofrecemos en Camicam Photobooth");
+    await delay(4000);
+    await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
+    await delay(6000);
+    await sendMessageWithTypingWithState(
+      from,
+      "Puedes armar tu paquete a tu gusto, con todo lo que necesites, incluso si requieres un solo servicio,\n\nO si prefieres, puedes ver nuestro Paquete Exclusivo para Bodas.\n\n¿Cómo quieres continuar?",
+      3000,
+      context.estado
+    );
+    await sendInteractiveMessage(
+      from,
+      "Selecciona una opción: 👇",
+      [
+        { id: "armar_paquete", title: "Armar mi paquete" },
+        { id: "paquete_wedding", title: "Paquete Para Bodas" }
+      ]
+    );
+    context.estado = "EsperandoConfirmacionPaquete";
+    return true;
+  }
+
+  // CASO XV
+  else if (messageLower.includes("xv") || messageLower.includes("quince")) {
+    context.tipoEvento = "XV";
+
+    // Paquete Recomendado PAQUETE MIS XV
+    context.paqueteRecomendado = {
+      paquete: "PAQUETE MIS XV"
+    };
+
+    await sendMessageWithTypingWithState(
+      from,
+      "¡Muchas felicidades! 👏\n\nHagamos que tu fiesta de XV Años sea un día maravilloso!! ✨",
+      3000,
+      context.estado
+    );
+    await delay(2000);
+    await sendWhatsAppMessage(from, "Mira, éstos son nuestros servicios");
+    await delay(4000);
+    await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
+    await delay(6000);
+    await sendMessageWithTypingWithState(
+      from,
+      "Quieres armar un paquete a tu gusto?\n\nO prefieres informacion del Paquete Mis XV?",
+      3000,
+      context.estado
+    );
+    await sendInteractiveMessage(
+      from,
+      "Selecciona una opción: 👇",
+      [
+        { id: "armar_paquete", title: "Armar mi paquete" },
+        { id: "paquete_xv", title: "Paquete MIS XV" }
+      ]
+    );
+
+    // -> Directamente a "EsperandoConfirmacionPaquete"
+    context.estado = "EsperandoConfirmacionPaquete";
+    return true;
+  }
+
+  // CASO OTRO
+  else {
+    // Obtener la recomendación basada en el tipo de evento escrito por el usuario
+    const recomendacion = getOtherEventPackageRecommendation(messageLower);
+
+    // Guardar en el contexto el paquete recomendado para posteriores referencias
+    context.paqueteRecomendado = recomendacion;
+
+    // Mensaje de felicitación y presentación de servicios
+    await sendMessageWithTypingWithState(
+      from,
+      "¡Muchas felicidades! 👏\n\nHagamos que tu evento sea único y especial!! ✨",
+      3000,
+      context.estado
+    );
+    await delay(2000);
+    await sendWhatsAppMessage(from, "Mira, éstos son los servicios que ofrecemos en Camicam Photobooth");
+    await delay(4000);
+    await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
+    await delay(6000);
+    await sendMessageWithTypingWithState(
+      from,
+      "Puedes armar tu paquete a tu gusto, con todo lo que necesites, incluso si requieres un solo servicio,\n\nO si prefieres, puedes ver la información de nuestro Paquete exclusivo para este tipo de evento.\n\n¿Cómo quieres continuar?",
+      3000,
+      context.estado
+    );
+    
+    // Enviar botones interactivos: "Armar mi paquete" y "Paquete Para Este Evento"
+    await sendInteractiveMessage(
+      from,
+      "Selecciona una opción: 👇",
+      [
+        { id: "armar_paquete", title: "Armar mi paquete" },
+        { id: "paquete_otro", title: context.paqueteRecomendado?.paquete || "Paq Para Este Evento" }
+      ]
+    );
+    
+    // Se actualiza el estado para esperar la confirmación
+    context.estado = "EsperandoConfirmacionPaquete";
+    return true;
+  }
+}
 
 /***************************************************
 FUNCION para identificar el subtipo de evento 
@@ -1532,7 +1678,7 @@ if (
 
   /* ============================================
    Interceptamos el botón "paquete_xv"
-   CASO BODA
+   CASO XV
    ============================================ */
    if (messageLower === "paquete_xv" || messageLower.includes("Paquete Para XV")) {
 
@@ -1541,92 +1687,17 @@ if (
       // PARTE 1
   const textoA = `  
 Te presento el paquete que estamos promocionando:
-
-    *PAQUETE MIS XV*
-
-        Incluye: 
-
-🔸*Cabina de fotos* (3 Horas) 
-Impresion ilimitada de fotos en calidad Kodak.
-¡Tus invitados se divertirán mucho con los accesorios chuzcos que ponemos dentro de la cabina!
-
-🔸*6 letras Gigantes* (5 Horas)
-De 1.20 mts de alto y luces led con secuencias multicolor.
-¡Para que tu nombre se vea espectacular!
-
-y Escoge
-
-🔸*Niebla de piso*
-Que cubre TODA la pista de baile durante TODO el vals principal.
-¡Lucirás hermosa con tu papá!
-
-Ó
-
-🔸*Lluvia de mariposas* 
-Durante el vals principal realizamos 4 detonaciones de papel china cortado en forma de mariposa
-¡Tus invitados quedarán sorprendidos!
-
-Todo esto con un valor de $8,900
 `;
   
    // PARTE 2
    const textoB = `  
-*¡Contrata ahora y recibe de REGALO!*
-
-🔸*2 Chisperos* de Luz Fría De 2.5 mts
-Ideales para la presentación
-
-Con un valor de $1,000
-
-¡¡Y eso no es todo!! 
-
-A las primeras 10 Quinceañeras que contraten éste paquete les estaremos Regalando 
-
-🔸*1 Scrapbook* personalizado para la cabina de fotos
-Donde tus invitados pegarán una de sus fotos y escribirán un lindo mensaje que podrán personalizar con nuestra plantilla de Stickers exclusiva para XV años
-
-Con un valor de $1,300
-
-¡Te lo llevamos también Completamente Gratis!
-
-¡Será un recuerdo muy bonito de tu evento!
-
-Si contrataras todo esto por separado, el precio Regular sería de $11,200
-
-*¡¡SOLO HOY CONTRATA TODO POR UN EXCELENTE PRECIO!!*
+Revisa los detalles de los servicios en el siguiente sitio web:
 `;
       
       const textoC = `
-Y no te preocupes que nosotros cubrimos los gastos DE FLETE y transportacion!! a una distancia de hasta 20 km del centro de Monterrey
-
-   *¡¡Aprovecha!!*
-
-¡Solo este mes disfruta de un *45% DE DESCUENTO* sobre el precio regular!
-
-¡¡Un Gran Ahorro que puedes ocupar en otras cosas!!
-  
-      En Resumen:
-  
-🔸 *Cabina de fotos* (3 Horas)
-🔸 *6 letras Gigantes* (5 Horas)
-🔸 *Niebla de piso* ó 
-    *Lluvia de mariposas* 
-🔸 *2 Chisperos de luz fría*
-🔸 *1 Scrapbook*
-🔸 *Descuento de $5,040*
-🔸 *Flete Incluido*
-
-*¡¡SOLO HOY CONTRATA TODO POR TAN SOLO!!*
-
-        ✨ *$6,160* ✨
-
-¡¡Aprovecha esta oportunidad!!
-
-Separa tu fecha con $500, el resto puede ser el dia de tu evento
-
-Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen tu fecha 😱      
+https://cami-cam.com/paquete-mis-xv/     
 `;
-  
+ 
   
   
       // Enviamos imagen de presentacion
@@ -1635,6 +1706,10 @@ Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen tu fecha 
       // Primer mensaje
       await delay(2000);
       await sendMessageWithTypingWithState(from, textoA, 2000, context.estado);
+
+      // Enviamos imagen con la informacion del paquete Mis XV
+      await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/04/Paq-Mis-XV-Inform.jpg");
+      
   
       // Segundo mensaje
       await delay(2000);
@@ -1675,13 +1750,14 @@ Revisa Disponibilidad ahora y asegura tu paquete antes de que te ganen tu fecha 
   }
 
 
+  
+
 
 
 
 
   /* ============================================
-   Interceptamos el botón "paquete_xv"
-   CASO BODA
+   Interceptamos el botón de otro evento
    ============================================ */
    if (messageLower === "paquete_otro") {
     // Aseguramos que la recomendación esté en el contexto
@@ -1736,8 +1812,8 @@ if (context.estado === "Contacto Inicial") {
   // Mensaje inicial explicando que es un asistente virtual
   await sendMessageWithTypingWithState(
     from,
-    "¡Hola! 👋\n\nEstoy aquí para ayudarte",
-    1500, // Retraso de 2 segundos
+    "¡Hola! 👋\n\nSoy Gustavo, a tus órdenes",
+    500, // Retraso de medio segundo
     "Contacto Inicial"
   );
 
@@ -1757,10 +1833,10 @@ if (context.estado === "Contacto Inicial") {
   await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2024/08/Visita.jpg");*/
 
   // Mensaje adicional para eventos no listados
-  await delay(500); // Retraso de 1.5 segundos antes de enviar el mensaje
+  await delay(500); // Retraso de .5 segundos antes de enviar el mensaje
   await sendMessageWithTypingWithState(
     from,
-    "Para iniciar, dime por favor\n¿Qué tipo de evento tienes?",
+    "Por favor indícame: Qué tipo de evento tienes?",
     2000,
     "Contacto Inicial"
   );
@@ -2416,12 +2492,18 @@ if (context.estado === "EsperandoFecha") {
 
   // Convertir la fecha al formato DD/MM/AAAA utilizando parseFecha
   const fechaDDMMYYYY = parseFecha(userMessage);
+ 
   // Formatear la fecha a "DD de Mes AAAA"
   const formattedDate = formatFechaEnEspanol(fechaDDMMYYYY);
 
-  // Verificar disponibilidad de la fecha (simulado)
-  if (!checkAvailability(formattedDate)) {
-    await sendMessageWithTypingWithState(
+  // (d) Convertir a YYYY-MM-DD para consultar en la DB
+const fechaISO = convertirDDMMAAAAaISO(fechaDDMMYYYY); 
+// => "2025-08-09"
+
+// (e) Llamar al CRM para verificar si está disponible
+const estaDisponible = await checkAvailability(fechaISO);
+if (!estaDisponible) {
+  await sendMessageWithTypingWithState(
       from,
       "😔 Lo siento, esa fecha ya está reservada. Prueba con otra o contáctanos para más detalles.",
       2000,
@@ -2430,6 +2512,9 @@ if (context.estado === "EsperandoFecha") {
     return true;
   }
 
+    // (f) Si está disponible, guardamos en el contexto
+  //     - Podrías guardar la versión ISO para luego reservar
+  context.fechaISO = fechaISO;
   // Si todas las validaciones son exitosas, guardar la fecha en el contexto
   context.fecha = formattedDate;
   
@@ -2457,20 +2542,14 @@ if (context.estado === "EsperandoLugar") {
   // Mensaje 1: Explicación del anticipo para separar la fecha
   await sendMessageWithTypingWithState(
     from,
-    "ℹ️ IMPORTANTE\n\nPara separar la fecha ✅ solicitamos un anticipo de $500, el resto puede ser el día del evento.",
+    "Para separar la fecha ✅ solicitamos un anticipo de $500, el resto puede ser el día del evento.",
     4000,
     context.estado
   );
   
-  // Enviar mensaje con datos para transferencia y una imagen (ajusta la URL y texto según convenga)
- 
-  await sendImageMessage(
-    from,
-    "http://cami-cam.com/wp-content/uploads/2025/03/Datos-Transferencia-1.jpeg", "722969010494399671",
-    5000,
-    context.estado
-  );
-  
+  // Enviar mensaje con datos para transferencia y una imagen  
+  await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/03/Datos-Transferencia-1.jpeg", "722969010494399671");
+
   
   // Mensaje 2: Explicación del siguiente paso una vez acreditado el anticipo
   await sendMessageWithTypingWithState(
