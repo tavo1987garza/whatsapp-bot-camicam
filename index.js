@@ -2091,7 +2091,7 @@ if (context.estado === "EsperandoServicios") {
 
 /*''''''''''''''''''''''''''''''''''''''
 🟢 4.1 ESPRAMOS CANTIDAD DE CHISPEROS 🟢
-''''''''''''''''''''''''''''''''''''''*/
+''''''''''''''''''''''''''''''''''''''
 if (context.estado === "EsperandoCantidadChisperos") {
   const cantidad = parseInt(userMessage);
   if (isNaN(cantidad) || cantidad <= 0) {
@@ -2116,11 +2116,48 @@ if (context.estado === "EsperandoCantidadChisperos") {
   // Actualizar la cotización final
   await actualizarCotizacion(from, context);
   return true;
+}*/
+
+/*''''''''''''''''''''''''''''''''''''''
+🟢 4.1 ESPRAMOS CANTIDAD DE CHISPEROS 🟢
+''''''''''''''''''''''''''''''''''''''*/
+if (context.estado === "EsperandoCantidadChisperos") {
+  const cantidad = parseInt(userMessage);
+  if (isNaN(cantidad) || cantidad <= 0) {
+    await sendWhatsAppMessage(from, "Por favor, ingresa un número válido para la cantidad de chisperos.");
+    return true;
+  }
+
+  // Verificar que la cantidad sea par
+  if (cantidad % 2 !== 0) {
+    await sendWhatsAppMessage(from, "Cantidad inválida. Las opciones válidas para los chisperos son cantidades pares: 2, 4, 6, 8, 10, etc.");
+    return true;
+  }
+ 
+  // Regex para capturar "chisperos" con o sin número
+  const regex = /chisperos(\s*\d+)?/i;
+  if (regex.test(context.serviciosSeleccionados)) {
+    context.serviciosSeleccionados = context.serviciosSeleccionados.replace(regex, `chisperos ${cantidad}`);
+  } else {
+    context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `chisperos ${cantidad}`;
+  }
+  await sendWhatsAppMessage(from, `✅ Se han agregado ${cantidad} chisperos.`);
+  
+  // Verificar si aún falta información sobre el carrito de shots
+  if (context.faltaVarianteCarritoShots) {
+    context.estado = "EsperandoTipoCarritoShots";
+    await sendWhatsAppMessage(from, "¿El carrito de shots lo deseas CON alcohol o SIN alcohol? 🍹");
+    return true;
+  }
+  
+  // Si no falta información, actualizar la cotización final
+  await actualizarCotizacion(from, context);
+  return true;
 }
 
 /*'''''''''''''''''''''''''''''''''''
 🟢 4.2 ESPRAMOS CANTIDAD DE LETRAS 🟢
-'''''''''''''''''''''''''''''''''''*/
+'''''''''''''''''''''''''''''''''''
 if (context.estado === "EsperandoCantidadLetras") {
   const cantidad = parseInt(userMessage);
   if (isNaN(cantidad) || cantidad <= 0) {
@@ -2156,6 +2193,56 @@ if (context.estado === "EsperandoCantidadLetras") {
   if (context.faltanChisperos) {
     context.estado = "EsperandoCantidadChisperos";
     await sendWhatsAppMessage(from, "¿Cuántos chisperos ocupas? 🔥 Opciones: 2, 4, 6, 8, 10, etc");
+    return true;
+  }
+  
+  // Si ya se tienen todos los datos, actualiza la cotización
+  await actualizarCotizacion(from, context);
+  return true;
+}*/
+
+/*'''''''''''''''''''''''''''''''''''
+🟢 4.2 ESPRAMOS CANTIDAD DE LETRAS 🟢
+'''''''''''''''''''''''''''''''''''*/
+if (context.estado === "EsperandoCantidadLetras") {
+  const cantidad = parseInt(userMessage);
+  if (isNaN(cantidad) || cantidad <= 0) {
+    await sendWhatsAppMessage(from, "Por favor, ingresa un número válido para la cantidad de letras.");
+    return true;
+  }
+  
+  // Separar la lista de servicios por coma y limpiar espacios
+  let serviciosArray = context.serviciosSeleccionados.split(",").map(s => s.trim());
+  let encontrado = false;
+  
+  // Buscar una entrada que contenga "letras" (sin cantidad) para actualizarla
+  serviciosArray = serviciosArray.map(service => {
+    if (/^letras(\s*gigantes)?$/i.test(service)) {
+      encontrado = true;
+      return `letras gigantes ${cantidad}`;
+    }
+    return service;
+  });
+  
+  if (!encontrado) {
+    serviciosArray.push(`letras gigantes ${cantidad}`);
+  }
+  
+  context.serviciosSeleccionados = serviciosArray.join(", ");
+  
+  await sendWhatsAppMessage(from, `✅ Se han agregado ${cantidad} letras gigantes.`);
+  
+  // Si además faltan chisperos, cambia el estado para solicitarlos
+  if (context.faltanChisperos) {
+    context.estado = "EsperandoCantidadChisperos";
+    await sendWhatsAppMessage(from, "¿Cuántos chisperos ocupas? 🔥 Opciones: 2, 4, 6, 8, 10, etc");
+    return true;
+  }
+  
+  // Verificar si aún falta información sobre el carrito de shots
+  if (context.faltaVarianteCarritoShots) {
+    context.estado = "EsperandoTipoCarritoShots";
+    await sendWhatsAppMessage(from, "¿El carrito de shots lo deseas CON alcohol o SIN alcohol? �");
     return true;
   }
   
