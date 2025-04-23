@@ -1914,6 +1914,7 @@ if (context.estado === "Contacto Inicial") {
     context.faltanLetras = false;
     context.faltanChisperos = false;
     context.faltaVarianteCarritoShots = false;
+    context.faltaTipoCabina = false;
   
     // Verificar si "letras gigantes" ya contiene un número, de lo contrario, marcar que falta la cantidad
     /*if (!/letras\s*gigantes\s+\d+/i.test(context.serviciosSeleccionados)) {
@@ -1946,7 +1947,7 @@ if (context.estado === "Contacto Inicial") {
       }
     } 
     // Verificar si se incluye "cabina" sin especificar tipo (de fotos o 360)
-    if (/cabina(?!\s*(de fotos|360))/i.test(context.serviciosSeleccionados)) {
+  /*  if (/cabina(?!\s*(de fotos|360))/i.test(context.serviciosSeleccionados)) {
        context.faltaTipoCabina = true;
        // Eliminar la entrada "cabina" sin especificar de la cotización
        context.serviciosSeleccionados = context.serviciosSeleccionados
@@ -1958,7 +1959,25 @@ if (context.estado === "Contacto Inicial") {
         context.estado = "EsperandoTipoCabina";
         await sendWhatsAppMessage(from, "¿Deseas agregar Cabina de fotos o Cabina 360?");
         return true;
-    }
+    }*/
+
+      // Verificar si se incluye "cabina" sin especificar tipo
+  if (/cabina(?!\s*(de fotos|360))/i.test(context.serviciosSeleccionados)) {
+    context.faltaTipoCabina = true;
+    // Eliminar la entrada "cabina" sin especificar de la cotización
+    context.serviciosSeleccionados = context.serviciosSeleccionados
+      .split(",")
+      .map(s => s.trim())
+      .filter(s => !/^cabina$/i.test(s))
+      .join(", ");
+  }
+
+  // Preguntar primero por el tipo de cabina si falta
+  if (context.faltaTipoCabina) {
+    context.estado = "EsperandoTipoCabina";
+    await sendWhatsAppMessage(from, "¿Deseas agregar Cabina de fotos o Cabina 360?");
+    return true;
+  }
 
     // Priorizar preguntar primero por las letras si faltan
     if (context.faltanLetras) {
@@ -2140,18 +2159,6 @@ if (context.estado === "EsperandoTipoCarritoShots") {
     // Si la variante seleccionada no está en la cotización, se agrega.
     context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + varianteSeleccionada;
     await sendWhatsAppMessage(from, `✅ Se ha seleccionado ${varianteSeleccionada}.`);
-
-
-
-    
-    if (context.faltaTipoCabina) {
-      await sendWhatsAppMessage(from, "¿Deseas agregar Cabina de fotos o Cabina 360?");
-      context.estado = "EsperandoTipoCabina";
-      return true; // Detenemos el flujo hasta que se resuelva la selección de cabina
-    }
-
-
-
 
     // Verificar si faltan letras o chisperos antes de mostrar la cotización
     if (/letras(?:\s*gigantes)?(?!\s*\d+)/i.test(context.serviciosSeleccionados)) {
