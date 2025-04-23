@@ -1915,9 +1915,14 @@ if (context.estado === "Contacto Inicial") {
     context.faltaVarianteCarritoShots = false;
   
     // Verificar si "letras gigantes" ya contiene un número, de lo contrario, marcar que falta la cantidad
-    if (!/letras\s*gigantes\s+\d+/i.test(context.serviciosSeleccionados)) {
+    /*if (!/letras\s*gigantes\s+\d+/i.test(context.serviciosSeleccionados)) {
     context.faltanLetras = true;
-    }
+    }*/
+
+     // Verificar si mencionó letras pero sin cantidad
+  if (/(letras|letras gigantes)(?!\s*\d+)/i.test(context.serviciosSeleccionados)) {
+    context.faltanLetras = true;
+  }
     // Verificar si "chisperos" está presente sin cantidad
     if (/chisperos(?!\s*\d+)/i.test(context.serviciosSeleccionados)) {
       context.faltanChisperos = true;
