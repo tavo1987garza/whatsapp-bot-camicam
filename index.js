@@ -1080,14 +1080,11 @@ async function handleFAQs(from, userMessage) {
       3000,
       context.estado
     );
-    await delay(2000);
-    await sendWhatsAppMessage(from, "Mira, éstos son los servicios que ofrecemos en Camicam Photobooth");
-    await delay(4000);
     await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
     await delay(6000);
     await sendMessageWithTypingWithState(
       from,
-      "Puedes armar tu paquete a tu gusto, con todo lo que necesites, incluso si requieres un solo servicio,\n\nO si prefieres, puedes ver nuestro Paquete Exclusivo para Bodas.\n\n¿Cómo quieres continuar?",
+      "Quieres armar un paquete a tu gusto?\n\nO prefieres informacion del Paquete WEDDING?",
       3000,
       context.estado
     );
@@ -1096,7 +1093,7 @@ async function handleFAQs(from, userMessage) {
       "Selecciona una opción: 👇",
       [
         { id: "armar_paquete", title: "Armar mi paquete" },
-        { id: "paquete_wedding", title: "Paquete Para Bodas" }
+        { id: "paquete_wedding", title: "Paquete WEDDING" }
       ]
     );
     context.estado = "EsperandoConfirmacionPaquete";
@@ -1118,9 +1115,6 @@ async function handleFAQs(from, userMessage) {
       3000,
       context.estado
     );
-    await delay(2000);
-    await sendWhatsAppMessage(from, "Mira, éstos son nuestros servicios");
-    await delay(4000);
     await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
     await delay(6000);
     await sendMessageWithTypingWithState(
@@ -1158,14 +1152,11 @@ async function handleFAQs(from, userMessage) {
       3000,
       context.estado
     );
-    await delay(2000);
-    await sendWhatsAppMessage(from, "Mira, éstos son los servicios que ofrecemos en Camicam Photobooth");
-    await delay(4000);
     await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
     await delay(6000);
     await sendMessageWithTypingWithState(
       from,
-      "Puedes armar tu paquete a tu gusto, con todo lo que necesites, incluso si requieres un solo servicio,\n\nO si prefieres, puedes ver la información de nuestro Paquete exclusivo para este tipo de evento.\n\n¿Cómo quieres continuar?",
+      "Quieres armar un paquete a tu gusto?\n\nO prefieres informacion del Paquete exclusivo para este tipo de evento",
       3000,
       context.estado
     );
@@ -1648,7 +1639,7 @@ if (
   if (messageLower === "paquete_wedding" || messageLower.includes("Paquete Para Bodas")) {
     await sendMessageWithTypingWithState(
       from,
-      "Te presento el *Paquete Wedding* que estamos promocionando: \n\nIncluye Cabina 360, iniciales decorativas, 2 chisperos y un carrito de shots con alcohol, por *$4,450*.",
+      "Aquí tienes la información del *Paquete WEDDING*",
       2000,
       context.estado
     );
@@ -1665,7 +1656,7 @@ if (
     await delay(2000);
     await sendInteractiveMessage(
       from,
-      "¿Te gustaría continuar con el *PAQUETE WEDDING*?\n\nO prefieres armar tu paquete?",
+      "¿Te interesa el *PAQUETE WEDDING*?\n\nO prefieres armar un Paquete a tu gusto?",
       [
         { id: "si_me_interesa", title: "PAQUETE WEDDING" },
         { id: "armar_paquete", title: "Armar mi paquete" }
@@ -1683,7 +1674,7 @@ if (
    if (messageLower === "paquete_xv" || messageLower.includes("Paquete Para XV")) {
     await sendMessageWithTypingWithState(
       from,
-      "Te presento el *Paquete Mis XV* que estamos promocionando:",
+      "Aquí tienes la información del *Paquete Mis XV*",
       2000,
       context.estado
     );
@@ -1730,7 +1721,7 @@ https://cami-cam.com/paquete-mis-xv/
       await delay(2000);
       await sendInteractiveMessage(
         from,
-        "¿Te gustaría continuar con el *PAQUETE MIS XV*?\n\nO prefieres armar tu Paquete Personalizado?",
+        "¿Te interesa el *PAQUETE MIS XV*?\n\nO prefieres armar un Paquete a tu gusto?",
         [
           { id: "si_me_interesa", title: "PAQUETE MIS XV" },
           { id: "armar_paquete", title: "Armar mi paquete" }
@@ -1739,13 +1730,6 @@ https://cami-cam.com/paquete-mis-xv/
     context.estado = "EsperandoConfirmacionPaquete";
     return true;
   }
-
-
-  
-
-
-
-
 
   /* ============================================
    Interceptamos el botón de otro evento
@@ -1778,7 +1762,7 @@ https://cami-cam.com/paquete-mis-xv/
       // Enviar botones interactivos con "aceptar paquete" y "armar mi paquete"
       await sendInteractiveMessage(
         from,
-        `Te gustaría continuar con el ${recomendacion.paquete}?\n\nO prefieres Armar tu Paquete?`,
+        `¿Te interesa el *${recomendacion.paquete}*?\n\nO prefieres armar un Paquete a tu gusto?`,
         [
           { id: "si_me_interesa", title: recomendacion.paquete },
           { id: "armar_paquete", title: "Armar mi paquete" }
