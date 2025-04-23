@@ -1946,7 +1946,7 @@ if (context.estado === "Contacto Inicial") {
       }
     } 
     // Verificar si se incluye "cabina" sin especificar tipo (de fotos o 360)
-   /* if (/cabina(?!\s*(de fotos|360))/i.test(context.serviciosSeleccionados)) {
+    if (/cabina(?!\s*(de fotos|360))/i.test(context.serviciosSeleccionados)) {
        context.faltaTipoCabina = true;
        // Eliminar la entrada "cabina" sin especificar de la cotización
        context.serviciosSeleccionados = context.serviciosSeleccionados
@@ -1958,25 +1958,7 @@ if (context.estado === "Contacto Inicial") {
         context.estado = "EsperandoTipoCabina";
         await sendWhatsAppMessage(from, "¿Deseas agregar Cabina de fotos o Cabina 360?");
         return true;
-    }*/
-
-      // Verificar si se incluye "cabina" sin especificar tipo
-  if (/cabina(?!\s*(de fotos|360))/i.test(context.serviciosSeleccionados)) {
-    context.faltaTipoCabina = true;
-    // Eliminar la entrada "cabina" sin especificar de la cotización
-    context.serviciosSeleccionados = context.serviciosSeleccionados
-      .split(",")
-      .map(s => s.trim())
-      .filter(s => !/^cabina$/i.test(s))
-      .join(", ");
-  }
-
-   // Preguntar primero por el tipo de cabina si falta
-   if (context.faltaTipoCabina) {
-    context.estado = "EsperandoTipoCabina";
-    await sendWhatsAppMessage(from, "¿Deseas agregar Cabina de fotos o Cabina 360?");
-    return true;
-  }
+    }
 
     // Priorizar preguntar primero por las letras si faltan
     if (context.faltanLetras) {
