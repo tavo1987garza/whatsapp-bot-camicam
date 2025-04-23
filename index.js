@@ -1977,7 +1977,7 @@ if (context.estado === "Contacto Inicial") {
     context.estado = "EsperandoTipoCabina";
     await sendWhatsAppMessage(from, "¿Deseas agregar Cabina de fotos o Cabina 360?");
     return true;
-  }
+  }  
 
     // Priorizar preguntar primero por las letras si faltan
     if (context.faltanLetras) {
