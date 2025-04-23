@@ -2087,7 +2087,7 @@ if (context.estado === "EsperandoServicios") {
   // Si ya se especificaron todos los datos, actualizar la cotización
   await actualizarCotizacion(from, context);
   return true;
-} 
+}  
 
 /*''''''''''''''''''''''''''''''''''''''
 🟢 4.1 ESPRAMOS CANTIDAD DE CHISPEROS 🟢
