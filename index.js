@@ -1684,7 +1684,7 @@ if (
   
    // PARTE 2
    const textoB = `  
-Revisa los detalles de los servicios en el siguiente sitio web:
+Visita nuesto Sitio Web para más detalles:
 `;
       
       const textoC = `
@@ -2478,17 +2478,19 @@ if (context.estado === "EsperandoFecha") {
 const fechaISO = convertirDDMMAAAAaISO(fechaDDMMYYYY); 
 // => "2025-08-09"
 
-// (e) Llamar al CRM para verificar si está disponible
+  // (e) Llamar al CRM para verificar si está disponible
 const estaDisponible = await checkAvailability(fechaISO);
 if (!estaDisponible) {
   await sendMessageWithTypingWithState(
-      from,
-      "😔 Lo siento, esa fecha ya está reservada. Prueba con otra o contáctanos para más detalles.",
-      2000,
-      context.estado
-    );
-    return true;
-  }
+    from,
+    "😔 Lo siento, esa fecha ya está reservada. Una disculpa por no poder atenderte.",
+    2000,
+    context.estado
+  );
+  // Finalizar el flujo
+  context.estado = "Finalizado";
+  return true;
+}
 
     // (f) Si está disponible, guardamos en el contexto
   //     - Podrías guardar la versión ISO para luego reservar
