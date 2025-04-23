@@ -2173,6 +2173,12 @@ if (context.estado === "EsperandoTipoCarritoShots") {
       return true;
     }
 
+    if (context.faltaTipoCabina) {
+      context.estado = "EsperandoTipoCabina";
+      await sendWhatsAppMessage(from, "¿Deseas agregar Cabina de fotos o Cabina 360?");
+      return true;
+    }
+
     // Si no faltan letras ni chisperos, mostrar la cotización
     await actualizarCotizacion(from, context);
     context.estado = "EsperandoDudas";
