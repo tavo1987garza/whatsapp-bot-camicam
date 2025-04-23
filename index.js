@@ -1682,7 +1682,7 @@ if (
    ============================================ */
    if (messageLower === "paquete_xv" || messageLower.includes("Paquete Para XV")) {
 
-
+  
     
       // PARTE 1
   const textoA = `  
