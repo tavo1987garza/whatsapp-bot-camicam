@@ -2483,7 +2483,7 @@ const estaDisponible = await checkAvailability(fechaISO);
 if (!estaDisponible) {
   await sendMessageWithTypingWithState(
     from,
-    "😔 Lo siento, esa fecha ya está reservada. Una disculpa por no poder atenderte.",
+    `😔 Lo siento, ${formattedDate} ya no tengo Disponible. Una disculpa por no poder atenderte.`,
     2000,
     context.estado
   );
