@@ -1152,7 +1152,7 @@ async function handleFAQs(from, userMessage) {
     await delay(6000);
     await sendMessageWithTypingWithState(
       from,
-      `Quieres armar un paquete a tu gusto?\n\nO prefieres ver el Paquete exclusivo para ${context.paqueteRecomendado?.paquete || "este evento"}`,
+      `Quieres armar un paquete a tu gusto?\n\nO prefieres ver el ${context.paqueteRecomendado?.paquete || "este evento"}`,
       3000,
       context.estado
     );
