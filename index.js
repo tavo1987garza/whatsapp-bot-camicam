@@ -1080,11 +1080,12 @@ async function handleFAQs(from, userMessage) {
       3000,
       context.estado
     );
-    await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
+    await delay(2000);
+    await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/04/Servicios.png");
     await delay(6000);
     await sendMessageWithTypingWithState(
       from,
-      "Quieres armar un paquete a tu gusto?\n\nO prefieres informacion del Paquete WEDDING?",
+      "Quieres armar un paquete a tu gusto?\n\nO prefieres ver el Paquete WEDDING?",
       3000,
       context.estado
     );
@@ -1115,11 +1116,12 @@ async function handleFAQs(from, userMessage) {
       3000,
       context.estado
     );
-    await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
+    await delay(2000);
+    await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/04/Servicios.png");
     await delay(6000);
     await sendMessageWithTypingWithState(
       from,
-      "Quieres armar un paquete a tu gusto?\n\nO prefieres informacion del Paquete Mis XV?",
+      "Quieres armar un paquete a tu gusto?\n\nO prefieres ver el Paquete Mis XV?",
       3000,
       context.estado
     );
@@ -1152,11 +1154,12 @@ async function handleFAQs(from, userMessage) {
       3000,
       context.estado
     );
-    await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg");
+    await delay(2000);
+    await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/04/Servicios.png");
     await delay(6000);
     await sendMessageWithTypingWithState(
       from,
-      "Quieres armar un paquete a tu gusto?\n\nO prefieres informacion del Paquete exclusivo para este tipo de evento",
+      "Quieres armar un paquete a tu gusto?\n\nO prefieres ver el Paquete exclusivo para este tipo de evento",
       3000,
       context.estado
     );
@@ -1787,7 +1790,7 @@ if (context.estado === "Contacto Inicial") {
   // Mensaje inicial explicando que es un asistente virtual
   await sendMessageWithTypingWithState(
     from,
-    "¡Hola! 👋\n\nSoy Gustavo, a tus órdenes",
+    "¡Hola! 👋\n\nSoy *Cami-Bot*, a tus órdenes",
     500, // Retraso de medio segundo
     "Contacto Inicial"
   );
