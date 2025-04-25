@@ -194,3 +194,154 @@ function getOtherEventPackageRecommendation(userMessage) {
     }
   };
   }
+
+
+
+
+  /*'''''''''''''''''''''''''''''''''''
+🟢 4. ESPERAMOS LOS SERVICIOS 🟢
+''''''''''''''''''''''''''''''''''*/
+if (context.estado === "EsperandoServicios") {
+  // Si el usuario indica agregar o quitar en su mensaje inicial:
+  if (messageLower.includes("agregar")) {
+    const serviciosAAgregar = userMessage.replace(/agregar/i, "").trim();
+    
+    // 🟢 TRANSFORMACIÓN: "6 letras" => "letras gigantes 6", "4 chisperos" => "chisperos 4"
+    serviciosAAgregar = serviciosAAgregar
+      .replace(/\b(\d+)\s+letras(?:\s*gigantes)?\b/gi, 'letras gigantes $1')
+      .replace(/\b(\d+)\s+chisperos?\b/gi, 'chisperos $1');
+
+    context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + serviciosAAgregar;
+    await sendWhatsAppMessage(from, `✅ Se ha agregado: ${serviciosAAgregar}`);
+
+  } else if (messageLower.includes("quitar")) {
+    const serviciosAQuitar = userMessage.replace(/quitar/i, "").trim();
+    context.serviciosSeleccionados = context.serviciosSeleccionados
+      .split(",")
+      .map(s => s.trim())
+      .filter(s => !s.toLowerCase().includes(serviciosAQuitar.toLowerCase()))
+      .join(", ");
+    await sendWhatsAppMessage(from, `✅ Se ha quitado: ${serviciosAQuitar}`);
+  } else {
+    // Si el usuario pone directamente la lista sin "agregar"
+    // => También se hace la TRANSFORMACIÓN antes de asignar.
+    let listaServicios = userMessage;
+    
+    listaServicios = listaServicios
+      .replace(/\b(\d+)\s+letras(?:\s*gigantes)?\b/gi, 'letras gigantes $1')
+      .replace(/\b(\d+)\s+chisperos?\b/gi, 'chisperos $1');
+    
+    context.serviciosSeleccionados = listaServicios;
+  }
+
+  // Inicializamos flags para servicios sin cantidad
+  context.faltanLetras = false;
+  context.faltanChisperos = false;
+  context.faltaVarianteCarritoShots = false;
+  context.faltaTipoCabina = false;
+
+  // Verificar si mencionó letras pero sin cantidad
+  if (/(letras|letras gigantes)(?!\s*\d+)/i.test(context.serviciosSeleccionados)) {
+    context.faltanLetras = true;
+  }
+  
+  // Verificar si "chisperos" está presente sin cantidad
+  if (/chisperos(?!\s*\d+)/i.test(context.serviciosSeleccionados)) {
+    context.faltanChisperos = true;
+  }
+  
+  // Verificar si carrito de shots se escribió sin la variante
+  if (/carrito de shots/i.test(context.serviciosSeleccionados)) {
+    if (!/carrito de shots\s+(con|sin)\s*alcohol/i.test(context.serviciosSeleccionados)) {
+      context.faltaVarianteCarritoShots = true;
+      // Eliminar la entrada "carrito de shots" sin variante de la cotización
+      context.serviciosSeleccionados = context.serviciosSeleccionados
+        .split(",")
+        .map(s => s.trim())
+        .filter(s => !/^carrito de shots$/i.test(s))
+        .join(", ");
+    }
+  } 
+  
+  // Verificar si se incluye "cabina" sin especificar tipo
+  if (/cabina(?!\s*(de fotos|360))/i.test(context.serviciosSeleccionados)) {
+    context.faltaTipoCabina = true;
+    // Eliminar la entrada "cabina" sin especificar de la cotización
+    context.serviciosSeleccionados = context.serviciosSeleccionados
+      .split(",")
+      .map(s => s.trim())
+      .filter(s => !/^cabina$/i.test(s))
+      .join(", ");
+  }
+
+  // Preguntar primero por el tipo de cabina si falta
+  if (context.faltaTipoCabina) {
+    context.estado = "EsperandoTipoCabina";
+    await sendWhatsAppMessage(from, "¿Deseas agregar Cabina de fotos o Cabina 360?");
+    return true;
+  }
+
+  // Preguntar por letras solo si se mencionaron y faltan cantidades
+  if (context.faltanLetras && /(letras|letras gigantes)/i.test(context.serviciosSeleccionados)) {
+    context.estado = "EsperandoCantidadLetras";
+    await sendWhatsAppMessage(from, "¿Cuántas letras necesitas? 🔠");
+    return true;
+  }
+
+  // Preguntar por chisperos solo si se mencionaron y faltan cantidades
+  if (context.faltanChisperos && /chisperos/i.test(context.serviciosSeleccionados)) {
+    context.estado = "EsperandoCantidadChisperos";
+    await sendWhatsAppMessage(from, "¿Cuántos chisperos ocupas? 🔥 Opciones: 2, 4, 6, 8, 10, etc");
+    return true;
+  }
+
+  // Preguntar por tipo de carrito de shots si se mencionó
+  if (context.faltaVarianteCarritoShots) {
+    context.estado = "EsperandoTipoCarritoShots";
+    await sendWhatsAppMessage(from, "¿El carrito de shots lo deseas CON alcohol o SIN alcohol? 🍹");
+    return true;
+  }
+
+  // Si ya se especificaron todos los datos, actualizar la cotización
+  await actualizarCotizacion(from, context);
+  return true;
+}
+
+
+
+/*''''''''''''''''''''''''''''''''''''''
+🟢 4.1 ESPRAMOS CANTIDAD DE CHISPEROS 🟢
+''''''''''''''''''''''''''''''''''''''*/
+if (context.estado === "EsperandoCantidadChisperos") {
+  const cantidad = parseInt(userMessage);
+  if (isNaN(cantidad) || cantidad <= 0) {
+    await sendWhatsAppMessage(from, "Por favor, ingresa un número válido para la cantidad de chisperos.");
+    return true;
+  }
+
+  // Verificar que la cantidad sea par
+  if (cantidad % 2 !== 0) {
+    await sendWhatsAppMessage(from, "Cantidad inválida. Las opciones válidas para los chisperos son cantidades pares: 2, 4, 6, 8, 10, etc.");
+    return true;
+  }
+ 
+  // Regex para capturar "chisperos" con o sin número
+  const regex = /chisperos(\s*\d+)?/i;
+  if (regex.test(context.serviciosSeleccionados)) {
+    context.serviciosSeleccionados = context.serviciosSeleccionados.replace(regex, `chisperos ${cantidad}`);
+  } else {
+    context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `chisperos ${cantidad}`;
+  }
+  await sendWhatsAppMessage(from, `✅ Se han agregado ${cantidad} chisperos.`);
+  
+  // Verificar si aún falta información sobre el carrito de shots
+  if (context.faltaVarianteCarritoShots) {
+    context.estado = "EsperandoTipoCarritoShots";
+    await sendWhatsAppMessage(from, "¿El carrito de shots lo deseas CON alcohol o SIN alcohol? 🍹");
+    return true;
+  }
+  
+  // Si no falta información, actualizar la cotización final
+  await actualizarCotizacion(from, context);
+  return true;
+}
