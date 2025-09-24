@@ -311,35 +311,25 @@ async function reportMessageToCRM(to, message, tipo = "enviado") {
   const crmData = {
     plataforma: "WhatsApp",
     remitente: to,
-    mensaje: message,
-    tipo: tipo
+    mensaje: message,   // string o URL
+    tipo
   };
-  console.log("Enviando al CRM:", crmData);
   try {
     const response = await axios.post(crmUrl, crmData, { timeout: 5000 });
-    console.log("✅ Reporte al CRM exitoso:", response.data);
+    console.log("✅ Reporte al CRM:", response.data);
   } catch (error) {
     console.error("❌ Error al reportar al CRM:", error.response?.data || error.message);
     throw error;
   }
 }
-
 /***********************************************
 FUNCION para enviar mensajes simples con emojis.
 ***********************************************/ 
 async function sendWhatsAppMessage(to, message) {
-  if (!process.env.WHATSAPP_PHONE_NUMBER_ID || !process.env.WHATSAPP_ACCESS_TOKEN) {
-    console.error("❌ ERROR: Credenciales de WhatsApp no configuradas correctamente.");
-    return;
-  }
-  if (!to || !message) {
-    console.error("❌ ERROR: El número de destino y el mensaje son obligatorios.");
-    return;
-  }
   const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
   const data = {
     messaging_product: 'whatsapp',
-    to: to,
+    to,
     type: 'text',
     text: { body: message }
   };
@@ -351,17 +341,11 @@ async function sendWhatsAppMessage(to, message) {
       },
       timeout: 5000
     });
-    console.log('✅ Mensaje enviado a WhatsApp:', response.data);
-    const mensajeHTML = `<p>${message}</p>`;
-    await reportMessageToCRM(to, mensajeHTML, "enviado");
+    console.log('✅ Mensaje enviado:', response.data);
+    // ✅ Importante: sin HTML; tipo correcto
+    await reportMessageToCRM(to, message, "enviado");
   } catch (error) {
-    if (error.response) {
-      console.error('❌ Error en la respuesta de WhatsApp:', error.response.data);
-    } else if (error.request) {
-      console.error('❌ No se recibió respuesta de WhatsApp:', error.request);
-    } else {
-      console.error('❌ Error en la solicitud:', error.message);
-    }
+    console.error('❌ Error WhatsApp:', error.response?.data || error.message);
   }
 }
 
@@ -372,12 +356,9 @@ async function sendImageMessage(to, imageUrl, caption) {
   const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
   const data = {
     messaging_product: 'whatsapp',
-    to: to,
+    to,
     type: 'image',
-    image: {
-      link: imageUrl,
-      caption: caption
-    }
+    image: { link: imageUrl, caption }
   };
   try {
     const response = await axios.post(url, data, {
@@ -386,18 +367,16 @@ async function sendImageMessage(to, imageUrl, caption) {
         'Content-Type': 'application/json',
       },
     });
-    console.log('Imagen enviada:', response.data);
-    const resumen = `
-      <div>
-        <img src="${imageUrl}" alt="Imagen enviada" style="max-width:200px;">
-        ${ caption ? `<p>Caption: ${caption}</p>` : '' }
-      </div>
-    `;
-    await reportMessageToCRM(to, resumen, "enviado");
+    console.log('✅ Imagen enviada:', response.data);
+    // ✅ Importante: manda la URL cruda y tipo imagen
+    await reportMessageToCRM(to, imageUrl, "enviado_imagen");
   } catch (error) {
-    console.error('Error al enviar imagen:', error.response?.data || error.message);
+    console.error('❌ Error al enviar imagen:', error.response?.data || error.message);
   }
 }
+
+
+
 
 // Configurar cliente de OpenAI
 const openai = new OpenAI({
@@ -525,6 +504,32 @@ async function sendWhatsAppVideo(to, videoUrl, caption) {
     console.error('❌ Error al enviar el video:', error.response?.data || error.message);
   }
 }
+
+
+/*async function sendWhatsAppVideo(to, videoUrl, caption) {
+  const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+  const data = {
+    messaging_product: 'whatsapp',
+    to,
+    type: 'video',
+    video: { link: videoUrl, caption }
+  };
+  try {
+    const response = await axios.post(url, data, {
+      headers: {
+        Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    console.log('✅ Video enviado:', response.data);
+    // Para no romper el front actual, lo reportamos como texto
+    await reportMessageToCRM(to, `Video: ${videoUrl}`, "enviado");
+    // Si decides soportar video nativo más tarde:
+    // await reportMessageToCRM(to, videoUrl, "enviado_video");
+  } catch (error) {
+    console.error('❌ Error video:', error.response?.data || error.message);
+  }
+}*/
 
 
 // Función para enviar mensajes con indicador de escritura
@@ -1552,7 +1557,7 @@ function calculateQuotation(servicesText) {
 /*'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 🟢 FUNCION PARA MANEJAR EL FLUJO DE MENSAJES DEL USUARIO CON TONO NATURAL 🟢
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''*/
-async function handleUserMessage(from, userMessage, messageLower) {
+  async function handleUserMessage(from, userMessage, messageLower) {
   if (!userContext[from]) {
     userContext[from] = {
       estado: "Contacto Inicial",
@@ -1560,9 +1565,9 @@ async function handleUserMessage(from, userMessage, messageLower) {
       nombre: null,
       fecha: null,
       lugar: null,
-      serviciosSeleccionados: [],
+      serviciosSeleccionados: "",   // <-- antes era []
       total: 0,
-      mediosEnviados: new Set(), // Para evitar enviar medios repetidos
+      mediosEnviados: new Set(),
     };
   }
   const context = userContext[from];
@@ -1879,7 +1884,7 @@ if (context.estado === "Contacto Inicial") {
 /*''''''''''''''''''''''''''''''''
 🟢 4. ESPERAMOS LOS SERVICIOS 🟢
 ''''''''''''''''''''''''''''''''*/
-   if (context.estado === "EsperandoServicios") {
+   /*if (context.estado === "EsperandoServicios") {
     // Si el usuario indica agregar o quitar en su mensaje inicial:
     if (messageLower.includes("agregar")) {
       const serviciosAAgregar = userMessage.replace(/agregar/i, "").trim();
@@ -1910,7 +1915,32 @@ if (context.estado === "Contacto Inicial") {
         .replace(/\b(\d+)\s+chisperos?\b/gi, 'chisperos $1');
       
       context.serviciosSeleccionados = listaServicios;
-    }
+    }*/
+
+    if (context.estado === "EsperandoServicios") {
+  const lower = messageLower;
+  // agregar
+  if (lower.includes("agregar")) {
+    let serviciosAAgregar = userMessage.replace(/agregar/i, "").trim(); // <-- let (no const)
+    serviciosAAgregar = serviciosAAgregar
+      .replace(/\b(\d+)\s+letras(?:\s*gigantes)?\b/gi, 'letras gigantes $1')
+      .replace(/\b(\d+)\s+chisperos?\b/gi, 'chisperos $1');
+    context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + serviciosAAgregar;
+    await sendWhatsAppMessage(from, `✅ Se ha agregado: ${serviciosAAgregar}`);
+  } else if (lower.includes("quitar")) {
+    const serviciosAQuitar = userMessage.replace(/quitar/i, "").trim();
+    context.serviciosSeleccionados = context.serviciosSeleccionados
+      .split(",")
+      .map(s => s.trim())
+      .filter(s => !s.toLowerCase().includes(serviciosAQuitar.toLowerCase()))
+      .join(", ");
+    await sendWhatsAppMessage(from, `✅ Se ha quitado: ${serviciosAQuitar}`);
+  } else {
+    let lista = userMessage
+      .replace(/\b(\d+)\s+letras(?:\s*gigantes)?\b/gi, 'letras gigantes $1')
+      .replace(/\b(\d+)\s+chisperos?\b/gi, 'chisperos $1');
+    context.serviciosSeleccionados = lista;
+  }
   
     // Inicializamos flags para servicios sin cantidad
     context.faltanLetras = false;
