@@ -30,6 +30,37 @@ import cors from 'cors';
 // Cargar variables de entorno
 dotenv.config();
 
+async function getPermanentToken() {
+    const APP_ID = process.env.META_APP_ID;
+    const APP_SECRET = process.env.META_APP_SECRET;
+    const SHORT_LIVED_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN; // Tu token temporal
+
+    try {
+        const response = await axios.get(
+            `https://graph.facebook.com/v18.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${APP_ID}&client_secret=${APP_SECRET}&fb_exchange_token=${SHORT_LIVED_TOKEN}`
+        );
+
+        console.log('✅ Token permanente obtenido:', response.data);
+        return response.data.access_token;
+    } catch (error) {
+        console.error('❌ Error obteniendo token permanente:', error.response?.data);
+        return null;
+    }
+}
+
+// Ejecutar si se llama directamente
+if (import.meta.url === `file://${process.argv[1]}`) {
+    getPermanentToken().then(token => {
+        if (token) {
+            console.log('\n🎉 TOKEN PERMANENTE:');
+            console.log(token);
+            console.log('\n💡 Actualiza tu variable WHATSAPP_ACCESS_TOKEN en .env');
+        }
+    });
+}
+
+export { getPermanentToken };
+
 // Crear instancia de Express
 const app = express();
 const PORT = process.env.PORT || 3000; 
