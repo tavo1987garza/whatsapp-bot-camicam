@@ -41,7 +41,7 @@ app.use(cors({ origin: "https://camicam-crm-d78af2926170.herokuapp.com" }));
 app.use(express.json());
 
 
-// 🔹 Configurar AWS (S3)
+// 🔹 Configurar AWS (S3)   
 AWS.config.update({
   region: process.env.AWS_REGION,
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
