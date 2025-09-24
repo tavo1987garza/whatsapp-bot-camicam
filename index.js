@@ -29,7 +29,7 @@ import cors from 'cors';
 
 // Cargar variables de entorno
 dotenv.config();
-
+ 
 // Crear instancia de Express
 const app = express();
 const PORT = process.env.PORT || 3000; 
@@ -39,7 +39,6 @@ app.use(cors({ origin: "https://camicam-crm-d78af2926170.herokuapp.com" }));
 
 // Middleware para manejar JSON
 app.use(express.json());
-
 
 // 🔹 Configurar AWS (S3)   
 AWS.config.update({
@@ -133,6 +132,94 @@ app.get('/', async (req, res) => {
 =============================================*/ 
 app.post('/webhook', async (req, res) => {
   console.log("📩 Webhook activado:", JSON.stringify(req.body, null, 2));
+  const message = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+  if (!message) return res.sendStatus(404);
+  const from = message.from;
+
+  // Imagen entrante (ya lo tenías)
+  if (message.type === "image") {
+    try {
+      const mediaId = message.image.id;
+      const respMedia = await axios.get(
+        `https://graph.facebook.com/v21.0/${mediaId}`,
+        { headers: { Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}` } }
+      );
+      const directUrl = respMedia.data.url;
+      const respImagen = await axios.get(directUrl, {
+        headers: { Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}` },
+        responseType: 'arraybuffer'
+      });
+      const uploadResult = await s3.upload({
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: `${uuidv4()}.jpg`,
+        Body: respImagen.data,
+        ContentType: 'image/jpeg'
+      }).promise();
+      const urlPublica = uploadResult.Location;
+      await axios.post("https://camicam-crm-d78af2926170.herokuapp.com/recibir_mensaje", {
+        plataforma: "WhatsApp",
+        remitente: from,
+        mensaje: urlPublica,
+        tipo: "recibido_imagen"
+      });
+      console.log("✅ Imagen recibida->CRM:", urlPublica);
+    } catch (err) {
+      console.error("❌ Error imagen entrante:", err.message);
+    }
+    return res.sendStatus(200);
+  }
+
+  // ⬇️ Video entrante NUEVO
+  if (message.type === "video") {
+    try {
+      const mediaId = message.video.id;
+      const respMedia = await axios.get(
+        `https://graph.facebook.com/v21.0/${mediaId}`,
+        { headers: { Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}` } }
+      );
+      const directUrl = respMedia.data.url;
+      const respVideo = await axios.get(directUrl, {
+        headers: { Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}` },
+        responseType: 'arraybuffer'
+      });
+      const uploadResult = await s3.upload({
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: `${uuidv4()}.mp4`,
+        Body: respVideo.data,
+        ContentType: 'video/mp4'
+      }).promise();
+      const urlPublica = uploadResult.Location;
+      await axios.post("https://camicam-crm-d78af2926170.herokuapp.com/recibir_mensaje", {
+        plataforma: "WhatsApp",
+        remitente: from,
+        mensaje: urlPublica,
+        tipo: "recibido_video"
+      });
+      console.log("✅ Video recibido->CRM:", urlPublica);
+    } catch (err) {
+      console.error("❌ Error video entrante:", err.message);
+    }
+    return res.sendStatus(200);
+  }
+
+  // Texto/interactive (igual)
+  let userMessage = "";
+  if (message.text?.body) userMessage = message.text.body;
+  else if (message.interactive?.button_reply) userMessage = message.interactive.button_reply.title || message.interactive.button_reply.id;
+  else if (message.interactive?.list_reply) userMessage = message.interactive.list_reply.title || message.interactive.list_reply.id;
+
+  try {
+    await axios.post('https://camicam-crm-d78af2926170.herokuapp.com/recibir_mensaje', {
+      plataforma: "WhatsApp",
+      remitente: from,
+      mensaje: userMessage
+    });
+  } catch (error) {
+    console.error("❌ Error enviar texto al CRM:", error.message);
+  }
+
+/*app.post('/webhook', async (req, res) => {
+  console.log("📩 Webhook activado:", JSON.stringify(req.body, null, 2));
 
   // 1) Extraemos el mensaje
   const message = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
@@ -221,7 +308,7 @@ app.post('/webhook', async (req, res) => {
     console.log("✅ Respuesta del CRM recibida");
   } catch (error) {
     console.error("❌ Error al enviar mensaje al CRM:", error.message);
-  }
+  }*/
 
 
   const buttonReply = message?.interactive?.button_reply?.id || '';
@@ -303,10 +390,28 @@ app.post('/webhook', async (req, res) => {
     }
   });
 
+  
+/*==========================================================
+📌 Endpoint CRM→Bot para enviar VIDEO a WhatsApp (nuevo)
+==========================================================*/
+app.post('/enviar_video', async (req, res) => {
+  try {
+    const { telefono, videoUrl, caption } = req.body;
+    if (!telefono || !videoUrl) {
+      return res.status(400).json({ error: 'Faltan datos (telefono, videoUrl)' });
+    }
+    await sendWhatsAppVideo(telefono, videoUrl, caption);
+    res.status(200).json({ mensaje: 'Video enviado a WhatsApp correctamente' });
+  } catch (error) {
+    console.error('❌ Error al enviar video a WhatsApp:', error.message);
+    res.status(500).json({ error: 'Error al enviar video a WhatsApp' });
+  }
+});
+
 /*************************************
 FUNCION para reportar mensajes al CRM.
 *************************************/ 
-async function reportMessageToCRM(to, message, tipo = "enviado") {
+/*async function reportMessageToCRM(to, message, tipo = "enviado") {
   const crmUrl = "https://camicam-crm-d78af2926170.herokuapp.com/recibir_mensaje";
   const crmData = {
     plataforma: "WhatsApp",
@@ -321,11 +426,22 @@ async function reportMessageToCRM(to, message, tipo = "enviado") {
     console.error("❌ Error al reportar al CRM:", error.response?.data || error.message);
     throw error;
   }
+}*/
+
+async function reportMessageToCRM(to, message, tipo = "enviado") {
+  const crmUrl = "https://camicam-crm-d78af2926170.herokuapp.com/recibir_mensaje";
+  const crmData = { plataforma: "WhatsApp", remitente: to, mensaje: message, tipo };
+  try {
+    await axios.post(crmUrl, crmData, { timeout: 5000 });
+  } catch (error) {
+    console.error("❌ Error reportar CRM:", error.response?.data || error.message);
+  }
 }
+
 /***********************************************
 FUNCION para enviar mensajes simples con emojis.
 ***********************************************/ 
-async function sendWhatsAppMessage(to, message) {
+/*async function sendWhatsAppMessage(to, message) {
   const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
   const data = {
     messaging_product: 'whatsapp',
@@ -347,12 +463,27 @@ async function sendWhatsAppMessage(to, message) {
   } catch (error) {
     console.error('❌ Error WhatsApp:', error.response?.data || error.message);
   }
+} */
+
+async function sendWhatsAppMessage(to, message) {
+  const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+  const data = { messaging_product: 'whatsapp', to, type: 'text', text: { body: message } };
+  try {
+    await axios.post(url, data, {
+      headers: { Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`, 'Content-Type': 'application/json' },
+      timeout: 5000
+    });
+    await reportMessageToCRM(to, message, "enviado");
+  } catch (error) {
+    console.error('❌ Error enviar texto:', error.response?.data || error.message);
+  }
 }
+
 
 /****************************
 FUNCION para enviar Imagenes.
 *****************************/ 
-async function sendImageMessage(to, imageUrl, caption) {
+/* async function sendImageMessage(to, imageUrl, caption) {
   const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
   const data = {
     messaging_product: 'whatsapp',
@@ -373,7 +504,74 @@ async function sendImageMessage(to, imageUrl, caption) {
   } catch (error) {
     console.error('❌ Error al enviar imagen:', error.response?.data || error.message);
   }
+} */
+
+
+async function sendImageMessage(to, imageUrl, caption) {
+  const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+  const data = { messaging_product: 'whatsapp', to, type: 'image', image: { link: imageUrl, caption } };
+  try {
+    await axios.post(url, data, {
+      headers: { Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`, 'Content-Type': 'application/json' },
+    });
+    await reportMessageToCRM(to, imageUrl, "enviado_imagen");
+  } catch (error) {
+    console.error('❌ Error enviar imagen:', error.response?.data || error.message);
+  }
 }
+
+
+/****************************
+FUNCIÓN para Enviar Video 
+*****************************/
+/*async function sendWhatsAppVideo(to, videoUrl, caption) {
+  const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+  const data = {
+    messaging_product: 'whatsapp',
+    to: to,
+    type: 'video',
+    video: {
+      link: videoUrl,
+      caption: caption
+    }
+  };
+  try {
+    const response = await axios.post(url, data, {
+      headers: {
+        Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    console.log('✅ Video enviado:', response.data);
+    const resumen = `
+      <div>
+        <video controls style="max-width:200px;">
+          <source src="${videoUrl}" type="video/mp4">
+          Tu navegador no soporta la etiqueta de video.
+        </video>
+        ${ caption ? `<p>Caption: ${caption}</p>` : '' }
+      </div>
+    `;
+    await reportMessageToCRM(to, resumen, "enviado");
+  } catch (error) {
+    console.error('❌ Error al enviar el video:', error.response?.data || error.message);
+  }
+}*/
+
+async function sendWhatsAppVideo(to, videoUrl, caption) {
+  const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+  const data = { messaging_product: 'whatsapp', to, type: 'video', video: { link: videoUrl, caption } };
+  try {
+    await axios.post(url, data, {
+      headers: { Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`, 'Content-Type': 'application/json' }
+    });
+    // ⬅️ Reporte nativo como video
+    await reportMessageToCRM(to, videoUrl, "enviado_video");
+  } catch (error) {
+    console.error('❌ Error enviar video:', error.response?.data || error.message);
+  }
+}
+
 
 
 
@@ -470,66 +668,6 @@ async function sendInteractiveMessageWithImageWithState(from, message, imageUrl,
   await sendInteractiveMessage(from, options.message, options.buttons);
 }
 
-// Función para enviar videos
-async function sendWhatsAppVideo(to, videoUrl, caption) {
-  const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
-  const data = {
-    messaging_product: 'whatsapp',
-    to: to,
-    type: 'video',
-    video: {
-      link: videoUrl,
-      caption: caption
-    }
-  };
-  try {
-    const response = await axios.post(url, data, {
-      headers: {
-        Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    console.log('✅ Video enviado:', response.data);
-    const resumen = `
-      <div>
-        <video controls style="max-width:200px;">
-          <source src="${videoUrl}" type="video/mp4">
-          Tu navegador no soporta la etiqueta de video.
-        </video>
-        ${ caption ? `<p>Caption: ${caption}</p>` : '' }
-      </div>
-    `;
-    await reportMessageToCRM(to, resumen, "enviado");
-  } catch (error) {
-    console.error('❌ Error al enviar el video:', error.response?.data || error.message);
-  }
-}
-
-
-/*async function sendWhatsAppVideo(to, videoUrl, caption) {
-  const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
-  const data = {
-    messaging_product: 'whatsapp',
-    to,
-    type: 'video',
-    video: { link: videoUrl, caption }
-  };
-  try {
-    const response = await axios.post(url, data, {
-      headers: {
-        Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    console.log('✅ Video enviado:', response.data);
-    // Para no romper el front actual, lo reportamos como texto
-    await reportMessageToCRM(to, `Video: ${videoUrl}`, "enviado");
-    // Si decides soportar video nativo más tarde:
-    // await reportMessageToCRM(to, videoUrl, "enviado_video");
-  } catch (error) {
-    console.error('❌ Error video:', error.response?.data || error.message);
-  }
-}*/
 
 
 // Función para enviar mensajes con indicador de escritura
