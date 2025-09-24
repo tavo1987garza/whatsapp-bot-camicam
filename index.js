@@ -130,7 +130,7 @@ app.get('/', async (req, res) => {
 /*===========================================
 📌 Webhook para manejar mensajes de WhatsApp
 =============================================*/ 
-app.post('/webhook', async (req, res) => {
+/*pp.post('/webhook', async (req, res) => {
   console.log("📩 Webhook activado:", JSON.stringify(req.body, null, 2));
   const message = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
   if (!message) return res.sendStatus(404);
@@ -216,9 +216,9 @@ app.post('/webhook', async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Error enviar texto al CRM:", error.message);
-  }
+  }*/
 
-/*app.post('/webhook', async (req, res) => {
+app.post('/webhook', async (req, res) => {
   console.log("📩 Webhook activado:", JSON.stringify(req.body, null, 2));
 
   // 1) Extraemos el mensaje
@@ -308,7 +308,7 @@ app.post('/webhook', async (req, res) => {
     console.log("✅ Respuesta del CRM recibida");
   } catch (error) {
     console.error("❌ Error al enviar mensaje al CRM:", error.message);
-  }*/
+  }
 
 
   const buttonReply = message?.interactive?.button_reply?.id || '';
@@ -411,7 +411,7 @@ app.post('/enviar_video', async (req, res) => {
 /*************************************
 FUNCION para reportar mensajes al CRM.
 *************************************/ 
-/*async function reportMessageToCRM(to, message, tipo = "enviado") {
+async function reportMessageToCRM(to, message, tipo = "enviado") {
   const crmUrl = "https://camicam-crm-d78af2926170.herokuapp.com/recibir_mensaje";
   const crmData = {
     plataforma: "WhatsApp",
@@ -426,9 +426,9 @@ FUNCION para reportar mensajes al CRM.
     console.error("❌ Error al reportar al CRM:", error.response?.data || error.message);
     throw error;
   }
-}*/
+}
 
-async function reportMessageToCRM(to, message, tipo = "enviado") {
+/*async function reportMessageToCRM(to, message, tipo = "enviado") {
   const crmUrl = "https://camicam-crm-d78af2926170.herokuapp.com/recibir_mensaje";
   const crmData = { plataforma: "WhatsApp", remitente: to, mensaje: message, tipo };
   try {
@@ -436,12 +436,12 @@ async function reportMessageToCRM(to, message, tipo = "enviado") {
   } catch (error) {
     console.error("❌ Error reportar CRM:", error.response?.data || error.message);
   }
-}
+}*/
 
 /***********************************************
 FUNCION para enviar mensajes simples con emojis.
 ***********************************************/ 
-/*async function sendWhatsAppMessage(to, message) {
+async function sendWhatsAppMessage(to, message) {
   const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
   const data = {
     messaging_product: 'whatsapp',
@@ -463,9 +463,9 @@ FUNCION para enviar mensajes simples con emojis.
   } catch (error) {
     console.error('❌ Error WhatsApp:', error.response?.data || error.message);
   }
-} */
+} 
 
-async function sendWhatsAppMessage(to, message) {
+/*async function sendWhatsAppMessage(to, message) {
   const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
   const data = { messaging_product: 'whatsapp', to, type: 'text', text: { body: message } };
   try {
@@ -477,13 +477,13 @@ async function sendWhatsAppMessage(to, message) {
   } catch (error) {
     console.error('❌ Error enviar texto:', error.response?.data || error.message);
   }
-}
+}*/
 
 
 /****************************
 FUNCION para enviar Imagenes.
 *****************************/ 
-/* async function sendImageMessage(to, imageUrl, caption) {
+async function sendImageMessage(to, imageUrl, caption) {
   const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
   const data = {
     messaging_product: 'whatsapp',
@@ -504,10 +504,10 @@ FUNCION para enviar Imagenes.
   } catch (error) {
     console.error('❌ Error al enviar imagen:', error.response?.data || error.message);
   }
-} */
+} 
 
 
-async function sendImageMessage(to, imageUrl, caption) {
+/*async function sendImageMessage(to, imageUrl, caption) {
   const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
   const data = { messaging_product: 'whatsapp', to, type: 'image', image: { link: imageUrl, caption } };
   try {
@@ -518,13 +518,13 @@ async function sendImageMessage(to, imageUrl, caption) {
   } catch (error) {
     console.error('❌ Error enviar imagen:', error.response?.data || error.message);
   }
-}
+}*/
 
 
 /****************************
 FUNCIÓN para Enviar Video 
 *****************************/
-/*async function sendWhatsAppVideo(to, videoUrl, caption) {
+async function sendWhatsAppVideo(to, videoUrl, caption) {
   const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
   const data = {
     messaging_product: 'whatsapp',
@@ -556,9 +556,9 @@ FUNCIÓN para Enviar Video
   } catch (error) {
     console.error('❌ Error al enviar el video:', error.response?.data || error.message);
   }
-}*/
+}
 
-async function sendWhatsAppVideo(to, videoUrl, caption) {
+/*async function sendWhatsAppVideo(to, videoUrl, caption) {
   const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
   const data = { messaging_product: 'whatsapp', to, type: 'video', video: { link: videoUrl, caption } };
   try {
@@ -570,7 +570,7 @@ async function sendWhatsAppVideo(to, videoUrl, caption) {
   } catch (error) {
     console.error('❌ Error enviar video:', error.response?.data || error.message);
   }
-}
+}*/
 
 
 
