@@ -61,6 +61,31 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
 export { getPermanentToken };
 
+// Agrega esto TEMPORALMENTE a tu index.js para diagnosticar
+app.get('/debug-token', async (req, res) => {
+    try {
+        const response = await axios.get(
+            `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`
+                }
+            }
+        );
+        
+        res.json({
+            status: '✅ Token válido',
+            phone_number: response.data,
+            token_preview: process.env.WHATSAPP_ACCESS_TOKEN?.substring(0, 20) + '...'
+        });
+    } catch (error) {
+        res.json({
+            status: '❌ Token inválido o expirado',
+            error: error.response?.data
+        });
+    }
+});
+
 // Crear instancia de Express
 const app = express();
 const PORT = process.env.PORT || 3000; 
