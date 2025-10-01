@@ -754,7 +754,7 @@ async function handleTipoEvento(from, msgLower, context) {
     return true;
   }
 
-  if (msgLower.includes("xv") || msgLower.includes("quince")) {
+  if (msgLower.includes("xv") || msgLower.includes("info paquete mis xv") || msgLower.includes("quince")) {
     context.tipoEvento = "XV";
     context.paqueteRecomendado = { paquete: "PAQUETE MIS XV" };
 
@@ -825,669 +825,465 @@ async function aiShortReply(query) {
   return out;
 }
 
-
 /* =========================
-   Handlers de flujo principal - VERSIÓN ORGANIZADA Y MODULAR
+   Handlers de flujo principal
 ========================= */
-
-// Función auxiliar para solicitar fecha (reutilizable)
-async function solicitarFecha(from, context, mensajePersonalizado = null) {
-  const mensaje = mensajePersonalizado || 
-    "De acuerdo. Indícame la fecha de tu evento.\n\nFormato: DD/MM/AAAA o '20 de marzo 2025' 📆";
-  
-  await sendMessageWithTypingWithState(from, mensaje, 500, context.estado);
+async function solicitarFecha(from, context) {
+  await sendMessageWithTypingWithState(
+    from,
+    "De acuerdo. Indícame la fecha de tu evento.\n\nFormato: DD/MM/AAAA o '20 de marzo 2025' 📆",
+    500,
+    context.estado
+  );
   context.estado = "EsperandoFecha";
-  await saveContext(from, context);
 }
 
-/* ========================== */
-/* 1. HANDLER PRINCIPAL */
-/* ========================== */
-
 async function handleUserMessage(from, userText, messageLower) {
-  const context = await ensureContext(from);
+  const context = ensureContext(from);
 
-  /* ==================== */
-  /* DETECCIÓN INICIAL */
-  /* ==================== */
-  
-  // 1.1 Flujo específico para "Info Paquete Mis XV" (ALTA PRIORIDAD)
-  if (messageLower.includes("info paquete mis xv")) {
-    await handlePaqueteMisXVFlow(from, context);
-    return true;
-  }
-
-  // 1.2 FAQs (solo si no interrumpe flujos sensibles)
-  const estadosSensibles = [
-    "EsperandoServicios", "EsperandoFecha", "EsperandoLugar", 
-    "EsperandoCantidadLetras", "EsperandoCantidadChisperos", "EsperandoDudas",
-    "EsperandoTipoCabina", "ConfirmarAgregarCabinaCambio", 
-    "EsperandoTipoCarritoShots", "ConfirmarAgregarCarritoShotsCambio",
-    "EsperandoFechaPaqueteXV", "EsperandoDecisionPaqueteXV"
-  ];
-  
-  if (!estadosSensibles.includes(context.estado)) {
+  // FAQs sólo si no cortarían un flujo sensible
+  const inSensitive = ["EsperandoServicios","EsperandoFecha","EsperandoLugar","EsperandoCantidadLetras","EsperandoCantidadChisperos","EsperandoDudas","EsperandoTipoCabina","ConfirmarAgregarCabinaCambio","EsperandoTipoCarritoShots","ConfirmarAgregarCarritoShotsCambio"].includes(context.estado);
+  if (!inSensitive) {
     if (await handleFAQs(from, userText)) return true;
   }
 
-  /* ========================== */
-  /* MANEJO POR ESTADO ACTUAL */
-  /* ========================== */
-  
-  switch (context.estado) {
-    
-    /* ==================== */
-    /* FLUJO PAQUETE MIS XV */
-    /* ==================== */
-    case "EsperandoFechaPaqueteXV":
-      return await handleFechaPaqueteXV(from, userText, context);
-
-    case "EsperandoDecisionPaqueteXV":
-      return await handleDecisionPaqueteXV(from, userText, messageLower, context);
-
-    /* ======================== */
-    /* FLUJO PRINCIPAL DEL BOT */
-    /* ======================== */
-    
-    // Estados iniciales
-    case "Contacto Inicial":
-      return await handleContactoInicial(from, context);
-
-    case "EsperandoTipoEvento":
-    case "EsperandoSubtipoOtroEvento":
-      return await handleTipoEvento(from, messageLower, context);
-
-    case "EsperandoConfirmacionPaquete":
-      return await handleConfirmacionPaquete(from, messageLower, context);
-
-    // Estados de cotización
-    case "EsperandoServicios":
-      return await handleServicios(from, userText, messageLower, context);
-
-    case "EsperandoCantidadLetras":
-      return await handleCantidadLetras(from, userText, context);
-
-    case "EsperandoCantidadChisperos":
-      return await handleCantidadChisperos(from, userText, context);
-
-    case "EsperandoTipoCabina":
-      return await handleTipoCabina(from, messageLower, context);
-
-    case "ConfirmarAgregarCabinaCambio":
-      return await handleConfirmarCabinaCambio(from, messageLower, context);
-
-    case "EsperandoTipoCarritoShots":
-      return await handleTipoCarritoShots(from, messageLower, context);
-
-    case "ConfirmarAgregarCarritoShotsCambio":
-      return await handleConfirmarCarritoShotsCambio(from, messageLower, context);
-
-    case "EsperandoDudas":
-      return await handleDudas(from, userText, messageLower, context);
-
-    case "ConfirmandoLetras":
-      return await handleConfirmandoLetras(from, messageLower, context);
-
-    // Estados de finalización
-    case "EsperandoFecha":
-      return await handleFecha(from, userText, context);
-
-    case "EsperandoLugar":
-      return await handleLugar(from, userText, context);
-
-    case "Finalizado":
-      return await handleFinalizado(from, context, userText);
-
-    default:
-      return await handleEstadoDesconocido(from, context, userText);
-  }
-}
-
-/* ========================== */
-/* 2. HANDLERS FLUJO PAQUETE MIS XV */
-/* ========================== */
-
-async function handleDecisionPaqueteXV(from, userText, messageLower, context) {
-  if (messageLower.includes("confirmar_paquete_xv") || 
-      normalizeText(userText).includes("paquete mis xv") ||
-      normalizeText(userText).includes("si me interesa")) {
-    
-    context.estado = "EsperandoLugar";
-    await saveContext(from, context);
-    await sendMessageWithTypingWithState(
-      from,
-      "Para continuar, necesito el nombre de tu salón o lugar del evento 🏢",
-      500,
-      context.estado
-    );
-    return true;
-  }
-  
-  if (messageLower.includes("armar_paquete") || normalizeText(userText).includes("armar mi paquete")) {
-    context.estado = "EsperandoServicios";
-    await saveContext(from, context);
-    await sendMessageWithTypingWithState(
-      from,
-      "Perfecto. Escribe los servicios separados por comas.\nEj.: cabina de fotos, cabina 360, 6 letras gigantes, 4 chisperos, carrito de shots con alcohol, lluvia metálica, niebla de piso, scrapbook, audio guest book",
-      500,
-      context.estado
-    );
-    return true;
-  }
-  
-  // Si no entendió, repetir opciones
-  await sendMessageWithTypingWithState(from, "No entendí tu respuesta. Elige una opción:", 200, context.estado);
-  await sendInteractiveMessage(from, "Elige:", [
-    { id: "confirmar_paquete_xv", title: "✅ PAQUETE MIS XV" },
-    { id: "armar_paquete", title: "🎛️ ARMAR MI PAQUETE" }
-  ]);
-  return true;
-}
-
-/* ========================== */
-/* 3. HANDLERS ESTADOS INICIALES */
-/* ========================== */
-
-async function handleContactoInicial(from, context) {
-  await sendMessageWithTypingWithState(from, "¡Hola! 👋 Soy *Cami-Bot*, a tus órdenes.", 200, "Contacto Inicial");
-  await sendMessageWithTypingWithState(from, "¿Qué tipo de evento tienes? (Boda, XV, cumpleaños...)", 300, "Contacto Inicial");
-  context.estado = "EsperandoTipoEvento";
-  await saveContext(from, context);
-  return true;
-}
-
-async function handleConfirmacionPaquete(from, messageLower, context) {
-  // Manejo de botones de paquetes
-  const handlers = {
-    "paquete_wedding": async () => {
-      await sendMessageWithTypingWithState(from, "Información del *Paquete WEDDING*:", 300, context.estado);
-      await sendWhatsAppVideo(from, mediaMapping["cabina de fotos"].videos[0]);
-      for (const img of mediaMapping["cabina de fotos"].images.slice(0,4)) { 
-        await sendImageMessage(from, img); 
-        await delay(300); 
-      }
-      await sendInteractiveMessage(from, "¿Te interesa el *PAQUETE WEDDING* o armas tu paquete?", [
-        { id: "si_me_interesa", title: "PAQUETE WEDDING" },
-        { id: "armar_paquete", title: "Armar mi paquete" }
-      ]);
-    },
-    
-    "paquete_xv": async () => {
-      await sendMessageWithTypingWithState(from, "Información del *Paquete Mis XV*:", 300, context.estado);
-      await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/04/Paq-Mis-XV-Inform.jpg");
-      await sendWhatsAppMessage(from, "Visita nuestro sitio para más detalles:");
-      await sendWhatsAppMessage(from, "https://cami-cam.com/paquete-mis-xv/");
-      await sendWhatsAppVideo(from, mediaMapping["cabina de fotos"].videos[0]);
-      for (const img of mediaMapping["cabina de fotos"].images.slice(0,4)) { 
-        await sendImageMessage(from, img); 
-        await delay(300); 
-      }
-      await sendInteractiveMessage(from, "¿Te interesa *PAQUETE MIS XV* o armas tu paquete?", [
-        { id: "si_me_interesa", title: "PAQUETE MIS XV" },
-        { id: "armar_paquete", title: "Armar mi paquete" }
-      ]);
-    },
-    
-    "paquete_otro": async () => {
-      const rec = context.paqueteRecomendado;
-      if (rec) {
-        for (const img of rec.media?.images || []) { 
-          await sendImageMessage(from, img); 
-          await delay(250); 
-        }
-        for (const vid of rec.media?.videos || []) { 
-          await sendWhatsAppVideo(from, vid); 
-          await delay(250); 
-        }
-        await sendMessageWithTypingWithState(from, `🎉 *${rec.paquete}*\n${rec.descripcion}`, 300, context.estado);
-        await sendInteractiveMessage(from, `¿Te interesa *${rec.paquete}* o armas tu paquete?`, [
-          { id: "si_me_interesa", title: rec.paquete },
-          { id: "armar_paquete", title: "Armar mi paquete" }
-        ]);
-      } else {
-        await sendWhatsAppMessage(from, "No encuentro una recomendación para este evento. Intentemos armar tu paquete.");
-        context.estado = "EsperandoServicios";
-      }
-    },
-    
-    "si_me_interesa_sugerido": async () => {
-      await solicitarFecha(from, context);
-    },
-    
-    "si_me_interesa": async () => {
-      await solicitarFecha(from, context);
-    },
-    
-    "modificar_cotizacion": async () => {
-      context.estado = "EsperandoDudas";
-      await sendWhatsAppMessage(from, "Para modificar:\n\n*Agregar* <servicio>\n*Quitar* <servicio>");
-    },
-    
-    "armar_paquete": async () => {
-      context.estado = "EsperandoServicios";
+  // Botones/acciones
+  if (messageLower.includes("armar_paquete") || messageLower.includes("armar mi paquete")) {
+    if (["EsperandoConfirmacionPaquete","EsperandoDudas","EsperandoTipoEvento"].includes(context.estado)) {
       await sendMessageWithTypingWithState(
         from,
         "Perfecto. Escribe los servicios separados por comas.\nEj.: cabina de fotos, cabina 360, 6 letras gigantes, 4 chisperos, carrito de shots con alcohol, lluvia metálica, niebla de piso, scrapbook, audio guest book",
         500,
         context.estado
       );
+      context.estado = "EsperandoServicios";
+      return true;
     }
-  };
+  }
 
-  const handler = handlers[messageLower];
-  if (handler) {
-    await handler();
-    await saveContext(from, context);
+  if (messageLower === "si_me_interesa_sugerido" || messageLower === "si_me_interesa") {
+    if (["EsperandoConfirmacionPaquete","EsperandoDudas"].includes(context.estado)) {
+      context.estado = "EsperandoFecha";
+      await solicitarFecha(from, context);
+      return true;
+    }
+  }
+
+  if (messageLower === "modificar_cotizacion") {
+    context.estado = "EsperandoDudas";
+    await sendWhatsAppMessage(from, "Para modificar:\n\n*Agregar* <servicio>\n*Quitar* <servicio>");
     return true;
   }
 
-  // Si no es un botón reconocido
-  await sendMessageWithTypingWithState(from, "No entendí tu respuesta. Elige una opción:", 200, context.estado);
-  await sendInteractiveMessage(from, "Elige:", [
-    { id: "si_me_interesa", title: "Sí, me interesa" },
-    { id: "armar_paquete", title: "Armar mi paquete" }
-  ]);
-  return true;
-}
-
-/* ========================== */
-/* 4. HANDLERS COTIZACIÓN */
-/* ========================== */
-
-async function handleServicios(from, userText, messageLower, context) {
-  let servicios = userText;
-
-  if (messageLower.includes("agregar")) {
-    const toAdd = normalizeServicesInput(userText.replace(/agregar/i, "").trim());
-    context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + toAdd;
-    await sendWhatsAppMessage(from, `✅ Agregado: ${toAdd}`);
-  } else if (messageLower.includes("quitar")) {
-    const toRemove = userText.replace(/quitar/i,"").trim().toLowerCase();
-    context.serviciosSeleccionados = context.serviciosSeleccionados
-      .split(",").map(s=>s.trim())
-      .filter(s=>!normalizeText(s).includes(normalizeText(toRemove)))
-      .join(", ");
-    await sendWhatsAppMessage(from, `✅ Quitado: ${toRemove}`);
-  } else {
-    servicios = normalizeServicesInput(userText);
-    context.serviciosSeleccionados = servicios;
-  }
-
-  // Flags de faltantes
-  const sAll = context.serviciosSeleccionados;
-  const faltaLetras = /(letras|letras gigantes)(?!\s*\d+)/i.test(sAll);
-  const faltaChisperos = /chisperos(?!\s*\d+)/i.test(sAll);
-  const faltaShots = /carrito de shots(?!\s*(con|sin)\s*alcohol)/i.test(sAll);
-  const faltaCabinaTipo = /(^|,)\s*cabina\s*(,|$)/i.test(sAll);
-
-  if (faltaCabinaTipo) {
-    context.estado = "EsperandoTipoCabina";
-    context.serviciosSeleccionados = sAll.split(",").map(x=>x.trim()).filter(x=>!/^cabina$/i.test(x)).join(", ");
-    await saveContext(from, context);
-    await sendWhatsAppMessage(from, "¿Deseas *Cabina de fotos* o *Cabina 360*?");
+  if (messageLower === "paquete_wedding") {
+    await sendMessageWithTypingWithState(from, "Información del *Paquete WEDDING*:", 300, context.estado);
+    await sendWhatsAppVideo(from, mediaMapping["cabina de fotos"].videos[0]);
+    for (const img of mediaMapping["cabina de fotos"].images.slice(0,4)) { await sendImageMessage(from, img); await delay(300); }
+    await sendInteractiveMessage(from, "¿Te interesa el *PAQUETE WEDDING* o armas tu paquete?", [
+      { id: "si_me_interesa", title: "PAQUETE WEDDING" },
+      { id: "armar_paquete", title: "Armar mi paquete" }
+    ]);
+    context.estado = "EsperandoConfirmacionPaquete";
     return true;
   }
 
-  if (faltaLetras) {
-    context.estado = "EsperandoCantidadLetras";
-    await saveContext(from, context);
-    await sendWhatsAppMessage(from, "¿Cuántas letras necesitas? 🔠");
+  if (messageLower === "paquete_xv") {
+    await sendMessageWithTypingWithState(from, "Información del *Paquete Mis XV*:", 300, context.estado);
+    await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/04/Paq-Mis-XV-Inform.jpg");
+    await sendWhatsAppMessage(from, "Visita nuestro sitio para más detalles:");
+    await sendWhatsAppMessage(from, "https://cami-cam.com/paquete-mis-xv/");
+    await sendWhatsAppVideo(from, mediaMapping["cabina de fotos"].videos[0]);
+    for (const img of mediaMapping["cabina de fotos"].images.slice(0,4)) { await sendImageMessage(from, img); await delay(300); }
+    await sendInteractiveMessage(from, "¿Te interesa *PAQUETE MIS XV* o armas tu paquete?", [
+      { id: "si_me_interesa", title: "PAQUETE MIS XV" },
+      { id: "armar_paquete", title: "Armar mi paquete" }
+    ]);
+    context.estado = "EsperandoConfirmacionPaquete";
     return true;
   }
 
-  if (faltaChisperos) {
-    context.estado = "EsperandoCantidadChisperos";
-    await saveContext(from, context);
-    await sendWhatsAppMessage(from, "¿Cuántos chisperos ocupas? (2, 4, 6, 8, 10…) 🔥");
-    return true;
-  }
-
-  if (faltaShots) {
-    context.estado = "EsperandoTipoCarritoShots";
-    await saveContext(from, context);
-    await sendWhatsAppMessage(from, "¿El carrito de shots lo deseas *CON* alcohol o *SIN* alcohol? 🍹");
-    return true;
-  }
-
-  await actualizarCotizacion(from, context);
-  return true;
-}
-
-async function handleCantidadLetras(from, userText, context) {
-  const cant = parseInt(userText, 10);
-  if (!Number.isFinite(cant) || cant <= 0) {
-    await sendWhatsAppMessage(from, "Ingresa un número válido para letras.");
-    return true;
-  }
-  
-  let arr = context.serviciosSeleccionados.split(",").map(s=>s.trim());
-  let found = false;
-  arr = arr.map(s => {
-    if (/^letras(\s*gigantes)?$/i.test(s)) { found = true; return `letras gigantes ${cant}`; }
-    return s;
-  });
-  if (!found) arr.push(`letras gigantes ${cant}`);
-  context.serviciosSeleccionados = arr.join(", ");
-  
-  await sendWhatsAppMessage(from, `✅ Agregadas ${cant} letras gigantes.`);
-  await actualizarCotizacion(from, context);
-  return true;
-}
-
-async function handleCantidadChisperos(from, userText, context) {
-  const cant = parseInt(userText, 10);
-  if (!Number.isFinite(cant) || cant <= 0 || cant % 2 !== 0) {
-    await sendWhatsAppMessage(from, "Cantidad inválida. Debe ser un número par: 2, 4, 6, 8, 10…");
-    return true;
-  }
-  
-  const re = /chisperos(\s*\d+)?/i;
-  if (re.test(context.serviciosSeleccionados))
-    context.serviciosSeleccionados = context.serviciosSeleccionados.replace(re, `chisperos ${cant}`);
-  else
-    context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `chisperos ${cant}`;
-
-  await sendWhatsAppMessage(from, `✅ Agregados ${cant} chisperos.`);
-  await actualizarCotizacion(from, context);
-  return true;
-}
-
-async function handleTipoCabina(from, messageLower, context) {
-  const resp = messageLower.includes("360") || messageLower.includes("giratoria") ? "cabina 360"
-             : messageLower.includes("fotos") || messageLower.includes("inflable") || messageLower.includes("cabina de fotos") ? "cabina de fotos"
-             : null;
-  
-  if (!resp) { 
-    await sendWhatsAppMessage(from, "Responde 'fotos' o '360', por favor."); 
-    return true; 
-  }
-
-  const hasResp = normalizeText(context.serviciosSeleccionados).includes(normalizeText(resp));
-  const other = resp === "cabina de fotos" ? "cabina 360" : "cabina de fotos";
-
-  if (hasResp) {
-    if (normalizeText(context.serviciosSeleccionados).includes(normalizeText(other))) {
-      await sendWhatsAppMessage(from, "Ya tienes ambas cabinas en tu cotización.");
-      context.estado = "EsperandoDudas";
-      await saveContext(from, context);
+  if (messageLower === "paquete_otro") {
+    const rec = context.paqueteRecomendado;
+    if (rec) {
+      for (const img of rec.media?.images || []) { await sendImageMessage(from, img); await delay(250); }
+      for (const vid of rec.media?.videos || []) { await sendWhatsAppVideo(from, vid); await delay(250); }
+      await sendMessageWithTypingWithState(from, `🎉 *${rec.paquete}*\n${rec.descripcion}`, 300, context.estado);
+      await sendInteractiveMessage(from, `¿Te interesa *${rec.paquete}* o armas tu paquete?`, [
+        { id: "si_me_interesa", title: rec.paquete },
+        { id: "armar_paquete", title: "Armar mi paquete" }
+      ]);
+      context.estado = "EsperandoConfirmacionPaquete";
       return true;
     } else {
-      context.estado = "ConfirmarAgregarCabinaCambio";
-      context.cabinaToAgregar = other;
-      await saveContext(from, context);
-      await sendWhatsAppMessage(from, `Ya tienes ${resp}. ¿Deseas agregar también ${other}? (sí/no)`);
+      await sendWhatsAppMessage(from, "No encuentro una recomendación para este evento. Intentemos armar tu paquete.");
+      context.estado = "EsperandoServicios";
       return true;
     }
-  } else {
-    context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + resp;
-    await sendWhatsAppMessage(from, `✅ Seleccionada ${resp}.`);
+  }
+
+  // Inicio
+  if (context.estado === "Contacto Inicial") {
+    await sendMessageWithTypingWithState(from, "¡Hola! 👋 Soy *Cami-Bot*, a tus órdenes.", 200, "Contacto Inicial");
+    await sendMessageWithTypingWithState(from, "¿Qué tipo de evento tienes? (Boda, XV, cumpleaños...)", 300, "Contacto Inicial");
+    context.estado = "EsperandoTipoEvento";
+    return true;
+  }
+
+  // Tipo de evento
+  if (["EsperandoTipoEvento","EsperandoSubtipoOtroEvento"].includes(context.estado)) {
+    await handleTipoEvento(from, messageLower, context);
+    return true;
+  }
+
+  // Confirmación paquete (si escribe otra cosa)
+  if (context.estado === "EsperandoConfirmacionPaquete") {
+    await sendMessageWithTypingWithState(from, "No entendí tu respuesta. Elige una opción:", 200, context.estado);
+    await sendInteractiveMessage(from, "Elige:", [
+      { id: "si_me_interesa", title: "Sí, me interesa" },
+      { id: "armar_paquete", title: "Armar mi paquete" }
+    ]);
+    return true;
+  }
+
+  // Servicios
+  if (context.estado === "EsperandoServicios") {
+    const lower = messageLower;
+    let servicios = userText;
+
+    if (lower.includes("agregar")) {
+      const toAdd = normalizeServicesInput(userText.replace(/agregar/i, "").trim());
+      context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + toAdd;
+      await sendWhatsAppMessage(from, `✅ Agregado: ${toAdd}`);
+    } else if (lower.includes("quitar")) {
+      const toRemove = userText.replace(/quitar/i,"").trim().toLowerCase();
+      context.serviciosSeleccionados = context.serviciosSeleccionados
+        .split(",").map(s=>s.trim())
+        .filter(s=>!normalizeText(s).includes(normalizeText(toRemove)))
+        .join(", ");
+      await sendWhatsAppMessage(from, `✅ Quitado: ${toRemove}`);
+    } else {
+      servicios = normalizeServicesInput(userText);
+      context.serviciosSeleccionados = servicios;
+    }
+
+    // Flags de faltantes
+    const sAll = context.serviciosSeleccionados;
+    const faltaLetras = /(letras|letras gigantes)(?!\s*\d+)/i.test(sAll);
+    const faltaChisperos = /chisperos(?!\s*\d+)/i.test(sAll);
+    const faltaShots = /carrito de shots(?!\s*(con|sin)\s*alcohol)/i.test(sAll);
+    const faltaCabinaTipo = /(^|,)\s*cabina\s*(,|$)/i.test(sAll);
+
+    if (faltaCabinaTipo) {
+      context.estado = "EsperandoTipoCabina";
+      context.serviciosSeleccionados = sAll.split(",").map(x=>x.trim()).filter(x=>!/^cabina$/i.test(x)).join(", ");
+      await sendWhatsAppMessage(from, "¿Deseas *Cabina de fotos* o *Cabina 360*?");
+      return true;
+    }
+
+    if (faltaLetras) {
+      context.estado = "EsperandoCantidadLetras";
+      await sendWhatsAppMessage(from, "¿Cuántas letras necesitas? 🔠");
+      return true;
+    }
+
+    if (faltaChisperos) {
+      context.estado = "EsperandoCantidadChisperos";
+      await sendWhatsAppMessage(from, "¿Cuántos chisperos ocupas? (2, 4, 6, 8, 10…) 🔥");
+      return true;
+    }
+
+    if (faltaShots) {
+      context.estado = "EsperandoTipoCarritoShots";
+      await sendWhatsAppMessage(from, "¿El carrito de shots lo deseas *CON* alcohol o *SIN* alcohol? 🍹");
+      return true;
+    }
+
     await actualizarCotizacion(from, context);
     return true;
   }
-}
 
-async function handleConfirmarCabinaCambio(from, messageLower, context) {
-  if (/(^|\s)si($|\s)|s[ií]/i.test(messageLower)) {
-    const v = context.cabinaToAgregar;
-    if (!normalizeText(context.serviciosSeleccionados).includes(normalizeText(v))) {
-      context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + v;
-      await sendWhatsAppMessage(from, `✅ Agregada ${v}.`);
-      await actualizarCotizacion(from, context, "¡Paquete actualizado!");
-    }
-  } else {
-    await sendWhatsAppMessage(from, "Entendido. Mantendré una sola cabina.");
-  }
-  context.estado = "EsperandoDudas";
-  await saveContext(from, context);
-  return true;
-}
-
-async function handleTipoCarritoShots(from, messageLower, context) {
-  const resp = messageLower.includes("sin") ? "carrito de shots sin alcohol"
-             : messageLower.includes("con") ? "carrito de shots con alcohol"
-             : null;
-  
-  if (!resp) { 
-    await sendWhatsAppMessage(from, "Responde 'con' o 'sin' alcohol, por favor."); 
-    return true; 
-  }
-
-  if (normalizeText(context.serviciosSeleccionados).includes(normalizeText(resp))) {
-    const other = resp.includes("sin") ? "carrito de shots con alcohol" : "carrito de shots sin alcohol";
-    if (normalizeText(context.serviciosSeleccionados).includes(normalizeText(other))) {
-      await sendWhatsAppMessage(from, "Ya tienes ambas variantes en la cotización. Si deseas cambios, avísame.");
-      context.estado = "EsperandoDudas";
-      await saveContext(from, context);
-      return true;
-    } else {
-      context.estado = "ConfirmarAgregarCarritoShotsCambio";
-      context.carritoShotsToAgregar = other;
-      await saveContext(from, context);
-      await sendWhatsAppMessage(from, `Ya tienes ${resp}. ¿Deseas agregar también ${other}? (sí/no)`);
+  // Cantidad chisperos
+  if (context.estado === "EsperandoCantidadChisperos") {
+    const cant = parseInt(userText, 10);
+    if (!Number.isFinite(cant) || cant <= 0 || cant % 2 !== 0) {
+      await sendWhatsAppMessage(from, "Cantidad inválida. Debe ser un número par: 2, 4, 6, 8, 10…");
       return true;
     }
-  } else {
-    context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + resp;
-    await sendWhatsAppMessage(from, `✅ Seleccionado ${resp}.`);
+    const re = /chisperos(\s*\d+)?/i;
+    if (re.test(context.serviciosSeleccionados))
+      context.serviciosSeleccionados = context.serviciosSeleccionados.replace(re, `chisperos ${cant}`);
+    else
+      context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `chisperos ${cant}`;
+
+    await sendWhatsAppMessage(from, `✅ Agregados ${cant} chisperos.`);
     await actualizarCotizacion(from, context);
     return true;
   }
-}
 
-async function handleConfirmarCarritoShotsCambio(from, messageLower, context) {
-  if (/(^|\s)si($|\s)|s[ií]/i.test(messageLower)) {
-    const v = context.carritoShotsToAgregar;
-    if (!normalizeText(context.serviciosSeleccionados).includes(normalizeText(v))) {
-      context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + v;
-      await sendWhatsAppMessage(from, `✅ Agregado ${v}.`);
-      await actualizarCotizacion(from, context, "¡Paquete actualizado!");
+  // Cantidad letras
+  if (context.estado === "EsperandoCantidadLetras") {
+    const cant = parseInt(userText, 10);
+    if (!Number.isFinite(cant) || cant <= 0) {
+      await sendWhatsAppMessage(from, "Ingresa un número válido para letras.");
+      return true;
     }
-  } else {
-    await sendWhatsAppMessage(from, "Entendido. Mantengo una sola variante.");
+    let arr = context.serviciosSeleccionados.split(",").map(s=>s.trim());
+    let found = false;
+    arr = arr.map(s => {
+      if (/^letras(\s*gigantes)?$/i.test(s)) { found = true; return `letras gigantes ${cant}`; }
+      return s;
+    });
+    if (!found) arr.push(`letras gigantes ${cant}`);
+    context.serviciosSeleccionados = arr.join(", ");
+    await sendWhatsAppMessage(from, `✅ Agregadas ${cant} letras gigantes.`);
+    await actualizarCotizacion(from, context);
+    return true;
   }
-  context.estado = "EsperandoDudas";
-  await saveContext(from, context);
-  return true;
-}
 
-async function handleDudas(from, userText, messageLower, context) {
-  // Manejo de nombre → contar letras
-  if (messageLower.includes("ocupo el nombre de")) {
+  // Nombre → contar letras
+  if (context.estado === "EsperandoDudas" && messageLower.includes("ocupo el nombre de")) {
     context.nombreCliente = userText.replace(/ocupo el nombre de/i,"").trim();
     const n = contarLetras(context.nombreCliente);
     context.estado = "ConfirmandoLetras";
-    await saveContext(from, context);
     await sendWhatsAppMessage(from, `Entiendo que ocupas ${n} letras gigantes. ¿Es correcto? (sí/no)`);
     return true;
   }
 
-  if (messageLower.includes("quitar")) {
-    const catalog = ["cabina de fotos","cabina 360","lluvia de mariposas","carrito de shots con alcohol","carrito de shots sin alcohol","niebla de piso","lluvia metálica","scrapbook","audio guest book","letras gigantes","chisperos"];
-    let target = null;
-    for (const k of catalog) {
-      if (k==="letras gigantes" && /letras/i.test(messageLower)) { target="letras gigantes"; break; }
-      if (k==="chisperos" && /(chispero|chisperos)/i.test(messageLower)) { target="chisperos"; break; }
-      if (messageLower.includes(k)) { target=k; break; }
+  if (context.estado === "ConfirmandoLetras") {
+    if (/(^|\s)si($|\s)/i.test(messageLower) || /s[ií]/i.test(messageLower)) {
+      const n = contarLetras(context.nombreCliente || "");
+      const re = /letras gigantes\s*\d*/i;
+      if (re.test(context.serviciosSeleccionados))
+        context.serviciosSeleccionados = context.serviciosSeleccionados.replace(re, `letras gigantes ${n}`);
+      else
+        context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `letras gigantes ${n}`;
+      await sendWhatsAppMessage(from, `✅ Agregadas ${n} letras gigantes por el nombre '${context.nombreCliente}'.`);
+      await actualizarCotizacion(from, context);
+    } else {
+      context.estado = "EsperandoCantidadLetras";
+      await sendWhatsAppMessage(from, "¿Cuántas letras necesitas? 🔠");
     }
-    if (!target) { 
-      await sendWhatsAppMessage(from, "No entendí qué quitar. Usa: *Quitar <servicio>*"); 
-      return true; 
-    }
+    return true;
+  }
 
-    const mQty = userText.match(/(?:quitar|qu[ií]tame)\s*(\d+)/i);
-    if (mQty && (target==="letras gigantes" || target==="chisperos")) {
-      const re = new RegExp(`${target}\\s*(\\d+)`,"i");
-      const mAct = context.serviciosSeleccionados.match(re);
-      const current = mAct ? parseInt(mAct[1],10) : 0;
-      const delta = parseInt(mQty[1],10);
-      if (delta > current) { 
-        await sendWhatsAppMessage(from, `No puedes quitar más de ${current}.`); 
-        return true; 
-      }
-      const next = current - delta;
-      if (target==="chisperos" && next>0 && next%2!==0) {
-        await sendWhatsAppMessage(from, "Los chisperos deben ser en pares. No actualicé la cotización.");
+  // Carrito shots variante
+  if (context.estado === "EsperandoTipoCarritoShots") {
+    const resp = messageLower.includes("sin") ? "carrito de shots sin alcohol"
+               : messageLower.includes("con") ? "carrito de shots con alcohol"
+               : null;
+    if (!resp) { await sendWhatsAppMessage(from, "Responde 'con' o 'sin' alcohol, por favor."); return true; }
+
+    if (normalizeText(context.serviciosSeleccionados).includes(normalizeText(resp))) {
+      const other = resp.includes("sin") ? "carrito de shots con alcohol" : "carrito de shots sin alcohol";
+      if (normalizeText(context.serviciosSeleccionados).includes(normalizeText(other))) {
+        await sendWhatsAppMessage(from, "Ya tienes ambas variantes en la cotización. Si deseas cambios, avísame.");
+        context.estado = "EsperandoDudas";
+        return true;
+      } else {
+        context.estado = "ConfirmarAgregarCarritoShotsCambio";
+        context.carritoShotsToAgregar = other;
+        await sendWhatsAppMessage(from, `Ya tienes ${resp}. ¿Deseas agregar también ${other}? (sí/no)`);
         return true;
       }
-      if (next>0) {
-        context.serviciosSeleccionados = context.serviciosSeleccionados.replace(re, `${target} ${next}`);
-        await sendWhatsAppMessage(from, `✅ Quitados ${delta}. Ahora tienes ${next}.`);
+    } else {
+      context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + resp;
+      await sendWhatsAppMessage(from, `✅ Seleccionado ${resp}.`);
+      await actualizarCotizacion(from, context);
+      context.estado = "EsperandoDudas";
+      return true;
+    }
+  }
+
+  if (context.estado === "ConfirmarAgregarCarritoShotsCambio") {
+    if (/(^|\s)si($|\s)|s[ií]/i.test(messageLower)) {
+      const v = context.carritoShotsToAgregar;
+      if (!normalizeText(context.serviciosSeleccionados).includes(normalizeText(v))) {
+        context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + v;
+        await sendWhatsAppMessage(from, `✅ Agregado ${v}.`);
+        await actualizarCotizacion(from, context, "¡Paquete actualizado!");
+      }
+    } else {
+      await sendWhatsAppMessage(from, "Entendido. Mantengo una sola variante.");
+    }
+    context.estado = "EsperandoDudas";
+    return true;
+  }
+
+  // Tipo cabina
+  if (context.estado === "EsperandoTipoCabina") {
+    const resp = messageLower.includes("360") || messageLower.includes("giratoria") ? "cabina 360"
+               : messageLower.includes("fotos") || messageLower.includes("inflable") || messageLower.includes("cabina de fotos") ? "cabina de fotos"
+               : null;
+    if (!resp) { await sendWhatsAppMessage(from, "Responde 'fotos' o '360', por favor."); return true; }
+
+    const hasResp = normalizeText(context.serviciosSeleccionados).includes(normalizeText(resp));
+    const other = resp === "cabina de fotos" ? "cabina 360" : "cabina de fotos";
+
+    if (hasResp) {
+      if (normalizeText(context.serviciosSeleccionados).includes(normalizeText(other))) {
+        await sendWhatsAppMessage(from, "Ya tienes ambas cabinas en tu cotización.");
+        context.estado = "EsperandoDudas";
+        return true;
+      } else {
+        context.estado = "ConfirmarAgregarCabinaCambio";
+        context.cabinaToAgregar = other;
+        await sendWhatsAppMessage(from, `Ya tienes ${resp}. ¿Deseas agregar también ${other}? (sí/no)`);
+        return true;
+      }
+    } else {
+      context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + resp;
+      await sendWhatsAppMessage(from, `✅ Seleccionada ${resp}.`);
+      await actualizarCotizacion(from, context);
+      context.estado = "EsperandoDudas";
+      return true;
+    }
+  }
+
+  if (context.estado === "ConfirmarAgregarCabinaCambio") {
+    if (/(^|\s)si($|\s)|s[ií]/i.test(messageLower)) {
+      const v = context.cabinaToAgregar;
+      if (!normalizeText(context.serviciosSeleccionados).includes(normalizeText(v))) {
+        context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + v;
+        await sendWhatsAppMessage(from, `✅ Agregada ${v}.`);
+        await actualizarCotizacion(from, context, "¡Paquete actualizado!");
+      }
+    } else {
+      await sendWhatsAppMessage(from, "Entendido. Mantendré una sola cabina.");
+    }
+    context.estado = "EsperandoDudas";
+    return true;
+  }
+
+  // Dudas: agregar/quitar directo
+  if (context.estado === "EsperandoDudas") {
+    if (messageLower.includes("quitar")) {
+      const catalog = ["cabina de fotos","cabina 360","lluvia de mariposas","carrito de shots con alcohol","carrito de shots sin alcohol","niebla de piso","lluvia metálica","scrapbook","audio guest book","letras gigantes","chisperos"];
+      let target = null;
+      for (const k of catalog) {
+        if (k==="letras gigantes" && /letras/i.test(messageLower)) { target="letras gigantes"; break; }
+        if (k==="chisperos" && /(chispero|chisperos)/i.test(messageLower)) { target="chisperos"; break; }
+        if (messageLower.includes(k)) { target=k; break; }
+      }
+      if (!target) { await sendWhatsAppMessage(from, "No entendí qué quitar. Usa: *Quitar <servicio>*"); return true; }
+
+      const mQty = userText.match(/(?:quitar|qu[ií]tame)\s*(\d+)/i);
+      if (mQty && (target==="letras gigantes" || target==="chisperos")) {
+        const re = new RegExp(`${target}\\s*(\\d+)`,"i");
+        const mAct = context.serviciosSeleccionados.match(re);
+        const current = mAct ? parseInt(mAct[1],10) : 0;
+        const delta = parseInt(mQty[1],10);
+        if (delta > current) { await sendWhatsAppMessage(from, `No puedes quitar más de ${current}.`); return true; }
+        const next = current - delta;
+        if (target==="chisperos" && next>0 && next%2!==0) {
+          await sendWhatsAppMessage(from, "Los chisperos deben ser en pares. No actualicé la cotización.");
+          return true;
+        }
+        if (next>0) {
+          context.serviciosSeleccionados = context.serviciosSeleccionados.replace(re, `${target} ${next}`);
+          await sendWhatsAppMessage(from, `✅ Quitados ${delta}. Ahora tienes ${next}.`);
+        } else {
+          context.serviciosSeleccionados = context.serviciosSeleccionados
+            .split(",").map(s=>s.trim()).filter(s=>!normalizeText(s).startsWith(normalizeText(target))).join(", ");
+          await sendWhatsAppMessage(from, `✅ Eliminado *${target}* por completo.`);
+        }
       } else {
         context.serviciosSeleccionados = context.serviciosSeleccionados
           .split(",").map(s=>s.trim()).filter(s=>!normalizeText(s).startsWith(normalizeText(target))).join(", ");
-        await sendWhatsAppMessage(from, `✅ Eliminado *${target}* por completo.`);
+        await sendWhatsAppMessage(from, `✅ ${target} eliminado.`);
       }
-    } else {
-      context.serviciosSeleccionados = context.serviciosSeleccionados
-        .split(",").map(s=>s.trim()).filter(s=>!normalizeText(s).startsWith(normalizeText(target))).join(", ");
-      await sendWhatsAppMessage(from, `✅ ${target} eliminado.`);
-    }
-    await actualizarCotizacion(from, context, "¡Paquete actualizado!");
-    return true;
-  }
-
-  if (messageLower.includes("agregar")) {
-    // tratamiento especial de carrito de shots
-    if (messageLower.includes("agregar carrito de shots") && !/con alcohol|sin alcohol/i.test(messageLower)) {
-      context.estado = "EsperandoTipoCarritoShots";
-      await saveContext(from, context);
-      await sendWhatsAppMessage(from, "¿El carrito lo deseas CON alcohol o SIN alcohol? 🍹");
-      return true;
-    }
-    if (messageLower.includes("agregar cabina") && !/cabina de fotos|cabina 360/i.test(messageLower)) {
-      context.estado = "EsperandoTipoCabina";
-      await saveContext(from, context);
-      await sendWhatsAppMessage(from, "¿Cabina de fotos o Cabina 360?");
+      await actualizarCotizacion(from, context, "¡Paquete actualizado!");
       return true;
     }
 
-    // genérico
-    const clean = normalizeServicesInput(userText.replace(/agregar/i,"").trim());
-    if (!clean) { 
-      await sendWhatsAppMessage(from, "Indica qué agregar. Ej.: *Agregar cabina de fotos*"); 
-      return true; 
-    }
-    const already = normalizeText(context.serviciosSeleccionados).includes(normalizeText(clean));
-    if (already) { 
-      await sendWhatsAppMessage(from, "Ya está en tu cotización."); 
-      return true; 
-    }
+    if (messageLower.includes("agregar")) {
+      // tratamiento especial de carrito de shots
+      if (messageLower.includes("agregar carrito de shots") && !/con alcohol|sin alcohol/i.test(messageLower)) {
+        context.estado = "EsperandoTipoCarritoShots";
+        await sendWhatsAppMessage(from, "¿El carrito lo deseas CON alcohol o SIN alcohol? 🍹");
+        return true;
+      }
+      if (messageLower.includes("agregar cabina") && !/cabina de fotos|cabina 360/i.test(messageLower)) {
+        context.estado = "EsperandoTipoCabina";
+        await sendWhatsAppMessage(from, "¿Cabina de fotos o Cabina 360?");
+        return true;
+      }
 
-    // cantidad opcional
-    const mQty = clean.match(/(letras(?:\s*gigantes)?|chisperos)\s+(\d+)/i);
-    if (/^chisperos\b/i.test(clean) && !mQty) {
-      context.estado = "EsperandoCantidadChisperos";
-      await saveContext(from, context);
-      await sendWhatsAppMessage(from, "¿Cuántos chisperos? (2, 4, 6, 8, 10…) 🔥");
+      // genérico
+      const clean = normalizeServicesInput(userText.replace(/agregar/i,"").trim());
+      if (!clean) { await sendWhatsAppMessage(from, "Indica qué agregar. Ej.: *Agregar cabina de fotos*"); return true; }
+      const already = normalizeText(context.serviciosSeleccionados).includes(normalizeText(clean));
+      if (already) { await sendWhatsAppMessage(from, "Ya está en tu cotización."); return true; }
+
+      // cantidad opcional
+      const mQty = clean.match(/(letras(?:\s*gigantes)?|chisperos)\s+(\d+)/i);
+      if (/^chisperos\b/i.test(clean) && !mQty) {
+        context.estado = "EsperandoCantidadChisperos";
+        await sendWhatsAppMessage(from, "¿Cuántos chisperos? (2, 4, 6, 8, 10…) 🔥");
+        return true;
+      }
+      if (/^letras(?:\s*gigantes)?\b/i.test(clean) && !mQty) {
+        context.estado = "EsperandoCantidadLetras";
+        await sendWhatsAppMessage(from, "¿Cuántas letras? 🔠");
+        return true;
+      }
+
+      context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + clean;
+      await sendWhatsAppMessage(from, `✅ Agregado: ${clean}`);
+      await actualizarCotizacion(from, context);
       return true;
     }
-    if (/^letras(?:\s*gigantes)?\b/i.test(clean) && !mQty) {
-      context.estado = "EsperandoCantidadLetras";
-      await saveContext(from, context);
-      await sendWhatsAppMessage(from, "¿Cuántas letras? 🔠");
+  }
+
+  // Fecha
+  if (context.estado === "EsperandoFecha") {
+    if (!isValidDateExtended(userText)) {
+      await sendMessageWithTypingWithState(from, "Formato inválido. Usa DD/MM/AAAA o '20 de mayo 2025'.", 200, context.estado);
+      return true;
+    }
+    if (!isValidFutureDate(userText)) {
+      await sendMessageWithTypingWithState(from, "Esa fecha ya pasó. Indica una futura.", 200, context.estado);
+      return true;
+    }
+    if (!isWithinTwoYears(userText)) {
+      await sendMessageWithTypingWithState(from, "Agenda abierta hasta 2 años. Indica otra fecha dentro de ese rango.", 200, context.estado);
       return true;
     }
 
-    context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + clean;
-    await sendWhatsAppMessage(from, `✅ Agregado: ${clean}`);
-    await actualizarCotizacion(from, context);
+    const ddmmyyyy = parseFecha(userText);
+    const iso = toISO(ddmmyyyy);
+    const ok = await checkAvailability(iso);
+    const pretty = formatFechaEnEspanol(ddmmyyyy);
+
+    if (!ok) {
+      await sendMessageWithTypingWithState(from, `😔 Lo siento, *${pretty}* no está disponible.`, 200, context.estado);
+      context.estado = "Finalizado";
+      return true;
+    }
+
+    context.fecha = pretty;
+    context.fechaISO = iso;
+    context.estado = "EsperandoLugar";
+    await sendMessageWithTypingWithState(from, `¡Perfecto!\n\n*${pretty}* DISPONIBLE 👏👏👏\n\n¿Nombre del salón? 🏢`, 200, "EsperandoLugar");
     return true;
   }
 
-  return false;
-}
-
-async function handleConfirmandoLetras(from, messageLower, context) {
-  if (/(^|\s)si($|\s)|s[ií]/i.test(messageLower)) {
-    const n = contarLetras(context.nombreCliente || "");
-    const re = /letras gigantes\s*\d*/i;
-    if (re.test(context.serviciosSeleccionados))
-      context.serviciosSeleccionados = context.serviciosSeleccionados.replace(re, `letras gigantes ${n}`);
-    else
-      context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `letras gigantes ${n}`;
-    await sendWhatsAppMessage(from, `✅ Agregadas ${n} letras gigantes por el nombre '${context.nombreCliente}'.`);
-    await actualizarCotizacion(from, context);
-  } else {
-    context.estado = "EsperandoCantidadLetras";
-    await saveContext(from, context);
-    await sendWhatsAppMessage(from, "¿Cuántas letras necesitas? 🔠");
-  }
-  return true;
-}
-
-/* ========================== */
-/* 5. HANDLERS FINALIZACIÓN */
-/* ========================== */
-
-async function handleFecha(from, userText, context) {
-  if (!isValidDateExtended(userText)) {
-    await sendMessageWithTypingWithState(from, "Formato inválido. Usa DD/MM/AAAA o '20 de mayo 2025'.", 200, context.estado);
-    return true;
-  }
-  if (!isValidFutureDate(userText)) {
-    await sendMessageWithTypingWithState(from, "Esa fecha ya pasó. Indica una futura.", 200, context.estado);
-    return true;
-  }
-  if (!isWithinTwoYears(userText)) {
-    await sendMessageWithTypingWithState(from, "Agenda abierta hasta 2 años. Indica otra fecha dentro de ese rango.", 200, context.estado);
-    return true;
-  }
-
-  const ddmmyyyy = parseFecha(userText);
-  const iso = toISO(ddmmyyyy);
-  const ok = await checkAvailability(iso);
-  const pretty = formatFechaEnEspanol(ddmmyyyy);
-
-  if (!ok) {
-    await sendMessageWithTypingWithState(from, `😔 Lo siento, *${pretty}* no está disponible.`, 200, context.estado);
+  // Lugar
+  if (context.estado === "EsperandoLugar") {
+    context.lugar = userText;
+    await sendMessageWithTypingWithState(from, "Para separar fecha solicitamos un anticipo de $500. El resto el día del evento.", 200, context.estado);
+    await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/03/Datos-Transferencia-1.jpeg", "722969010494399671");
+    await sendMessageWithTypingWithState(from, "Tras acreditarse, te pido datos, lleno contrato y te envío foto.", 200, context.estado);
+    await sendWhatsAppMessage(from, "❓ Preguntas frecuentes:\nhttps://cami-cam.com/preguntas-frecuentes/");
+    await sendMessageWithTypingWithState(from, "Cualquier duda, con confianza.\nSoy Gustavo González, a tus órdenes 😀", 200, context.estado);
     context.estado = "Finalizado";
-    await saveContext(from, context);
     return true;
   }
 
-  context.fecha = pretty;
-  context.fechaISO = iso;
-  context.estado = "EsperandoLugar";
-  await saveContext(from, context);
-  await sendMessageWithTypingWithState(from, `¡Perfecto!\n\n*${pretty}* DISPONIBLE 👏👏👏\n\n¿Nombre del salón? 🏢`, 200, "EsperandoLugar");
-  return true;
-}
-
-async function handleLugar(from, userText, context) {
-  context.lugar = userText;
-  context.estado = "Finalizado";
-  await saveContext(from, context);
-  
-  await sendMessageWithTypingWithState(from, "Para separar fecha solicitamos un anticipo de $500. El resto el día del evento.", 200, context.estado);
-  await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/03/Datos-Transferencia-1.jpeg", "722969010494399671");
-  await sendMessageWithTypingWithState(from, "Tras acreditarse, te pido datos, lleno contrato y te envío foto.", 200, context.estado);
-  await sendWhatsAppMessage(from, "❓ Preguntas frecuentes:\nhttps://cami-cam.com/preguntas-frecuentes/");
-  await sendMessageWithTypingWithState(from, "Cualquier duda, con confianza.\nSoy Gustavo González, a tus órdenes 😀", 200, context.estado);
-  return true;
-}
-
-async function handleFinalizado(from, context, userText) {
-  // Reactivar conversación si pasa mucho tiempo
-  const lastActivity = new Date(context.lastActivity || context.fechaCreacion || new Date());
-  const now = new Date();
-  const daysDiff = (now - lastActivity) / (1000 * 60 * 60 * 24);
-  
-  if (daysDiff > 7) { // Reactivar después de 7 días
-    await sendMessageWithTypingWithState(from, "¡Hola de nuevo! 👋 ¿En qué puedo ayudarte?", 200, context.estado);
-    context.estado = "Contacto Inicial";
-    await saveContext(from, context);
+  if (context.estado === "Finalizado") {
+    return true;
   }
-  return true;
-}
 
-/* ========================== */
-/* 6. HANDLER DE FALLBACK */
-/* ========================== */
-
-async function handleEstadoDesconocido(from, context, userText) {
-  console.warn(`Estado no manejado: ${context.estado} para mensaje: ${userText}`);
-  
-  // Fallback AI para estados no manejados
+  // Fallback AI
   const ai = await aiShortReply(userText);
   await sendWhatsAppMessage(from, ai);
   return true;
