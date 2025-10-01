@@ -29,7 +29,6 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 // Cotizador
 const COTIZADOR_URL = "https://cotizador-cami-cam-209c7f6faca2.herokuapp.com/";
-// Placeholder de video (cámbialo cuando lo tengas)
 const COTIZADOR_VIDEO_URL = process.env.COTIZADOR_VIDEO_URL || "https://filesamples.com/samples/video/mp4/sample_640x360.mp4";
 
 const REQUIRED_ENVS = [
@@ -169,7 +168,6 @@ async function reportMessageToCRM(to, message, tipo = "enviado") {
   }
 }
 async function reportEventToCRM(to, eventName, meta = {}) {
-  // Por qué: registrar clics/acciones como mensaje “enviado” con prefijo EVENT:
   const payload = `EVENT:${eventName}${Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : ''}`;
   await reportMessageToCRM(to, payload, "enviado");
 }
@@ -264,7 +262,7 @@ async function deactivateTypingIndicator() { /* no-op */ }
 async function sendMessageWithTypingWithState(from, message, delayMs, expectedStateSnapshot) {
   await activateTypingIndicator(from);
   await delay(delayMs);
-  const ctx = await getContext(from); // Por qué: respetar estado persistido
+  const ctx = await getContext(from);
   if ((ctx?.estado || null) === expectedStateSnapshot) {
     await sendWhatsAppMessage(from, message);
   }
@@ -274,19 +272,6 @@ async function sendMessageWithTypingWithState(from, message, delayMs, expectedSt
 /* =========================
    Media/FAQs (básico)
 ========================= */
-const mediaMapping = {
-  "cabina de fotos": {
-    images: [
-      "https://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-1.jpg",
-      "https://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-2.jpg",
-      "https://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-3.jpg",
-      "https://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-4.jpg"
-    ],
-    videos: [
-      "https://cami-cam.com/wp-content/uploads/2025/03/Cabina-Blanca.mp4"
-    ]
-  }
-};
 const faqs = [
   { re: /contrato/i, answer: "📄 ¡Sí! Tras el anticipo llenamos contrato y te enviamos foto." },
   { re: /flete/i, answer: "🚚 Varía según ubicación. Dime el salón y lo calculamos." },
@@ -319,7 +304,6 @@ async function ensureContext(from) {
 /* =========================
    Flujos nuevos
 ========================= */
-// XV tras fecha OK (tu guion)
 async function flujoXVDespuesDeFechaOK(from, context, pretty) {
   await sendMessageWithTypingWithState(from, `¡Perfecto!\n\n*${pretty}* DISPONIBLE 👏👏👏`, 200, context.estado);
   await delay(1000);
@@ -362,7 +346,6 @@ async function handleCotizadorPersonalizado(from, context) {
   context.estado = "EnviandoACotizador";
   await saveContext(from, context);
 
-  // Evento CRM
   await reportEventToCRM(from, 'cotizador_web_click', { origin: context.tipoEvento || 'desconocido' });
 
   await sendMessageWithTypingWithState(from, "¡Perfecto! Te explico cómo usar nuestro cotizador online:", 200, "EnviandoACotizador");
@@ -455,7 +438,7 @@ async function aiShortReply(query) {
 }
 
 /* =========================
-   Handlers de flujo principal (simplificados a cotizador)
+   Handlers de flujo principal (con trigger “Paquete mis XV”)
 ========================= */
 async function solicitarFecha(from, context) {
   await sendMessageWithTypingWithState(
@@ -469,7 +452,6 @@ async function solicitarFecha(from, context) {
 }
 
 async function handleTipoEvento(from, msgLower, context) {
-  // Boda
   if (msgLower.includes("boda") || msgLower.includes("evento_boda")) {
     context.tipoEvento = "Boda";
     await saveContext(from, context);
@@ -484,7 +466,6 @@ async function handleTipoEvento(from, msgLower, context) {
     return true;
   }
 
-  // XV
   if (msgLower.includes("xv") || msgLower.includes("quince")) {
     context.tipoEvento = "XV";
     await saveContext(from, context);
@@ -493,7 +474,6 @@ async function handleTipoEvento(from, msgLower, context) {
     return true;
   }
 
-  // Otros
   context.tipoEvento = "Otro";
   await saveContext(from, context);
   await sendMessageWithTypingWithState(from, "¡Excelente! ✨ Hagamos tu evento único.", 400, context.estado);
@@ -510,6 +490,19 @@ async function handleTipoEvento(from, msgLower, context) {
 async function handleUserMessage(from, userText, messageLower) {
   let context = await ensureContext(from);
 
+  // 🔹 TRIGGER ESPECIAL DE INICIO: "Paquete mis XV"
+  if (
+    (context.estado === "Contacto Inicial" || context.estado === "EsperandoTipoEvento") &&
+    messageLower.includes("paquete mis xv")
+  ) {
+    // Por qué: saltar saludo y no volver a preguntar tipo de evento
+    context.tipoEvento = "XV";
+    await saveContext(from, context);
+    await sendMessageWithTypingWithState(from, "¡Felicidades! ✨ Hagamos unos XV espectaculares.", 300, context.estado);
+    await solicitarFecha(from, context);
+    return true;
+  }
+
   // Botones
   if (messageLower === "cotizador_personalizado") {
     await handleCotizadorPersonalizado(from, context);
@@ -520,7 +513,6 @@ async function handleUserMessage(from, userText, messageLower) {
     return true;
   }
   if (messageLower.includes("armar_paquete") || messageLower.includes("armar mi paquete")) {
-    // Ahora: no cotizamos aquí → enviar al cotizador
     await handleCotizadorPersonalizado(from, context);
     return true;
   }
@@ -540,7 +532,7 @@ async function handleUserMessage(from, userText, messageLower) {
     return true;
   }
 
-  // Confirmación paquete genérica: empujar a cotizador
+  // Confirmación paquete genérica
   if (context.estado === "EsperandoConfirmacionPaquete") {
     await sendInteractiveMessage(from, "¿Cómo quieres continuar?", [
       { id: "cotizador_personalizado", title: "🎛️ COTIZADOR WEB" },
@@ -570,14 +562,12 @@ async function handleUserMessage(from, userText, messageLower) {
     context.fecha = pretty;
     context.fechaISO = iso;
 
-    // Si es XV: corre el flujo nuevo
     if ((context.tipoEvento || "").toLowerCase() === "xv") {
       await saveContext(from, context);
       await flujoXVDespuesDeFechaOK(from, context, pretty);
       return true;
     }
 
-    // Para otros: ya no cotizamos; empujamos a cotizador directamente
     context.estado = "EsperandoDecisionPaquete";
     await saveContext(from, context);
     await sendInteractiveMessage(from, `*${pretty}* DISPONIBLE 👏👏👏\n¿Cómo quieres continuar?`, [
@@ -589,7 +579,6 @@ async function handleUserMessage(from, userText, messageLower) {
 
   // Esperando decisión del paquete (XV)
   if (context.estado === "EsperandoDecisionPaquete") {
-    // Si escriben libre, re-mostrar opciones
     await sendInteractiveMessage(from, "Elige una opción:", [
       { id: "confirmar_paquete_xv", title: "✅ PAQUETE MIS XV" },
       { id: "cotizador_personalizado", title: "🎛️ COTIZADOR WEB" }
@@ -605,7 +594,7 @@ async function handleUserMessage(from, userText, messageLower) {
 
   if (context.estado === "Finalizado") return true;
 
-  // FAQs rápidas si no estamos en pasos críticos
+  // FAQs rápidas (fuera de pasos críticos)
   const critical = ["EsperandoFecha","EsperandoLugar","EsperandoDecisionPaquete","EnviandoACotizador"].includes(context.estado);
   if (!critical) {
     for (const f of faqs) {
@@ -641,7 +630,6 @@ app.post('/webhook', async (req, res) => {
 
     const from = message.from;
 
-    // IMAGEN entrante
     if (message.type === "image") {
       try {
         const mediaId = message.image.id;
@@ -664,7 +652,6 @@ app.post('/webhook', async (req, res) => {
       return res.sendStatus(200);
     }
 
-    // VIDEO entrante
     if (message.type === "video") {
       try {
         const mediaId = message.video.id;
@@ -687,7 +674,6 @@ app.post('/webhook', async (req, res) => {
       return res.sendStatus(200);
     }
 
-    // TEXTO/INTERACTIVE entrante
     let userMessage = "";
     if (message.text?.body) userMessage = message.text.body;
     else if (message.interactive?.button_reply) userMessage = message.interactive.button_reply.title || message.interactive.button_reply.id;
