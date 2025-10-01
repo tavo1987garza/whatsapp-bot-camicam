@@ -754,7 +754,7 @@ async function handleTipoEvento(from, msgLower, context) {
     return true;
   }
 
-  if (msgLower.includes("xv") || msgLower.includes("info paquete mis xv") || msgLower.includes("quince")) {
+  if (msgLower.includes("xv")  || msgLower.includes("quince")) {
     context.tipoEvento = "XV";
     context.paqueteRecomendado = { paquete: "PAQUETE MIS XV" };
 
