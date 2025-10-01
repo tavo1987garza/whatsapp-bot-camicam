@@ -135,78 +135,8 @@ const shouldSkipDuplicateSend = (to, payloadKey) => {
 };
 
 /* =========================
-   CRM helpers - AGREGAR PERSISTENCIA
+   CRM helpers
 ========================= */
-async function getContextFromDB(from) {
-  try {
-    const { data } = await axios.get(`${CRM_BASE_URL}/leads/context`, {
-      params: { telefono: from },
-      timeout: 5000
-    });
-    return data?.context || null;
-  } catch (e) {
-    console.error("Error getting context from DB:", e.message);
-    return null;
-  }
-}
-
-async function saveContextToDB(from, context) {
-  try {
-    await axios.post(`${CRM_BASE_URL}/leads/context`, {
-      telefono: from,
-      context: {
-        ...context,
-        lastActivity: new Date().toISOString()
-      }
-    }, { timeout: 5000 });
-  } catch (e) {
-    console.error("Error saving context to DB:", e.message);
-  }
-}
-
-// Función mejorada que usa memoria + BD como fallback
-async function ensureContext(from) {
-  // Primero intenta desde memoria (más rápido)
-  if (userContext[from]) {
-    return userContext[from];
-  }
-  
-  // Si no está en memoria, busca en BD
-  const contextFromDB = await getContextFromDB(from);
-  if (contextFromDB) {
-    userContext[from] = contextFromDB;
-    return contextFromDB;
-  }
-  
-  // Si no existe en ningún lado, crea nuevo contexto
-  const newContext = {
-    estado: "Contacto Inicial",
-    tipoEvento: null,
-    paqueteRecomendado: null,
-    fecha: null,
-    fechaISO: null,
-    lugar: null,
-    serviciosSeleccionados: "",
-    mediosEnviados: new Set(),
-    upsellSuggested: false,
-    suggestScrapbookVideo: false,
-    lastActivity: new Date().toISOString()
-  };
-  
-  userContext[from] = newContext;
-  await saveContextToDB(from, newContext);
-  return newContext;
-}
-
-// Función para guardar contexto (ambos lugares)
-async function saveContext(from, context) {
-  userContext[from] = context;
-  await saveContextToDB(from, {
-    ...context,
-    mediosEnviados: Array.from(context.mediosEnviados || []) // Convertir Set a Array para JSON
-  });
-}
-
 async function reportMessageToCRM(to, message, tipo = "enviado") {
   try {
     await axios.post(`${CRM_BASE_URL}/recibir_mensaje`, {
@@ -318,96 +248,10 @@ async function deactivateTypingIndicator() { /* no-op */ }
 async function sendMessageWithTypingWithState(from, message, delayMs, expectedState) {
   await activateTypingIndicator(from);
   await delay(delayMs);
-  const context = await ensureContext(from);
-  if (context.estado === expectedState) {
+  if (userContext[from]?.estado === expectedState) {
     await sendWhatsAppMessage(from, message);
   }
   await deactivateTypingIndicator(from);
-}
-
-/* =========================
-   NUEVO: Flujo específico para "Info Paquete Mis XV"
-========================= */
-async function handlePaqueteMisXVFlow(from, context) {
-  context.tipoEvento = "XV";
-  context.paqueteRecomendado = "PAQUETE MIS XV";
-  context.estado = "EsperandoFechaPaqueteXV";
-  
-  await sendMessageWithTypingWithState(
-    from, 
-    "¡Excelente! Para verificar disponibilidad del *PAQUETE MIS XV*, necesito la fecha de tu evento.\n\nFormato: DD/MM/AAAA 📆",
-    500, 
-    context.estado
-  );
-  
-  await saveContext(from, context);
-}
-
-async function handleFechaPaqueteXV(from, userText, context) {
-  if (!isValidDateExtended(userText)) {
-    await sendMessageWithTypingWithState(from, "Formato inválido. Usa DD/MM/AAAA o '20 de mayo 2025'.", 200, context.estado);
-    return false;
-  }
-  
-  if (!isValidFutureDate(userText)) {
-    await sendMessageWithTypingWithState(from, "Esa fecha ya pasó. Indica una futura.", 200, context.estado);
-    return false;
-  }
-  
-  if (!isWithinTwoYears(userText)) {
-    await sendMessageWithTypingWithState(from, "Agenda abierta hasta 2 años. Indica otra fecha dentro de ese rango.", 200, context.estado);
-    return false;
-  }
-
-  const ddmmyyyy = parseFecha(userText);
-  const iso = toISO(ddmmyyyy);
-  const ok = await checkAvailability(iso);
-  const pretty = formatFechaEnEspanol(ddmmyyyy);
-
-  if (!ok) {
-    await sendMessageWithTypingWithState(from, `😔 Lo siento, *${pretty}* no está disponible.`, 200, context.estado);
-    context.estado = "Finalizado";
-    await saveContext(from, context);
-    return false;
-  }
-
-  context.fecha = pretty;
-  context.fechaISO = iso;
-  context.estado = "MostrandoPaqueteXV";
-  await saveContext(from, context);
-
-  // Mostrar información del paquete MIS XV
-  await sendMessageWithTypingWithState(from, `¡Perfecto!\n\n*${pretty}* DISPONIBLE 👏👏👏`, 200, context.estado);
-  await delay(1000);
-  await sendMessageWithTypingWithState(from, "El paquete que estamos promocionando es el *PAQUETE MIS XV*", 200, context.estado);
-  await delay(500);
-  
-  // Enviar imagen del paquete MIS XV
-  await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/04/Paq-Mis-XV-Inform.jpg");
-  await delay(1000);
-  
-  await sendMessageWithTypingWithState(from, "🎁 *PROMOCIÓN EXCLUSIVA:* Al contratar este paquete te llevas sin costo el servicio de *'Audio Guest Book'*", 200, context.estado);
-  await delay(1000);
-  
-  // Enviar información del Audio Guest Book
-  await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2023/07/audio1.jpg", "Audio Guest Book - Incluido gratis en tu paquete");
-  await delay(1000);
-  
-  await sendMessageWithTypingWithState(from, "¿Te interesa este *PAQUETE MIS XV* o prefieres armar un paquete a tu gusto?", 200, context.estado);
-  await delay(500);
-  
-  // Enviar imagen de servicios
-  await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/04/Servicios.png", "Nuestros servicios disponibles");
-  await delay(500);
-  
-  await sendInteractiveMessage(from, "Elige una opción:", [
-    { id: "confirmar_paquete_xv", title: "✅ PAQUETE MIS XV" },
-    { id: "armar_paquete", title: "🎛️ ARMAR MI PAQUETE" }
-  ]);
-  
-  context.estado = "EsperandoDecisionPaqueteXV";
-  await saveContext(from, context);
-  return true;
 }
 
 /* =========================
@@ -488,11 +332,9 @@ const faqs = [
 /* =========================
    Context helpers
 ========================= */
-async function ensureContext(from) {
-  let context = await getContext(from);
-  
-  if (!context) {
-    context = {
+function ensureContext(from) {
+  if (!userContext[from]) {
+    userContext[from] = {
       estado: "Contacto Inicial",
       tipoEvento: null,
       paqueteRecomendado: null,
@@ -500,14 +342,12 @@ async function ensureContext(from) {
       fechaISO: null,
       lugar: null,
       serviciosSeleccionados: "",
-      mediosEnviados: [],
+      mediosEnviados: new Set(),
       upsellSuggested: false,
-      lastActivity: new Date().toISOString()
+      suggestScrapbookVideo: false
     };
-    await saveContext(from, context);
   }
-  
-  return context;
+  return userContext[from];
 }
 
 /* =========================
@@ -754,7 +594,7 @@ async function handleTipoEvento(from, msgLower, context) {
     return true;
   }
 
-  if (msgLower.includes("xv")  || msgLower.includes("quince")) {
+  if (msgLower.includes("xv") || msgLower.includes("quince")) {
     context.tipoEvento = "XV";
     context.paqueteRecomendado = { paquete: "PAQUETE MIS XV" };
 
@@ -1457,4 +1297,3 @@ app.listen(PORT, () => {
 }).on('error', (err) => {
   console.error('Error al iniciar el servidor:', err);
 });
-
