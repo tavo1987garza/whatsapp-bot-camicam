@@ -63,7 +63,7 @@ const s3 = new AWS.S3();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
 
 /* =========================
-   OpenAI (solo fallback)
+   OpenAI (fallback NLU/short)
 ========================= */
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 const responseCache = new NodeCache({ stdTTL: 3600 });
@@ -262,7 +262,7 @@ async function deactivateTypingIndicator() { /* no-op */ }
 async function sendMessageWithTypingWithState(from, message, delayMs, expectedStateSnapshot) {
   await activateTypingIndicator(from);
   await delay(delayMs);
-  const ctx = await getContext(from);
+  const ctx = await getContext(from); // por qué: respetar estado persistido
   if ((ctx?.estado || null) === expectedStateSnapshot) {
     await sendWhatsAppMessage(from, message);
   }
@@ -270,13 +270,9 @@ async function sendMessageWithTypingWithState(from, message, delayMs, expectedSt
 }
 
 /* =========================
-   Media/FAQs (básico)
+   FAQs puntuales (para intenciones)
 ========================= */
-const faqs = [
-  { re: /contrato/i, answer: "📄 ¡Sí! Tras el anticipo llenamos contrato y te enviamos foto." },
-  { re: /flete/i, answer: "🚚 Varía según ubicación. Dime el salón y lo calculamos." },
-  { re: /pag(o|a)|tarjeta|efectivo/i, answer: "💳 Aceptamos transferencia, depósito y efectivo." },
-];
+const AGB_IMAGE = "https://cami-cam.com/wp-content/uploads/2023/07/audio1.jpg";
 
 /* =========================
    Contexto (persistente en CRM)
@@ -302,31 +298,137 @@ async function ensureContext(from) {
 }
 
 /* =========================
-   Flujos nuevos
+   Detección de intención (regex + LLM fallback)
 ========================= */
+const INTENTS = {
+  GREETING: 'greeting',
+  PRICE: 'price',
+  DATE: 'date',
+  HOURS: 'hours',
+  WHAT_IS_AGB: 'what_is_agb',
+  WHAT_IS: 'what_is',
+  OKAY: 'okay',
+  HELP: 'help',
+  BUTTON_COTIZADOR: 'button_cotizador',
+  BUTTON_CONF_PAXV: 'button_confirm_paquete_xv',
+  UNKNOWN: 'unknown',
+};
+
+function detectIntentRegex(text) {
+  const t = normalizeText(text);
+  if (/^(hola|buen[oa]s|holi|hey|que onda)\b/.test(t)) return INTENTS.GREETING;
+  if (/\b(precio|cuan?to(?:s)? vale|cuan?to(?:s)? cuesta|tarifa|costo)s?\b/.test(t)) return INTENTS.PRICE;
+  if (/(^|\s)(ok|okay|va|sale|entendido|perfecto)(\s|$)/.test(t)) return INTENTS.OKAY;
+  if (/\b(ayuda|no se|no entiendo|como funciona|instrucciones)\b/.test(t)) return INTENTS.HELP;
+  if (/\b(hora|horas|duraci[oó]n|cu[aá]ntas horas)\b/.test(t)) return INTENTS.HOURS;
+  if (/\b(audio\s*guest\s*book|ag[bc]\b|libreta de audio|tel[eé]fono de mensajes)\b/.test(t)) return INTENTS.WHAT_IS_AGB;
+  if (/que es|que incluye|como es|como funciona/.test(t)) return INTENTS.WHAT_IS;
+  if (/cotizador|personalizar|coti(z|s)ador web|\bweb\b/.test(t)) return INTENTS.BUTTON_COTIZADOR;
+  if (/^paquete mis xv$|^paquete de xv$|^mis xv$/.test(t)) return INTENTS.BUTTON_CONF_PAXV;
+  // Fecha “similar” (captura 20/05/2026 o 20 de mayo 2026)
+  if (isValidDateExtended(text)) return INTENTS.DATE;
+  return INTENTS.UNKNOWN;
+}
+
+async function detectIntent(text) {
+  const viaRegex = detectIntentRegex(text);
+  if (viaRegex !== INTENTS.UNKNOWN) return viaRegex;
+
+  // Fallback LLM barato (opcional, robustez para frases raras)
+  try {
+    const prompt = `Clasifica la intención del usuario para un bot de eventos.
+Texto: "${text}"
+Clases: greeting, price, date, hours, what_is_agb, what_is, okay, help, button_cotizador, button_confirm_paquete_xv, unknown
+Responde SOLO una clase.`;
+    const resp = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0, max_tokens: 5
+    });
+    const label = normalizeText(resp.choices?.[0]?.message?.content || "unknown");
+    const map = {
+      'greeting': INTENTS.GREETING, 'price': INTENTS.PRICE, 'date': INTENTS.DATE, 'hours': INTENTS.HOURS,
+      'what_is_agb': INTENTS.WHAT_IS_AGB, 'what_is': INTENTS.WHAT_IS, 'okay': INTENTS.OKAY,
+      'help': INTENTS.HELP, 'button_cotizador': INTENTS.BUTTON_COTIZADOR,
+      'button_confirm_paquete_xv': INTENTS.BUTTON_CONF_PAXV, 'unknown': INTENTS.UNKNOWN
+    };
+    return map[label] || INTENTS.UNKNOWN;
+  } catch {
+    return INTENTS.UNKNOWN;
+  }
+}
+
+/* =========================
+   Flujos y helpers
+========================= */
+async function solicitarFecha(from, context) {
+  await sendMessageWithTypingWithState(
+    from,
+    "Indícame la fecha de tu evento.\n\nFormato: DD/MM/AAAA o '20 de marzo 2026' 📆",
+    400,
+    context.estado
+  );
+  context.estado = "EsperandoFecha";
+  await saveContext(from, context);
+}
+
+async function solicitarLugar(from, context) {
+  await sendMessageWithTypingWithState(
+    from,
+    "Para continuar, necesito el nombre de tu salón o lugar del evento 🏢",
+    400,
+    context.estado
+  );
+}
+
+async function handleLugar(from, userText, context) {
+  context.lugar = userText;
+  context.estado = "Finalizando";
+  await saveContext(from, context);
+
+  await sendMessageWithTypingWithState(from, "¡Excelente! Aquí tienes la información para separar tu fecha:", 200, "Finalizando");
+  await delay(600);
+
+  await sendMessageWithTypingWithState(from, "💰 *ANTICIPO:* $500 MXN", 200, "Finalizando");
+  await sendMessageWithTypingWithState(from, "El resto se paga el día del evento.", 200, "Finalizando");
+  await delay(600);
+
+  await sendImageMessage(from, "https://cami-cam.com/wp-content/uploads/2025/03/Datos-Transferencia-1.jpeg", "Datos para transferencia: 722969010494399671");
+  await delay(600);
+
+  await sendMessageWithTypingWithState(from, "Después de tu depósito:", 200, "Finalizando");
+  await sendMessageWithTypingWithState(from, "1. Te pido tus datos completos", 200, "Finalizando");
+  await sendMessageWithTypingWithState(from, "2. Llenamos el contrato", 200, "Finalizando");
+  await sendMessageWithTypingWithState(from, "3. Te envío foto del contrato firmado", 200, "Finalizando");
+  await delay(600);
+
+  await sendMessageWithTypingWithState(from, "❓ *Preguntas frecuentes:*", 200, "Finalizando");
+  await sendMessageWithTypingWithState(from, "https://cami-cam.com/preguntas-frecuentes/", 200, "Finalizando");
+  await delay(400);
+
+  await sendMessageWithTypingWithState(from, "Cualquier duda, con toda confianza.\n\nSoy Gustavo González, a tus órdenes 😀", 200, "Finalizando");
+
+  context.estado = "Finalizado";
+  await saveContext(from, context);
+}
+
 async function flujoXVDespuesDeFechaOK(from, context, pretty) {
   await sendMessageWithTypingWithState(from, `¡Perfecto!\n\n*${pretty}* DISPONIBLE 👏👏👏`, 200, context.estado);
-  await delay(1000);
+  await delay(800);
 
   await sendMessageWithTypingWithState(from, "El paquete que estamos promocionando es:", 200, context.estado);
-  await delay(500);
+  await delay(400);
 
   await sendImageMessage(from, "https://cami-cam.com/wp-content/uploads/2025/04/Paq-Mis-XV-Inform.jpg");
-  await delay(1000);
+  await delay(800);
 
   await sendMessageWithTypingWithState(from, "🎁 *PROMOCIÓN EXCLUSIVA:* Al contratar este paquete te llevas sin costo el servicio de *'Audio Guest Book'*", 200, context.estado);
-  await delay(1000);
+  await delay(800);
 
-  await sendImageMessage(from, "https://cami-cam.com/wp-content/uploads/2023/07/audio1.jpg", "Audio Guest Book - Incluido gratis en tu paquete");
-  await delay(1000);
+  await sendImageMessage(from, AGB_IMAGE, "Audio Guest Book - Incluido gratis en tu paquete");
+  await delay(600);
 
-  await sendMessageWithTypingWithState(from, "¿Te interesa este *PAQUETE MIS XV* o prefieres armar un paquete a tu gusto?", 200, context.estado);
-  await delay(500);
-
-  await sendImageMessage(from, "https://cami-cam.com/wp-content/uploads/2025/04/Servicios.png", "Nuestros servicios disponibles");
-  await delay(500);
-
-  await sendInteractiveMessage(from, "Elige una opción:", [
+  await sendInteractiveMessage(from, "¿Te interesa este *PAQUETE MIS XV* o prefieres armar un paquete a tu gusto?", [
     { id: "confirmar_paquete_xv", title: "✅ PAQUETE MIS XV" },
     { id: "cotizador_personalizado", title: "🎛️ COTIZADOR WEB" }
   ]);
@@ -349,114 +451,126 @@ async function handleCotizadorPersonalizado(from, context) {
   await reportEventToCRM(from, 'cotizador_web_click', { origin: context.tipoEvento || 'desconocido' });
 
   await sendMessageWithTypingWithState(from, "¡Perfecto! Te explico cómo usar nuestro cotizador online:", 200, "EnviandoACotizador");
-  await delay(1000);
+  await delay(800);
 
   await sendWhatsAppVideo(from, COTIZADOR_VIDEO_URL, "Video explicativo del cotizador");
-  await delay(2000);
+  await delay(1200);
 
-  await sendMessageWithTypingWithState(from, "🎛️ *COTIZADOR ONLINE*", 200, "EnviandoACotizador");
-  await sendMessageWithTypingWithState(from, "En el cotizador podrás:", 200, "EnviandoACotizador");
-  await sendMessageWithTypingWithState(from, "• Seleccionar servicios específicos", 200, "EnviandoACotizador");
-  await sendMessageWithTypingWithState(from, "• Ver precios en tiempo real", 200, "EnviandoACotizador");
-  await sendMessageWithTypingWithState(from, "• Personalizar tu paquete ideal", 200, "EnviandoACotizador");
-  await delay(1000);
+  await sendMessageWithTypingWithState(from, "🎛️ *COTIZADOR ONLINE*\nSelecciona servicios, ve precios en tiempo real y arma tu paquete.", 200, "EnviandoACotizador");
+  await delay(600);
 
   await sendMessageWithTypingWithState(from, `🌐 Accede aquí: ${COTIZADOR_URL}`, 200, "EnviandoACotizador");
-  await delay(1000);
+  await delay(600);
 
   context.estado = "EsperandoLugar";
   await saveContext(from, context);
   await solicitarLugar(from, context);
 }
 
-async function solicitarLugar(from, context) {
-  await sendMessageWithTypingWithState(
-    from,
-    "Para continuar, necesito el nombre de tu salón o lugar del evento 🏢",
-    500,
-    context.estado
-  );
-}
+/* =========================
+   NLU → Respuestas por intención
+========================= */
+async function handleIntent(from, context, intent, rawText) {
+  switch (intent) {
+    case INTENTS.GREETING:
+      await reportEventToCRM(from, 'intent_greeting');
+      // Reorienta a lo pendiente
+      if (context.estado === "EsperandoFecha") {
+        await sendWhatsAppMessage(from, "¡Hola! 😊 Continuemos: envíame la *fecha de tu evento* (DD/MM/AAAA).");
+      } else if (context.estado === "EsperandoLugar") {
+        await sendWhatsAppMessage(from, "¡Hola! 😊 ¿Nombre del *salón o lugar* del evento?");
+      } else {
+        await sendWhatsAppMessage(from, "¡Hola! ¿En qué te ayudo? Puedo revisar fecha o enviarte el cotizador.");
+      }
+      return true;
 
-async function handleLugar(from, userText, context) {
-  context.lugar = userText;
-  context.estado = "Finalizando";
-  await saveContext(from, context);
+    case INTENTS.OKAY:
+      await reportEventToCRM(from, 'intent_ok');
+      // Nudge corto sin cambiar estado
+      if (context.estado === "EsperandoFecha") {
+        await sendWhatsAppMessage(from, "Perfecto. Cuando gustes, envía la *fecha* (DD/MM/AAAA).");
+      } else if (context.estado === "EsperandoDecisionPaquete") {
+        await sendWhatsAppMessage(from, "¿Prefieres *PAQUETE MIS XV* o *COTIZADOR WEB*?");
+      }
+      return true;
 
-  await sendMessageWithTypingWithState(from, "¡Excelente! Aquí tienes la información para separar tu fecha:", 200, "Finalizando");
-  await delay(1000);
+    case INTENTS.PRICE:
+      await reportEventToCRM(from, 'intent_price', { estado: context.estado, tipo: context.tipoEvento });
+      await sendWhatsAppMessage(from, "Los *precios* los ves en tiempo real en nuestro *Cotizador Web*.");
+      await sendMessageWithTypingWithState(from, `🌐 ${COTIZADOR_URL}`, 300, (await getContext(from))?.estado || context.estado);
+      // Re-pregunta lo pendiente
+      if (context.estado === "EsperandoFecha") {
+        await sendWhatsAppMessage(from, "Antes revisemos *disponibilidad*: ¿qué fecha tienes? 📆");
+      }
+      return true;
 
-  await sendMessageWithTypingWithState(from, "💰 *ANTICIPO:* $500 MXN", 200, "Finalizando");
-  await sendMessageWithTypingWithState(from, "El resto se paga el día del evento.", 200, "Finalizando");
-  await delay(1000);
+    case INTENTS.HOURS:
+      await reportEventToCRM(from, 'intent_hours', { tipo: context.tipoEvento });
+      await sendWhatsAppMessage(from, "⏱️ Referencias: *Cabina* 3h, *Letras* 5h. Detalles completos en el *Cotizador Web* o al confirmar el paquete.");
+      if (context.estado === "EsperandoFecha") {
+        await sendWhatsAppMessage(from, "Envíame tu *fecha* para validar disponibilidad. 📆");
+      }
+      return true;
 
-  await sendImageMessage(from, "https://cami-cam.com/wp-content/uploads/2025/03/Datos-Transferencia-1.jpeg", "Datos para transferencia: 722969010494399671");
-  await delay(1000);
+    case INTENTS.WHAT_IS_AGB:
+      await reportEventToCRM(from, 'intent_what_is_agb');
+      await sendWhatsAppMessage(from, "El *Audio Guest Book* es un teléfono donde tus invitados dejan mensajes de voz; te lo entregamos en archivo de audio.");
+      await sendImageMessage(from, AGB_IMAGE, "Audio Guest Book");
+      if (context.estado === "EsperandoFecha") {
+        await sendWhatsAppMessage(from, "¿Me compartes la *fecha* del evento? 📆");
+      } else if (context.estado === "EsperandoDecisionPaquete") {
+        await sendInteractiveMessage(from, "¿Cómo seguimos?", [
+          { id: "confirmar_paquete_xv", title: "✅ PAQUETE MIS XV" },
+          { id: "cotizador_personalizado", title: "🎛️ COTIZADOR WEB" }
+        ]);
+      }
+      return true;
 
-  await sendMessageWithTypingWithState(from, "Después de tu depósito:", 200, "Finalizando");
-  await sendMessageWithTypingWithState(from, "1. Te pido tus datos completos", 200, "Finalizando");
-  await sendMessageWithTypingWithState(from, "2. Llenamos el contrato", 200, "Finalizando");
-  await sendMessageWithTypingWithState(from, "3. Te envío foto del contrato firmado", 200, "Finalizando");
-  await delay(1000);
+    case INTENTS.WHAT_IS:
+      await reportEventToCRM(from, 'intent_what_is');
+      await sendWhatsAppMessage(from, "¡Te explico! Dime qué servicio te interesa y te doy detalles. Si quieres precios y opciones, usa el *Cotizador Web*.");
+      await sendMessageWithTypingWithState(from, `🌐 ${COTIZADOR_URL}`, 300, (await getContext(from))?.estado || context.estado);
+      if (context.estado === "EsperandoFecha") {
+        await sendWhatsAppMessage(from, "Mientras, ¿cuál es la *fecha* de tu evento? 📆");
+      }
+      return true;
 
-  await sendMessageWithTypingWithState(from, "❓ *Preguntas frecuentes:*", 200, "Finalizando");
-  await sendMessageWithTypingWithState(from, "https://cami-cam.com/preguntas-frecuentes/", 200, "Finalizando");
-  await delay(500);
+    case INTENTS.BUTTON_COTIZADOR:
+      await reportEventToCRM(from, 'intent_button_like_cotizador');
+      await handleCotizadorPersonalizado(from, context);
+      return true;
 
-  await sendMessageWithTypingWithState(from, "Cualquier duda, con toda confianza.\n\nSoy Gustavo González, a tus órdenes 😀", 200, "Finalizando");
+    case INTENTS.BUTTON_CONF_PAXV:
+      await reportEventToCRM(from, 'intent_button_like_confirm_paquete_xv');
+      await handleConfirmarPaqueteXV(from, context);
+      return true;
 
-  context.estado = "Finalizado";
-  await saveContext(from, context);
+    case INTENTS.DATE:
+      // No interceptamos aquí; dejamos al manejador de fecha.
+      return false;
+
+    case INTENTS.HELP:
+      await reportEventToCRM(from, 'intent_help');
+      await sendWhatsAppMessage(from, "Puedo ayudarte a *revisar fecha*, mostrarte el *paquete* o llevarte al *Cotizador Web*.");
+      await sendInteractiveMessage(from, "Elige una opción:", [
+        { id: "confirmar_paquete_xv", title: "✅ PAQUETE MIS XV" },
+        { id: "cotizador_personalizado", title: "🎛️ COTIZADOR WEB" }
+      ]);
+      return true;
+
+    default:
+      return false;
+  }
 }
 
 /* =========================
-   OpenAI fallback breve
+   Tipo de evento (igual que antes)
 ========================= */
-function construirContexto() {
-  return `
-Eres un agente de ventas de "Camicam Photobooth".
-Zona: Monterrey y área metropolitana.
-Responde breve, profesional y cercana. Redirige a cotizador si piden personalizar.
-`.trim();
-}
-async function aiShortReply(query) {
-  const prompt = `${construirContexto()}\n\nCliente: "${query}"\nResponde en máx 2 líneas.`;
-  const key = normalizeText(prompt);
-  const cached = responseCache.get(key);
-  if (cached) return cached;
-  const resp = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [
-      { role: 'system', content: 'Eres un asesor de ventas amable. Responde breve, natural y útil.' },
-      { role: 'user', content: prompt }
-    ],
-    temperature: 0.6, max_tokens: 80
-  });
-  const out = resp.choices?.[0]?.message?.content?.trim() || "Con gusto te apoyo. ¿Podrías darme un poco más de detalle?";
-  responseCache.set(key, out);
-  return out;
-}
-
-/* =========================
-   Handlers de flujo principal (con trigger “Paquete mis XV”)
-========================= */
-async function solicitarFecha(from, context) {
-  await sendMessageWithTypingWithState(
-    from,
-    "Indícame la fecha de tu evento.\n\nFormato: DD/MM/AAAA o '20 de marzo 2025' 📆",
-    500,
-    context.estado
-  );
-  context.estado = "EsperandoFecha";
-  await saveContext(from, context);
-}
-
 async function handleTipoEvento(from, msgLower, context) {
   if (msgLower.includes("boda") || msgLower.includes("evento_boda")) {
     context.tipoEvento = "Boda";
     await saveContext(from, context);
-    await sendMessageWithTypingWithState(from, "¡Felicidades por tu boda! ❤️ Hagamos un día inolvidable.", 400, context.estado);
-    await sendImageMessage(from, "https://cami-cam.com/wp-content/uploads/2025/04/Servicios.png");
+    await sendWhatsAppMessage(from, "¡Felicidades por tu boda! ❤️ Hagamos un día inolvidable.");
     await sendInteractiveMessage(from, "¿Cómo quieres continuar?", [
       { id: "cotizador_personalizado", title: "🎛️ COTIZADOR WEB" },
       { id: "armar_paquete", title: "Ver opciones" }
@@ -469,15 +583,14 @@ async function handleTipoEvento(from, msgLower, context) {
   if (msgLower.includes("xv") || msgLower.includes("quince")) {
     context.tipoEvento = "XV";
     await saveContext(from, context);
-    await sendMessageWithTypingWithState(from, "¡Felicidades! ✨ Hagamos unos XV espectaculares.", 400, context.estado);
+    await sendWhatsAppMessage(from, "¡Felicidades! ✨ Hagamos unos XV espectaculares.");
     await solicitarFecha(from, context);
     return true;
   }
 
   context.tipoEvento = "Otro";
   await saveContext(from, context);
-  await sendMessageWithTypingWithState(from, "¡Excelente! ✨ Hagamos tu evento único.", 400, context.estado);
-  await sendImageMessage(from, "https://cami-cam.com/wp-content/uploads/2025/04/Servicios.png");
+  await sendWhatsAppMessage(from, "¡Excelente! ✨ Hagamos tu evento único.");
   await sendInteractiveMessage(from, "¿Cómo quieres continuar?", [
     { id: "cotizador_personalizado", title: "🎛️ COTIZADOR WEB" },
     { id: "armar_paquete", title: "Ver opciones" }
@@ -487,23 +600,26 @@ async function handleTipoEvento(from, msgLower, context) {
   return true;
 }
 
+/* =========================
+   Handler principal (con NLU)
+========================= */
 async function handleUserMessage(from, userText, messageLower) {
   let context = await ensureContext(from);
 
-  // 🔹 TRIGGER ESPECIAL DE INICIO: "Paquete mis XV"
+  // Atajo inicial “Paquete mis XV” + evento
   if (
     (context.estado === "Contacto Inicial" || context.estado === "EsperandoTipoEvento") &&
-    messageLower.includes("paquete mis xv")
+    /(^|\s)paquete\s+mis\s+xv(\s|$)/i.test(userText)
   ) {
-    // Por qué: saltar saludo y no volver a preguntar tipo de evento
+    await reportEventToCRM(from, 'trigger_paquete_xv', { text: userText });
     context.tipoEvento = "XV";
     await saveContext(from, context);
-    await sendMessageWithTypingWithState(from, "¡Felicidades! ✨ Hagamos unos XV espectaculares.", 300, context.estado);
+    await sendWhatsAppMessage(from, "¡Felicidades! ✨ Hagamos unos XV espectaculares.");
     await solicitarFecha(from, context);
     return true;
   }
 
-  // Botones
+  // Botones/acciones equivalentes por texto
   if (messageLower === "cotizador_personalizado") {
     await handleCotizadorPersonalizado(from, context);
     return true;
@@ -517,10 +633,15 @@ async function handleUserMessage(from, userText, messageLower) {
     return true;
   }
 
+  // Detección de intención (ANTES de la lógica de formato inválido)
+  const intent = await detectIntent(userText);
+  const handledByIntent = await handleIntent(from, context, intent, userText);
+  if (handledByIntent) return true;
+
   // Inicio
   if (context.estado === "Contacto Inicial") {
-    await sendMessageWithTypingWithState(from, "¡Hola! 👋 Soy *Cami-Bot*, a tus órdenes.", 200, "Contacto Inicial");
-    await sendMessageWithTypingWithState(from, "¿Qué tipo de evento tienes? (Boda, XV, cumpleaños...)", 300, "Contacto Inicial");
+    await sendWhatsAppMessage(from, "¡Hola! 👋 Soy *Cami-Bot*, a tus órdenes.");
+    await sendWhatsAppMessage(from, "¿Qué tipo de evento tienes? (Boda, XV, cumpleaños...)");
     context.estado = "EsperandoTipoEvento";
     await saveContext(from, context);
     return true;
@@ -532,20 +653,30 @@ async function handleUserMessage(from, userText, messageLower) {
     return true;
   }
 
-  // Confirmación paquete genérica
+  // Confirmación genérica
   if (context.estado === "EsperandoConfirmacionPaquete") {
     await sendInteractiveMessage(from, "¿Cómo quieres continuar?", [
-      { id: "cotizador_personalizado", title: "🎛️ COTIZADOR WEB" },
-      { id: "armar_paquete", title: "Ver opciones" }
+      { id: "confirmar_paquete_xv", title: "✅ PAQUETE MIS XV" },
+      { id: "cotizador_personalizado", title: "🎛️ COTIZADOR WEB" }
     ]);
     return true;
   }
 
-  // Fecha (XV u otros)
+  // Fecha (con validaciones)
   if (context.estado === "EsperandoFecha") {
-    if (!isValidDateExtended(userText)) { await sendMessageWithTypingWithState(from, "Formato inválido. Usa DD/MM/AAAA o '20 de mayo 2025'.", 200, "EsperandoFecha"); return true; }
-    if (!isValidFutureDate(userText)) { await sendMessageWithTypingWithState(from, "Esa fecha ya pasó. Indica una futura.", 200, "EsperandoFecha"); return true; }
-    if (!isWithinTwoYears(userText)) { await sendMessageWithTypingWithState(from, "Agenda abierta hasta 2 años. Indica otra fecha dentro de ese rango.", 200, "EsperandoFecha"); return true; }
+    if (!isValidDateExtended(userText)) {
+      // Importante: ya hicimos NLU. Si llegó aquí, realmente no envió fecha.
+      await sendWhatsAppMessage(from, "Para seguir, envíame la *fecha* en formato DD/MM/AAAA o '20 de mayo 2026' 📆");
+      return true;
+    }
+    if (!isValidFutureDate(userText)) {
+      await sendWhatsAppMessage(from, "Esa fecha ya pasó. Indica una futura, por favor. 📆");
+      return true;
+    }
+    if (!isWithinTwoYears(userText)) {
+      await sendWhatsAppMessage(from, "Agenda abierta hasta 2 años. Indica otra fecha dentro de ese rango. 📆");
+      return true;
+    }
 
     const ddmmyyyy = parseFecha(userText);
     const iso = toISO(ddmmyyyy);
@@ -553,7 +684,7 @@ async function handleUserMessage(from, userText, messageLower) {
     const pretty = formatFechaEnEspanol(ddmmyyyy);
 
     if (!ok) {
-      await sendMessageWithTypingWithState(from, `😔 Lo siento, *${pretty}* no está disponible.`, 200, "EsperandoFecha");
+      await sendWhatsAppMessage(from, `😔 Lo siento, *${pretty}* no está disponible.`);
       context.estado = "Finalizado";
       await saveContext(from, context);
       return true;
@@ -572,12 +703,12 @@ async function handleUserMessage(from, userText, messageLower) {
     await saveContext(from, context);
     await sendInteractiveMessage(from, `*${pretty}* DISPONIBLE 👏👏👏\n¿Cómo quieres continuar?`, [
       { id: "cotizador_personalizado", title: "🎛️ COTIZADOR WEB" },
-      { id: "armar_paquete", title: "Ver opciones" }
+      { id: "confirmar_paquete_xv", title: "✅ PAQUETE MIS XV" }
     ]);
     return true;
   }
 
-  // Esperando decisión del paquete (XV)
+  // Esperando decisión (XV)
   if (context.estado === "EsperandoDecisionPaquete") {
     await sendInteractiveMessage(from, "Elige una opción:", [
       { id: "confirmar_paquete_xv", title: "✅ PAQUETE MIS XV" },
@@ -594,20 +725,12 @@ async function handleUserMessage(from, userText, messageLower) {
 
   if (context.estado === "Finalizado") return true;
 
-  // FAQs rápidas (fuera de pasos críticos)
-  const critical = ["EsperandoFecha","EsperandoLugar","EsperandoDecisionPaquete","EnviandoACotizador"].includes(context.estado);
-  if (!critical) {
-    for (const f of faqs) {
-      if (f.re.test(userText)) {
-        await sendWhatsAppMessage(from, f.answer + " 😊");
-        return true;
-      }
-    }
-  }
-
   // Fallback breve
-  const ai = await aiShortReply(userText);
-  await sendWhatsAppMessage(from, ai);
+  await sendWhatsAppMessage(from, "¿Deseas revisar *fecha*, ver el *PAQUETE MIS XV* o ir al *COTIZADOR WEB*?");
+  await sendInteractiveMessage(from, "Puedo ayudarte con:", [
+    { id: "confirmar_paquete_xv", title: "✅ PAQUETE MIS XV" },
+    { id: "cotizador_personalizado", title: "🎛️ COTIZADOR WEB" }
+  ]);
   return true;
 }
 
@@ -630,6 +753,7 @@ app.post('/webhook', async (req, res) => {
 
     const from = message.from;
 
+    // IMAGEN entrante
     if (message.type === "image") {
       try {
         const mediaId = message.image.id;
@@ -652,6 +776,7 @@ app.post('/webhook', async (req, res) => {
       return res.sendStatus(200);
     }
 
+    // VIDEO entrante
     if (message.type === "video") {
       try {
         const mediaId = message.video.id;
@@ -674,6 +799,7 @@ app.post('/webhook', async (req, res) => {
       return res.sendStatus(200);
     }
 
+    // TEXTO/INTERACTIVE entrante
     let userMessage = "";
     if (message.text?.body) userMessage = message.text.body;
     else if (message.interactive?.button_reply) userMessage = message.interactive.button_reply.title || message.interactive.button_reply.id;
