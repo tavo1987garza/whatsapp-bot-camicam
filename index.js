@@ -135,9 +135,9 @@ const shouldSkipDuplicateSend = (to, payloadKey) => {
 };
 
 /* =========================
-   CRM helpers
+   CRM helpers - AGREGAR PERSISTENCIA
 ========================= */
-async function getContext(from) {
+async function getContextFromDB(from) {
   try {
     const { data } = await axios.get(`${CRM_BASE_URL}/leads/context`, {
       params: { telefono: from },
@@ -145,12 +145,12 @@ async function getContext(from) {
     });
     return data?.context || null;
   } catch (e) {
-    console.error("Error getting context:", e.message);
+    console.error("Error getting context from DB:", e.message);
     return null;
   }
 }
 
-async function saveContext(from, context) {
+async function saveContextToDB(from, context) {
   try {
     await axios.post(`${CRM_BASE_URL}/leads/context`, {
       telefono: from,
@@ -160,8 +160,51 @@ async function saveContext(from, context) {
       }
     }, { timeout: 5000 });
   } catch (e) {
-    console.error("Error saving context:", e.message);
+    console.error("Error saving context to DB:", e.message);
   }
+}
+
+// Función mejorada que usa memoria + BD como fallback
+async function ensureContext(from) {
+  // Primero intenta desde memoria (más rápido)
+  if (userContext[from]) {
+    return userContext[from];
+  }
+  
+  // Si no está en memoria, busca en BD
+  const contextFromDB = await getContextFromDB(from);
+  if (contextFromDB) {
+    userContext[from] = contextFromDB;
+    return contextFromDB;
+  }
+  
+  // Si no existe en ningún lado, crea nuevo contexto
+  const newContext = {
+    estado: "Contacto Inicial",
+    tipoEvento: null,
+    paqueteRecomendado: null,
+    fecha: null,
+    fechaISO: null,
+    lugar: null,
+    serviciosSeleccionados: "",
+    mediosEnviados: new Set(),
+    upsellSuggested: false,
+    suggestScrapbookVideo: false,
+    lastActivity: new Date().toISOString()
+  };
+  
+  userContext[from] = newContext;
+  await saveContextToDB(from, newContext);
+  return newContext;
+}
+
+// Función para guardar contexto (ambos lugares)
+async function saveContext(from, context) {
+  userContext[from] = context;
+  await saveContextToDB(from, {
+    ...context,
+    mediosEnviados: Array.from(context.mediosEnviados || []) // Convertir Set a Array para JSON
+  });
 }
 
 async function reportMessageToCRM(to, message, tipo = "enviado") {
@@ -272,23 +315,99 @@ async function sendInteractiveMessage(to, body, buttons) {
 async function activateTypingIndicator() { /* no-op */ }
 async function deactivateTypingIndicator() { /* no-op */ }
 
-/*async function sendMessageWithTypingWithState(from, message, delayMs, expectedState) {
-  await activateTypingIndicator(from);
-  await delay(delayMs);
-  if (userContext[from]?.estado === expectedState) {
-    await sendWhatsAppMessage(from, message);
-  }
-  await deactivateTypingIndicator(from);
-}*/
-
 async function sendMessageWithTypingWithState(from, message, delayMs, expectedState) {
   await activateTypingIndicator(from);
   await delay(delayMs);
-  const context = await getContext(from);
-  if (context?.estado === expectedState) {
+  const context = await ensureContext(from);
+  if (context.estado === expectedState) {
     await sendWhatsAppMessage(from, message);
   }
   await deactivateTypingIndicator(from);
+}
+
+/* =========================
+   NUEVO: Flujo específico para "Info Paquete Mis XV"
+========================= */
+async function handlePaqueteMisXVFlow(from, context) {
+  context.tipoEvento = "XV";
+  context.paqueteRecomendado = "PAQUETE MIS XV";
+  context.estado = "EsperandoFechaPaqueteXV";
+  
+  await sendMessageWithTypingWithState(
+    from, 
+    "¡Excelente! Para verificar disponibilidad del *PAQUETE MIS XV*, necesito la fecha de tu evento.\n\nFormato: DD/MM/AAAA 📆",
+    500, 
+    context.estado
+  );
+  
+  await saveContext(from, context);
+}
+
+async function handleFechaPaqueteXV(from, userText, context) {
+  if (!isValidDateExtended(userText)) {
+    await sendMessageWithTypingWithState(from, "Formato inválido. Usa DD/MM/AAAA o '20 de mayo 2025'.", 200, context.estado);
+    return false;
+  }
+  
+  if (!isValidFutureDate(userText)) {
+    await sendMessageWithTypingWithState(from, "Esa fecha ya pasó. Indica una futura.", 200, context.estado);
+    return false;
+  }
+  
+  if (!isWithinTwoYears(userText)) {
+    await sendMessageWithTypingWithState(from, "Agenda abierta hasta 2 años. Indica otra fecha dentro de ese rango.", 200, context.estado);
+    return false;
+  }
+
+  const ddmmyyyy = parseFecha(userText);
+  const iso = toISO(ddmmyyyy);
+  const ok = await checkAvailability(iso);
+  const pretty = formatFechaEnEspanol(ddmmyyyy);
+
+  if (!ok) {
+    await sendMessageWithTypingWithState(from, `😔 Lo siento, *${pretty}* no está disponible.`, 200, context.estado);
+    context.estado = "Finalizado";
+    await saveContext(from, context);
+    return false;
+  }
+
+  context.fecha = pretty;
+  context.fechaISO = iso;
+  context.estado = "MostrandoPaqueteXV";
+  await saveContext(from, context);
+
+  // Mostrar información del paquete MIS XV
+  await sendMessageWithTypingWithState(from, `¡Perfecto!\n\n*${pretty}* DISPONIBLE 👏👏👏`, 200, context.estado);
+  await delay(1000);
+  await sendMessageWithTypingWithState(from, "El paquete que estamos promocionando es el *PAQUETE MIS XV*", 200, context.estado);
+  await delay(500);
+  
+  // Enviar imagen del paquete MIS XV
+  await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/04/Paq-Mis-XV-Inform.jpg");
+  await delay(1000);
+  
+  await sendMessageWithTypingWithState(from, "🎁 *PROMOCIÓN EXCLUSIVA:* Al contratar este paquete te llevas sin costo el servicio de *'Audio Guest Book'*", 200, context.estado);
+  await delay(1000);
+  
+  // Enviar información del Audio Guest Book
+  await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2023/07/audio1.jpg", "Audio Guest Book - Incluido gratis en tu paquete");
+  await delay(1000);
+  
+  await sendMessageWithTypingWithState(from, "¿Te interesa este *PAQUETE MIS XV* o prefieres armar un paquete a tu gusto?", 200, context.estado);
+  await delay(500);
+  
+  // Enviar imagen de servicios
+  await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/04/Servicios.png", "Nuestros servicios disponibles");
+  await delay(500);
+  
+  await sendInteractiveMessage(from, "Elige una opción:", [
+    { id: "confirmar_paquete_xv", title: "✅ PAQUETE MIS XV" },
+    { id: "armar_paquete", title: "🎛️ ARMAR MI PAQUETE" }
+  ]);
+  
+  context.estado = "EsperandoDecisionPaqueteXV";
+  await saveContext(from, context);
+  return true;
 }
 
 /* =========================
@@ -721,6 +840,51 @@ async function solicitarFecha(from, context) {
 
 async function handleUserMessage(from, userText, messageLower) {
   const context = ensureContext(from);
+
+  /*============= INICIA flujo para mensaje "info paquete mis xv"========*/
+
+    // ✅ PRIMERO: Manejar "Info Paquete Mis XV" 
+  if (messageLower.includes("info paquete mis xv")) {
+    await handlePaqueteMisXVFlow(from, context);
+    return true;
+  }
+
+  // ✅ SEGUNDO: Manejar el flujo específico del Paquete XV
+  if (context.estado === "EsperandoFechaPaqueteXV") {
+    const success = await handleFechaPaqueteXV(from, userText, context);
+    return success;
+  }
+
+  if (context.estado === "EsperandoDecisionPaqueteXV") {
+    if (messageLower.includes("confirmar_paquete_xv") || 
+        normalizeText(userText).includes("paquete mis xv") ||
+        normalizeText(userText).includes("si me interesa")) {
+      
+      // Continuar con el flujo normal para capturar lugar
+      context.estado = "EsperandoLugar";
+      await saveContext(from, context);
+      await sendMessageWithTypingWithState(
+        from,
+        "Para continuar, necesito el nombre de tu salón o lugar del evento 🏢",
+        500,
+        context.estado
+      );
+      return true;
+    }
+    if (messageLower.includes("armar_paquete") || normalizeText(userText).includes("armar mi paquete")) {
+      // Volver al flujo normal de armar paquete
+      context.estado = "EsperandoServicios";
+      await saveContext(from, context);
+      await sendMessageWithTypingWithState(
+        from,
+        "Perfecto. Escribe los servicios separados por comas.\nEj.: cabina de fotos, cabina 360, 6 letras gigantes, 4 chisperos, carrito de shots con alcohol, lluvia metálica, niebla de piso, scrapbook, audio guest book",
+        500,
+        context.estado
+      );
+      return true;
+    }
+  }
+  /*============= TERMINA flujo para mensaje "info paquete mis xv"========*/
 
   // FAQs sólo si no cortarían un flujo sensible
   const inSensitive = ["EsperandoServicios","EsperandoFecha","EsperandoLugar","EsperandoCantidadLetras","EsperandoCantidadChisperos","EsperandoDudas","EsperandoTipoCabina","ConfirmarAgregarCabinaCambio","EsperandoTipoCarritoShots","ConfirmarAgregarCarritoShotsCambio"].includes(context.estado);
