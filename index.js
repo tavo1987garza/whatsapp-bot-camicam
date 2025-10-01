@@ -1,7 +1,6 @@
-// Código Camibot Funciona pefecto, est alimpio y ordenado
-// Saluda, segmenta por tipo de evento y genera cotizaciones, (Falta pulir)  
 // file: index.js
-// Node >=18, ES Modules en package.json ("type": "module")
+// Node >=18, ES Modules ("type": "module")
+// Objetivo: misma funcionalidad con hardening + fixes de entrega y estabilidad.
 
 import dotenv from 'dotenv';
 import express from 'express';
@@ -15,73 +14,85 @@ import cors from 'cors';
 
 dotenv.config();
 
-/* =========================
-   Configuración base
-========================= */
+/* ============== Config base ============== */
 const app = express();
 const PORT = process.env.PORT || 3000;
-const CRM_BASE_URL = process.env.CRM_BASE_URL || "https://camicam-crm-d78af2926170.herokuapp.com";
-const ALLOWED_ORIGIN = process.env.CORS_ORIGIN || "https://camicam-crm-d78af2926170.herokuapp.com";
-const WABA_VERSION = process.env.WABA_VERSION || "v21.0";
+const CRM_BASE_URL = process.env.CRM_BASE_URL || 'https://camicam-crm-d78af2926170.herokuapp.com';
+const ALLOWED_ORIGIN = (process.env.CORS_ORIGIN || 'https://camicam-crm-d78af2926170.herokuapp.com')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
+const WABA_VERSION = process.env.WABA_VERSION || 'v21.0';
 const PHONE_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
 const WABA_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-app.use(cors({ origin: ALLOWED_ORIGIN }));
-app.use(express.json());
+const REQUIRED_ENVS = [
+  'WHATSAPP_PHONE_NUMBER_ID',
+  'WHATSAPP_ACCESS_TOKEN',
+  'VERIFY_TOKEN',
+  'OPENAI_API_KEY',
+  'AWS_REGION',
+  'AWS_ACCESS_KEY_ID',
+  'AWS_SECRET_ACCESS_KEY',
+  'S3_BUCKET_NAME',
+];
+const missing = REQUIRED_ENVS.filter(k => !process.env[k]);
+if (missing.length) {
+  console.error('❌ Faltan variables de entorno:', missing.join(', '));
+  process.exit(1); // Por qué: evitar estados parciales difíciles de depurar
+}
 
-/* =========================
-   AWS S3
-========================= */
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin) return cb(null, true);
+    if (ALLOWED_ORIGIN.includes(origin)) return cb(null, true);
+    return cb(new Error('CORS: origen no permitido'), false);
+  },
+  credentials: false,
+}));
+app.options('*', cors()); // Preflight
+app.use(express.json({ limit: '1mb' }));
+
+/* ============== AWS S3 ============== */
 AWS.config.update({
   region: process.env.AWS_REGION,
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
 });
 const s3 = new AWS.S3();
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
 
-/* =========================
-   OpenAI
-========================= */
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+/* ============== OpenAI ============== */
+const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
-/* =========================
-   Estado y cachés
-========================= */
+/* ============== Estado & cachés ============== */
 const userContext = {}; // { [from]: {...} }
 const responseCache = new NodeCache({ stdTTL: 3600 });
-const antiDuplicateCache = new NodeCache({ stdTTL: 120 }); // evita reenvíos iguales en 2 min
+const antiDuplicateCache = new NodeCache({ stdTTL: 120 });
 
-/* =========================
-   Utilidades
-========================= */
+/* ============== Utils ============== */
 const delay = ms => new Promise(r => setTimeout(r, ms));
-const nowMs = () => Date.now();
-
-const normalizeText = (s) =>
-  (s || "")
-    .toString()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim();
+const normalizeText = s => (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+const toHttps = url => (url?.startsWith('http://') ? url.replace(/^http:\/\//i, 'https://') : url);
+const num = v => Number(v) || 0;
 
 const formatFechaEnEspanol = (fechaStrDDMMYYYY) => {
-  const [dia, mes, anio] = fechaStrDDMMYYYY.split("/");
-  const meses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  const [dia, mes, anio] = fechaStrDDMMYYYY.split('/');
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   return `${dia} de ${meses[Number(mes)-1]} ${anio}`;
 };
 
 const parseFecha = (dateString) => {
-  const s = (dateString || "").trim();
+  const s = (dateString || '').trim();
   if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
   const m = s.match(/^(\d{1,2})\s*(?:de\s+)?([a-záéíóú]+)\s*(?:de\s+)?(\d{4})$/i);
   if (!m) return null;
-  const day = m[1].padStart(2,"0");
+  const day = m[1].padStart(2, '0');
   const monthMap = {
-    enero:"01",febrero:"02",marzo:"03",abril:"04",mayo:"05",junio:"06",
-    julio:"07",agosto:"08",septiembre:"09",setiembre:"09",octubre:"10",noviembre:"11",diciembre:"12"
+    enero:'01',febrero:'02',marzo:'03',abril:'04',mayo:'05',junio:'06',
+    julio:'07',agosto:'08',septiembre:'09',setiembre:'09',octubre:'10',noviembre:'11',diciembre:'12'
   };
   const month = monthMap[normalizeText(m[2])];
   if (!month) return null;
@@ -124,128 +135,98 @@ const toISO = (ddmmyyyy) => {
   return `${y}-${m}-${d}`;
 };
 
-const contarLetras = (texto) => (texto || "").replace(/[^a-zA-ZÁÉÍÓÚáéíóúÑñ]/g,"").length;
+const contarLetras = (texto) => (texto || '').replace(/[^a-zA-ZÁÉÍÓÚáéíóúÑñ]/g,'').length;
 
-// Anti-duplicado por usuario + hash simple
 const shouldSkipDuplicateSend = (to, payloadKey) => {
-  const key = `${to}::${payloadKey}`;
+  const key = `${to}::${payloadKey}`.slice(0, 512);
   if (antiDuplicateCache.get(key)) return true;
   antiDuplicateCache.set(key, true);
   return false;
 };
 
-/* =========================
-   CRM helpers
-========================= */
-async function getContext(from) {
-  try {
-    const { data } = await axios.get(`${CRM_BASE_URL}/leads/context`, {
-      params: { telefono: from },
-      timeout: 5000
-    });
-    return data?.context || null;
-  } catch (e) {
-    console.error("Error getting context:", e.message);
-    return null;
-  }
-}
-
-async function saveContext(from, context) {
-  try {
-    await axios.post(`${CRM_BASE_URL}/leads/context`, {
-      telefono: from,
-      context: {
-        ...context,
-        lastActivity: new Date().toISOString()
-      }
-    }, { timeout: 5000 });
-  } catch (e) {
-    console.error("Error saving context:", e.message);
-  }
-}
-
-async function reportMessageToCRM(to, message, tipo = "enviado") {
+/* ============== CRM helpers ============== */
+async function reportMessageToCRM(to, message, tipo = 'enviado') {
   try {
     await axios.post(`${CRM_BASE_URL}/recibir_mensaje`, {
-      plataforma: "WhatsApp",
-      remitente: to,
-      mensaje: message,
-      tipo
+      plataforma: 'WhatsApp', remitente: to, mensaje: message, tipo
     }, { timeout: 7000 });
   } catch (e) {
-    console.error("CRM report error:", e.response?.data || e.message);
+    console.error('CRM report error:', e.response?.data || e.message);
   }
 }
-
 async function checkAvailability(dateYYYYMMDD) {
   try {
     const { data } = await axios.get(`${CRM_BASE_URL}/calendario/check`, { params: { fecha: dateYYYYMMDD }, timeout: 7000 });
     return !!data?.available;
   } catch (e) {
-    console.error("CRM disponibilidad error:", e.message);
+    console.error('CRM disponibilidad error:', e.message);
     return false;
   }
 }
 
-/* =========================
-   WhatsApp API helpers
-========================= */
+/* ============== WhatsApp API helpers ============== */
 const WABA_URL = `https://graph.facebook.com/${WABA_VERSION}/${PHONE_ID}/messages`;
 const WABA_HEADERS = {
   Authorization: `Bearer ${WABA_TOKEN}`,
   'Content-Type': 'application/json'
 };
 
+function wabaReady() {
+  return Boolean(PHONE_ID && WABA_TOKEN);
+}
+
 async function sendWhatsAppMessage(to, text) {
   try {
-    if (shouldSkipDuplicateSend(to, `text:${text}`)) return; // evita spam accidental
+    if (!wabaReady()) throw new Error('WABA no configurado');
+    if (!text) return;
+    if (shouldSkipDuplicateSend(to, `text:${text}`)) return;
     const { data } = await axios.post(WABA_URL, {
-      messaging_product: 'whatsapp',
-      to,
-      type: 'text',
-      text: { body: text }
-    }, { headers: WABA_HEADERS, timeout: 10000 });
-    console.log("WA text ok:", data?.messages?.[0]?.id || "ok");
-    await reportMessageToCRM(to, text, "enviado");
+      messaging_product: 'whatsapp', to, type: 'text', text: { body: text }
+    }, { headers: WABA_HEADERS, timeout: 15000 });
+    console.log('WA text ok:', data?.messages?.[0]?.id || 'ok');
+    await reportMessageToCRM(to, text, 'enviado');
   } catch (e) {
-    console.error("WA text error:", e.response?.data || e.message);
+    console.error('WA text error:', e.response?.data || e.message);
   }
 }
 
 async function sendImageMessage(to, imageUrl, caption = undefined) {
   try {
-    if (shouldSkipDuplicateSend(to, `image:${imageUrl}:${caption||""}`)) return;
+    if (!wabaReady()) throw new Error('WABA no configurado');
+    const link = toHttps(imageUrl); // Por qué: Meta suele exigir HTTPS público
+    if (!link) return;
+    if (shouldSkipDuplicateSend(to, `image:${link}:${caption||''}`)) return;
     const { data } = await axios.post(WABA_URL, {
-      messaging_product: 'whatsapp',
-      to,
-      type: 'image',
-      image: { link: imageUrl, ...(caption ? { caption } : {}) }
-    }, { headers: WABA_HEADERS, timeout: 15000 });
-    console.log("WA image ok:", data?.messages?.[0]?.id || "ok");
-    await reportMessageToCRM(to, imageUrl, "enviado_imagen");
+      messaging_product: 'whatsapp', to, type: 'image',
+      image: { link, ...(caption ? { caption } : {}) }
+    }, { headers: WABA_HEADERS, timeout: 20000 });
+    console.log('WA image ok:', data?.messages?.[0]?.id || 'ok');
+    await reportMessageToCRM(to, link, 'enviado_imagen');
   } catch (e) {
-    console.error("WA image error:", e.response?.data || e.message);
+    console.error('WA image error:', e.response?.data || e.message);
   }
 }
 
 async function sendWhatsAppVideo(to, videoUrl, caption = undefined) {
   try {
-    if (shouldSkipDuplicateSend(to, `video:${videoUrl}:${caption||""}`)) return;
+    if (!wabaReady()) throw new Error('WABA no configurado');
+    const link = toHttps(videoUrl);
+    if (!link) return;
+    if (shouldSkipDuplicateSend(to, `video:${link}:${caption||''}`)) return;
     const { data } = await axios.post(WABA_URL, {
-      messaging_product: 'whatsapp',
-      to,
-      type: 'video',
-      video: { link: videoUrl, ...(caption ? { caption } : {}) }
-    }, { headers: WABA_HEADERS, timeout: 20000 });
-    console.log("WA video ok:", data?.messages?.[0]?.id || "ok");
-    await reportMessageToCRM(to, videoUrl, "enviado_video");
+      messaging_product: 'whatsapp', to, type: 'video',
+      video: { link, ...(caption ? { caption } : {}) }
+    }, { headers: WABA_HEADERS, timeout: 30000 });
+    console.log('WA video ok:', data?.messages?.[0]?.id || 'ok');
+    await reportMessageToCRM(to, link, 'enviado_video');
   } catch (e) {
-    console.error("WA video error:", e.response?.data || e.message);
+    console.error('WA video error:', e.response?.data || e.message);
   }
 }
 
 async function sendInteractiveMessage(to, body, buttons) {
   try {
+    if (!wabaReady()) throw new Error('WABA no configurado');
     const payload = {
       messaging_product: 'whatsapp',
       to,
@@ -254,156 +235,114 @@ async function sendInteractiveMessage(to, body, buttons) {
       interactive: {
         type: 'button',
         body: { text: body },
-        action: {
-          buttons: buttons.map(b => ({ type: 'reply', reply: { id: b.id, title: b.title } }))
-        }
+        action: { buttons: buttons.map(b => ({ type: 'reply', reply: { id: b.id, title: b.title } })) }
       }
     };
     if (shouldSkipDuplicateSend(to, `interactive:${body}:${JSON.stringify(buttons)}`)) return;
-    const { data } = await axios.post(WABA_URL, payload, { headers: WABA_HEADERS, timeout: 15000 });
-    console.log("WA interactive ok:", data?.messages?.[0]?.id || "ok");
-    await reportMessageToCRM(to, `${body}\n\n${buttons.map(b=>`• ${b.title}`).join("\n")}`, "enviado");
+    const { data } = await axios.post(WABA_URL, payload, { headers: WABA_HEADERS, timeout: 20000 });
+    console.log('WA interactive ok:', data?.messages?.[0]?.id || 'ok');
+    await reportMessageToCRM(to, `${body}\n\n${buttons.map(b=>`• ${b.title}`).join('\n')}`, 'enviado');
   } catch (e) {
-    console.error("WA interactive error:", e.response?.data || e.message);
+    console.error('WA interactive error:', e.response?.data || e.message);
   }
 }
 
-// Indicador "typing": lo dejo como no-op seguro (para evitar errores de API)
-async function activateTypingIndicator() { /* no-op */ }
-async function deactivateTypingIndicator() { /* no-op */ }
+async function activateTypingIndicator() { /* no-op seguro */ }
+async function deactivateTypingIndicator() { /* no-op seguro */ }
 
-async function sendMessageWithTypingWithState(from, message, delayMs, expectedState) {
+// Por qué: snapshot del estado para evitar carreras con cambios posteriores
+async function sendMessageWithTypingWithState(from, message, delayMs, expectedStateSnapshot) {
   await activateTypingIndicator(from);
   await delay(delayMs);
-  if (userContext[from]?.estado === expectedState) {
+  if (userContext[from]?.estado === expectedStateSnapshot) {
     await sendWhatsAppMessage(from, message);
   }
   await deactivateTypingIndicator(from);
 }
 
-
-async function sendMessageWithTypingWithState(from, message, delayMs, expectedState) {
-  await activateTypingIndicator(from);
-  await delay(delayMs);
-  const context = await getContext(from);
-  if (context?.estado === expectedState) {
-    await sendWhatsAppMessage(from, message);
-  }
-  await deactivateTypingIndicator(from);
-}
-/* =========================
-   Gestión de Contexto
-========================= */
-async function ensureContext(from) {
-  let context = await getContext(from);
-  
-  if (!context) {
-    context = {
-      estado: "Contacto Inicial",
-      tipoEvento: null,
-      paqueteRecomendado: null,
-      fecha: null,
-      fechaISO: null,
-      lugar: null,
-      serviciosSeleccionados: "",
-      mediosEnviados: [],
-      upsellSuggested: false,
-      lastActivity: new Date().toISOString()
-    };
-    await saveContext(from, context);
-  }
-  
-  return context;
-}
-
-/* =========================
-   Catálogo, media, FAQs
-========================= */
+/* ============== Catálogo, media, FAQs ============== */
 const PRICES = {
-  "cabina de fotos": 3500,
-  "cabina 360": 3500,
-  "lluvia de mariposas": 2500,
-  "carrito de shots con alcohol": 2800,
-  "carrito de shots sin alcohol": 2200,
-  "niebla de piso": 3000,
-  "lluvia metálica": 2000, // normalizado
-  "scrapbook": 1300,
-  "audio guest book": 2000,
-  "letras gigantes": 400 // por letra
+  'cabina de fotos': 3500,
+  'cabina 360': 3500,
+  'lluvia de mariposas': 2500,
+  'carrito de shots con alcohol': 2800,
+  'carrito de shots sin alcohol': 2200,
+  'niebla de piso': 3000,
+  'lluvia metálica': 2000,
+  'scrapbook': 1300,
+  'audio guest book': 2000,
+  'letras gigantes': 400
 };
-
 const CHISPEROS_TIERS = { 2:1000, 4:1500, 6:2000, 8:2500, 10:3000 };
 
 const mediaMapping = {
-  "cabina de fotos": {
+  'cabina de fotos': {
     images: [
-      "http://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-1.jpg",
-      "http://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-2.jpg",
-      "http://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-3.jpg",
-      "http://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-4.jpg",
-      "http://cami-cam.com/wp-content/uploads/2025/03/Cabina-multicolor-2.jpeg"
+      'https://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-1.jpg',
+      'https://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-2.jpg',
+      'https://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-3.jpg',
+      'https://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-4.jpg',
+      'https://cami-cam.com/wp-content/uploads/2025/03/Cabina-multicolor-2.jpeg'
     ],
     videos: [
-      "http://cami-cam.com/wp-content/uploads/2025/03/Cabina-Blanca.mp4",
-      "http://cami-cam.com/wp-content/uploads/2025/03/Cabina-Rosa.mp4",
-      "http://cami-cam.com/wp-content/uploads/2025/03/cabina-multicolor.mp4"
+      'https://cami-cam.com/wp-content/uploads/2025/03/Cabina-Blanca.mp4',
+      'https://cami-cam.com/wp-content/uploads/2025/03/Cabina-Rosa.mp4',
+      'https://cami-cam.com/wp-content/uploads/2025/03/cabina-multicolor.mp4'
     ]
   },
-  "cabina 360": {
-    images: ["http://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-1.jpg"],
-    videos: ["http://cami-cam.com/wp-content/uploads/2025/03/Cabina-Rosa.mp4"]
+  'cabina 360': {
+    images: ['https://cami-cam.com/wp-content/uploads/2023/05/INCLUYE-1.jpg'],
+    videos: ['https://cami-cam.com/wp-content/uploads/2025/03/Cabina-Rosa.mp4']
   },
-  "lluvia de mariposas": { images: ["http://cami-cam.com/wp-content/uploads/2023/07/lluvia1.jpg"], videos: [] },
-  "carrito de shots con alcohol": { images: ["http://cami-cam.com/wp-content/uploads/2023/07/carrito1.jpg"], videos: [] },
-  "carrito de shots sin alcohol": { images: ["http://cami-cam.com/wp-content/uploads/2023/07/carrito1.jpg"], videos: [] },
-  "niebla de piso": { images: ["http://cami-cam.com/wp-content/uploads/2023/07/niebla1.jpg"], videos: [] },
-  "scrapbook": {
+  'lluvia de mariposas': { images: ['https://cami-cam.com/wp-content/uploads/2023/07/lluvia1.jpg'], videos: [] },
+  'carrito de shots con alcohol': { images: ['https://cami-cam.com/wp-content/uploads/2023/07/carrito1.jpg'], videos: [] },
+  'carrito de shots sin alcohol': { images: ['https://cami-cam.com/wp-content/uploads/2023/07/carrito1.jpg'], videos: [] },
+  'niebla de piso': { images: ['https://cami-cam.com/wp-content/uploads/2023/07/niebla1.jpg'], videos: [] },
+  'scrapbook': {
     images: [
-      "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-4.jpeg",
-      "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-3.jpeg",
-      "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-2.jpeg",
-      "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-5.jpeg",
-      "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-7.jpeg",
-      "http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-6.jpeg"
+      'https://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-4.jpeg',
+      'https://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-3.jpeg',
+      'https://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-2.jpeg',
+      'https://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-5.jpeg',
+      'https://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-7.jpeg',
+      'https://cami-cam.com/wp-content/uploads/2025/03/Scrapbook-6.jpeg'
     ],
-    videos: ["http://cami-cam.com/wp-content/uploads/2025/03/Scrapbook.mp4"]
+    videos: ['https://cami-cam.com/wp-content/uploads/2025/03/Scrapbook.mp4']
   },
-  "audio guest book": { images: ["http://cami-cam.com/wp-content/uploads/2023/07/audio1.jpg"], videos: [] },
-  "letras gigantes": {
-    images: ["http://cami-cam.com/wp-content/uploads/2025/03/Letras-Gigantes.jpeg"],
-    videos: ["http://cami-cam.com/wp-content/uploads/2025/02/LETRAS-GIGANTES-ILUMINADAS.mp4"]
+  'audio guest book': { images: ['https://cami-cam.com/wp-content/uploads/2023/07/audio1.jpg'], videos: [] },
+  'letras gigantes': {
+    images: ['https://cami-cam.com/wp-content/uploads/2025/03/Letras-Gigantes.jpeg'],
+    videos: ['https://cami-cam.com/wp-content/uploads/2025/02/LETRAS-GIGANTES-ILUMINADAS.mp4']
   },
-  "chisperos": { images: ["http://cami-cam.com/wp-content/uploads/2023/07/chisperos1.jpg"], videos: [] }
+  'chisperos': { images: ['https://cami-cam.com/wp-content/uploads/2023/07/chisperos1.jpg'], videos: [] }
 };
 
 const faqs = [
-  { re: /hacen contrato|contrato/i, answer: "📄 ¡Sí! Una vez que se acredite el anticipo, llenamos el contrato y te enviamos una foto." },
-  { re: /con cuanto tiempo separo mi fecha|separar/i, answer: "⏰ Puedes separar tu fecha en cualquier momento, siempre y cuando esté disponible." },
-  { re: /2026/i, answer: "📆 Claro, tenemos agenda para 2025 y 2026. ¡Consulta sin compromiso!" },
-  { re: /flete|cu[aá]nto se cobra de flete/i, answer: "🚚 El flete varía según la ubicación. Compárteme tu salón y lo calculamos." },
-  { re: /c[oó]mo reviso si tienen mi fecha|disponible/i, answer: "🔎 Dime la fecha de tu evento y reviso disponibilidad al momento." },
-  { re: /ubicaci[oó]n|d[oó]nde est[aá]n|ubican|oficinas/i, answer: "📍 Col. Independencia, Monterrey. Cubrimos hasta 30 km a la redonda." },
-  { re: /pago|m[eé]todo de pago|tarjeta|efectivo/i, answer: "💳 Aceptamos transferencia, depósito y efectivo." },
-  { re: /servicios|que servicios manejas/i, answer: "🎉 Estos son nuestros servicios:", image: "http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg" },
-  { re: /anticipo|separ(a|o)r/i, answer: "⏰ Separa con $500, el resto el día del evento. Tras acreditarse te envío contrato firmado." },
-  { re: /dep[oó]sito|transferencia|datos/i, answer: "722969010494399671", image: "http://cami-cam.com/wp-content/uploads/2025/03/Datos-Transferencia-1.jpeg" },
-  { re: /cabina de fotos|que incluye la cabina de fotos/i, answer: "📸 Cabina de fotos: 3h de servicio, iluminación profesional, fondo personalizado y props.", images: mediaMapping["cabina de fotos"].images, videos: mediaMapping["cabina de fotos"].videos },
-  { re: /scrapbook|que es el scrapbook/i, answer: "📚 Scrapbook: tus invitados pegan una foto y escriben un mensaje. Recuerdo único.", images: mediaMapping["scrapbook"].images, videos: mediaMapping["scrapbook"].videos }
+  { re: /hacen contrato|contrato/i, answer: '📄 ¡Sí! Una vez que se acredite el anticipo, llenamos el contrato y te enviamos una foto.' },
+  { re: /con cuanto tiempo separo mi fecha|separar/i, answer: '⏰ Puedes separar tu fecha en cualquier momento, siempre y cuando esté disponible.' },
+  { re: /2026/i, answer: '📆 Claro, tenemos agenda para 2025 y 2026. ¡Consulta sin compromiso!' },
+  { re: /flete|cu[aá]nto se cobra de flete/i, answer: '🚚 El flete varía según la ubicación. Compárteme tu salón y lo calculamos.' },
+  { re: /c[oó]mo reviso si tienen mi fecha|disponible/i, answer: '🔎 Dime la fecha de tu evento y reviso disponibilidad al momento.' },
+  { re: /ubicaci[oó]n|d[oó]nde est[aá]n|ubican|oficinas/i, answer: '📍 Col. Independencia, Monterrey. Cubrimos hasta 30 km a la redonda.' },
+  { re: /pago|m[eé]todo de pago|tarjeta|efectivo/i, answer: '💳 Aceptamos transferencia, depósito y efectivo.' },
+  { re: /servicios|que servicios manejas/i, answer: '🎉 Estos son nuestros servicios:', image: 'https://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg' },
+  { re: /anticipo|separ(a|o)r/i, answer: '⏰ Separa con $500, el resto el día del evento. Tras acreditarse te envío contrato firmado.' },
+  { re: /dep[oó]sito|transferencia|datos/i, answer: '722969010494399671', image: 'https://cami-cam.com/wp-content/uploads/2025/03/Datos-Transferencia-1.jpeg' },
+  { re: /cabina de fotos|que incluye la cabina de fotos/i, answer: '📸 Cabina de fotos: 3h de servicio, iluminación profesional, fondo personalizado y props.', images: mediaMapping['cabina de fotos'].images, videos: mediaMapping['cabina de fotos'].videos },
+  { re: /scrapbook|que es el scrapbook/i, answer: '📚 Scrapbook: tus invitados pegan una foto y escriben un mensaje. Recuerdo único.', images: mediaMapping['scrapbook'].images, videos: mediaMapping['scrapbook'].videos }
 ];
 
-/* =========================
-   Context helpers
-========================= */
+/* ============== Context helpers ============== */
 function ensureContext(from) {
   if (!userContext[from]) {
     userContext[from] = {
-      estado: "Contacto Inicial",
+      estado: 'Contacto Inicial',
       tipoEvento: null,
       paqueteRecomendado: null,
       fecha: null,
       fechaISO: null,
       lugar: null,
-      serviciosSeleccionados: "",
+      serviciosSeleccionados: '',
       mediosEnviados: new Set(),
       upsellSuggested: false,
       suggestScrapbookVideo: false
@@ -412,35 +351,21 @@ function ensureContext(from) {
   return userContext[from];
 }
 
-/* =========================
-   Normalización de servicios
-========================= */
+/* ============== Normalización servicios ============== */
 function normalizeServicesInput(raw) {
-  // Por qué: reducir ambigüedad y mapear sinónimos a llaves de PRICES
-  let s = " " + raw + " ";
-  s = s.replace(/\s+/g, " ");
-
-  // cantidades delante -> detrás
+  let s = ` ${raw} `;
+  s = s.replace(/\s+/g, ' ');
   s = s.replace(/\b(\d+)\s+letras(?:\s*gigantes)?\b/gi, 'letras gigantes $1');
   s = s.replace(/\b(\d+)\s+chisperos?\b/gi, 'chisperos $1');
-
-  // lluvia metálica (variantes)
   s = s.replace(/lluvia m[eé]talica/gi, 'lluvia metálica');
-
-  // carrito de shots sin variante → marcar para preguntar luego (no removemos texto aquí)
-  // cabina no específica
-  // se maneja a nivel flujo
-
   return s.trim();
 }
 
-/* =========================
-   FAQs
-========================= */
-async function handleFAQs(from, userMessage) {
+/* ============== FAQs ============== */
+async function handleFAQs(from, userMessageRaw) {
   for (const f of faqs) {
-    if (f.re.test(userMessage)) {
-      await sendWhatsAppMessage(from, f.answer + " 😊");
+    if (f.re.test(userMessageRaw)) {
+      await sendWhatsAppMessage(from, `${f.answer} 😊`);
       if (f.image) await sendImageMessage(from, f.image);
       if (f.images?.length) for (const img of f.images) await sendImageMessage(from, img);
       if (f.videos?.length) for (const vid of f.videos) await sendWhatsAppVideo(from, vid);
@@ -450,32 +375,28 @@ async function handleFAQs(from, userMessage) {
   return false;
 }
 
-/* =========================
-   Sugerencias upsell
-========================= */
+/* ============== Upsell ============== */
 function checkUpsellSuggestions(context) {
   const s = normalizeText(context.serviciosSeleccionados);
   const has = (x)=> s.includes(normalizeText(x));
-  const available = ["cabina de fotos","cabina 360","lluvia de mariposas","carrito de shots con alcohol","carrito de shots sin alcohol","niebla de piso","lluvia metálica","scrapbook","audio guest book","letras gigantes","chisperos"];
+  const available = ['cabina de fotos','cabina 360','lluvia de mariposas','carrito de shots con alcohol','carrito de shots sin alcohol','niebla de piso','lluvia metálica','scrapbook','audio guest book','letras gigantes','chisperos'];
   let count = 0; available.forEach(a=>{ if (has(a)) count++; });
 
   const suggestions = [];
-  if (has("cabina de fotos") && !has("scrapbook")) {
-    suggestions.push("👉 Sugerencia: agrega *Scrapbook* para un recuerdo increíble. Escribe: *Agregar scrapbook*");
+  if (has('cabina de fotos') && !has('scrapbook')) {
+    suggestions.push('👉 Sugerencia: agrega *Scrapbook* para un recuerdo increíble. Escribe: *Agregar scrapbook*');
     context.suggestScrapbookVideo = true;
     context.upsellSuggested = true;
   } else if (count === 2) {
-    suggestions.push("¡Tip! Con 3 servicios obtienes 30% y con 4, 40% de descuento.");
+    suggestions.push('¡Tip! Con 3 servicios obtienes 30% y con 4, 40% de descuento.');
     context.upsellSuggested = true;
   }
   return suggestions;
 }
 
-/* =========================
-   Cotizador
-========================= */
+/* ============== Cotizador ============== */
 function calculateQuotation(servicesCSV) {
-  const items = servicesCSV.split(",").map(x=>x.trim()).filter(Boolean);
+  const items = (servicesCSV || '').split(',').map(x=>x.trim()).filter(Boolean);
   let subtotal = 0, serviceCount = 0;
   const details = [];
   const recognized = new Set();
@@ -484,11 +405,11 @@ function calculateQuotation(servicesCSV) {
     // chisperos N
     const mCh = svc.match(/^chisperos(?:\s+(\d+))?$/i);
     if (mCh) {
-      const qty = Number(mCh[1]||0);
-      if (!qty) return { error:true, needsInput:"chisperos", details:["🔸 *Chisperos*: indica cantidad (par)."], subtotal:0, discountPercent:0, discountAmount:0, total:0, servicesRecognized:[] };
+      const qty = num(mCh[1]||0);
+      if (!qty) return { error:true, needsInput:'chisperos', details:['🔸 *Chisperos*: indica cantidad (par).'], subtotal:0, discountPercent:0, discountAmount:0, total:0, servicesRecognized:[] };
       if (qty % 2 !== 0 || !CHISPEROS_TIERS[qty]) { details.push(`🔸 Chisperos: cantidad inválida (${qty})`); continue; }
       subtotal += CHISPEROS_TIERS[qty];
-      serviceCount++; recognized.add("chisperos");
+      serviceCount++; recognized.add('chisperos');
       details.push(`🔸 *${qty} Chisperos*: $${CHISPEROS_TIERS[qty].toLocaleString()}`);
       continue;
     }
@@ -496,22 +417,22 @@ function calculateQuotation(servicesCSV) {
     // letras gigantes N
     const mL = svc.match(/^letras(?:\s*gigantes)?(?:\s+(\d+))?$/i);
     if (mL) {
-      const qty = Number(mL[1]||0);
-      if (!qty) { details.push("🔸 *Letras gigantes*: falta cantidad"); continue; }
-      const price = qty * PRICES["letras gigantes"];
-      subtotal += price; serviceCount++; recognized.add("letras gigantes");
+      const qty = num(mL[1]||0);
+      if (!qty) { details.push('🔸 *Letras gigantes*: falta cantidad'); continue; }
+      const price = qty * PRICES['letras gigantes'];
+      subtotal += price; serviceCount++; recognized.add('letras gigantes');
       details.push(`🔸 *${qty} Letras Gigantes* (5h): $${price.toLocaleString()}`);
       continue;
     }
 
     // lluvia metálica (normalizada)
-    if (/^lluvia m[eé]talica|^lluvia metálica$/i.test(svc)) {
-      subtotal += PRICES["lluvia metálica"]; serviceCount++; recognized.add("lluvia metálica");
-      details.push(`🔸 *Lluvia Metálica*: $${PRICES["lluvia metálica"].toLocaleString()}`);
+    if (/^lluvia m[eé]talica$|^lluvia metálica$/i.test(svc)) {
+      subtotal += PRICES['lluvia metálica']; serviceCount++; recognized.add('lluvia metálica');
+      details.push(`🔸 *Lluvia Metálica*: $${PRICES['lluvia metálica'].toLocaleString()}`);
       continue;
     }
 
-    // carrito de shots variantes exactas
+    // carrito de shots
     if (/^carrito de shots (con|sin) alcohol$/i.test(svc)) {
       const key = svc.toLowerCase();
       subtotal += PRICES[key]; serviceCount++; recognized.add(key);
@@ -519,10 +440,10 @@ function calculateQuotation(servicesCSV) {
       continue;
     }
 
-    // cabina de fotos / cabina 360 / otros simples
+    // simples
     const key = Object.keys(PRICES).find(k => k === svc.toLowerCase());
     if (key) {
-      const isCabina = key === "cabina de fotos" || key === "cabina 360";
+      const isCabina = key === 'cabina de fotos' || key === 'cabina 360';
       const name = isCabina ? `${key} (3 horas)` : key;
       subtotal += PRICES[key]; serviceCount++; recognized.add(key);
       details.push(`🔸 *${name.charAt(0).toUpperCase()+name.slice(1)}*: $${PRICES[key].toLocaleString()}`);
@@ -530,27 +451,20 @@ function calculateQuotation(servicesCSV) {
     }
 
     // no reconocido
-    details.push(`🔸 ${svc}: servicio no reconocido`);
+    if (svc) details.push(`🔸 ${svc}: servicio no reconocido`);
   }
 
   // descuentos
   let discountPercent = 0;
   if (serviceCount === 1) {
-    const only = Array.from(recognized)[0] || "";
-    if (only.startsWith("letras gigantes")) {
-      // No cae aquí porque recognized guarda sin cantidad
-      discountPercent = 10;
-    } else if (only === "chisperos") {
-      discountPercent = 0;
-    } else {
-      discountPercent = 10;
-    }
+    const only = Array.from(recognized)[0] || '';
+    discountPercent = (only === 'chisperos') ? 0 : 10;
   } else if (serviceCount === 2) discountPercent = 25;
   else if (serviceCount === 3) discountPercent = 30;
   else if (serviceCount >= 4) discountPercent = 40;
 
   const discountAmount = subtotal * (discountPercent/100);
-  const total = subtotal - discountAmount;
+  const total = Math.max(0, subtotal - discountAmount);
 
   return {
     error:false,
@@ -560,12 +474,12 @@ function calculateQuotation(servicesCSV) {
   };
 }
 
-async function actualizarCotizacion(from, context, header = "*PAQUETE PERSONALIZADO*") {
+async function actualizarCotizacion(from, context, header = '*PAQUETE PERSONALIZADO*') {
+  const snap = context.estado;
   const cot = calculateQuotation(context.serviciosSeleccionados);
-  const detalles = `${header}\n\n${cot.details.join("\n")}`;
+  const detalles = `${header}\n\n${cot.details.join('\n')}`;
   const resumen = `Subtotal: $${cot.subtotal.toLocaleString()}\nDescuento (${cot.discountPercent}%): -$${cot.discountAmount.toLocaleString()}\n\n*TOTAL: $${cot.total.toLocaleString()}*`;
 
-  // media por servicio (una sola vez por servicio)
   for (const s of cot.servicesRecognized) {
     if (!mediaMapping[s]) continue;
     context.mediosEnviados = context.mediosEnviados || new Set();
@@ -575,119 +489,118 @@ async function actualizarCotizacion(from, context, header = "*PAQUETE PERSONALIZ
     context.mediosEnviados.add(s);
   }
 
-  await sendMessageWithTypingWithState(from, detalles, 1000, context.estado);
+  await sendMessageWithTypingWithState(from, detalles, 1000, snap);
   await delay(500);
-  await sendMessageWithTypingWithState(from, resumen, 1000, context.estado);
+  await sendMessageWithTypingWithState(from, resumen, 1000, snap);
 
   const upsell = checkUpsellSuggestions(context);
   if (upsell.length) {
     await delay(500);
-    await sendMessageWithTypingWithState(from, upsell.join("\n"), 1000, context.estado);
+    await sendMessageWithTypingWithState(from, upsell.join('\n'), 1000, snap);
     if (context.suggestScrapbookVideo) {
-      const v = mediaMapping["scrapbook"]?.videos?.[0];
+      const v = mediaMapping['scrapbook']?.videos?.[0];
       if (v) await sendWhatsAppVideo(from, v);
       context.suggestScrapbookVideo = false;
     }
   }
 
-  const titulo = context.paqueteRecomendado?.paquete || "Paquete Sugerido";
+  const titulo = context.paqueteRecomendado?.paquete || 'Paquete Sugerido';
   await delay(500);
   await sendInteractiveMessage(from, `¿Continuamos con *${titulo}* o con tu *Paquete Personalizado*?`, [
-    { id: "si_me_interesa_sugerido", title: titulo },
-    { id: "si_me_interesa", title: "PAQ. PERSONALIZADO" },
-    { id: "modificar_cotizacion", title: "Modificar Cotización" }
+    { id: 'si_me_interesa_sugerido', title: titulo },
+    { id: 'si_me_interesa', title: 'PAQ. PERSONALIZADO' },
+    { id: 'modificar_cotizacion', title: 'Modificar Cotización' }
   ]);
 
-  context.estado = "EsperandoDudas";
+  context.estado = 'EsperandoDudas';
 }
 
-/* =========================
-   Flujos de evento/paquete
-========================= */
+/* ============== Flujos evento/paquete ============== */
 function getOtherEventPackageRecommendation(msgLower) {
   if (/cumplea|birthday|\b\d+\b|numero|n[uú]meros/.test(msgLower)) {
     return {
-      paquete: "PAQUETE NÚMEROS",
-      descripcion: "Números gigantes 1.20m, LED programable. Incluye 2 números por $600 + flete.",
-      media: mediaMapping["letras gigantes"]
+      paquete: 'PAQUETE NÚMEROS',
+      descripcion: 'Números gigantes 1.20m, LED programable. Incluye 2 números por $600 + flete.',
+      media: mediaMapping['letras gigantes']
     };
   }
   if (/revelaci[oó]n|baby|oh baby|girl|boy/.test(msgLower)) {
     return {
-      paquete: "PAQUETE REVELACIÓN",
-      descripcion: "Letras decorativas para reveal (BABY / OH BABY / GIRL BOY).",
-      media: mediaMapping["letras gigantes"]
+      paquete: 'PAQUETE REVELACIÓN',
+      descripcion: 'Letras decorativas para reveal (BABY / OH BABY / GIRL BOY).',
+      media: mediaMapping['letras gigantes']
     };
   }
   if (/propuesta|c[aá]sate|marry me|pedir matrimonio/.test(msgLower)) {
     return {
-      paquete: "PAQUETE MARRY ME",
-      descripcion: "Letras románticas MARRY ME para una propuesta inolvidable.",
-      media: mediaMapping["letras gigantes"]
+      paquete: 'PAQUETE MARRY ME',
+      descripcion: 'Letras románticas MARRY ME para una propuesta inolvidable.',
+      media: mediaMapping['letras gigantes']
     };
   }
   if (/graduaci[oó]n|grad|class|gen\b/.test(msgLower)) {
     return {
-      paquete: "PAQUETE GRADUACIÓN",
-      descripcion: "Letras para GRAD/CLASS (e.g., CLASS 2025).",
-      media: mediaMapping["letras gigantes"]
+      paquete: 'PAQUETE GRADUACIÓN',
+      descripcion: 'Letras para GRAD/CLASS (e.g., CLASS 2025).',
+      media: mediaMapping['letras gigantes']
     };
   }
   return {
-    paquete: "OTRO PAQUETE",
-    descripcion: "Cuéntame un poco más para recomendarte la mejor opción.",
-    media: { images: ["http://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg"], videos: [] }
+    paquete: 'OTRO PAQUETE',
+    descripcion: 'Cuéntame un poco más para recomendarte la mejor opción.',
+    media: { images: ['https://cami-cam.com/wp-content/uploads/2025/02/Servicios.jpg'], videos: [] }
   };
 }
 
 async function handleTipoEvento(from, msgLower, context) {
-  if (msgLower.includes("boda") || msgLower.includes("evento_boda")) {
-    context.tipoEvento = "Boda";
-    context.paqueteRecomendado = { paquete: "PAQUETE WEDDING" };
+  if (msgLower.includes('boda') || msgLower.includes('evento_boda')) {
+    context.tipoEvento = 'Boda';
+    context.paqueteRecomendado = { paquete: 'PAQUETE WEDDING' };
 
-    await sendMessageWithTypingWithState(from, "¡Felicidades por tu boda! ❤️ Hagamos un día inolvidable.", 500, context.estado);
-    await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/04/Servicios.png");
-    await sendMessageWithTypingWithState(from, "¿Armas tu paquete o ves el *Paquete WEDDING*?", 500, context.estado);
-    await sendInteractiveMessage(from, "Elige una opción:", [
-      { id: "armar_paquete", title: "Armar mi paquete" },
-      { id: "paquete_wedding", title: "Paquete WEDDING" }
+    const snap = context.estado;
+    await sendMessageWithTypingWithState(from, '¡Felicidades por tu boda! ❤️ Hagamos un día inolvidable.', 500, snap);
+    await sendImageMessage(from, 'https://cami-cam.com/wp-content/uploads/2025/04/Servicios.png');
+    await sendMessageWithTypingWithState(from, '¿Armas tu paquete o ves el *Paquete WEDDING*?', 500, snap);
+    await sendInteractiveMessage(from, 'Elige una opción:', [
+      { id: 'armar_paquete', title: 'Armar mi paquete' },
+      { id: 'paquete_wedding', title: 'Paquete WEDDING' }
     ]);
-    context.estado = "EsperandoConfirmacionPaquete";
+    context.estado = 'EsperandoConfirmacionPaquete';
     return true;
   }
 
-  if (msgLower.includes("xv") || msgLower.includes("quince")) {
-    context.tipoEvento = "XV";
-    context.paqueteRecomendado = { paquete: "PAQUETE MIS XV" };
+  if (msgLower.includes('xv') || msgLower.includes('quince')) {
+    context.tipoEvento = 'XV';
+    context.paqueteRecomendado = { paquete: 'PAQUETE MIS XV' };
 
-    await sendMessageWithTypingWithState(from, "¡Felicidades! ✨ Hagamos unos XV espectaculares.", 500, context.estado);
-    await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/04/Servicios.png");
-    await sendMessageWithTypingWithState(from, "¿Armas tu paquete o ves *Paquete MIS XV*?", 500, context.estado);
-    await sendInteractiveMessage(from, "Elige una opción:", [
-      { id: "armar_paquete", title: "Armar mi paquete" },
-      { id: "paquete_xv", title: "Paquete MIS XV" }
+    const snap = context.estado;
+    await sendMessageWithTypingWithState(from, '¡Felicidades! ✨ Hagamos unos XV espectaculares.', 500, snap);
+    await sendImageMessage(from, 'https://cami-cam.com/wp-content/uploads/2025/04/Servicios.png');
+    await sendMessageWithTypingWithState(from, '¿Armas tu paquete o ves *Paquete MIS XV*?', 500, snap);
+    await sendInteractiveMessage(from, 'Elige una opción:', [
+      { id: 'armar_paquete', title: 'Armar mi paquete' },
+      { id: 'paquete_xv', title: 'Paquete MIS XV' }
     ]);
-    context.estado = "EsperandoConfirmacionPaquete";
+    context.estado = 'EsperandoConfirmacionPaquete';
     return true;
   }
 
   const rec = getOtherEventPackageRecommendation(msgLower);
   context.paqueteRecomendado = rec;
 
-  await sendMessageWithTypingWithState(from, "¡Excelente! ✨ Hagamos tu evento único.", 500, context.estado);
-  await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/04/Servicios.png");
-  await sendMessageWithTypingWithState(from, `¿Armas tu paquete o ves *${rec.paquete}*?`, 500, context.estado);
-  await sendInteractiveMessage(from, "Elige una opción:", [
-    { id: "armar_paquete", title: "Armar mi paquete" },
-    { id: "paquete_otro", title: rec.paquete }
+  const snap = context.estado;
+  await sendMessageWithTypingWithState(from, '¡Excelente! ✨ Hagamos tu evento único.', 500, snap);
+  await sendImageMessage(from, 'https://cami-cam.com/wp-content/uploads/2025/04/Servicios.png');
+  await sendMessageWithTypingWithState(from, `¿Armas tu paquete o ves *${rec.paquete}*?`, 500, snap);
+  await sendInteractiveMessage(from, 'Elige una opción:', [
+    { id: 'armar_paquete', title: 'Armar mi paquete' },
+    { id: 'paquete_otro', title: rec.paquete }
   ]);
-  context.estado = "EsperandoConfirmacionPaquete";
+  context.estado = 'EsperandoConfirmacionPaquete';
   return true;
 }
 
-/* =========================
-   OpenAI fallback
-========================= */
+/* ============== OpenAI fallback ============== */
 function construirContexto() {
   return `
 Eres un agente de ventas de "Camicam Photobooth".
@@ -714,161 +627,162 @@ async function aiShortReply(query) {
   const cached = responseCache.get(key);
   if (cached) return cached;
   const resp = await openai.chat.completions.create({
-    model: "gpt-3.5-turbo",
+    model: 'gpt-4o-mini', // Por qué: mejor calidad/costo que 3.5, disponible en Chat Completions
     messages: [
-      { role: "system", content: "Eres un asesor de ventas amable. Responde breve, natural y útil." },
-      { role: "user", content: prompt }
+      { role: 'system', content: 'Eres un asesor de ventas amable. Responde breve, natural y útil.' },
+      { role: 'user', content: prompt }
     ],
     temperature: 0.6,
     max_tokens: 100
   });
-  const out = resp.choices?.[0]?.message?.content?.trim() || "Con gusto te apoyo. ¿Podrías darme un poco más de detalle?";
+  const out = resp.choices?.[0]?.message?.content?.trim() || 'Con gusto te apoyo. ¿Podrías darme un poco más de detalle?';
   responseCache.set(key, out);
   return out;
 }
 
-/* =========================
-   Handlers de flujo principal
-========================= */
+/* ============== Flujo principal ============== */
 async function solicitarFecha(from, context) {
+  const snap = context.estado;
   await sendMessageWithTypingWithState(
     from,
     "De acuerdo. Indícame la fecha de tu evento.\n\nFormato: DD/MM/AAAA o '20 de marzo 2025' 📆",
     500,
-    context.estado
+    snap
   );
-  context.estado = "EsperandoFecha";
+  context.estado = 'EsperandoFecha';
 }
 
 async function handleUserMessage(from, userText, messageLower) {
   const context = ensureContext(from);
 
-  // FAQs sólo si no cortarían un flujo sensible
-  const inSensitive = ["EsperandoServicios","EsperandoFecha","EsperandoLugar","EsperandoCantidadLetras","EsperandoCantidadChisperos","EsperandoDudas","EsperandoTipoCabina","ConfirmarAgregarCabinaCambio","EsperandoTipoCarritoShots","ConfirmarAgregarCarritoShotsCambio"].includes(context.estado);
+  const inSensitive = ['EsperandoServicios','EsperandoFecha','EsperandoLugar','EsperandoCantidadLetras','EsperandoCantidadChisperos','EsperandoDudas','EsperandoTipoCabina','ConfirmarAgregarCabinaCambio','EsperandoTipoCarritoShots','ConfirmarAgregarCarritoShotsCambio'].includes(context.estado);
   if (!inSensitive) {
     if (await handleFAQs(from, userText)) return true;
   }
 
-  // Botones/acciones
-  if (messageLower.includes("armar_paquete") || messageLower.includes("armar mi paquete")) {
-    if (["EsperandoConfirmacionPaquete","EsperandoDudas","EsperandoTipoEvento"].includes(context.estado)) {
+  // Botones / acciones
+  if (messageLower.includes('armar_paquete') || messageLower.includes('armar mi paquete')) {
+    if (['EsperandoConfirmacionPaquete','EsperandoDudas','EsperandoTipoEvento'].includes(context.estado)) {
+      const snap = context.estado;
       await sendMessageWithTypingWithState(
         from,
-        "Perfecto. Escribe los servicios separados por comas.\nEj.: cabina de fotos, cabina 360, 6 letras gigantes, 4 chisperos, carrito de shots con alcohol, lluvia metálica, niebla de piso, scrapbook, audio guest book",
+        'Perfecto. Escribe los servicios separados por comas.\nEj.: cabina de fotos, cabina 360, 6 letras gigantes, 4 chisperos, carrito de shots con alcohol, lluvia metálica, niebla de piso, scrapbook, audio guest book',
         500,
-        context.estado
+        snap
       );
-      context.estado = "EsperandoServicios";
+      context.estado = 'EsperandoServicios';
       return true;
     }
   }
 
-  if (messageLower === "si_me_interesa_sugerido" || messageLower === "si_me_interesa") {
-    if (["EsperandoConfirmacionPaquete","EsperandoDudas"].includes(context.estado)) {
-      context.estado = "EsperandoFecha";
+  if (messageLower === 'si_me_interesa_sugerido' || messageLower === 'si_me_interesa') {
+    if (['EsperandoConfirmacionPaquete','EsperandoDudas'].includes(context.estado)) {
+      context.estado = 'EsperandoFecha';
       await solicitarFecha(from, context);
       return true;
     }
   }
 
-  if (messageLower === "modificar_cotizacion") {
-    context.estado = "EsperandoDudas";
-    await sendWhatsAppMessage(from, "Para modificar:\n\n*Agregar* <servicio>\n*Quitar* <servicio>");
+  if (messageLower === 'modificar_cotizacion') {
+    context.estado = 'EsperandoDudas';
+    await sendWhatsAppMessage(from, 'Para modificar:\n\n*Agregar* <servicio>\n*Quitar* <servicio>');
     return true;
   }
 
-  if (messageLower === "paquete_wedding") {
-    await sendMessageWithTypingWithState(from, "Información del *Paquete WEDDING*:", 300, context.estado);
-    await sendWhatsAppVideo(from, mediaMapping["cabina de fotos"].videos[0]);
-    for (const img of mediaMapping["cabina de fotos"].images.slice(0,4)) { await sendImageMessage(from, img); await delay(300); }
-    await sendInteractiveMessage(from, "¿Te interesa el *PAQUETE WEDDING* o armas tu paquete?", [
-      { id: "si_me_interesa", title: "PAQUETE WEDDING" },
-      { id: "armar_paquete", title: "Armar mi paquete" }
+  if (messageLower === 'paquete_wedding') {
+    const snap = context.estado;
+    await sendMessageWithTypingWithState(from, 'Información del *Paquete WEDDING*:', 300, snap);
+    await sendWhatsAppVideo(from, mediaMapping['cabina de fotos'].videos[0]);
+    for (const img of mediaMapping['cabina de fotos'].images.slice(0,4)) { await sendImageMessage(from, img); await delay(300); }
+    await sendInteractiveMessage(from, '¿Te interesa el *PAQUETE WEDDING* o armas tu paquete?', [
+      { id: 'si_me_interesa', title: 'PAQUETE WEDDING' },
+      { id: 'armar_paquete', title: 'Armar mi paquete' }
     ]);
-    context.estado = "EsperandoConfirmacionPaquete";
+    context.estado = 'EsperandoConfirmacionPaquete';
     return true;
   }
 
-  if (messageLower === "paquete_xv") {
-    await sendMessageWithTypingWithState(from, "Información del *Paquete Mis XV*:", 300, context.estado);
-    await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/04/Paq-Mis-XV-Inform.jpg");
-    await sendWhatsAppMessage(from, "Visita nuestro sitio para más detalles:");
-    await sendWhatsAppMessage(from, "https://cami-cam.com/paquete-mis-xv/");
-    await sendWhatsAppVideo(from, mediaMapping["cabina de fotos"].videos[0]);
-    for (const img of mediaMapping["cabina de fotos"].images.slice(0,4)) { await sendImageMessage(from, img); await delay(300); }
-    await sendInteractiveMessage(from, "¿Te interesa *PAQUETE MIS XV* o armas tu paquete?", [
-      { id: "si_me_interesa", title: "PAQUETE MIS XV" },
-      { id: "armar_paquete", title: "Armar mi paquete" }
+  if (messageLower === 'paquete_xv') {
+    const snap = context.estado;
+    await sendMessageWithTypingWithState(from, 'Información del *Paquete Mis XV*:', 300, snap);
+    await sendImageMessage(from, 'https://cami-cam.com/wp-content/uploads/2025/04/Paq-Mis-XV-Inform.jpg');
+    await sendWhatsAppMessage(from, 'Visita nuestro sitio para más detalles:');
+    await sendWhatsAppMessage(from, 'https://cami-cam.com/paquete-mis-xv/');
+    await sendWhatsAppVideo(from, mediaMapping['cabina de fotos'].videos[0]);
+    for (const img of mediaMapping['cabina de fotos'].images.slice(0,4)) { await sendImageMessage(from, img); await delay(300); }
+    await sendInteractiveMessage(from, '¿Te interesa *PAQUETE MIS XV* o armas tu paquete?', [
+      { id: 'si_me_interesa', title: 'PAQUETE MIS XV' },
+      { id: 'armar_paquete', title: 'Armar mi paquete' }
     ]);
-    context.estado = "EsperandoConfirmacionPaquete";
+    context.estado = 'EsperandoConfirmacionPaquete';
     return true;
   }
 
-  if (messageLower === "paquete_otro") {
+  if (messageLower === 'paquete_otro') {
     const rec = context.paqueteRecomendado;
     if (rec) {
       for (const img of rec.media?.images || []) { await sendImageMessage(from, img); await delay(250); }
       for (const vid of rec.media?.videos || []) { await sendWhatsAppVideo(from, vid); await delay(250); }
-      await sendMessageWithTypingWithState(from, `🎉 *${rec.paquete}*\n${rec.descripcion}`, 300, context.estado);
+      await sendWhatsAppMessage(from, `🎉 *${rec.paquete}*\n${rec.descripcion}`);
       await sendInteractiveMessage(from, `¿Te interesa *${rec.paquete}* o armas tu paquete?`, [
-        { id: "si_me_interesa", title: rec.paquete },
-        { id: "armar_paquete", title: "Armar mi paquete" }
+        { id: 'si_me_interesa', title: rec.paquete },
+        { id: 'armar_paquete', title: 'Armar mi paquete' }
       ]);
-      context.estado = "EsperandoConfirmacionPaquete";
+      context.estado = 'EsperandoConfirmacionPaquete';
       return true;
     } else {
-      await sendWhatsAppMessage(from, "No encuentro una recomendación para este evento. Intentemos armar tu paquete.");
-      context.estado = "EsperandoServicios";
+      await sendWhatsAppMessage(from, 'No encuentro una recomendación para este evento. Intentemos armar tu paquete.');
+      context.estado = 'EsperandoServicios';
       return true;
     }
   }
 
   // Inicio
-  if (context.estado === "Contacto Inicial") {
-    await sendMessageWithTypingWithState(from, "¡Hola! 👋 Soy *Cami-Bot*, a tus órdenes.", 200, "Contacto Inicial");
-    await sendMessageWithTypingWithState(from, "¿Qué tipo de evento tienes? (Boda, XV, cumpleaños...)", 300, "Contacto Inicial");
-    context.estado = "EsperandoTipoEvento";
+  if (context.estado === 'Contacto Inicial') {
+    const snap = 'Contacto Inicial';
+    await sendMessageWithTypingWithState(from, '¡Hola! 👋 Soy *Cami-Bot*, a tus órdenes.', 200, snap);
+    await sendMessageWithTypingWithState(from, '¿Qué tipo de evento tienes? (Boda, XV, cumpleaños...)', 300, snap);
+    context.estado = 'EsperandoTipoEvento';
     return true;
   }
 
   // Tipo de evento
-  if (["EsperandoTipoEvento","EsperandoSubtipoOtroEvento"].includes(context.estado)) {
+  if (['EsperandoTipoEvento','EsperandoSubtipoOtroEvento'].includes(context.estado)) {
     await handleTipoEvento(from, messageLower, context);
     return true;
   }
 
-  // Confirmación paquete (si escribe otra cosa)
-  if (context.estado === "EsperandoConfirmacionPaquete") {
-    await sendMessageWithTypingWithState(from, "No entendí tu respuesta. Elige una opción:", 200, context.estado);
-    await sendInteractiveMessage(from, "Elige:", [
-      { id: "si_me_interesa", title: "Sí, me interesa" },
-      { id: "armar_paquete", title: "Armar mi paquete" }
+  // Confirmación paquete (input libre)
+  if (context.estado === 'EsperandoConfirmacionPaquete') {
+    await sendMessageWithTypingWithState(from, 'No entendí tu respuesta. Elige una opción:', 200, context.estado);
+    await sendInteractiveMessage(from, 'Elige:', [
+      { id: 'si_me_interesa', title: 'Sí, me interesa' },
+      { id: 'armar_paquete', title: 'Armar mi paquete' }
     ]);
     return true;
   }
 
   // Servicios
-  if (context.estado === "EsperandoServicios") {
+  if (context.estado === 'EsperandoServicios') {
     const lower = messageLower;
     let servicios = userText;
 
-    if (lower.includes("agregar")) {
-      const toAdd = normalizeServicesInput(userText.replace(/agregar/i, "").trim());
-      context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + toAdd;
+    if (lower.includes('agregar')) {
+      const toAdd = normalizeServicesInput(userText.replace(/agregar/i, '').trim());
+      context.serviciosSeleccionados += (context.serviciosSeleccionados ? ', ' : '') + toAdd;
       await sendWhatsAppMessage(from, `✅ Agregado: ${toAdd}`);
-    } else if (lower.includes("quitar")) {
-      const toRemove = userText.replace(/quitar/i,"").trim().toLowerCase();
+    } else if (lower.includes('quitar')) {
+      const toRemove = userText.replace(/quitar/i,'').trim().toLowerCase();
       context.serviciosSeleccionados = context.serviciosSeleccionados
-        .split(",").map(s=>s.trim())
+        .split(',').map(s=>s.trim())
         .filter(s=>!normalizeText(s).includes(normalizeText(toRemove)))
-        .join(", ");
+        .join(', ');
       await sendWhatsAppMessage(from, `✅ Quitado: ${toRemove}`);
     } else {
       servicios = normalizeServicesInput(userText);
       context.serviciosSeleccionados = servicios;
     }
 
-    // Flags de faltantes
     const sAll = context.serviciosSeleccionados;
     const faltaLetras = /(letras|letras gigantes)(?!\s*\d+)/i.test(sAll);
     const faltaChisperos = /chisperos(?!\s*\d+)/i.test(sAll);
@@ -876,27 +790,27 @@ async function handleUserMessage(from, userText, messageLower) {
     const faltaCabinaTipo = /(^|,)\s*cabina\s*(,|$)/i.test(sAll);
 
     if (faltaCabinaTipo) {
-      context.estado = "EsperandoTipoCabina";
-      context.serviciosSeleccionados = sAll.split(",").map(x=>x.trim()).filter(x=>!/^cabina$/i.test(x)).join(", ");
-      await sendWhatsAppMessage(from, "¿Deseas *Cabina de fotos* o *Cabina 360*?");
+      context.estado = 'EsperandoTipoCabina';
+      context.serviciosSeleccionados = sAll.split(',').map(x=>x.trim()).filter(x=>!/^cabina$/i.test(x)).join(', ');
+      await sendWhatsAppMessage(from, '¿Deseas *Cabina de fotos* o *Cabina 360*?');
       return true;
     }
 
     if (faltaLetras) {
-      context.estado = "EsperandoCantidadLetras";
-      await sendWhatsAppMessage(from, "¿Cuántas letras necesitas? 🔠");
+      context.estado = 'EsperandoCantidadLetras';
+      await sendWhatsAppMessage(from, '¿Cuántas letras necesitas? 🔠');
       return true;
     }
 
     if (faltaChisperos) {
-      context.estado = "EsperandoCantidadChisperos";
-      await sendWhatsAppMessage(from, "¿Cuántos chisperos ocupas? (2, 4, 6, 8, 10…) 🔥");
+      context.estado = 'EsperandoCantidadChisperos';
+      await sendWhatsAppMessage(from, '¿Cuántos chisperos ocupas? (2, 4, 6, 8, 10…) 🔥');
       return true;
     }
 
     if (faltaShots) {
-      context.estado = "EsperandoTipoCarritoShots";
-      await sendWhatsAppMessage(from, "¿El carrito de shots lo deseas *CON* alcohol o *SIN* alcohol? 🍹");
+      context.estado = 'EsperandoTipoCarritoShots';
+      await sendWhatsAppMessage(from, '¿El carrito de shots lo deseas *CON* alcohol o *SIN* alcohol? 🍹');
       return true;
     }
 
@@ -905,17 +819,17 @@ async function handleUserMessage(from, userText, messageLower) {
   }
 
   // Cantidad chisperos
-  if (context.estado === "EsperandoCantidadChisperos") {
+  if (context.estado === 'EsperandoCantidadChisperos') {
     const cant = parseInt(userText, 10);
     if (!Number.isFinite(cant) || cant <= 0 || cant % 2 !== 0) {
-      await sendWhatsAppMessage(from, "Cantidad inválida. Debe ser un número par: 2, 4, 6, 8, 10…");
+      await sendWhatsAppMessage(from, 'Cantidad inválida. Debe ser un número par: 2, 4, 6, 8, 10…');
       return true;
     }
     const re = /chisperos(\s*\d+)?/i;
     if (re.test(context.serviciosSeleccionados))
       context.serviciosSeleccionados = context.serviciosSeleccionados.replace(re, `chisperos ${cant}`);
     else
-      context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `chisperos ${cant}`;
+      context.serviciosSeleccionados += (context.serviciosSeleccionados ? ', ' : '') + `chisperos ${cant}`;
 
     await sendWhatsAppMessage(from, `✅ Agregados ${cant} chisperos.`);
     await actualizarCotizacion(from, context);
@@ -923,161 +837,161 @@ async function handleUserMessage(from, userText, messageLower) {
   }
 
   // Cantidad letras
-  if (context.estado === "EsperandoCantidadLetras") {
+  if (context.estado === 'EsperandoCantidadLetras') {
     const cant = parseInt(userText, 10);
     if (!Number.isFinite(cant) || cant <= 0) {
-      await sendWhatsAppMessage(from, "Ingresa un número válido para letras.");
+      await sendWhatsAppMessage(from, 'Ingresa un número válido para letras.');
       return true;
     }
-    let arr = context.serviciosSeleccionados.split(",").map(s=>s.trim());
+    let arr = context.serviciosSeleccionados.split(',').map(s=>s.trim());
     let found = false;
     arr = arr.map(s => {
       if (/^letras(\s*gigantes)?$/i.test(s)) { found = true; return `letras gigantes ${cant}`; }
       return s;
     });
     if (!found) arr.push(`letras gigantes ${cant}`);
-    context.serviciosSeleccionados = arr.join(", ");
+    context.serviciosSeleccionados = arr.join(', ');
     await sendWhatsAppMessage(from, `✅ Agregadas ${cant} letras gigantes.`);
     await actualizarCotizacion(from, context);
     return true;
   }
 
   // Nombre → contar letras
-  if (context.estado === "EsperandoDudas" && messageLower.includes("ocupo el nombre de")) {
-    context.nombreCliente = userText.replace(/ocupo el nombre de/i,"").trim();
+  if (context.estado === 'EsperandoDudas' && messageLower.includes('ocupo el nombre de')) {
+    context.nombreCliente = userText.replace(/ocupo el nombre de/i,'').trim();
     const n = contarLetras(context.nombreCliente);
-    context.estado = "ConfirmandoLetras";
+    context.estado = 'ConfirmandoLetras';
     await sendWhatsAppMessage(from, `Entiendo que ocupas ${n} letras gigantes. ¿Es correcto? (sí/no)`);
     return true;
   }
 
-  if (context.estado === "ConfirmandoLetras") {
-    if (/(^|\s)si($|\s)/i.test(messageLower) || /s[ií]/i.test(messageLower)) {
-      const n = contarLetras(context.nombreCliente || "");
+  if (context.estado === 'ConfirmandoLetras') {
+    if (/(^|\s)si($|\s)|s[ií]/i.test(messageLower)) {
+      const n = contarLetras(context.nombreCliente || '');
       const re = /letras gigantes\s*\d*/i;
       if (re.test(context.serviciosSeleccionados))
         context.serviciosSeleccionados = context.serviciosSeleccionados.replace(re, `letras gigantes ${n}`);
       else
-        context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + `letras gigantes ${n}`;
+        context.serviciosSeleccionados += (context.serviciosSeleccionados ? ', ' : '') + `letras gigantes ${n}`;
       await sendWhatsAppMessage(from, `✅ Agregadas ${n} letras gigantes por el nombre '${context.nombreCliente}'.`);
       await actualizarCotizacion(from, context);
     } else {
-      context.estado = "EsperandoCantidadLetras";
-      await sendWhatsAppMessage(from, "¿Cuántas letras necesitas? 🔠");
+      context.estado = 'EsperandoCantidadLetras';
+      await sendWhatsAppMessage(from, '¿Cuántas letras necesitas? 🔠');
     }
     return true;
   }
 
-  // Carrito shots variante
-  if (context.estado === "EsperandoTipoCarritoShots") {
-    const resp = messageLower.includes("sin") ? "carrito de shots sin alcohol"
-               : messageLower.includes("con") ? "carrito de shots con alcohol"
+  // Carrito de shots
+  if (context.estado === 'EsperandoTipoCarritoShots') {
+    const resp = messageLower.includes('sin') ? 'carrito de shots sin alcohol'
+               : messageLower.includes('con') ? 'carrito de shots con alcohol'
                : null;
     if (!resp) { await sendWhatsAppMessage(from, "Responde 'con' o 'sin' alcohol, por favor."); return true; }
 
     if (normalizeText(context.serviciosSeleccionados).includes(normalizeText(resp))) {
-      const other = resp.includes("sin") ? "carrito de shots con alcohol" : "carrito de shots sin alcohol";
+      const other = resp.includes('sin') ? 'carrito de shots con alcohol' : 'carrito de shots sin alcohol';
       if (normalizeText(context.serviciosSeleccionados).includes(normalizeText(other))) {
-        await sendWhatsAppMessage(from, "Ya tienes ambas variantes en la cotización. Si deseas cambios, avísame.");
-        context.estado = "EsperandoDudas";
+        await sendWhatsAppMessage(from, 'Ya tienes ambas variantes en la cotización. Si deseas cambios, avísame.');
+        context.estado = 'EsperandoDudas';
         return true;
       } else {
-        context.estado = "ConfirmarAgregarCarritoShotsCambio";
+        context.estado = 'ConfirmarAgregarCarritoShotsCambio';
         context.carritoShotsToAgregar = other;
         await sendWhatsAppMessage(from, `Ya tienes ${resp}. ¿Deseas agregar también ${other}? (sí/no)`);
         return true;
       }
     } else {
-      context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + resp;
+      context.serviciosSeleccionados += (context.serviciosSeleccionados ? ', ' : '') + resp;
       await sendWhatsAppMessage(from, `✅ Seleccionado ${resp}.`);
       await actualizarCotizacion(from, context);
-      context.estado = "EsperandoDudas";
+      context.estado = 'EsperandoDudas';
       return true;
     }
   }
 
-  if (context.estado === "ConfirmarAgregarCarritoShotsCambio") {
+  if (context.estado === 'ConfirmarAgregarCarritoShotsCambio') {
     if (/(^|\s)si($|\s)|s[ií]/i.test(messageLower)) {
       const v = context.carritoShotsToAgregar;
       if (!normalizeText(context.serviciosSeleccionados).includes(normalizeText(v))) {
-        context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + v;
+        context.serviciosSeleccionados += (context.serviciosSeleccionados ? ', ' : '') + v;
         await sendWhatsAppMessage(from, `✅ Agregado ${v}.`);
-        await actualizarCotizacion(from, context, "¡Paquete actualizado!");
+        await actualizarCotizacion(from, context, '¡Paquete actualizado!');
       }
     } else {
-      await sendWhatsAppMessage(from, "Entendido. Mantengo una sola variante.");
+      await sendWhatsAppMessage(from, 'Entendido. Mantengo una sola variante.');
     }
-    context.estado = "EsperandoDudas";
+    context.estado = 'EsperandoDudas';
     return true;
   }
 
   // Tipo cabina
-  if (context.estado === "EsperandoTipoCabina") {
-    const resp = messageLower.includes("360") || messageLower.includes("giratoria") ? "cabina 360"
-               : messageLower.includes("fotos") || messageLower.includes("inflable") || messageLower.includes("cabina de fotos") ? "cabina de fotos"
+  if (context.estado === 'EsperandoTipoCabina') {
+    const resp = messageLower.includes('360') || messageLower.includes('giratoria') ? 'cabina 360'
+               : (messageLower.includes('fotos') || messageLower.includes('inflable') || messageLower.includes('cabina de fotos')) ? 'cabina de fotos'
                : null;
     if (!resp) { await sendWhatsAppMessage(from, "Responde 'fotos' o '360', por favor."); return true; }
 
     const hasResp = normalizeText(context.serviciosSeleccionados).includes(normalizeText(resp));
-    const other = resp === "cabina de fotos" ? "cabina 360" : "cabina de fotos";
+    const other = resp === 'cabina de fotos' ? 'cabina 360' : 'cabina de fotos';
 
     if (hasResp) {
       if (normalizeText(context.serviciosSeleccionados).includes(normalizeText(other))) {
-        await sendWhatsAppMessage(from, "Ya tienes ambas cabinas en tu cotización.");
-        context.estado = "EsperandoDudas";
+        await sendWhatsAppMessage(from, 'Ya tienes ambas cabinas en tu cotización.');
+        context.estado = 'EsperandoDudas';
         return true;
       } else {
-        context.estado = "ConfirmarAgregarCabinaCambio";
+        context.estado = 'ConfirmarAgregarCabinaCambio';
         context.cabinaToAgregar = other;
         await sendWhatsAppMessage(from, `Ya tienes ${resp}. ¿Deseas agregar también ${other}? (sí/no)`);
         return true;
       }
     } else {
-      context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + resp;
+      context.serviciosSeleccionados += (context.serviciosSeleccionados ? ', ' : '') + resp;
       await sendWhatsAppMessage(from, `✅ Seleccionada ${resp}.`);
       await actualizarCotizacion(from, context);
-      context.estado = "EsperandoDudas";
+      context.estado = 'EsperandoDudas';
       return true;
     }
   }
 
-  if (context.estado === "ConfirmarAgregarCabinaCambio") {
+  if (context.estado === 'ConfirmarAgregarCabinaCambio') {
     if (/(^|\s)si($|\s)|s[ií]/i.test(messageLower)) {
       const v = context.cabinaToAgregar;
       if (!normalizeText(context.serviciosSeleccionados).includes(normalizeText(v))) {
-        context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + v;
+        context.serviciosSeleccionados += (context.serviciosSeleccionados ? ', ' : '') + v;
         await sendWhatsAppMessage(from, `✅ Agregada ${v}.`);
-        await actualizarCotizacion(from, context, "¡Paquete actualizado!");
+        await actualizarCotizacion(from, context, '¡Paquete actualizado!');
       }
     } else {
-      await sendWhatsAppMessage(from, "Entendido. Mantendré una sola cabina.");
+      await sendWhatsAppMessage(from, 'Entendido. Mantendré una sola cabina.');
     }
-    context.estado = "EsperandoDudas";
+    context.estado = 'EsperandoDudas';
     return true;
   }
 
   // Dudas: agregar/quitar directo
-  if (context.estado === "EsperandoDudas") {
-    if (messageLower.includes("quitar")) {
-      const catalog = ["cabina de fotos","cabina 360","lluvia de mariposas","carrito de shots con alcohol","carrito de shots sin alcohol","niebla de piso","lluvia metálica","scrapbook","audio guest book","letras gigantes","chisperos"];
+  if (context.estado === 'EsperandoDudas') {
+    if (messageLower.includes('quitar')) {
+      const catalog = ['cabina de fotos','cabina 360','lluvia de mariposas','carrito de shots con alcohol','carrito de shots sin alcohol','niebla de piso','lluvia metálica','scrapbook','audio guest book','letras gigantes','chisperos'];
       let target = null;
       for (const k of catalog) {
-        if (k==="letras gigantes" && /letras/i.test(messageLower)) { target="letras gigantes"; break; }
-        if (k==="chisperos" && /(chispero|chisperos)/i.test(messageLower)) { target="chisperos"; break; }
+        if (k==='letras gigantes' && /letras/i.test(messageLower)) { target='letras gigantes'; break; }
+        if (k==='chisperos' && /(chispero|chisperos)/i.test(messageLower)) { target='chisperos'; break; }
         if (messageLower.includes(k)) { target=k; break; }
       }
-      if (!target) { await sendWhatsAppMessage(from, "No entendí qué quitar. Usa: *Quitar <servicio>*"); return true; }
+      if (!target) { await sendWhatsAppMessage(from, 'No entendí qué quitar. Usa: *Quitar <servicio>*'); return true; }
 
       const mQty = userText.match(/(?:quitar|qu[ií]tame)\s*(\d+)/i);
-      if (mQty && (target==="letras gigantes" || target==="chisperos")) {
-        const re = new RegExp(`${target}\\s*(\\d+)`,"i");
+      if (mQty && (target==='letras gigantes' || target==='chisperos')) {
+        const re = new RegExp(`${target}\\s*(\\d+)`,'i');
         const mAct = context.serviciosSeleccionados.match(re);
         const current = mAct ? parseInt(mAct[1],10) : 0;
         const delta = parseInt(mQty[1],10);
         if (delta > current) { await sendWhatsAppMessage(from, `No puedes quitar más de ${current}.`); return true; }
         const next = current - delta;
-        if (target==="chisperos" && next>0 && next%2!==0) {
-          await sendWhatsAppMessage(from, "Los chisperos deben ser en pares. No actualicé la cotización.");
+        if (target==='chisperos' && next>0 && next%2!==0) {
+          await sendWhatsAppMessage(from, 'Los chisperos deben ser en pares. No actualicé la cotización.');
           return true;
         }
         if (next>0) {
@@ -1085,51 +999,48 @@ async function handleUserMessage(from, userText, messageLower) {
           await sendWhatsAppMessage(from, `✅ Quitados ${delta}. Ahora tienes ${next}.`);
         } else {
           context.serviciosSeleccionados = context.serviciosSeleccionados
-            .split(",").map(s=>s.trim()).filter(s=>!normalizeText(s).startsWith(normalizeText(target))).join(", ");
+            .split(',').map(s=>s.trim()).filter(s=>!normalizeText(s).startsWith(normalizeText(target))).join(', ');
           await sendWhatsAppMessage(from, `✅ Eliminado *${target}* por completo.`);
         }
       } else {
         context.serviciosSeleccionados = context.serviciosSeleccionados
-          .split(",").map(s=>s.trim()).filter(s=>!normalizeText(s).startsWith(normalizeText(target))).join(", ");
+          .split(',').map(s=>s.trim()).filter(s=>!normalizeText(s).startsWith(normalizeText(target))).join(', ');
         await sendWhatsAppMessage(from, `✅ ${target} eliminado.`);
       }
-      await actualizarCotizacion(from, context, "¡Paquete actualizado!");
+      await actualizarCotizacion(from, context, '¡Paquete actualizado!');
       return true;
     }
 
-    if (messageLower.includes("agregar")) {
-      // tratamiento especial de carrito de shots
-      if (messageLower.includes("agregar carrito de shots") && !/con alcohol|sin alcohol/i.test(messageLower)) {
-        context.estado = "EsperandoTipoCarritoShots";
-        await sendWhatsAppMessage(from, "¿El carrito lo deseas CON alcohol o SIN alcohol? 🍹");
+    if (messageLower.includes('agregar')) {
+      if (messageLower.includes('agregar carrito de shots') && !/con alcohol|sin alcohol/i.test(messageLower)) {
+        context.estado = 'EsperandoTipoCarritoShots';
+        await sendWhatsAppMessage(from, '¿El carrito lo deseas CON alcohol o SIN alcohol? 🍹');
         return true;
       }
-      if (messageLower.includes("agregar cabina") && !/cabina de fotos|cabina 360/i.test(messageLower)) {
-        context.estado = "EsperandoTipoCabina";
-        await sendWhatsAppMessage(from, "¿Cabina de fotos o Cabina 360?");
+      if (messageLower.includes('agregar cabina') && !/cabina de fotos|cabina 360/i.test(messageLower)) {
+        context.estado = 'EsperandoTipoCabina';
+        await sendWhatsAppMessage(from, '¿Cabina de fotos o Cabina 360?');
         return true;
       }
 
-      // genérico
-      const clean = normalizeServicesInput(userText.replace(/agregar/i,"").trim());
-      if (!clean) { await sendWhatsAppMessage(from, "Indica qué agregar. Ej.: *Agregar cabina de fotos*"); return true; }
+      const clean = normalizeServicesInput(userText.replace(/agregar/i,'').trim());
+      if (!clean) { await sendWhatsAppMessage(from, 'Indica qué agregar. Ej.: *Agregar cabina de fotos*'); return true; }
       const already = normalizeText(context.serviciosSeleccionados).includes(normalizeText(clean));
-      if (already) { await sendWhatsAppMessage(from, "Ya está en tu cotización."); return true; }
+      if (already) { await sendWhatsAppMessage(from, 'Ya está en tu cotización.'); return true; }
 
-      // cantidad opcional
       const mQty = clean.match(/(letras(?:\s*gigantes)?|chisperos)\s+(\d+)/i);
       if (/^chisperos\b/i.test(clean) && !mQty) {
-        context.estado = "EsperandoCantidadChisperos";
-        await sendWhatsAppMessage(from, "¿Cuántos chisperos? (2, 4, 6, 8, 10…) 🔥");
+        context.estado = 'EsperandoCantidadChisperos';
+        await sendWhatsAppMessage(from, '¿Cuántos chisperos? (2, 4, 6, 8, 10…) 🔥');
         return true;
       }
       if (/^letras(?:\s*gigantes)?\b/i.test(clean) && !mQty) {
-        context.estado = "EsperandoCantidadLetras";
-        await sendWhatsAppMessage(from, "¿Cuántas letras? 🔠");
+        context.estado = 'EsperandoCantidadLetras';
+        await sendWhatsAppMessage(from, '¿Cuántas letras? 🔠');
         return true;
       }
 
-      context.serviciosSeleccionados += (context.serviciosSeleccionados ? ", " : "") + clean;
+      context.serviciosSeleccionados += (context.serviciosSeleccionados ? ', ' : '') + clean;
       await sendWhatsAppMessage(from, `✅ Agregado: ${clean}`);
       await actualizarCotizacion(from, context);
       return true;
@@ -1137,17 +1048,17 @@ async function handleUserMessage(from, userText, messageLower) {
   }
 
   // Fecha
-  if (context.estado === "EsperandoFecha") {
+  if (context.estado === 'EsperandoFecha') {
     if (!isValidDateExtended(userText)) {
       await sendMessageWithTypingWithState(from, "Formato inválido. Usa DD/MM/AAAA o '20 de mayo 2025'.", 200, context.estado);
       return true;
     }
     if (!isValidFutureDate(userText)) {
-      await sendMessageWithTypingWithState(from, "Esa fecha ya pasó. Indica una futura.", 200, context.estado);
+      await sendMessageWithTypingWithState(from, 'Esa fecha ya pasó. Indica una futura.', 200, context.estado);
       return true;
     }
     if (!isWithinTwoYears(userText)) {
-      await sendMessageWithTypingWithState(from, "Agenda abierta hasta 2 años. Indica otra fecha dentro de ese rango.", 200, context.estado);
+      await sendMessageWithTypingWithState(from, 'Agenda abierta hasta 2 años. Indica otra fecha dentro de ese rango.', 200, context.estado);
       return true;
     }
 
@@ -1158,30 +1069,31 @@ async function handleUserMessage(from, userText, messageLower) {
 
     if (!ok) {
       await sendMessageWithTypingWithState(from, `😔 Lo siento, *${pretty}* no está disponible.`, 200, context.estado);
-      context.estado = "Finalizado";
+      context.estado = 'Finalizado';
       return true;
     }
 
     context.fecha = pretty;
     context.fechaISO = iso;
-    context.estado = "EsperandoLugar";
-    await sendMessageWithTypingWithState(from, `¡Perfecto!\n\n*${pretty}* DISPONIBLE 👏👏👏\n\n¿Nombre del salón? 🏢`, 200, "EsperandoLugar");
+    context.estado = 'EsperandoLugar';
+    await sendMessageWithTypingWithState(from, `¡Perfecto!\n\n*${pretty}* DISPONIBLE 👏👏👏\n\n¿Nombre del salón? 🏢`, 200, 'EsperandoLugar');
     return true;
   }
 
   // Lugar
-  if (context.estado === "EsperandoLugar") {
+  if (context.estado === 'EsperandoLugar') {
     context.lugar = userText;
-    await sendMessageWithTypingWithState(from, "Para separar fecha solicitamos un anticipo de $500. El resto el día del evento.", 200, context.estado);
-    await sendImageMessage(from, "http://cami-cam.com/wp-content/uploads/2025/03/Datos-Transferencia-1.jpeg", "722969010494399671");
-    await sendMessageWithTypingWithState(from, "Tras acreditarse, te pido datos, lleno contrato y te envío foto.", 200, context.estado);
-    await sendWhatsAppMessage(from, "❓ Preguntas frecuentes:\nhttps://cami-cam.com/preguntas-frecuentes/");
-    await sendMessageWithTypingWithState(from, "Cualquier duda, con confianza.\nSoy Gustavo González, a tus órdenes 😀", 200, context.estado);
-    context.estado = "Finalizado";
+    const snap = context.estado;
+    await sendMessageWithTypingWithState(from, 'Para separar fecha solicitamos un anticipo de $500. El resto el día del evento.', 200, snap);
+    await sendImageMessage(from, 'https://cami-cam.com/wp-content/uploads/2025/03/Datos-Transferencia-1.jpeg', '722969010494399671');
+    await sendMessageWithTypingWithState(from, 'Tras acreditarse, te pido datos, lleno contrato y te envío foto.', 200, snap);
+    await sendWhatsAppMessage(from, '❓ Preguntas frecuentes:\nhttps://cami-cam.com/preguntas-frecuentes/');
+    await sendMessageWithTypingWithState(from, 'Cualquier duda, con confianza.\nSoy Gustavo González, a tus órdenes 😀', 200, snap);
+    context.estado = 'Finalizado';
     return true;
   }
 
-  if (context.estado === "Finalizado") {
+  if (context.estado === 'Finalizado') {
     return true;
   }
 
@@ -1191,9 +1103,7 @@ async function handleUserMessage(from, userText, messageLower) {
   return true;
 }
 
-/* =========================
-   Rutas HTTP
-========================= */
+/* ============== Rutas HTTP ============== */
 app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
@@ -1204,13 +1114,14 @@ app.get('/webhook', (req, res) => {
 
 app.post('/webhook', async (req, res) => {
   try {
-    const message = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
-    if (!message) return res.sendStatus(404);
+    const entry = req.body?.entry?.[0]?.changes?.[0]?.value || {};
+    const message = entry?.messages?.[0];
+    if (!message) return res.sendStatus(200); // Por qué: ignorar statuses/acks
 
     const from = message.from;
 
     // IMAGEN entrante
-    if (message.type === "image") {
+    if (message.type === 'image') {
       try {
         const mediaId = message.image.id;
         const meta = await axios.get(`https://graph.facebook.com/${WABA_VERSION}/${mediaId}`, { headers: { Authorization: `Bearer ${WABA_TOKEN}` } });
@@ -1224,19 +1135,19 @@ app.post('/webhook', async (req, res) => {
           ContentType: 'image/jpeg'
         }).promise();
         await axios.post(`${CRM_BASE_URL}/recibir_mensaje`, {
-          plataforma: "WhatsApp",
+          plataforma: 'WhatsApp',
           remitente: from,
           mensaje: up.Location,
-          tipo: "recibido_imagen"
+          tipo: 'recibido_imagen'
         });
       } catch (e) {
-        console.error("Imagen entrante error:", e.message);
+        console.error('Imagen entrante error:', e.message);
       }
       return res.sendStatus(200);
     }
 
     // VIDEO entrante
-    if (message.type === "video") {
+    if (message.type === 'video') {
       try {
         const mediaId = message.video.id;
         const meta = await axios.get(`https://graph.facebook.com/${WABA_VERSION}/${mediaId}`, { headers: { Authorization: `Bearer ${WABA_TOKEN}` } });
@@ -1250,57 +1161,57 @@ app.post('/webhook', async (req, res) => {
           ContentType: 'video/mp4'
         }).promise();
         await axios.post(`${CRM_BASE_URL}/recibir_mensaje`, {
-          plataforma: "WhatsApp",
+          plataforma: 'WhatsApp',
           remitente: from,
           mensaje: up.Location,
-          tipo: "recibido_video"
+          tipo: 'recibido_video'
         });
       } catch (e) {
-        console.error("Video entrante error:", e.message);
+        console.error('Video entrante error:', e.message);
       }
       return res.sendStatus(200);
     }
 
     // TEXTO/INTERACTIVE entrante
-    let userMessage = "";
+    let userMessage = '';
     if (message.text?.body) userMessage = message.text.body;
     else if (message.interactive?.button_reply) userMessage = message.interactive.button_reply.title || message.interactive.button_reply.id;
     else if (message.interactive?.list_reply) userMessage = message.interactive.list_reply.title || message.interactive.list_reply.id;
 
     try {
       await axios.post(`${CRM_BASE_URL}/recibir_mensaje`, {
-        plataforma: "WhatsApp",
+        plataforma: 'WhatsApp',
         remitente: from,
         mensaje: userMessage
       });
     } catch (e) {
-      console.error("CRM texto error:", e.message);
+      console.error('CRM texto error:', e.message);
     }
 
     const buttonReply = message?.interactive?.button_reply?.id || '';
     const listReply = message?.interactive?.list_reply?.id || '';
     const messageLower = normalizeText(buttonReply || listReply || userMessage);
 
-    // Evita que "cabina de fotos" dispare FAQ cuando está en flujos clave
     const handled = await handleUserMessage(from, userMessage, messageLower);
     if (handled) return res.sendStatus(200);
 
     return res.sendStatus(200);
   } catch (e) {
-    console.error("Webhook error:", e.message);
+    console.error('Webhook error:', e.message);
     return res.sendStatus(500);
   }
 });
 
-app.get('/', async (_req, res) => {
+app.get('/', (_req, res) => {
   res.send('¡Servidor OK! 🚀');
 });
+app.get('/healthz', (_req, res) => res.json({ ok: true }));
 
 app.post('/upload_imagen', upload.single('imagen'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No se recibió archivo en 'imagen'" });
     const bucket = process.env.S3_BUCKET_NAME;
-    if (!bucket) return res.status(500).json({ error: "Falta S3_BUCKET_NAME" });
+    if (!bucket) return res.status(500).json({ error: 'Falta S3_BUCKET_NAME' });
     const nombreArchivo = `${uuidv4()}_${req.file.originalname}`;
     const up = await s3.upload({
       Bucket: bucket,
@@ -1310,7 +1221,7 @@ app.post('/upload_imagen', upload.single('imagen'), async (req, res) => {
     }).promise();
     return res.json({ url: up.Location });
   } catch (e) {
-    console.error("upload_imagen error:", e.message);
+    console.error('upload_imagen error:', e.message);
     return res.status(500).json({ error: e.message });
   }
 });
@@ -1322,7 +1233,7 @@ app.post('/enviar_mensaje', async (req, res) => {
     await sendWhatsAppMessage(telefono, mensaje);
     res.json({ ok: true });
   } catch (e) {
-    console.error("enviar_mensaje error:", e.message);
+    console.error('enviar_mensaje error:', e.message);
     res.status(500).json({ error: 'Error al enviar a WhatsApp' });
   }
 });
@@ -1334,7 +1245,7 @@ app.post('/enviar_imagen', async (req, res) => {
     await sendImageMessage(telefono, imageUrl, caption);
     res.json({ ok: true });
   } catch (e) {
-    console.error("enviar_imagen error:", e.message);
+    console.error('enviar_imagen error:', e.message);
     res.status(500).json({ error: 'Error al enviar imagen' });
   }
 });
@@ -1346,14 +1257,12 @@ app.post('/enviar_video', async (req, res) => {
     await sendWhatsAppVideo(telefono, videoUrl, caption);
     res.json({ ok: true });
   } catch (e) {
-    console.error("enviar_video error:", e.message);
+    console.error('enviar_video error:', e.message);
     res.status(500).json({ error: 'Error al enviar video' });
   }
 });
 
-/* =========================
-   Server
-========================= */
+/* ============== Server ============== */
 app.listen(PORT, () => {
   console.log(`Servidor escuchando en http://localhost:${PORT}`);
 }).on('error', (err) => {
