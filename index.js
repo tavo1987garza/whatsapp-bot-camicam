@@ -302,7 +302,7 @@ async function handlePaqueteMisXVFlow(from, context) {
   await saveContext(from, context);
 }
 
-// FLUJO PARA FECHA DEL PAQUETE XV
+// FLUJO PARA FECHA DEL PAQUETE XV  
 async function handleFechaPaqueteXV(from, userText, context) {
   if (!isValidDateExtended(userText)) {
     await sendMessageWithTypingWithState(from, "Formato inválido. Usa DD/MM/AAAA o '20 de mayo 2025'.", 200, context.estado);
