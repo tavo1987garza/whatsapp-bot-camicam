@@ -137,6 +137,33 @@ const shouldSkipDuplicateSend = (to, payloadKey) => {
 /* =========================
    CRM helpers
 ========================= */
+async function getContext(from) {
+  try {
+    const { data } = await axios.get(`${CRM_BASE_URL}/leads/context`, {
+      params: { telefono: from },
+      timeout: 5000
+    });
+    return data?.context || null;
+  } catch (e) {
+    console.error("Error getting context:", e.message);
+    return null;
+  }
+}
+
+async function saveContext(from, context) {
+  try {
+    await axios.post(`${CRM_BASE_URL}/leads/context`, {
+      telefono: from,
+      context: {
+        ...context,
+        lastActivity: new Date().toISOString()
+      }
+    }, { timeout: 5000 });
+  } catch (e) {
+    console.error("Error saving context:", e.message);
+  }
+}
+
 async function reportMessageToCRM(to, message, tipo = "enviado") {
   try {
     await axios.post(`${CRM_BASE_URL}/recibir_mensaje`, {
@@ -252,6 +279,41 @@ async function sendMessageWithTypingWithState(from, message, delayMs, expectedSt
     await sendWhatsAppMessage(from, message);
   }
   await deactivateTypingIndicator(from);
+}
+
+
+async function sendMessageWithTypingWithState(from, message, delayMs, expectedState) {
+  await activateTypingIndicator(from);
+  await delay(delayMs);
+  const context = await getContext(from);
+  if (context?.estado === expectedState) {
+    await sendWhatsAppMessage(from, message);
+  }
+  await deactivateTypingIndicator(from);
+}
+/* =========================
+   Gestión de Contexto
+========================= */
+async function ensureContext(from) {
+  let context = await getContext(from);
+  
+  if (!context) {
+    context = {
+      estado: "Contacto Inicial",
+      tipoEvento: null,
+      paqueteRecomendado: null,
+      fecha: null,
+      fechaISO: null,
+      lugar: null,
+      serviciosSeleccionados: "",
+      mediosEnviados: [],
+      upsellSuggested: false,
+      lastActivity: new Date().toISOString()
+    };
+    await saveContext(from, context);
+  }
+  
+  return context;
 }
 
 /* =========================
