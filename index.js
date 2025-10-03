@@ -1,5 +1,6 @@
 // =====================================
 // file: bot/index.js
+// Node >= 18 (ESM), "type": "module" en package.json
 // =====================================
 import dotenv from 'dotenv';
 import express from 'express';
@@ -14,22 +15,30 @@ import crypto from 'crypto';
 
 dotenv.config();
 
-/* ===== Config ===== */
+/* ──────────────────────────────────────────────────────────
+   CONFIG
+   ─ Usa listas blancas (CORS), timeouts cortos y llaves en env
+   ────────────────────────────────────────────────────────── */
 const app = express();
 const PORT = process.env.PORT || 3000;
+
 const CRM_BASE_URL = process.env.CRM_BASE_URL || "https://camicam-crm-d78af2926170.herokuapp.com";
 const ALLOWED_ORIGIN = (process.env.CORS_ORIGIN || "https://camicam-crm-d78af2926170.herokuapp.com")
   .split(',').map(s=>s.trim()).filter(Boolean);
+
 const WABA_VERSION = process.env.WABA_VERSION || "v21.0";
 const PHONE_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
 const WABA_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-const COTIZADOR_URL = "https://cotizador-cami-cam-209c7f6faca2.herokuapp.com/";
+// Cotizador
+const COTIZADOR_URL = (process.env.COTIZADOR_URL || "https://cotizador-cami-cam-209c7f6faca2.herokuapp.com").replace(/\/+$/,'') + '/';
 const COTIZADOR_VIDEO_URL = process.env.COTIZADOR_VIDEO_URL || "https://filesamples.com/samples/video/mp4/sample_640x360.mp4";
-const COTIZADOR_SECRET = process.env.COTIZADOR_SECRET || "dev-secret-change-me";
+const COTIZADOR_SECRET = process.env.COTIZADOR_SECRET || "dev-secret-change-me"; // para fallback firmado
+const COTIZADOR_API_KEY = process.env.COTIZADOR_API_KEY || "change-me";          // para shortlinks stateful
 
+// Validación de entornos críticos
 const REQUIRED_ENVS = [
   'WHATSAPP_PHONE_NUMBER_ID','WHATSAPP_ACCESS_TOKEN','VERIFY_TOKEN',
   'OPENAI_API_KEY','AWS_REGION','AWS_ACCESS_KEY_ID','AWS_SECRET_ACCESS_KEY','S3_BUCKET_NAME'
@@ -37,16 +46,21 @@ const REQUIRED_ENVS = [
 const missing = REQUIRED_ENVS.filter(k=>!process.env[k]);
 if (missing.length) { console.error('❌ Faltan envs:', missing.join(', ')); process.exit(1); }
 
+/* ──────────────────────────────────────────────────────────
+   MIDDLEWARE
+   ────────────────────────────────────────────────────────── */
 app.use(cors({
   origin(origin, cb){
-    if (!origin) return cb(null, true);
+    if (!origin) return cb(null, true);                 // por CLI/health
     if (ALLOWED_ORIGIN.includes(origin)) return cb(null, true);
     return cb(new Error('CORS no permitido'), false);
   }
 }));
 app.use(express.json({ limit:'1mb' }));
 
-/* ===== AWS S3 ===== */
+/* ──────────────────────────────────────────────────────────
+   AWS S3 (media entrante desde WhatsApp)
+   ────────────────────────────────────────────────────────── */
 AWS.config.update({
   region: process.env.AWS_REGION,
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -55,15 +69,19 @@ AWS.config.update({
 const s3 = new AWS.S3();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15*1024*1024 } });
 
-/* ===== OpenAI fallback ===== */
+/* ──────────────────────────────────────────────────────────
+   OpenAI (fallback micro-respuestas cacheadas)
+   ────────────────────────────────────────────────────────── */
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 const responseCache = new NodeCache({ stdTTL: 3600 });
 
-/* ===== Utils ===== */
-const antiDuplicateCache = new NodeCache({ stdTTL: 120 });
-const normalizeText = (s)=> (s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
-const toHttps = (u)=> u?.startsWith('http://') ? u.replace(/^http:\/\//i,'https://') : u;
+/* ──────────────────────────────────────────────────────────
+   UTILIDADES
+   ────────────────────────────────────────────────────────── */
+const antiDuplicateCache = new NodeCache({ stdTTL: 120 }); // antispam envío
 const delay = (ms)=> new Promise(r=>setTimeout(r,ms));
+const toHttps = (u)=> u?.startsWith('http://') ? u.replace(/^http:\/\//i,'https://') : u;
+const normalizeText = (s)=> (s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
 
 const formatFechaEnEspanol = (ddmmyyyy)=>{
   const [d,m,y]=ddmmyyyy.split('/');
@@ -108,7 +126,9 @@ const shouldSkipDuplicateSend = (to, key)=>{
   antiDuplicateCache.set(k,true); return false;
 };
 
-/* ===== CRM helpers ===== */
+/* ──────────────────────────────────────────────────────────
+   CRM HELPERS (contexto persistente + tracking)
+   ────────────────────────────────────────────────────────── */
 async function getContext(from){
   try{
     const { data } = await axios.get(`${CRM_BASE_URL}/leads/context`, { params:{ telefono: from }, timeout: 5000 });
@@ -129,7 +149,7 @@ async function reportMessageToCRM(to, message, tipo="enviado"){
     }, { timeout: 7000 });
   }catch(e){ console.error("CRM report:", e.response?.data || e.message); }
 }
-async function reportEventToCRM(to, eventName, meta={}){
+async function reportEventToCRM(to, eventName, meta={}){ // consistente con tus eventos
   const payload = `EVENT:${eventName}${Object.keys(meta).length?` ${JSON.stringify(meta)}`:''}`;
   await reportMessageToCRM(to, payload, "enviado");
 }
@@ -140,7 +160,9 @@ async function checkAvailability(dateYYYYMMDD){
   }catch(e){ console.error("disponibilidad:", e.message); return false; }
 }
 
-/* ===== WhatsApp helpers ===== */
+/* ──────────────────────────────────────────────────────────
+   WHATSAPP (WABA)
+   ────────────────────────────────────────────────────────── */
 const WABA_URL = `https://graph.facebook.com/${WABA_VERSION}/${PHONE_ID}/messages`;
 const WABA_HEADERS = { Authorization:`Bearer ${WABA_TOKEN}`, 'Content-Type':'application/json' };
 const wabaReady = ()=> Boolean(PHONE_ID && WABA_TOKEN);
@@ -195,7 +217,7 @@ async function sendInteractiveMessage(to, body, buttons){
     await reportMessageToCRM(to, `${body}\n\n${buttons.map(b=>`• ${b.title}`).join("\n")}`, "enviado");
   }catch(e){ console.error("WA interactive:", e.response?.data || e.message); }
 }
-async function activateTypingIndicator(){ /* no-op */ }
+async function activateTypingIndicator(){ /* no-op (evita errores WABA) */ }
 async function deactivateTypingIndicator(){ /* no-op */ }
 async function sendMessageWithTypingWithState(from, message, ms, expectedState){
   await activateTypingIndicator(from);
@@ -205,7 +227,9 @@ async function sendMessageWithTypingWithState(from, message, ms, expectedState){
   await deactivateTypingIndicator(from);
 }
 
-/* ===== Contexto (persistente en CRM) ===== */
+/* ──────────────────────────────────────────────────────────
+   CONTEXTO (persistente en CRM)
+   ────────────────────────────────────────────────────────── */
 async function ensureContext(from){
   let context = await getContext(from);
   if(!context){
@@ -224,7 +248,9 @@ async function ensureContext(from){
   return context;
 }
 
-/* ===== Intents ===== */
+/* ──────────────────────────────────────────────────────────
+   INTENTS (regex rápido, robusto a ruido)
+   ────────────────────────────────────────────────────────── */
 const INTENTS = {
   GREETING:'greeting', PRICE:'price', DATE:'date', HOURS:'hours',
   WHAT_IS_AGB:'what_is_agb', BUTTON_COTIZADOR:'button_cotizador', BUTTON_CONF_PAXV:'button_confirm_paquete_xv',
@@ -243,8 +269,11 @@ function detectIntentRegex(text){
 }
 async function detectIntent(t){ return detectIntentRegex(t); }
 
-/* ===== Deep link firmado ===== */
+/* ──────────────────────────────────────────────────────────
+   DEEPLINK FALLBACK (firmado) – por si falla el shortlink
+   ────────────────────────────────────────────────────────── */
 function signCotizadorPayload(obj){
+  // Por qué: firma determinística simple y verificable en Flask para evitar manipulación
   const ordered = [
     `evento=${obj.evento||""}`,
     `fecha=${obj.fecha||""}`,
@@ -256,7 +285,7 @@ function signCotizadorPayload(obj){
 }
 function buildCotizadorDeepLink({ tipoEvento, fechaISO, telefono }){
   const hasFecha = !!fechaISO;
-  const step = hasFecha ? 3 : 2; // ⬅️ NUEVO: step=2 si no hay fecha
+  const step = hasFecha ? 3 : 2;
   const evento = (tipoEvento||'XV').toUpperCase()==='XV' ? 'XV' : (tipoEvento||'Otro');
   const ts = Date.now();
   const base = { step, evento, fecha: (fechaISO||''), telefono, ts };
@@ -270,7 +299,38 @@ function buildCotizadorDeepLink({ tipoEvento, fechaISO, telefono }){
   return `${COTIZADOR_URL}?${usp.toString()}`;
 }
 
-/* ===== Flujos ===== */
+/* ──────────────────────────────────────────────────────────
+   SHORTLINK STATEFUL (/r/XYZ) – preferido (UX, corto)
+   ────────────────────────────────────────────────────────── */
+async function createShortLinkOnCotizador({ evento, fechaISO, telefono, step }){
+  // Por qué: link corto memorable con TTL, sin exponer parámetros en URL
+  const url = `${COTIZADOR_URL}api/shortlink`;
+  const payload = { evento, fecha: fechaISO || "", telefono: telefono || "", step: step || 3 };
+  const { data } = await axios.post(url, payload, {
+    headers: { Authorization: `Bearer ${COTIZADOR_API_KEY}` },
+    timeout: 7000
+  });
+  if (!data?.ok || !data?.url) throw new Error('Shortlink error');
+  return data; // { ok:true, code, url, expires_at }
+}
+async function buildCotizadorShortLink({ tipoEvento, fechaISO, telefono }){
+  const hasFecha = !!fechaISO;
+  const step = hasFecha ? 3 : 2;
+  const evento = (tipoEvento||'Otro').toUpperCase().includes('XV') ? 'XV' :
+                 (tipoEvento||'').toUpperCase().includes('BODA') ? 'BODA' : 'OTRO';
+  try{
+    const { url, code, expires_at } = await createShortLinkOnCotizador({ evento, fechaISO, telefono, step });
+    return { url, code, step, mode:'stateful', expires_at };
+  }catch(e){
+    // Fallback: no rompemos flujo si el API del cotizador no está disponible
+    const url = buildCotizadorDeepLink({ tipoEvento: evento, fechaISO, telefono });
+    return { url, code: null, step, mode:'fallback', expires_at: null };
+  }
+}
+
+/* ──────────────────────────────────────────────────────────
+   FLUJOS
+   ────────────────────────────────────────────────────────── */
 const AGB_IMAGE = "https://cami-cam.com/wp-content/uploads/2023/07/audio1.jpg";
 
 async function solicitarFecha(from, context){
@@ -333,30 +393,38 @@ async function handleConfirmarPaqueteXV(from, context){
   await solicitarLugar(from, context);
 }
 async function handleCotizadorPersonalizado(from, context){
+  // Por qué: educar (video) → entregar link corto → continuar con captura de salón
   context.estado="EnviandoACotizador"; await saveContext(from, context);
   await reportEventToCRM(from, 'cotizador_web_click', { origin: context.tipoEvento || 'desconocido' });
+
   await sendMessageWithTypingWithState(from, "¡Perfecto! Te explico cómo usar nuestro cotizador online:", 200, "EnviandoACotizador");
   await delay(800);
   await sendWhatsAppVideo(from, COTIZADOR_VIDEO_URL, "Video explicativo del cotizador");
-  await delay(1200);
-  const deepLink = buildCotizadorDeepLink({
+  await delay(1000);
+
+  const link = await buildCotizadorShortLink({
     tipoEvento: context.tipoEvento || 'XV',
     fechaISO: context.fechaISO || '',
     telefono: from,
   });
+  await reportEventToCRM(from, 'cotizador_web_shortlink_built', { code: link.code, step: link.step, mode: link.mode });
+
   await sendMessageWithTypingWithState(
     from,
-    "🎛️ *COTIZADOR ONLINE*\nEntra con este enlace, ya te dejamos *evento* y *fecha* (si la tenemos) precargados:",
+    "🎛️ *COTIZADOR ONLINE*\nAbre este enlace, ya precargamos *evento* y *fecha* (si la tenemos):",
     200,
     "EnviandoACotizador"
   );
-  await sendMessageWithTypingWithState(from, deepLink, 200, "EnviandoACotizador");
+  await sendMessageWithTypingWithState(from, link.url, 200, "EnviandoACotizador");
+
   await delay(600);
   context.estado="EsperandoLugar"; await saveContext(from, context);
   await solicitarLugar(from, context);
 }
 
-/* ===== Intents handler ===== */
+/* ──────────────────────────────────────────────────────────
+   INTENTS HANDLER (respuestas concisas + desvío a cotizador)
+   ────────────────────────────────────────────────────────── */
 async function handleIntent(from, context, intent, raw){
   switch(intent){
     case INTENTS.BUTTON_COTIZADOR:
@@ -364,10 +432,11 @@ async function handleIntent(from, context, intent, raw){
       await handleCotizadorPersonalizado(from, context); return true;
     case INTENTS.BUTTON_CONF_PAXV:
       await reportEventToCRM(from, 'intent_button_like_confirm_paquete_xv');
-      await handleConfirmarPaqueteXV(from, context); return true;
+      await handleConfirmarPaqueteXV(from, context);   return true;
     case INTENTS.PRICE:
       await reportEventToCRM(from, 'intent_price', { estado: context.estado, tipo: context.tipoEvento });
       await sendWhatsAppMessage(from, "Los *precios* los ves en tiempo real en nuestro *Cotizador Web*.");
+      // Link directo al home (sin prefill) si aún no hay contexto completo
       await sendMessageWithTypingWithState(from, `🌐 ${COTIZADOR_URL}`, 300, (await getContext(from))?.estado || context.estado);
       if (context.estado === "EsperandoFecha") await sendWhatsAppMessage(from, "Antes revisemos *disponibilidad*: ¿qué fecha tienes? 📆");
       return true;
@@ -380,7 +449,9 @@ async function handleIntent(from, context, intent, raw){
   }
 }
 
-/* ===== Tipo de evento ===== */
+/* ──────────────────────────────────────────────────────────
+   TIPO DE EVENTO
+   ────────────────────────────────────────────────────────── */
 async function handleTipoEvento(from, msgLower, context){
   if (msgLower.includes("boda")){
     context.tipoEvento="Boda"; await saveContext(from, context);
@@ -407,29 +478,34 @@ async function handleTipoEvento(from, msgLower, context){
   return true;
 }
 
-/* ===== Main handler ===== */
+/* ──────────────────────────────────────────────────────────
+   MAIN HANDLER
+   ────────────────────────────────────────────────────────── */
 async function handleUserMessage(from, userText, messageLower){
   let context = await ensureContext(from);
 
-  // Atajo: "Paquete mis XV"
+  // Atajo: "Paquete mis XV" → no preguntar tipo, registrar evento
   if ((context.estado==="Contacto Inicial"||context.estado==="EsperandoTipoEvento")
       && /(^|\s)paquete\s+mis\s+xv(\s|$)/i.test(userText)){
-    await reportMessageToCRM(from, 'EVENT:trigger_paquete_xv', 'enviado');
+    await reportMessageToCRM(from, 'EVENT:trigger_paquete_xv', 'enviado'); // ← solicitado
     context.tipoEvento="XV"; await saveContext(from, context);
     await sendWhatsAppMessage(from, "¡Felicidades! ✨ Hagamos unos XV espectaculares.");
     await solicitarFecha(from, context);
     return true;
   }
 
+  // Botones (IDs)
   if (messageLower === "cotizador_personalizado") { await handleCotizadorPersonalizado(from, context); return true; }
   if (messageLower === "confirmar_paquete_xv")    { await handleConfirmarPaqueteXV(from, context);   return true; }
   if (messageLower.includes("armar_paquete") || messageLower.includes("armar mi paquete")) {
     await handleCotizadorPersonalizado(from, context); return true;
   }
 
+  // Intents
   const intent = await detectIntent(userText);
   if (await handleIntent(from, context, intent, userText)) return true;
 
+  // Inicio
   if (context.estado==="Contacto Inicial"){
     await sendWhatsAppMessage(from, "¡Hola! 👋 Soy *Cami-Bot*, a tus órdenes.");
     await sendWhatsAppMessage(from, "¿Qué tipo de evento tienes? (Boda, XV, cumpleaños...)");
@@ -437,18 +513,20 @@ async function handleUserMessage(from, userText, messageLower){
     return true;
   }
 
+  // Tipo de evento
   if (["EsperandoTipoEvento","EsperandoSubtipoOtroEvento"].includes(context.estado)){
     await handleTipoEvento(from, messageLower, context); return true;
   }
 
+  // Confirmación genérica
   if (context.estado === "EsperandoConfirmacionPaquete"){
     await sendInteractiveMessage(from, "¿Cómo quieres continuar?", [
       { id:"confirmar_paquete_xv", title:"✅ PAQUETE MIS XV" },
       { id:"cotizador_personalizado", title:"🎛️ COTIZADOR WEB" }
-    ]);
-    return true;
+    ]); return true;
   }
 
+  // Fecha
   if (context.estado === "EsperandoFecha"){
     if (!isValidDateExtended(userText)) { await sendWhatsAppMessage(from, "Para seguir, envíame la *fecha* en formato DD/MM/AAAA o '20 de mayo 2026' 📆"); return true; }
     if (!isValidFutureDate(userText))   { await sendWhatsAppMessage(from, "Esa fecha ya pasó. Indica una futura, por favor. 📆"); return true; }
@@ -480,17 +558,20 @@ async function handleUserMessage(from, userText, messageLower){
     return true;
   }
 
+  // Decisión
   if (context.estado === "EsperandoDecisionPaquete"){
     await sendInteractiveMessage(from, "Elige una opción:", [
       { id:"confirmar_paquete_xv", title:"✅ PAQUETE MIS XV" },
       { id:"cotizador_personalizado", title:"🎛️ COTIZADOR WEB" }
-    ]);
-    return true;
+    ]); return true;
   }
 
+  // Lugar
   if (context.estado === "EsperandoLugar"){ await handleLugar(from, userText, context); return true; }
+
   if (context.estado === "Finalizado") return true;
 
+  // Catch-all asistido
   await sendWhatsAppMessage(from, "¿Deseas revisar *fecha*, ver el *PAQUETE MIS XV* o ir al *COTIZADOR WEB*?");
   await sendInteractiveMessage(from, "Puedo ayudarte con:", [
     { id:"confirmar_paquete_xv", title:"✅ PAQUETE MIS XV" },
@@ -499,12 +580,15 @@ async function handleUserMessage(from, userText, messageLower){
   return true;
 }
 
-/* ===== HTTP ===== */
+/* ──────────────────────────────────────────────────────────
+   HTTP (webhook + utilidades)
+   ────────────────────────────────────────────────────────── */
 app.get('/webhook', (req,res)=>{
   const mode=req.query['hub.mode']; const token=req.query['hub.verify_token']; const challenge=req.query['hub.challenge'];
   if (mode==='subscribe' && token===VERIFY_TOKEN) return res.status(200).send(challenge);
   return res.sendStatus(403);
 });
+
 app.post('/webhook', async (req,res)=>{
   try{
     const entry = req.body?.entry?.[0]?.changes?.[0]?.value || {};
@@ -512,6 +596,7 @@ app.post('/webhook', async (req,res)=>{
     if (!message) return res.sendStatus(200);
     const from = message.from;
 
+    // Media entrante (sube a S3 y loguea en CRM)
     if (message.type === "image"){
       try{
         const mediaId = message.image.id;
@@ -538,11 +623,13 @@ app.post('/webhook', async (req,res)=>{
       return res.sendStatus(200);
     }
 
+    // Texto/botón
     let userMessage = "";
     if (message.text?.body) userMessage = message.text.body;
     else if (message.interactive?.button_reply) userMessage = message.interactive.button_reply.title || message.interactive.button_reply.id;
     else if (message.interactive?.list_reply)   userMessage = message.interactive.list_reply.title || message.interactive.list_reply.id;
 
+    // CRM echo
     try{
       await axios.post(`${CRM_BASE_URL}/recibir_mensaje`, { plataforma:"WhatsApp", remitente: from, mensaje: userMessage });
     }catch(e){ console.error("CRM texto:", e.message); }
@@ -552,11 +639,11 @@ app.post('/webhook', async (req,res)=>{
     const messageLower = normalizeText(buttonReply || listReply || userMessage);
 
     const handled = await handleUserMessage(from, userMessage, messageLower);
-    if (handled) return res.sendStatus(200);
-    return res.sendStatus(200);
+    return res.sendStatus(handled ? 200 : 200);
   }catch(e){ console.error("Webhook error:", e.message); return res.sendStatus(500); }
 });
 
+// Utilidades
 app.get('/', (_req,res)=> res.send('¡Servidor OK! 🚀'));
 app.get('/healthz', (_req,res)=> res.json({ ok:true }));
 
@@ -590,5 +677,7 @@ app.post('/enviar_video', async (req,res)=>{
   }catch(e){ console.error("enviar_video:", e.message); res.status(500).json({ error:'Error al enviar video' }); }
 });
 
+// Server
 app.listen(PORT, ()=> console.log(`Servidor escuchando en http://localhost:${PORT}`))
   .on('error', err=> console.error('Error al iniciar servidor:', err));
+
