@@ -28,12 +28,14 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 const COTIZADOR_URL = (process.env.COTIZADOR_URL || "https://cotizador-cami-cam-209c7f6faca2.herokuapp.com/").replace(/\/+$/,'');
 const COTIZADOR_VIDEO_URL = process.env.COTIZADOR_VIDEO_URL || "https://filesamples.com/samples/video/mp4/sample_640x360.mp4";
-const COTIZADOR_SECRET = process.env.COTIZADOR_SECRET; // ❗ Requerido
+const COTIZADOR_SECRET = process.env.COTIZADOR_SECRET; // para fallback stateless
+const COTIZADOR_SHORT_API = `${COTIZADOR_URL}/api/short`;
+const COTIZADOR_BOT_SECRET = process.env.COTIZADOR_BOT_SECRET || ""; // HMAC para /api/short
 
 const REQUIRED_ENVS = [
   'WHATSAPP_PHONE_NUMBER_ID','WHATSAPP_ACCESS_TOKEN','VERIFY_TOKEN',
   'OPENAI_API_KEY','AWS_REGION','AWS_ACCESS_KEY_ID','AWS_SECRET_ACCESS_KEY','S3_BUCKET_NAME',
-  'COTIZADOR_SECRET'
+  'COTIZADOR_SECRET' // seguimos exigiendo para fallback
 ];
 const missing = REQUIRED_ENVS.filter(k=>!process.env[k]);
 if (missing.length) { console.error('❌ Faltan envs:', missing.join(', ')); process.exit(1); }
@@ -56,7 +58,7 @@ AWS.config.update({
 const s3 = new AWS.S3();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15*1024*1024 } });
 
-/* ===== OpenAI fallback (caché) ===== */
+/* ===== OpenAI (caché) ===== */
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 const responseCache = new NodeCache({ stdTTL: 3600 });
 
@@ -138,7 +140,7 @@ async function sendMessageWithTypingWithState(from, message, ms, expectedState){
   await deactivateTypingIndicator(from);
 }
 
-/* ===== Contexto (persistente) ===== */
+/* ===== Contexto ===== */
 async function ensureContext(from){
   let context = await getContext(from);
   if(!context){
@@ -161,7 +163,7 @@ async function ensureContext(from){
 const INTENTS = {
   GREETING:'greeting', PRICE:'price', DATE:'date', HOURS:'hours',
   WHAT_IS_AGB:'what_is_agb',
-  BUTTON_ARMAR:'button_armar', // ← renombrado
+  BUTTON_ARMAR:'button_armar',
   BUTTON_CONF_PAXV:'button_confirm_paquete_xv',
   BUTTON_CONF_PAWED:'button_confirm_paquete_wedding',
   OKAY:'okay', UNKNOWN:'unknown'
@@ -180,20 +182,52 @@ function detectIntentRegex(text){
 }
 async function detectIntent(t){ return detectIntentRegex(t); }
 
-/* ===== Shortlink firmado (/d/<token>) ===== */
+/* ===== Shortlinks ===== */
 function b64u(buf){ return Buffer.from(buf).toString('base64').replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_'); }
 function b64uJson(obj){ return b64u(Buffer.from(JSON.stringify(obj), 'utf8')); }
 function signP64(p64, secret){ const mac = crypto.createHmac('sha256', secret).update(p64).digest(); return b64u(mac); }
-function buildCotizadorShortLink({ tipoEvento, fechaISO, telefono }){
+
+/** Stateless (fallback) */
+function buildCotizadorShortLinkStateless({ tipoEvento, fechaISO, telefono }){
   const eventoNorm = String(tipoEvento||'OTRO').toUpperCase();
   const e = eventoNorm.includes('XV') ? 'XV' : eventoNorm.includes('BODA') ? 'BODA' : 'OTRO';
   const f = String(fechaISO||'');
-  const s = f ? 3 : 2; // Step 3 si ya hay fecha
+  const s = f ? 3 : 2;
   const p = String(telefono||'');
   const t = Date.now();
   const p64 = b64uJson({ e, f, p, s, t });
   const sig = signP64(p64, COTIZADOR_SECRET);
   return `${COTIZADOR_URL}/d/${p64}.${sig}`;
+}
+
+/** Stateful (preferido) */
+async function buildCotizadorShortLinkStateful({ tipoEvento, fechaISO, telefono }){
+  const eventoNorm = String(tipoEvento||'OTRO').toUpperCase();
+  const e = eventoNorm.includes('XV') ? 'XV' : eventoNorm.includes('BODA') ? 'BODA' : 'OTRO';
+  const f = String(fechaISO||'');
+  const s = f ? 3 : 2;
+  const p = String(telefono||'');
+  const t = Date.now();
+  const body = { e, f, p, s, t };
+
+  // por qué: anti-tamper entre bot y cotizador
+  const raw = Buffer.from(JSON.stringify(body), 'utf8');
+  const sign = crypto.createHmac('sha256', COTIZADOR_BOT_SECRET || '').update(raw).digest('hex');
+
+  try{
+    if(!COTIZADOR_BOT_SECRET) throw new Error('SHORTLINK HMAC not configured');
+    const { data } = await axios.post(COTIZADOR_SHORT_API, body, {
+      headers: { 'Content-Type':'application/json', 'X-Short-Sign': sign },
+      timeout: 5000
+    });
+    if (data?.ok && data?.id) {
+      return `${COTIZADOR_URL}/s/${data.id}`;
+    }
+    throw new Error('Bad short API response');
+  }catch(e){
+    console.warn('[shortlink stateful] fallo, usando fallback stateless:', e.message);
+    return buildCotizadorShortLinkStateless({ tipoEvento, fechaISO, telefono });
+  }
 }
 
 /* ===== Flujos ===== */
@@ -233,7 +267,6 @@ async function handleLugar(from, userText, context){
   context.estado="Finalizado"; await saveContext(from, context);
 }
 
-/* — XV luego de fecha OK: oferta + botón ARMAR MI PAQUETE — */
 async function flujoXVDespuesDeFechaOK(from, context, pretty){
   await sendMessageWithTypingWithState(from, `¡Perfecto!\n\n*${pretty}* DISPONIBLE 👏👏👏`, 200, context.estado);
   await delay(600);
@@ -245,7 +278,6 @@ async function flujoXVDespuesDeFechaOK(from, context, pretty){
   await delay(600);
   await sendImageMessage(from, AGB_IMAGE, "Audio Guest Book - Incluido gratis en tu paquete");
   await delay(400);
-
   await sendInteractiveMessage(from, "¿Cómo quieres continuar?", [
     { id:"confirmar_paquete_xv", title:"✅ PAQUETE MIS XV" },
     { id:"armar_mi_paquete",     title:"🧩 ARMAR MI PAQUETE" }
@@ -253,7 +285,7 @@ async function flujoXVDespuesDeFechaOK(from, context, pretty){
   context.estado="EsperandoDecisionPaquete"; await saveContext(from, context);
 }
 
-/* — ARMAR MI PAQUETE (Shortlink) — */
+/* — ARMAR MI PAQUETE (Stateful shortlink) — */
 async function handleArmarMiPaquete(from, context){
   context.estado="EnviandoACotizador"; await saveContext(from, context);
   await reportEventToCRM(from, 'cotizador_web_click', { origin: context.tipoEvento || 'desconocido' });
@@ -263,7 +295,7 @@ async function handleArmarMiPaquete(from, context){
   await sendWhatsAppVideo(from, COTIZADOR_VIDEO_URL, "Video explicativo del cotizador");
   await delay(900);
 
-  const shortUrl = buildCotizadorShortLink({
+  const shortUrl = await buildCotizadorShortLinkStateful({
     tipoEvento: context.tipoEvento || 'OTRO',
     fechaISO: context.fechaISO || '',
     telefono: from
@@ -295,7 +327,7 @@ async function handleConfirmarPaqueteWedding(from, context){
 }
 
 /* ===== Intents handler ===== */
-async function handleIntent(from, context, intent, raw){
+async function handleIntent(from, context, intent){
   switch(intent){
     case INTENTS.BUTTON_ARMAR:
       await reportEventToCRM(from, 'intent_button_armar_mi_paquete');
@@ -351,27 +383,28 @@ async function handleTipoEvento(from, msgLower, context){
 async function handleUserMessage(from, userText, messageLower){
   let context = await ensureContext(from);
 
-  // Atajos iniciales: PACK MIS XV / PACK WEDDING → set tipo, shortlink y pedir fecha
+  // Atajos iniciales: NO enviar link; sólo botones
   if ((context.estado==="Contacto Inicial"||context.estado==="EsperandoTipoEvento")) {
     if (/^paquete\s+mis\s+xv$/i.test(userText.trim())) {
       await reportMessageToCRM(from, 'EVENT:trigger_paquete_xv', 'enviado');
       context.tipoEvento="XV"; await saveContext(from, context);
       await sendWhatsAppMessage(from, "¡Felicidades! ✨ Hagamos unos XV espectaculares.");
-      // Enviar shortlink Step 2 (sin fecha aún)
-      const link = buildCotizadorShortLink({ tipoEvento:"XV", fechaISO:"", telefono:from });
-      await sendMessageWithTypingWithState(from, "🧩 *ARMAR MI PAQUETE* (enlace corto):", 200, "Contacto Inicial");
-      await sendWhatsAppMessage(from, link);
-      await solicitarFecha(from, context);
+      await sendInteractiveMessage(from, "¿Cómo quieres continuar?", [
+        { id:"armar_mi_paquete", title:"🧩 ARMAR MI PAQUETE" },
+        { id:"confirmar_paquete_xv", title:"✅ PAQUETE MIS XV" }
+      ]);
+      context.estado="EsperandoConfirmacionPaquete"; await saveContext(from, context);
       return true;
     }
     if (/^paquete\s+wedding$|^paquete\s+boda$/i.test(userText.trim())) {
       await reportMessageToCRM(from, 'EVENT:trigger_paquete_wedding', 'enviado');
       context.tipoEvento="Boda"; await saveContext(from, context);
       await sendWhatsAppMessage(from, "¡Felicidades por tu boda! ❤️");
-      const link = buildCotizadorShortLink({ tipoEvento:"Boda", fechaISO:"", telefono:from });
-      await sendMessageWithTypingWithState(from, "🧩 *ARMAR MI PAQUETE* (enlace corto):", 200, "Contacto Inicial");
-      await sendWhatsAppMessage(from, link);
-      await solicitarFecha(from, context);
+      await sendInteractiveMessage(from, "¿Cómo quieres continuar?", [
+        { id:"armar_mi_paquete", title:"🧩 ARMAR MI PAQUETE" },
+        { id:"confirmar_paquete_wedding", title:"✅ PAQUETE WEDDING" }
+      ]);
+      context.estado="EsperandoConfirmacionPaquete"; await saveContext(from, context);
       return true;
     }
   }
@@ -383,7 +416,7 @@ async function handleUserMessage(from, userText, messageLower){
 
   // Intents libres
   const intent = await detectIntent(userText);
-  if (await handleIntent(from, context, intent, userText)) return true;
+  if (await handleIntent(from, context, intent)) return true;
 
   // Saludo / inicio
   if (context.estado==="Contacto Inicial"){
@@ -406,7 +439,7 @@ async function handleUserMessage(from, userText, messageLower){
     return true;
   }
 
-  // Fecha
+  // Fecha (NO mandar link aquí)
   if (context.estado === "EsperandoFecha"){
     if (!isValidDateExtended(userText)) { await sendWhatsAppMessage(from, "Para seguir, envíame la *fecha* en formato DD/MM/AAAA o '20 de mayo 2026' 📆"); return true; }
     if (!isValidFutureDate(userText))   { await sendWhatsAppMessage(from, "Esa fecha ya pasó. Indica una futura, por favor. 📆"); return true; }
@@ -425,18 +458,13 @@ async function handleUserMessage(from, userText, messageLower){
 
     context.fecha = pretty; context.fechaISO = iso; await saveContext(from, context);
 
-    // Enviar shortlink Step 3 ya con fecha, para ambos casos
-    const link = buildCotizadorShortLink({ tipoEvento: context.tipoEvento || 'OTRO', fechaISO: iso, telefono: from });
-    await sendMessageWithTypingWithState(from, `¡Perfecto! *${pretty}* DISPONIBLE 👏👏👏\nEntra aquí para continuar en el Paso 3:`, 200, (await getContext(from))?.estado || context.estado);
-    await sendWhatsAppMessage(from, link);
+    await sendMessageWithTypingWithState(from, `¡Perfecto! *${pretty}* DISPONIBLE 👏👏👏`, 200, (await getContext(from))?.estado || context.estado);
 
-    // Flujos específicos (XV muestra paquete, Boda ofrece botón + armar)
     if ((context.tipoEvento||"").toLowerCase()==="xv"){
       await flujoXVDespuesDeFechaOK(from, context, pretty);
       return true;
     }
 
-    // Para Boda u otros, ofrecer acciones coherentes
     await sendInteractiveMessage(from, "¿Cómo quieres continuar?", [
       { id:"confirmar_paquete_wedding", title:"✅ PAQUETE WEDDING" },
       { id:"armar_mi_paquete",         title:"🧩 ARMAR MI PAQUETE" }
@@ -457,7 +485,6 @@ async function handleUserMessage(from, userText, messageLower){
   if (context.estado === "EsperandoLugar"){ await handleLugar(from, userText, context); return true; }
   if (context.estado === "Finalizado") return true;
 
-  // Fallback simple
   await sendWhatsAppMessage(from, "¿Deseas revisar *fecha*, ver un paquete o *ARMAR MI PAQUETE*?");
   await sendInteractiveMessage(from, "Puedo ayudarte con:", [
     { id:"armar_mi_paquete",         title:"🧩 ARMAR MI PAQUETE" },
