@@ -30,7 +30,6 @@ const COTIZADOR_URL = (process.env.COTIZADOR_URL || "https://cotizador-cami-cam-
 const COTIZADOR_VIDEO_URL = process.env.COTIZADOR_VIDEO_URL || "https://filesamples.com/samples/video/mp4/sample_640x360.mp4";
 const COTIZADOR_SECRET = process.env.COTIZADOR_SECRET; // para fallback stateless
 const COTIZADOR_SHORT_API = `${COTIZADOR_URL}/api/short`;
-const COTIZADOR_BOT_SECRET = process.env.COTIZADOR_BOT_SECRET || ""; // HMAC para /api/short
 
 const REQUIRED_ENVS = [
   'WHATSAPP_PHONE_NUMBER_ID','WHATSAPP_ACCESS_TOKEN','VERIFY_TOKEN',
@@ -211,11 +210,12 @@ async function buildCotizadorShortLinkStateful({ tipoEvento, fechaISO, telefono 
   const body = { e, f, p, s, t };
 
   // por qué: anti-tamper entre bot y cotizador
-  const raw = Buffer.from(JSON.stringify(body), 'utf8');
-  const sign = crypto.createHmac('sha256', COTIZADOR_BOT_SECRET || '').update(raw).digest('hex');
+  // por qué: anti-tamper entre bot y cotizador
+const raw = Buffer.from(JSON.stringify(body), 'utf8');
+const sign = crypto.createHmac('sha256', COTIZADOR_SECRET).update(raw).digest('hex');
 
   try{
-    if(!COTIZADOR_BOT_SECRET) throw new Error('SHORTLINK HMAC not configured');
+    if(!COTIZADOR_SECRET) throw new Error('SHORTLINK HMAC not configured');
     const { data } = await axios.post(COTIZADOR_SHORT_API, body, {
       headers: { 'Content-Type':'application/json', 'X-Short-Sign': sign },
       timeout: 5000
