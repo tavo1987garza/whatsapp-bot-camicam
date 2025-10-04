@@ -186,19 +186,6 @@ function b64u(buf){ return Buffer.from(buf).toString('base64').replace(/=/g,'').
 function b64uJson(obj){ return b64u(Buffer.from(JSON.stringify(obj), 'utf8')); }
 function signP64(p64, secret){ const mac = crypto.createHmac('sha256', secret).update(p64).digest(); return b64u(mac); }
 
-/** Stateless (fallback) */
-function buildCotizadorShortLinkStateless({ tipoEvento, fechaISO, telefono }){
-  const eventoNorm = String(tipoEvento||'OTRO').toUpperCase();
-  const e = eventoNorm.includes('XV') ? 'XV' : eventoNorm.includes('BODA') ? 'BODA' : 'OTRO';
-  const f = String(fechaISO||'');
-  const s = f ? 3 : 2;
-  const p = String(telefono||'');
-  const t = Date.now();
-  const p64 = b64uJson({ e, f, p, s, t });
-  const sig = signP64(p64, COTIZADOR_SECRET);
-  return `${COTIZADOR_URL}/d/${p64}.${sig}`;
-}
-
 /** Stateful (preferido) */
 async function buildCotizadorShortLinkStateful({ tipoEvento, fechaISO, telefono }){
   const eventoNorm = String(tipoEvento||'OTRO').toUpperCase();
@@ -209,13 +196,11 @@ async function buildCotizadorShortLinkStateful({ tipoEvento, fechaISO, telefono 
   const t = Date.now();
   const body = { e, f, p, s, t };
 
-  // por qué: anti-tamper entre bot y cotizador
-  // por qué: anti-tamper entre bot y cotizador
-const raw = Buffer.from(JSON.stringify(body), 'utf8');
-const sign = crypto.createHmac('sha256', COTIZADOR_SECRET).update(raw).digest('hex');
+  // Usamos COTIZADOR_SECRET (ya validado al inicio del archivo) para firmar
+  const raw = Buffer.from(JSON.stringify(body), 'utf8');
+  const sign = crypto.createHmac('sha256', COTIZADOR_SECRET).update(raw).digest('hex');
 
   try{
-    if(!COTIZADOR_SECRET) throw new Error('SHORTLINK HMAC not configured');
     const { data } = await axios.post(COTIZADOR_SHORT_API, body, {
       headers: { 'Content-Type':'application/json', 'X-Short-Sign': sign },
       timeout: 5000
