@@ -186,13 +186,14 @@ function b64u(buf){ return Buffer.from(buf).toString('base64').replace(/=/g,'').
 function b64uJson(obj){ return b64u(Buffer.from(JSON.stringify(obj), 'utf8')); }
 function signP64(p64, secret){ const mac = crypto.createHmac('sha256', secret).update(p64).digest(); return b64u(mac); }
 
+
 /** Stateful (preferido) */
 async function buildCotizadorShortLinkStateful({ tipoEvento, fechaISO, telefono }){
-  const eventoNorm = String(tipoEvento||'OTRO').toUpperCase();
+  const eventoNorm = String(tipoEvento || 'OTRO').toUpperCase();
   const e = eventoNorm.includes('XV') ? 'XV' : eventoNorm.includes('BODA') ? 'BODA' : 'OTRO';
-  const f = String(fechaISO||'');
+  const f = String(fechaISO || '');
   const s = f ? 3 : 2;
-  const p = String(telefono||'');
+  const p = String(telefono || '');
   const t = Date.now();
   const body = { e, f, p, s, t };
 
@@ -200,16 +201,19 @@ async function buildCotizadorShortLinkStateful({ tipoEvento, fechaISO, telefono 
   const raw = Buffer.from(JSON.stringify(body), 'utf8');
   const sign = crypto.createHmac('sha256', COTIZADOR_SECRET).update(raw).digest('hex');
 
-  try{
+  try {
     const { data } = await axios.post(COTIZADOR_SHORT_API, body, {
-      headers: { 'Content-Type':'application/json', 'X-Short-Sign': sign },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Short-Sign': sign
+      },
       timeout: 5000
     });
     if (data?.ok && data?.id) {
       return `${COTIZADOR_URL}/s/${data.id}`;
     }
     throw new Error('Bad short API response');
-  }catch(e){
+  } catch (e) {
     console.warn('[shortlink stateful] fallo, usando fallback stateless:', e.message);
     return buildCotizadorShortLinkStateless({ tipoEvento, fechaISO, telefono });
   }
