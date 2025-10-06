@@ -194,11 +194,11 @@ async function getLeadIdByPhone(phone) {
   }
 }
 
-/* ===== CRM: actualizar estado del lead por teléfono ===== */
+// ===== CRM: actualizar estado (solo para estados no-seguimiento) =====
 async function updateLeadStatusByPhone(phone, newStatus) {
-  const validStates = ["Contacto Inicial", "En proceso", "Seguimiento", "Cliente", "No cliente"];
+  const validStates = ["Contacto Inicial", "En proceso", "Cliente", "No cliente"];
   if (!validStates.includes(newStatus)) {
-    console.error("Estado inválido:", newStatus);
+    console.error("Estado inválido para actualización directa:", newStatus);
     return;
   }
 
@@ -215,6 +215,19 @@ async function updateLeadStatusByPhone(phone, newStatus) {
   } catch (e) {
     console.error("updateLeadStatusByPhone:", e.message);
   }
+}
+
+// ===== CRM: enviar evento de seguimiento específico =====
+async function reportFollowUpType(to, tipoEvento) {
+  let seguimientoType;
+  if ((tipoEvento || "").toLowerCase().includes("xv")) {
+    seguimientoType = "XV";
+  } else if ((tipoEvento || "").toLowerCase().includes("boda") || (tipoEvento || "").toLowerCase().includes("wedding")) {
+    seguimientoType = "Boda";
+  } else {
+    seguimientoType = "Otro";
+  }
+  await reportMessageToCRM(to, `EVENT:lead_seguimiento ${seguimientoType}`, "enviado");
 }
 
 /* ===== WhatsApp helpers ===== */
@@ -481,7 +494,7 @@ async function flujoPaquetePostFechaOK(from, context, pretty, tipoEvento) {
 
 /* ===== Manejo de decisiones del usuario ===== */
 async function handleArmarMiPaquete(from, context) {
-  await updateLeadStatusByPhone(from, "Seguimiento"); // ✅ Estado: Seguimiento
+  await reportFollowUpType(from, context.tipoEvento); // ✅ Nuevo
   context.estado = "EnviandoACotizador";
   await saveContext(from, context);
   await reportEventToCRM(from, 'cotizador_web_click', { origin: context.tipoEvento || 'desconocido' });
@@ -510,9 +523,8 @@ async function handleArmarMiPaquete(from, context) {
   await saveContext(from, context);
   await solicitarLugar(from, context);
 }
-
 async function handleConfirmarPaqueteXV(from, context) {
-  await updateLeadStatusByPhone(from, "Seguimiento"); // ✅ Estado: Seguimiento
+  await reportFollowUpType(from, context.tipoEvento); // ✅ Nuevo
   context.serviciosSeleccionados = "PAQUETE MIS XV";
   context.estado = "EsperandoLugar";
   await saveContext(from, context);
@@ -520,7 +532,7 @@ async function handleConfirmarPaqueteXV(from, context) {
 }
 
 async function handleConfirmarPaqueteWedding(from, context) {
-  await updateLeadStatusByPhone(from, "Seguimiento"); // ✅ Estado: Seguimiento
+  await reportFollowUpType(from, context.tipoEvento); // ✅ Nuevo
   context.serviciosSeleccionados = "PAQUETE WEDDING";
   context.estado = "EsperandoLugar";
   await saveContext(from, context);
