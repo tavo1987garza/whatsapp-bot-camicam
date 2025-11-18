@@ -567,9 +567,12 @@ async function handleIntent(from, context, intent) {
   }
 }
 
+
 /* ===== Tipo de evento ===== */
 async function handleTipoEvento(from, msgLower, context) {
-  if (msgLower.includes("boda")) {
+  console.log('🔍 Detectando tipo evento con texto:', msgLower); // ← Agrega esto para debug
+  
+  if (msgLower.includes("boda") || msgLower.includes("wedding") || msgLower.includes("casamiento")) {
     context.tipoEvento = "Boda";
     await saveContext(from, context);
     await sendWhatsAppMessage(from, "¡Felicidades por su boda! ❤️");
@@ -581,13 +584,15 @@ async function handleTipoEvento(from, msgLower, context) {
     await saveContext(from, context);
     return true;
   }
-  if (msgLower.includes("xv") || msgLower.includes("quince")) {
+  
+  if (msgLower.includes("xv") || msgLower.includes("quince") || msgLower.includes("15") || msgLower.includes("fiesta de quince")) {
     context.tipoEvento = "XV";
     await saveContext(from, context);
     await sendWhatsAppMessage(from, "¡Felicidades! ✨ Hagamos unos XV espectaculares.");
     await solicitarFecha(from, context);
     return true;
   }
+  
   context.tipoEvento = "Otro";
   await saveContext(from, context);
   await sendWhatsAppMessage(from, "¡Excelente! ✨ Hagamos su evento único.");
@@ -598,6 +603,7 @@ async function handleTipoEvento(from, msgLower, context) {
   await saveContext(from, context);
   return true;
 }
+
 
 /* ===== Manejador principal de mensajes ===== */
 async function handleUserMessage(from, userText, messageLower) {
