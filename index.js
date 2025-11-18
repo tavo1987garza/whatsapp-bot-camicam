@@ -16,7 +16,7 @@ dotenv.config();
 
 /* ===== Configuración global ===== */
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 const CRM_BASE_URL = process.env.CRM_BASE_URL || "https://camicam-crm-d78af2926170.herokuapp.com";
 const ALLOWED_ORIGIN = (process.env.CORS_ORIGIN || "https://camicam-crm-d78af2926170.herokuapp.com,https://cotizador-cami-cam-209c7f6faca2.herokuapp.com")
   .split(',').map(s => s.trim()).filter(Boolean);
@@ -857,5 +857,6 @@ app.post('/enviar_video', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log(`Servidor escuchando en http://localhost:${PORT}`))
-  .on('error', err => console.error('Error al iniciar servidor:', err));
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Bot de WhatsApp ejecutándose en puerto ${PORT}`);
+});
