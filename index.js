@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import multer from 'multer';
 import cors from 'cors';
 import crypto from 'crypto';
+console.log('=== BOT CAMI-CAM INICIADO ===');
 
 dotenv.config();
 
