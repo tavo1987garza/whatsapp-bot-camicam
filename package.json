@@ -22,13 +22,7 @@
     "openai": "^4.80.1",
     "uuid": "^9.0.1"
   },
-  "keywords": [
-    "whatsapp",
-    "bot",
-    "cami-cam",
-    "photography",
-    "automation"
-  ],
+  "keywords": ["whatsapp", "bot", "cami-cam", "photography", "automation"],
   "author": "Gutavo González",
   "license": "MIT",
   "engines": {
