@@ -323,13 +323,15 @@ async function sendMessageWithTypingWithState(from, message, ms, expectedState) 
 }
 
 /* ===== Contexto inicial ===== */
+
+
 async function ensureContext(from) {
   let context = await getContext(from);
-  if (!context) {
+  // Si no hay contexto o es null, crea uno nuevo
+  if (!context || typeof context !== 'object') {
     context = {
       estado: "Contacto Inicial",
       tipoEvento: null,
-      paqueteRecomendado: null,
       fecha: null,
       fechaISO: null,
       lugar: null,
@@ -413,11 +415,12 @@ async function buildCotizadorShortLinkStateful({ tipoEvento, fechaISO, telefono 
 /* ===== Flujos específicos ===== */
 const AGB_IMAGE = "https://cami-cam.com/wp-content/uploads/2023/07/audio1.jpg";
 
+
+
 async function solicitarFecha(from, context) {
   context.estado = "EsperandoFecha";
   await saveContext(from, context);
-  await sendWhatsAppMessage(from, 
-    "Indíqueme la fecha de su evento.\n\nFormato: DD/MM/AAAA o '20 de mayo 2026' 📆");
+  await sendWhatsAppMessage(from, "Indíqueme la fecha de su evento.\n\nFormato: DD/MM/AAAA o '20 de mayo 2026' 📆");
 }
 
 async function solicitarLugar(from, context) {
@@ -596,7 +599,6 @@ async function handleTipoEvento(from, msgLower, context) {
   await saveContext(from, context);
   return true;
 }
-
 
 /* ===== Manejador principal de mensajes ===== */
 async function handleUserMessage(from, userText, messageLower) {
