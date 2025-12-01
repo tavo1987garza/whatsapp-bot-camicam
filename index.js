@@ -18,8 +18,8 @@ dotenv.config();
 /* ===== Configuración global ===== */
 const app = express();
 const PORT = process.env.PORT || 3001;
-const CRM_BASE_URL = process.env.CRM_BASE_URL || "https://camicam-crm-d78af2926170.herokuapp.com";
-const ALLOWED_ORIGIN = (process.env.CORS_ORIGIN || "https://camicam-crm-d78af2926170.herokuapp.com,https://cotizador-cami-cam-209c7f6faca2.herokuapp.com")
+const CRM_BASE_URL = process.env.CRM_BASE_URL || "https://crm.cami-cam.com";
+const ALLOWED_ORIGIN = (process.env.CORS_ORIGIN || "https://crm.cami-cam.com,https://cotizador-cami-cam-209c7f6faca2.herokuapp.com")
   .split(',').map(s => s.trim()).filter(Boolean);
 const WABA_VERSION = process.env.WABA_VERSION || "v21.0";
 const PHONE_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
