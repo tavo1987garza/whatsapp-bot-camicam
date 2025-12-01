@@ -414,23 +414,16 @@ async function buildCotizadorShortLinkStateful({ tipoEvento, fechaISO, telefono 
 const AGB_IMAGE = "https://cami-cam.com/wp-content/uploads/2023/07/audio1.jpg";
 
 async function solicitarFecha(from, context) {
-  await sendMessageWithTypingWithState(
-    from,
-    "Indíqueme la fecha de su evento.\n\nFormato: DD/MM/AAAA o '20 de mayo 2026' 📆",
-    300,
-    context.estado
-  );
   context.estado = "EsperandoFecha";
   await saveContext(from, context);
+  await sendWhatsAppMessage(from, 
+    "Indíqueme la fecha de su evento.\n\nFormato: DD/MM/AAAA o '20 de mayo 2026' 📆");
 }
 
 async function solicitarLugar(from, context) {
-  await sendMessageWithTypingWithState(
-    from,
-    "Para continuar, necesito el nombre de su salón o lugar del evento 🏢",
-    300,
-    context.estado
-  );
+  context.estado = "EsperandoLugar";
+  await saveContext(from, context);
+  await sendWhatsAppMessage(from, "Para continuar, necesito el nombre de su salón o lugar del evento 🏢");
 }
 
 async function handleLugar(from, userText, context) {
