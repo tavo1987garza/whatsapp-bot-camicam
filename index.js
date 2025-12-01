@@ -635,7 +635,7 @@ async function handleUserMessage(from, userText, messageLower) {
 
   // Saludo / inicio
   if (context.estado === "Contacto Inicial") {
-    await sendWhatsAppMessage(from, "¡Hola! 👋 Soy *Cami-Bot*, a sus órdenes.");
+    await sendWhatsAppMessage(from, "¡Hola! 👋 Soy el Nuevo *Cami-Bot*, a sus órdenes.");
     await sendWhatsAppMessage(from, "¿Qué tipo de evento tiene? (Boda, XV, cumpleaños...)");
     context.estado = "EsperandoTipoEvento";
     await saveContext(from, context);
