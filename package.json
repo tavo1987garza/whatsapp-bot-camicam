@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "type": "module",
   "description": "Bot de WhatsApp para Cami Cam - Photobooth",
-  "main": "bot/index.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node bot/index.js",
-    "dev": "node --watch bot/index.js"
+    "start": "node index.js",
+    "dev": "node --watch index.js"
   },
   "dependencies": {
     "@langchain/core": "^0.3.58",
