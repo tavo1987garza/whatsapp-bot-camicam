@@ -19,7 +19,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 const CRM_BASE_URL = process.env.CRM_BASE_URL || "https://crm.cami-cam.com";
-const ALLOWED_ORIGIN = (process.env.CORS_ORIGIN || "https://crm.cami-cam.com,https://cotizador-cami-cam-209c7f6faca2.herokuapp.com")
+const ALLOWED_ORIGIN = (process.env.CORS_ORIGIN || "https://crm.cami-cam.com,https://cotizador.cami-cam.com")
   .split(',').map(s => s.trim()).filter(Boolean);
 const WABA_VERSION = process.env.WABA_VERSION || "v21.0";
 const PHONE_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
@@ -27,7 +27,7 @@ const WABA_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-const COTIZADOR_URL = (process.env.COTIZADOR_URL || "https://cotizador-cami-cam-209c7f6faca2.herokuapp.com/").replace(/\/+$/, '');
+const COTIZADOR_URL = (process.env.COTIZADOR_URL || "https://cotizador.cami-cam.com").replace(/\/+$/, '');
 const COTIZADOR_VIDEO_URL = process.env.COTIZADOR_VIDEO_URL || "https://filesamples.com/samples/video/mp4/sample_640x360.mp4";
 const COTIZADOR_SECRET = process.env.COTIZADOR_SECRET;
 const COTIZADOR_SHORT_API = `${COTIZADOR_URL}/api/short`;
