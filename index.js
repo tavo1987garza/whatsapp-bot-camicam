@@ -866,6 +866,21 @@ app.post('/enviar_video', async (req, res) => {
   }
 });
 
+// 🔹 Endpoint para limpiar cualquier estado local del bot (opcional)
+app.post('/limpiar_contexto', async (req, res) => {
+  try {
+    const { telefono } = req.body;
+    if (!telefono) {
+      return res.status(400).json({ error: 'Falta el número de teléfono' });
+    }
+    console.log(`🧹 Contexto limpiado para ${telefono} (notificación recibida del CRM)`);
+    return res.json({ ok: true });
+  } catch (e) {
+    console.error("limpiar_contexto:", e.message);
+    return res.status(500).json({ error: 'Error interno' });
+  }
+});
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Bot de WhatsApp ejecutándose en puerto ${PORT}`);
 });
