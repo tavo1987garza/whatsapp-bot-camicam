@@ -163,7 +163,6 @@ app.post('/webhook', async (req, res) => {
           Key: key,
           Body: bin.data,
           ContentType: mediaType === 'image' ? 'image/jpeg' : 'video/mp4',
-          ACL: 'public-read'
         }).promise();
         
         // Avisar al CRM con la URL de S3
