@@ -168,6 +168,39 @@ async function sendWhatsAppButtons(to, bodyText, buttons, customToken, customPho
   }
 }
 
+// Función para simular que el bot está escribiendo
+async function sendTypingIndicator(to, customToken, customPhoneId) {
+  try {
+    const url = `https://graph.facebook.com/${WABA_VERSION}/${customPhoneId}/messages`;
+    const headers = { Authorization: `Bearer ${customToken}`, 'Content-Type': 'application/json' };
+    
+    // Payload oficial de Meta para mostrar "Escribiendo..."
+    await axios.post(url, {
+      messaging_product: 'whatsapp',
+      recipient_type: 'individual',
+      to: to,
+      type: 'text',
+      text: { preview_url: false } // El cuerpo vacío activa el indicador
+    }, { headers, timeout: 5000 });
+  } catch (e) {
+    // Ignoramos errores aquí, no es crítico si falla el indicador de escritura
+  }
+}
+
+// Función wrapper que aplica el delay antes de enviar cualquier cosa
+async function sendWithDelay(to, sendFunction, delaySeconds, ...args) {
+  const delay = parseInt(delaySeconds) || 0;
+  
+  if (delay > 0) {
+    await sendTypingIndicator(to, args[2], args[3]); // Muestra "Escribiendo..."
+    await new Promise(resolve => setTimeout(resolve, delay * 1000)); // Espera N segundos
+  }
+  
+  // Ejecuta la función de envío real (sendWhatsAppMessage, sendImageMessage, etc.)
+  await sendFunction(to, ...args);
+}
+
+
 
 /* ===== Webhooks de Meta ===== */
 app.get('/webhook', (req, res) => {
@@ -240,31 +273,32 @@ app.post('/webhook', async (req, res) => {
     // 3. 🚀 NUEVO: Si el CRM devuelve una respuesta automática, el bot la interpreta y envía
     if (crmResponse.data?.bot_response) {
       const respuesta = crmResponse.data.bot_response;
+      const token = process.env.WHATSAPP_ACCESS_TOKEN;
+      const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
       
-      // Si es un objeto (viene de un Flujo con tipo específico)
       if (typeof respuesta === 'object' && respuesta.type) {
         const tipo = respuesta.type;
         const caption = respuesta.caption || "";
         const url = respuesta.url || "";
         const buttons = respuesta.bot_buttons || [];
+        const delay = respuesta.delay || 0; // <-- Nuevo campo
 
         if (tipo === 'imagen' && url) {
-          await sendImageMessage(from, url, caption, process.env.WHATSAPP_ACCESS_TOKEN, process.env.WHATSAPP_PHONE_NUMBER_ID);
+          await sendWithDelay(from, sendImageMessage, delay, url, caption, token, phoneId);
         } 
         else if (tipo === 'video' && url) {
-          await sendWhatsAppVideo(from, url, caption, process.env.WHATSAPP_ACCESS_TOKEN, process.env.WHATSAPP_PHONE_NUMBER_ID);
+          await sendWithDelay(from, sendWhatsAppVideo, delay, url, caption, token, phoneId);
         } 
         else if (tipo === 'opciones' && buttons.length > 0) {
-          await sendWhatsAppButtons(from, caption, buttons, process.env.WHATSAPP_ACCESS_TOKEN, process.env.WHATSAPP_PHONE_NUMBER_ID);
+          await sendWithDelay(from, sendWhatsAppButtons, delay, caption, buttons, token, phoneId);
         } 
         else {
-          // Fallback a mensaje de texto normal
-          await sendWhatsAppMessage(from, caption, process.env.WHATSAPP_ACCESS_TOKEN, process.env.WHATSAPP_PHONE_NUMBER_ID);
+          await sendWithDelay(from, sendWhatsAppMessage, delay, caption, token, phoneId);
         }
       } 
-      // Si es un string simple (viene de una Keyword tradicional)
       else if (typeof respuesta === 'string') {
-        await sendWhatsAppMessage(from, respuesta, process.env.WHATSAPP_ACCESS_TOKEN, process.env.WHATSAPP_PHONE_NUMBER_ID);
+        // Para keywords tradicionales, podemos poner un delay por defecto de 1 segundo
+        await sendWithDelay(from, sendWhatsAppMessage, 1, respuesta, token, phoneId);
       }
     }
 
