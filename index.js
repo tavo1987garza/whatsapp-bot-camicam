@@ -123,6 +123,52 @@ async function sendWhatsAppVideo(to, videoUrl, caption, customToken, customPhone
   }
 }
 
+
+async function sendWhatsAppButtons(to, bodyText, buttons, customToken, customPhoneId) {
+  try {
+    if (!customToken || !customPhoneId || !bodyText || !buttons || buttons.length === 0) {
+      console.error("❌ Faltan datos para enviar botones");
+      return;
+    }
+
+    // WhatsApp limita a 3 botones de tipo "reply" y 20 caracteres máx. por título
+    const validButtons = buttons.slice(0, 3).map((btnText, index) => ({
+      type: "reply",
+      reply: {
+        id: `btn_${index}`, 
+        title: btnText.substring(0, 20) 
+      }
+    }));
+
+    const url = `https://graph.facebook.com/${WABA_VERSION}/${customPhoneId}/messages`;
+    const headers = { 
+      Authorization: `Bearer ${customToken}`, 
+      'Content-Type': 'application/json' 
+    };
+
+    const payload = {
+      messaging_product: 'whatsapp',
+      to: to,
+      type: 'interactive',
+      interactive: {
+        type: 'button',
+        body: { text: bodyText },
+        action: { buttons: validButtons }
+      }
+    };
+
+    const { data } = await axios.post(url, payload, { headers, timeout: 15000 });
+    console.log("✅ WA buttons ok:", data?.messages?.[0]?.id || "ok");
+    
+    // Reportar al CRM que se enviaron botones
+    await reportMessageToCRM(to, `[BOTONES] ${bodyText} | Opciones: ${buttons.join(', ')}`, "enviado_opciones");
+
+  } catch (e) {
+    console.error("❌ WA buttons error:", e.response?.data || e.message);
+  }
+}
+
+
 /* ===== Webhooks de Meta ===== */
 app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
@@ -149,7 +195,7 @@ app.post('/webhook', async (req, res) => {
       try {
         const mediaId = message[mediaType].id;
         const meta = await axios.get(`https://graph.facebook.com/${WABA_VERSION}/${mediaId}`, {
-          headers: { Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}` } // Token genérico solo para descargar
+          headers: { Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}` }
         });
         const directUrl = meta.data.url;
         const bin = await axios.get(directUrl, {
@@ -165,11 +211,9 @@ app.post('/webhook', async (req, res) => {
           ContentType: mediaType === 'image' ? 'image/jpeg' : 'video/mp4',
         }).promise();
         
-        // Avisar al CRM con la URL de S3
         await reportMessageToCRM(from, up.Location, `recibido_${mediaType}`);
       } catch (e) {
         console.error(`❌ Error procesando ${mediaType} entrante:`, e.message);
-        // Fallback: avisar al CRM que llegó algo, aunque falle la subida
         await reportMessageToCRM(from, "[Archivo multimedia]", `recibido_${mediaType}`);
       }
       return res.sendStatus(200);
@@ -185,7 +229,7 @@ app.post('/webhook', async (req, res) => {
       userMessage = message.interactive.list_reply.title || message.interactive.list_reply.id;
     }
 
-    // Enviar al CRM. El CRM decidirá si hay una respuesta automática (keyword/flow) y la devolverá en "bot_response"
+    // Enviar al CRM. El CRM decidirá si hay una respuesta automática (keyword/flow)
     const crmResponse = await axios.post(`${CRM_BASE_URL}/recibir_mensaje`, {
       plataforma: "WhatsApp",
       remitente: from,
@@ -193,17 +237,35 @@ app.post('/webhook', async (req, res) => {
       tipo: "recibido"
     }, { timeout: 7000 });
 
-    // Si el CRM devuelve una respuesta automática, el bot la envía
+    // 3. 🚀 NUEVO: Si el CRM devuelve una respuesta automática, el bot la interpreta y envía
     if (crmResponse.data?.bot_response) {
-      // Nota: Para respuestas automáticas del CRM, usamos las credenciales por defecto del .env 
-      // o idealmente, el CRM también debería devolver el token/phone_id si la respuesta es inmediata.
-      // Por simplicidad, usamos las del .env como fallback para la respuesta automática del bot.
-      await sendWhatsAppMessage(
-        from, 
-        crmResponse.data.bot_response, 
-        process.env.WHATSAPP_ACCESS_TOKEN, 
-        process.env.WHATSAPP_PHONE_NUMBER_ID
-      );
+      const respuesta = crmResponse.data.bot_response;
+      
+      // Si es un objeto (viene de un Flujo con tipo específico)
+      if (typeof respuesta === 'object' && respuesta.type) {
+        const tipo = respuesta.type;
+        const caption = respuesta.caption || "";
+        const url = respuesta.url || "";
+        const buttons = respuesta.bot_buttons || [];
+
+        if (tipo === 'imagen' && url) {
+          await sendImageMessage(from, url, caption, process.env.WHATSAPP_ACCESS_TOKEN, process.env.WHATSAPP_PHONE_NUMBER_ID);
+        } 
+        else if (tipo === 'video' && url) {
+          await sendWhatsAppVideo(from, url, caption, process.env.WHATSAPP_ACCESS_TOKEN, process.env.WHATSAPP_PHONE_NUMBER_ID);
+        } 
+        else if (tipo === 'opciones' && buttons.length > 0) {
+          await sendWhatsAppButtons(from, caption, buttons, process.env.WHATSAPP_ACCESS_TOKEN, process.env.WHATSAPP_PHONE_NUMBER_ID);
+        } 
+        else {
+          // Fallback a mensaje de texto normal
+          await sendWhatsAppMessage(from, caption, process.env.WHATSAPP_ACCESS_TOKEN, process.env.WHATSAPP_PHONE_NUMBER_ID);
+        }
+      } 
+      // Si es un string simple (viene de una Keyword tradicional)
+      else if (typeof respuesta === 'string') {
+        await sendWhatsAppMessage(from, respuesta, process.env.WHATSAPP_ACCESS_TOKEN, process.env.WHATSAPP_PHONE_NUMBER_ID);
+      }
     }
 
     return res.sendStatus(200);
