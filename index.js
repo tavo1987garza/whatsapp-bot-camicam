@@ -276,41 +276,29 @@ app.post('/webhook', async (req, res) => {
       const token = process.env.WHATSAPP_ACCESS_TOKEN;
       const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
       
-      // ARRAY de acciones (motor v2)
-      if (Array.isArray(respuesta)) {
-        for (const accion of respuesta) {
-          try {
-            if (accion.type === 'delay') {
-              await new Promise(resolve => setTimeout(resolve, (accion.seconds || 1) * 1000));
-              continue;
-            }
-            
-            const delay = accion.delay || 0;
-            if (delay > 0) {
-              await sendTypingIndicator(from, token, phoneId);
-              await new Promise(resolve => setTimeout(resolve, delay * 1000));
-            }
-            
-            if (accion.type === 'mensaje') {
-              await sendWhatsAppMessage(from, accion.caption || "", token, phoneId);
-            } 
-            else if (accion.type === 'imagen' && accion.url) {
-              await sendImageMessage(from, accion.url, accion.caption || "", token, phoneId);
-            } 
-            else if (accion.type === 'video' && accion.url) {
-              await sendWhatsAppVideo(from, accion.url, accion.caption || "", token, phoneId);
-            } 
-            else if (accion.type === 'opciones' && accion.botones?.length > 0) {
-              await sendWhatsAppButtons(from, accion.caption || "", accion.botones, token, phoneId);
-            }
-          } catch (err) {
-            console.error("❌ Error ejecutando acción del flujo:", err);
-          }
+      if (typeof respuesta === 'object' && respuesta.type) {
+        const tipo = respuesta.type;
+        const caption = respuesta.caption || "";
+        const url = respuesta.url || "";
+        const buttons = respuesta.bot_buttons || [];
+        const delay = respuesta.delay || 0; // <-- Nuevo campo
+
+        if (tipo === 'imagen' && url) {
+          await sendWithDelay(from, sendImageMessage, delay, url, caption, token, phoneId);
+        } 
+        else if (tipo === 'video' && url) {
+          await sendWithDelay(from, sendWhatsAppVideo, delay, url, caption, token, phoneId);
+        } 
+        else if (tipo === 'opciones' && buttons.length > 0) {
+          await sendWithDelay(from, sendWhatsAppButtons, delay, caption, buttons, token, phoneId);
+        } 
+        else {
+          await sendWithDelay(from, sendWhatsAppMessage, delay, caption, token, phoneId);
         }
-      }
-      // String simple (keyword tradicional)
+      } 
       else if (typeof respuesta === 'string') {
-        await sendWhatsAppMessage(from, respuesta, token, phoneId);
+        // Para keywords tradicionales, podemos poner un delay por defecto de 1 segundo
+        await sendWithDelay(from, sendWhatsAppMessage, 1, respuesta, token, phoneId);
       }
     }
 
