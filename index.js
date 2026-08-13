@@ -221,18 +221,318 @@ async function sendTypingIndicator(to, customToken, customPhoneId) {
   }
 }
 
-// Función wrapper que aplica el delay antes de enviar cualquier cosa
-async function sendWithDelay(to, sendFunction, delaySeconds, ...args) {
-  const delay = parseInt(delaySeconds) || 0;
-  
-  if (delay > 0) {
-    await sendTypingIndicator(to, args[2], args[3]); // Muestra "Escribiendo..."
-    await new Promise(resolve => setTimeout(resolve, delay * 1000)); // Espera N segundos
+// ============================================================
+// WRAPPER DE ENVÍO CON DELAY
+// ============================================================
+async function sendWithDelay(
+  to,
+  sendFunction,
+  delaySeconds,
+  customToken,
+  customPhoneId,
+  ...sendArgs
+) {
+  const delay = Math.max(
+    0,
+    parseInt(delaySeconds, 10) || 0
+  );
+
+  if (!customToken || !customPhoneId) {
+    throw new Error(
+      "sendWithDelay requiere token y phoneId del tenant"
+    );
   }
-  
-  // Ejecuta la función de envío real (sendWhatsAppMessage, sendImageMessage, etc.)
-  await sendFunction(to, ...args);
+
+  if (delay > 0) {
+    await new Promise(resolve =>
+      setTimeout(resolve, delay * 1000)
+    );
+  }
+
+  await sendFunction(
+    to,
+    ...sendArgs,
+    customToken,
+    customPhoneId
+  );
 }
+
+
+
+// ==========================================
+// SEGURIDAD INTERNA CRM → BOT
+// ==========================================
+
+function validarCRMInterno(req, res, next) {
+  const secretoRecibido = req.headers['x-bot-secret'];
+  const secretoEsperado = process.env.BOT_INTERNAL_SECRET;
+
+  if (!secretoEsperado) {
+    console.error(
+      '❌ BOT_INTERNAL_SECRET no está configurado en Node'
+    );
+
+    return res.status(500).json({
+      error: 'Configuración interna incompleta'
+    });
+  }
+
+  if (secretoRecibido !== secretoEsperado) {
+    console.warn(
+      '⛔ Intento no autorizado contra endpoint interno'
+    );
+
+    return res.status(401).json({
+      error: 'No autorizado'
+    });
+  }
+
+  next();
+}
+
+
+/* ===== Endpoints para envío manual desde el CRM (Multi-Tenant) ===== */
+app.post(
+  '/enviar_mensaje',
+  validarCRMInterno,
+  async (req, res) => {
+    try {
+      const {
+        telefono,
+        mensaje,
+        whatsapp_token,
+        whatsapp_phone_id,
+        delay = 0
+      } = req.body;
+
+      if (!telefono || !mensaje) {
+        return res.status(400).json({
+          error: 'Faltan datos: telefono o mensaje'
+        });
+      }
+
+      if (!whatsapp_token || !whatsapp_phone_id) {
+        return res.status(400).json({
+          error: 'Faltan credenciales WhatsApp del tenant'
+        });
+      }
+
+      await sendWithDelay(
+        telefono,
+        sendWhatsAppMessage,
+        delay,
+        whatsapp_token,
+        whatsapp_phone_id,
+        mensaje
+      );
+
+      return res.json({
+        ok: true
+      });
+
+    } catch (e) {
+      console.error(
+        '❌ enviar_mensaje:',
+        e.response?.data || e.message
+      );
+
+      return res.status(500).json({
+        error: 'Error al enviar a WhatsApp'
+      });
+    }
+  }
+);
+
+app.post(
+  '/enviar_imagen',
+  validarCRMInterno,
+  async (req, res) => {
+    try {
+      const {
+        telefono,
+        imageUrl,
+        caption = '',
+        whatsapp_token,
+        whatsapp_phone_id,
+        delay = 0
+      } = req.body;
+
+      if (!telefono || !imageUrl) {
+        return res.status(400).json({
+          error: 'Faltan datos: telefono o imageUrl'
+        });
+      }
+
+      // 🔐 MULTI-TENANT ESTRICTO
+      if (!whatsapp_token || !whatsapp_phone_id) {
+        console.error(
+          '⛔ /enviar_imagen llamado sin credenciales del tenant'
+        );
+
+        return res.status(400).json({
+          error: 'Faltan credenciales WhatsApp del tenant'
+        });
+      }
+
+      await sendWithDelay(
+        telefono,
+        sendImageMessage,
+        delay,
+        whatsapp_token,
+        whatsapp_phone_id,
+        imageUrl,
+        caption
+      );
+
+      return res.json({
+        ok: true
+      });
+
+    } catch (e) {
+      console.error(
+        '❌ enviar_imagen:',
+        e.response?.data || e.message
+      );
+
+      return res.status(500).json({
+        error: 'Error al enviar imagen'
+      });
+    }
+  }
+);
+
+app.post(
+  '/enviar_video',
+  validarCRMInterno,
+  async (req, res) => {
+    try {
+      const {
+        telefono,
+        videoUrl,
+        caption = '',
+        whatsapp_token,
+        whatsapp_phone_id,
+        delay = 0
+      } = req.body;
+
+      if (!telefono || !videoUrl) {
+        return res.status(400).json({
+          error: 'Faltan datos: telefono o videoUrl'
+        });
+      }
+
+      // 🔐 MULTI-TENANT ESTRICTO
+      if (!whatsapp_token || !whatsapp_phone_id) {
+        console.error(
+          '⛔ /enviar_video llamado sin credenciales del tenant'
+        );
+
+        return res.status(400).json({
+          error: 'Faltan credenciales WhatsApp del tenant'
+        });
+      }
+
+      await sendWithDelay(
+        telefono,
+        sendWhatsAppVideo,
+        delay,
+        whatsapp_token,
+        whatsapp_phone_id,
+        videoUrl,
+        caption
+      );
+
+      return res.json({
+        ok: true
+      });
+
+    } catch (e) {
+      console.error(
+        '❌ enviar_video:',
+        e.response?.data || e.message
+      );
+
+      return res.status(500).json({
+        error: 'Error al enviar video'
+      });
+    }
+  }
+);
+
+app.post(
+  '/enviar_botones',
+  validarCRMInterno,
+  async (req, res) => {
+    try {
+      const {
+        telefono,
+        mensaje = 'Selecciona una opción:',
+        opciones,
+        whatsapp_token,
+        whatsapp_phone_id,
+        delay = 0
+      } = req.body;
+
+      if (!telefono) {
+        return res.status(400).json({
+          error: 'Falta telefono'
+        });
+      }
+
+      if (!Array.isArray(opciones) || opciones.length === 0) {
+        return res.status(400).json({
+          error: 'Faltan opciones'
+        });
+      }
+
+      // 🔐 MULTI-TENANT ESTRICTO
+      if (!whatsapp_token || !whatsapp_phone_id) {
+        console.error(
+          '⛔ /enviar_botones llamado sin credenciales del tenant'
+        );
+
+        return res.status(400).json({
+          error: 'Faltan credenciales WhatsApp del tenant'
+        });
+      }
+
+      // WhatsApp reply buttons: máximo 3
+      const botones = opciones
+        .slice(0, 3)
+        .filter(opcion => opcion && opcion.id && opcion.title);
+
+      if (botones.length === 0) {
+        return res.status(400).json({
+          error: 'Las opciones no tienen formato válido'
+        });
+      }
+
+      await sendWithDelay(
+        telefono,
+        sendWhatsAppButtons,
+        delay,
+        whatsapp_token,
+        whatsapp_phone_id,
+        mensaje,
+        botones
+      );
+
+      return res.json({
+        ok: true
+      });
+
+    } catch (e) {
+      console.error(
+        '❌ enviar_botones:',
+        e.response?.data || e.message
+      );
+
+      return res.status(500).json({
+        error: 'Error al enviar botones'
+      });
+    }
+  }
+);
 
 
 
@@ -343,54 +643,6 @@ return res.sendStatus(200);
   }
 });
 
-/* ===== Endpoints para envío manual desde el CRM (Multi-Tenant) ===== */
-app.post('/enviar_mensaje', async (req, res) => {
-  try {
-    const { telefono, mensaje, whatsapp_token, whatsapp_phone_id } = req.body;
-    if (!telefono || !mensaje) return res.status(400).json({ error: 'Faltan datos' });
-    
-    const token = whatsapp_token || process.env.WHATSAPP_ACCESS_TOKEN;
-    const phoneId = whatsapp_phone_id || process.env.WHATSAPP_PHONE_NUMBER_ID;
-
-    await sendWhatsAppMessage(telefono, mensaje, token, phoneId);
-    res.json({ ok: true });
-  } catch (e) {
-    console.error("❌ enviar_mensaje:", e.message);
-    res.status(500).json({ error: 'Error al enviar a WhatsApp' });
-  }
-});
-
-app.post('/enviar_imagen', async (req, res) => {
-  try {
-    const { telefono, imageUrl, caption, whatsapp_token, whatsapp_phone_id } = req.body;
-    if (!telefono || !imageUrl) return res.status(400).json({ error: 'Faltan datos (telefono, imageUrl)' });
-    
-    const token = whatsapp_token || process.env.WHATSAPP_ACCESS_TOKEN;
-    const phoneId = whatsapp_phone_id || process.env.WHATSAPP_PHONE_NUMBER_ID;
-
-    await sendImageMessage(telefono, imageUrl, caption, token, phoneId);
-    res.json({ ok: true });
-  } catch (e) {
-    console.error("❌ enviar_imagen:", e.message);
-    res.status(500).json({ error: 'Error al enviar imagen' });
-  }
-});
-
-app.post('/enviar_video', async (req, res) => {
-  try {
-    const { telefono, videoUrl, caption, whatsapp_token, whatsapp_phone_id } = req.body;
-    if (!telefono || !videoUrl) return res.status(400).json({ error: 'Faltan datos (telefono, videoUrl)' });
-    
-    const token = whatsapp_token || process.env.WHATSAPP_ACCESS_TOKEN;
-    const phoneId = whatsapp_phone_id || process.env.WHATSAPP_PHONE_NUMBER_ID;
-
-    await sendWhatsAppVideo(telefono, videoUrl, caption, token, phoneId);
-    res.json({ ok: true });
-  } catch (e) {
-    console.error("❌ enviar_video:", e.message);
-    res.status(500).json({ error: 'Error al enviar video' });
-  }
-});
 
 /* ===== Health Check ===== */
 app.get('/', (_req, res) => res.send('🤖 Bot Multi-Tenant OK! 🚀'));
