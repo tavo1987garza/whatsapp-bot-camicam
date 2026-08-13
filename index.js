@@ -38,16 +38,50 @@ const shouldSkipDuplicateSend = (to, key) => {
 };
 
 /* ===== Puente: Enviar mensaje entrante al CRM ===== */
-async function reportMessageToCRM(remitente, mensaje, tipo = "recibido") {
+async function reportMessageToCRM(
+  remitente,
+  mensaje,
+  tipo = "recibido",
+  whatsappPhoneId
+) {
   try {
-    await axios.post(`${CRM_BASE_URL}/recibir_mensaje`, {
-      plataforma: "WhatsApp",
-      remitente: remitente,
-      mensaje: mensaje,
-      tipo: tipo
-    }, { timeout: 7000 });
+
+    if (!whatsappPhoneId) {
+      throw new Error("Falta whatsappPhoneId para identificar tenant");
+    }
+
+    const headers = {
+      "Content-Type": "application/json",
+      "X-Bot-Secret": process.env.BOT_INTERNAL_SECRET
+    };
+
+    const { data } = await axios.post(
+      `${CRM_BASE_URL}/recibir_mensaje`,
+      {
+        plataforma: "whatsapp",
+        remitente: remitente,
+        mensaje: mensaje,
+        tipo: tipo,
+
+        // 🔐 Flask resolverá cliente_id usando este valor.
+        whatsapp_phone_id: whatsappPhoneId
+      },
+      {
+        headers,
+        timeout: 15000
+      }
+    );
+
+    return data;
+
   } catch (e) {
-    console.error("❌ Error reportando al CRM:", e.response?.data || e.message);
+
+    console.error(
+      "❌ Error reportando al CRM:",
+      e.response?.data || e.message
+    );
+
+    throw e;
   }
 }
 
@@ -218,8 +252,18 @@ app.post('/webhook', async (req, res) => {
   try {
     const entry = req.body?.entry?.[0]?.changes?.[0]?.value || {};
     const message = entry?.messages?.[0];
+
     if (!message) return res.sendStatus(200);
-    
+
+    // 🔐 Identificador REAL del número de WhatsApp que recibió el mensaje.
+    // Este valor será usado por Flask para identificar el tenant.
+    const inboundPhoneId = entry?.metadata?.phone_number_id;
+
+    if (!inboundPhoneId) {
+      console.error("❌ Webhook recibido sin metadata.phone_number_id");
+      return res.sendStatus(200);
+    }
+
     const from = message.from;
 
     // 1. Manejo de multimedia entrante (Descargar de Meta -> Subir a S3 -> Avisar al CRM)
@@ -244,65 +288,55 @@ app.post('/webhook', async (req, res) => {
           ContentType: mediaType === 'image' ? 'image/jpeg' : 'video/mp4',
         }).promise();
         
-        await reportMessageToCRM(from, up.Location, `recibido_${mediaType}`);
+        await reportMessageToCRM(
+          from,
+          up.Location,
+          `recibido_${mediaType}`,
+          inboundPhoneId
+        );
       } catch (e) {
         console.error(`❌ Error procesando ${mediaType} entrante:`, e.message);
-        await reportMessageToCRM(from, "[Archivo multimedia]", `recibido_${mediaType}`);
+        await reportMessageToCRM(
+          from,
+          "[Archivo multimedia]",
+          `recibido_${mediaType}`,
+          inboundPhoneId
+        );
       }
       return res.sendStatus(200);
     }
 
     // 2. Manejo de texto o botones
-    let userMessage = "";
-    if (message.text?.body) {
-      userMessage = message.text.body;
-    } else if (message.interactive?.button_reply) {
-      userMessage = message.interactive.button_reply.title || message.interactive.button_reply.id;
-    } else if (message.interactive?.list_reply) {
-      userMessage = message.interactive.list_reply.title || message.interactive.list_reply.id;
-    }
+// 2. Manejo de texto o botones
+let userMessage = "";
 
-    // Enviar al CRM. El CRM decidirá si hay una respuesta automática (keyword/flow)
-    const crmResponse = await axios.post(`${CRM_BASE_URL}/recibir_mensaje`, {
-      plataforma: "WhatsApp",
-      remitente: from,
-      mensaje: userMessage,
-      tipo: "recibido"
-    }, { timeout: 7000 });
+if (message.text?.body) {
+  userMessage = message.text.body;
 
-    // 3. 🚀 NUEVO: Si el CRM devuelve una respuesta automática, el bot la interpreta y envía
-    if (crmResponse.data?.bot_response) {
-      const respuesta = crmResponse.data.bot_response;
-      const token = process.env.WHATSAPP_ACCESS_TOKEN;
-      const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-      
-      if (typeof respuesta === 'object' && respuesta.type) {
-        const tipo = respuesta.type;
-        const caption = respuesta.caption || "";
-        const url = respuesta.url || "";
-        const buttons = respuesta.bot_buttons || [];
-        const delay = respuesta.delay || 0; // <-- Nuevo campo
+} else if (message.interactive?.button_reply) {
 
-        if (tipo === 'imagen' && url) {
-          await sendWithDelay(from, sendImageMessage, delay, url, caption, token, phoneId);
-        } 
-        else if (tipo === 'video' && url) {
-          await sendWithDelay(from, sendWhatsAppVideo, delay, url, caption, token, phoneId);
-        } 
-        else if (tipo === 'opciones' && buttons.length > 0) {
-          await sendWithDelay(from, sendWhatsAppButtons, delay, caption, buttons, token, phoneId);
-        } 
-        else {
-          await sendWithDelay(from, sendWhatsAppMessage, delay, caption, token, phoneId);
-        }
-      } 
-      else if (typeof respuesta === 'string') {
-        // Para keywords tradicionales, podemos poner un delay por defecto de 1 segundo
-        await sendWithDelay(from, sendWhatsAppMessage, 1, respuesta, token, phoneId);
-      }
-    }
+  userMessage =
+    message.interactive.button_reply.id ||
+    message.interactive.button_reply.title;
 
-    return res.sendStatus(200);
+} else if (message.interactive?.list_reply) {
+
+  userMessage =
+    message.interactive.list_reply.id ||
+    message.interactive.list_reply.title;
+}
+
+if (userMessage) {
+
+  await reportMessageToCRM(
+    from,
+    userMessage,
+    "recibido",
+    inboundPhoneId
+  );
+}
+
+return res.sendStatus(200);
   } catch (e) {
     console.error("❌ Webhook error:", e.message);
     return res.sendStatus(500);
