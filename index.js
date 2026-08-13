@@ -306,7 +306,7 @@ app.post('/webhook', async (req, res) => {
       return res.sendStatus(200);
     }
 
-    // 2. Manejo de texto o botones
+  
 // 2. Manejo de texto o botones
 let userMessage = "";
 
