@@ -1,13 +1,10 @@
 // =====================================
 // file: index.js (Versión Multi-Tenant Limpia)
 // =====================================
-import AWS from 'aws-sdk';
 import axios from 'axios';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
-import multer from 'multer';
-import { v4 as uuidv4 } from 'uuid';
 
 dotenv.config();
 
@@ -20,15 +17,6 @@ const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
-
-/* ===== AWS S3 Setup ===== */
-AWS.config.update({
-  region: process.env.AWS_REGION,
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-});
-const s3 = new AWS.S3();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
 
 /* ===== Utils ===== */
 const toHttps = (u) => u?.startsWith('http://') ? u.replace(/^http:\/\//i, 'https://') : u;
@@ -621,7 +609,7 @@ app.post('/webhook', async (req, res) => {
 
     const from = message.from;
 
-    // 1. Manejo de multimedia entrante (Descargar de Meta -> Subir a S3 -> Avisar al CRM)
+    // 1. Multimedia entrante: reservar descriptor durable en Flask.
     if (message.type === "image" || message.type === "video") {
       const mediaType = message.type;
 
@@ -641,49 +629,14 @@ app.post('/webhook', async (req, res) => {
             event_id: resultadoMedia.event_id || null
           }
         );
+        return res.sendStatus(200);
       } catch (e) {
         console.error(
-          "❌ No se pudo reportar descriptor multimedia al CRM; " +
-          "continúa flujo espejo anterior:",
+          "❌ Descriptor multimedia no reservado; Meta debe reintentar:",
           e.response?.status || e.code || e.message
         );
+        return res.sendStatus(500);
       }
-
-      try {
-        const mediaId = message[mediaType].id;
-        const meta = await axios.get(`https://graph.facebook.com/${WABA_VERSION}/${mediaId}`, {
-          headers: { Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}` }
-        });
-        const directUrl = meta.data.url;
-        const bin = await axios.get(directUrl, {
-          headers: { Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}` },
-          responseType: 'arraybuffer'
-        });
-        
-        const key = `${from}_${uuidv4()}.${mediaType === 'image' ? 'jpg' : 'mp4'}`;
-        const up = await s3.upload({
-          Bucket: process.env.S3_BUCKET_NAME,
-          Key: key,
-          Body: bin.data,
-          ContentType: mediaType === 'image' ? 'image/jpeg' : 'video/mp4',
-        }).promise();
-        
-        await reportMessageToCRM(
-          from,
-          up.Location,
-          `recibido_${mediaType}`,
-          inboundPhoneId
-        );
-      } catch (e) {
-        console.error(`❌ Error procesando ${mediaType} entrante:`, e.message);
-        await reportMessageToCRM(
-          from,
-          "[Archivo multimedia]",
-          `recibido_${mediaType}`,
-          inboundPhoneId
-        );
-      }
-      return res.sendStatus(200);
     }
 
   
