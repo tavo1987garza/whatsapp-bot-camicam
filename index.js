@@ -85,6 +85,61 @@ async function reportMessageToCRM(
   }
 }
 
+/* ===== Puente espejo: Registrar descriptor multimedia en el CRM ===== */
+async function reportMediaToCRM({
+  whatsapp_phone_id,
+  meta_message_id,
+  remitente,
+  message_type,
+  media_id
+}) {
+  const descriptor = {
+    whatsapp_phone_id,
+    meta_message_id,
+    remitente,
+    message_type,
+    media_id
+  };
+
+  const camposCompletos = Object.values(descriptor).every(
+    (valor) => typeof valor === "string" && valor.trim().length > 0
+  );
+  if (!camposCompletos) {
+    throw new Error("Descriptor multimedia incompleto");
+  }
+
+  const botInternalSecret = process.env.BOT_INTERNAL_SECRET;
+  if (!botInternalSecret) {
+    throw new Error("BOT_INTERNAL_SECRET no configurado");
+  }
+
+  const respuesta = await axios.post(
+    `${CRM_BASE_URL}/recibir_media`,
+    descriptor,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        "X-Bot-Secret": botInternalSecret
+      },
+      timeout: 15000,
+      validateStatus: (status) => status === 200 || status === 202
+    }
+  );
+
+  const estadosPermitidos = new Set([
+    "accepted",
+    "already_accepted",
+    "already_processing",
+    "already_processed",
+    "previously_failed"
+  ]);
+  if (!estadosPermitidos.has(respuesta.data?.status)) {
+    throw new Error("Respuesta inesperada de /recibir_media");
+  }
+
+  return respuesta.data;
+}
+
 /* ===== WhatsApp Helpers (Multi-Tenant Ready) ===== */
 async function sendWhatsAppMessage(to, text, customToken, customPhoneId) {
   try {
@@ -569,6 +624,31 @@ app.post('/webhook', async (req, res) => {
     // 1. Manejo de multimedia entrante (Descargar de Meta -> Subir a S3 -> Avisar al CRM)
     if (message.type === "image" || message.type === "video") {
       const mediaType = message.type;
+
+      try {
+        const resultadoMedia = await reportMediaToCRM({
+          whatsapp_phone_id: inboundPhoneId,
+          meta_message_id: message.id,
+          remitente: message.from,
+          message_type: message.type,
+          media_id: message[message.type]?.id
+        });
+        console.log(
+          "✅ Descriptor multimedia reportado al CRM:",
+          {
+            message_type: mediaType,
+            status: resultadoMedia.status,
+            event_id: resultadoMedia.event_id || null
+          }
+        );
+      } catch (e) {
+        console.error(
+          "❌ No se pudo reportar descriptor multimedia al CRM; " +
+          "continúa flujo espejo anterior:",
+          e.response?.status || e.code || e.message
+        );
+      }
+
       try {
         const mediaId = message[mediaType].id;
         const meta = await axios.get(`https://graph.facebook.com/${WABA_VERSION}/${mediaId}`, {
