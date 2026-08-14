@@ -129,7 +129,13 @@ async function reportMediaToCRM({
 }
 
 /* ===== WhatsApp Helpers (Multi-Tenant Ready) ===== */
-async function sendWhatsAppMessage(to, text, customToken, customPhoneId) {
+async function sendWhatsAppMessage(
+  to,
+  text,
+  customToken,
+  customPhoneId,
+  reportarAlCRM = true
+) {
   try {
     if (!customToken || !customPhoneId || !text) {
       console.error("❌ Faltan credenciales o texto para enviar mensaje");
@@ -148,7 +154,9 @@ async function sendWhatsAppMessage(to, text, customToken, customPhoneId) {
     }, { headers, timeout: 15000 });
     
     console.log("✅ WA text ok:", data?.messages?.[0]?.id || "ok");
-    await reportMessageToCRM(to, text, "enviado");
+    if (reportarAlCRM) {
+      await reportMessageToCRM(to, text, "enviado", customPhoneId);
+    }
   } catch (e) {
     console.error("❌ WA text:", e.response?.data || e.message);
   }
@@ -345,6 +353,7 @@ app.post(
         mensaje,
         whatsapp_token,
         whatsapp_phone_id,
+        reportar_al_crm = true,
         delay = 0
       } = req.body;
 
@@ -360,9 +369,14 @@ app.post(
         });
       }
 
+      const enviarTexto = reportar_al_crm === false
+        ? (to, text, token, phoneId) =>
+            sendWhatsAppMessage(to, text, token, phoneId, false)
+        : sendWhatsAppMessage;
+
       await sendWithDelay(
         telefono,
-        sendWhatsAppMessage,
+        enviarTexto,
         delay,
         whatsapp_token,
         whatsapp_phone_id,
