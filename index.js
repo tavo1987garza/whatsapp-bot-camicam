@@ -181,95 +181,183 @@ async function sendWhatsAppMessage(
   return { message_id: messageId };
 }
 
-async function sendImageMessage(to, imageUrl, caption, customToken, customPhoneId) {
-  try {
-    if (!customToken || !customPhoneId) return;
-    const link = toHttps(imageUrl);
-    if (!link) return;
-    
-    const url = `https://graph.facebook.com/${WABA_VERSION}/${customPhoneId}/messages`;
-    const headers = { Authorization: `Bearer ${customToken}`, 'Content-Type': 'application/json' };
+async function sendImageMessage(to, imageUrl, caption, customToken, customPhoneId, reportarAlCRM = true) {
+  if (!to || !imageUrl || !customToken || !customPhoneId) {
+    throw new Error("datos_envio_imagen_incompletos");
+  }
+  const link = toHttps(imageUrl);
+  if (!link) throw new Error("url_imagen_invalida");
 
-    const { data } = await axios.post(url, {
+  const url = `https://graph.facebook.com/${WABA_VERSION}/${customPhoneId}/messages`;
+  const headers = { Authorization: `Bearer ${customToken}`, 'Content-Type': 'application/json' };
+  let data;
+
+  try {
+    const respuesta = await axios.post(url, {
       messaging_product: 'whatsapp',
       to,
       type: 'image',
       image: { link, ...(caption ? { caption } : {}) }
     }, { headers, timeout: 20000 });
-    
-    console.log("✅ WA image ok:", data?.messages?.[0]?.id || "ok");
-    await reportMessageToCRM(to, link, "enviado_imagen");
+    data = respuesta.data;
   } catch (e) {
-    console.error("❌ WA image:", e.response?.data || e.message);
+    console.error("❌ WA image upstream:", {
+      http_status: e.response?.status || null,
+      meta_code: e.response?.data?.error?.code || null,
+      error_type: e.code || e.name || "Error"
+    });
+    throw e;
   }
+
+  const messageId = data?.messages?.[0]?.id || null;
+  console.log("✅ WA image ok:", messageId || "ok");
+  if (reportarAlCRM) {
+    try {
+      await reportMessageToCRM(to, link, "enviado_imagen", customPhoneId);
+    } catch (e) {
+      console.error("❌ WA image reporting secundario:", {
+        http_status: e.response?.status || null,
+        error_type: e.code || e.name || "Error"
+      });
+    }
+  }
+  return { message_id: messageId };
 }
 
-async function sendWhatsAppVideo(to, videoUrl, caption, customToken, customPhoneId) {
-  try {
-    if (!customToken || !customPhoneId) return;
-    const link = toHttps(videoUrl);
-    if (!link) return;
-    
-    const url = `https://graph.facebook.com/${WABA_VERSION}/${customPhoneId}/messages`;
-    const headers = { Authorization: `Bearer ${customToken}`, 'Content-Type': 'application/json' };
+async function sendWhatsAppVideo(to, videoUrl, caption, customToken, customPhoneId, reportarAlCRM = true) {
+  if (!to || !videoUrl || !customToken || !customPhoneId) {
+    throw new Error("datos_envio_video_incompletos");
+  }
+  const link = toHttps(videoUrl);
+  if (!link) throw new Error("url_video_invalida");
 
-    const { data } = await axios.post(url, {
+  const url = `https://graph.facebook.com/${WABA_VERSION}/${customPhoneId}/messages`;
+  const headers = { Authorization: `Bearer ${customToken}`, 'Content-Type': 'application/json' };
+  let data;
+
+  try {
+    const respuesta = await axios.post(url, {
       messaging_product: 'whatsapp',
       to,
       type: 'video',
       video: { link, ...(caption ? { caption } : {}) }
     }, { headers, timeout: 30000 });
-    
-    console.log("✅ WA video ok:", data?.messages?.[0]?.id || "ok");
-    await reportMessageToCRM(to, link, "enviado_video");
+    data = respuesta.data;
   } catch (e) {
-    console.error("❌ WA video:", e.response?.data || e.message);
+    console.error("❌ WA video upstream:", {
+      http_status: e.response?.status || null,
+      meta_code: e.response?.data?.error?.code || null,
+      error_type: e.code || e.name || "Error"
+    });
+    throw e;
   }
+
+  const messageId = data?.messages?.[0]?.id || null;
+  console.log("✅ WA video ok:", messageId || "ok");
+  if (reportarAlCRM) {
+    try {
+      await reportMessageToCRM(to, link, "enviado_video", customPhoneId);
+    } catch (e) {
+      console.error("❌ WA video reporting secundario:", {
+        http_status: e.response?.status || null,
+        error_type: e.code || e.name || "Error"
+      });
+    }
+  }
+  return { message_id: messageId };
 }
 
 
-async function sendWhatsAppButtons(to, bodyText, buttons, customToken, customPhoneId) {
-  try {
-    if (!customToken || !customPhoneId || !bodyText || !buttons || buttons.length === 0) {
-      console.error("❌ Faltan datos para enviar botones");
-      return;
-    }
-
-    // WhatsApp limita a 3 botones de tipo "reply" y 20 caracteres máx. por título
-    const validButtons = buttons.slice(0, 3).map((btnText, index) => ({
-      type: "reply",
-      reply: {
-        id: `btn_${index}`, 
-        title: btnText.substring(0, 20) 
-      }
-    }));
-
-    const url = `https://graph.facebook.com/${WABA_VERSION}/${customPhoneId}/messages`;
-    const headers = { 
-      Authorization: `Bearer ${customToken}`, 
-      'Content-Type': 'application/json' 
-    };
-
-    const payload = {
-      messaging_product: 'whatsapp',
-      to: to,
-      type: 'interactive',
-      interactive: {
-        type: 'button',
-        body: { text: bodyText },
-        action: { buttons: validButtons }
-      }
-    };
-
-    const { data } = await axios.post(url, payload, { headers, timeout: 15000 });
-    console.log("✅ WA buttons ok:", data?.messages?.[0]?.id || "ok");
-    
-    // Reportar al CRM que se enviaron botones
-    await reportMessageToCRM(to, `[BOTONES] ${bodyText} | Opciones: ${buttons.join(', ')}`, "enviado_opciones");
-
-  } catch (e) {
-    console.error("❌ WA buttons error:", e.response?.data || e.message);
+function normalizarBotonesWhatsApp(buttons) {
+  if (!Array.isArray(buttons) || buttons.length < 1 || buttons.length > 3) {
+    throw new Error("botones_cantidad_invalida");
   }
+
+  const normalizados = buttons.map((button) => {
+    const esString = typeof button === "string";
+    if (
+      !esString &&
+      (typeof button?.id !== "string" || typeof button?.title !== "string")
+    ) {
+      throw new Error("boton_invalido");
+    }
+    const id = (esString ? button : button.id).trim();
+    const title = (esString ? button : button.title).trim();
+    if (!id || !title || id.length > 256 || title.length > 20) {
+      throw new Error("boton_invalido");
+    }
+    return { id, title };
+  });
+
+  if (
+    new Set(normalizados.map((button) => button.id)).size !== normalizados.length ||
+    new Set(normalizados.map((button) => button.title)).size !== normalizados.length
+  ) {
+    throw new Error("botones_duplicados");
+  }
+  return normalizados;
+}
+
+
+async function sendWhatsAppButtons(to, bodyText, buttons, customToken, customPhoneId, reportarAlCRM = true) {
+  if (!to || typeof bodyText !== "string" || !customToken || !customPhoneId) {
+    throw new Error("datos_envio_botones_incompletos");
+  }
+  const body = bodyText.trim();
+  if (!body || body.length > 1024) throw new Error("cuerpo_botones_invalido");
+  const botonesNormalizados = normalizarBotonesWhatsApp(buttons);
+  const validButtons = botonesNormalizados.map((button) => ({
+    type: "reply",
+    reply: { id: button.id, title: button.title }
+  }));
+  const url = `https://graph.facebook.com/${WABA_VERSION}/${customPhoneId}/messages`;
+  const headers = {
+    Authorization: `Bearer ${customToken}`,
+    'Content-Type': 'application/json'
+  };
+  const payload = {
+    messaging_product: 'whatsapp',
+    to,
+    type: 'interactive',
+    interactive: {
+      type: 'button',
+      body: { text: body },
+      action: { buttons: validButtons }
+    }
+  };
+  let data;
+
+  try {
+    const respuesta = await axios.post(url, payload, { headers, timeout: 15000 });
+    data = respuesta.data;
+  } catch (e) {
+    console.error("❌ WA buttons upstream:", {
+      http_status: e.response?.status || null,
+      meta_code: e.response?.data?.error?.code || null,
+      error_type: e.code || e.name || "Error"
+    });
+    throw e;
+  }
+
+  const messageId = data?.messages?.[0]?.id || null;
+  console.log("✅ WA buttons ok:", messageId || "ok");
+  if (reportarAlCRM) {
+    try {
+      const opcionesReporte = botonesNormalizados.map((button) => button.title).join(', ');
+      await reportMessageToCRM(
+        to,
+        `[BOTONES] ${body} | Opciones: ${opcionesReporte}`,
+        "enviado_opciones",
+        customPhoneId
+      );
+    } catch (e) {
+      console.error("❌ WA buttons reporting secundario:", {
+        http_status: e.response?.status || null,
+        error_type: e.code || e.name || "Error"
+      });
+    }
+  }
+  return { message_id: messageId };
 }
 
 // Función para simular que el bot está escribiendo
@@ -433,17 +521,24 @@ app.post(
         caption = '',
         whatsapp_token,
         whatsapp_phone_id,
+        reportar_al_crm = true,
         delay = 0
       } = req.body;
 
-      if (!telefono || !imageUrl) {
+      if (
+        typeof telefono !== 'string' || !telefono.trim() ||
+        typeof imageUrl !== 'string' || !imageUrl.trim()
+      ) {
         return res.status(400).json({
           error: 'Faltan datos: telefono o imageUrl'
         });
       }
 
       // 🔐 MULTI-TENANT ESTRICTO
-      if (!whatsapp_token || !whatsapp_phone_id) {
+      if (
+        typeof whatsapp_token !== 'string' || !whatsapp_token.trim() ||
+        typeof whatsapp_phone_id !== 'string' || !whatsapp_phone_id.trim()
+      ) {
         console.error(
           '⛔ /enviar_imagen llamado sin credenciales del tenant'
         );
@@ -453,9 +548,14 @@ app.post(
         });
       }
 
+      const enviarImagen = reportar_al_crm === false
+        ? (to, imageUrl, imageCaption, token, phoneId) =>
+            sendImageMessage(to, imageUrl, imageCaption, token, phoneId, false)
+        : sendImageMessage;
+
       await sendWithDelay(
         telefono,
-        sendImageMessage,
+        enviarImagen,
         delay,
         whatsapp_token,
         whatsapp_phone_id,
@@ -468,13 +568,15 @@ app.post(
       });
 
     } catch (e) {
-      console.error(
-        '❌ enviar_imagen:',
-        e.response?.data || e.message
-      );
-
-      return res.status(500).json({
-        error: 'Error al enviar imagen'
+      const esTimeout = e.code === 'ECONNABORTED' || e.code === 'ETIMEDOUT';
+      console.error('❌ enviar_imagen upstream:', {
+        http_status: e.response?.status || null,
+        meta_code: e.response?.data?.error?.code || null,
+        error_type: e.code || e.name || 'Error'
+      });
+      return res.status(esTimeout ? 504 : 502).json({
+        ok: false,
+        error: 'Error al enviar imagen a WhatsApp'
       });
     }
   }
@@ -491,17 +593,24 @@ app.post(
         caption = '',
         whatsapp_token,
         whatsapp_phone_id,
+        reportar_al_crm = true,
         delay = 0
       } = req.body;
 
-      if (!telefono || !videoUrl) {
+      if (
+        typeof telefono !== 'string' || !telefono.trim() ||
+        typeof videoUrl !== 'string' || !videoUrl.trim()
+      ) {
         return res.status(400).json({
           error: 'Faltan datos: telefono o videoUrl'
         });
       }
 
       // 🔐 MULTI-TENANT ESTRICTO
-      if (!whatsapp_token || !whatsapp_phone_id) {
+      if (
+        typeof whatsapp_token !== 'string' || !whatsapp_token.trim() ||
+        typeof whatsapp_phone_id !== 'string' || !whatsapp_phone_id.trim()
+      ) {
         console.error(
           '⛔ /enviar_video llamado sin credenciales del tenant'
         );
@@ -511,9 +620,14 @@ app.post(
         });
       }
 
+      const enviarVideo = reportar_al_crm === false
+        ? (to, videoUrl, videoCaption, token, phoneId) =>
+            sendWhatsAppVideo(to, videoUrl, videoCaption, token, phoneId, false)
+        : sendWhatsAppVideo;
+
       await sendWithDelay(
         telefono,
-        sendWhatsAppVideo,
+        enviarVideo,
         delay,
         whatsapp_token,
         whatsapp_phone_id,
@@ -526,13 +640,15 @@ app.post(
       });
 
     } catch (e) {
-      console.error(
-        '❌ enviar_video:',
-        e.response?.data || e.message
-      );
-
-      return res.status(500).json({
-        error: 'Error al enviar video'
+      const esTimeout = e.code === 'ECONNABORTED' || e.code === 'ETIMEDOUT';
+      console.error('❌ enviar_video upstream:', {
+        http_status: e.response?.status || null,
+        meta_code: e.response?.data?.error?.code || null,
+        error_type: e.code || e.name || 'Error'
+      });
+      return res.status(esTimeout ? 504 : 502).json({
+        ok: false,
+        error: 'Error al enviar video a WhatsApp'
       });
     }
   }
@@ -549,10 +665,11 @@ app.post(
         opciones,
         whatsapp_token,
         whatsapp_phone_id,
+        reportar_al_crm = true,
         delay = 0
       } = req.body;
 
-      if (!telefono) {
+      if (typeof telefono !== 'string' || !telefono.trim()) {
         return res.status(400).json({
           error: 'Falta telefono'
         });
@@ -564,8 +681,17 @@ app.post(
         });
       }
 
+      if (typeof mensaje !== 'string' || !mensaje.trim() || mensaje.trim().length > 1024) {
+        return res.status(400).json({
+          error: 'Mensaje de botones inválido'
+        });
+      }
+
       // 🔐 MULTI-TENANT ESTRICTO
-      if (!whatsapp_token || !whatsapp_phone_id) {
+      if (
+        typeof whatsapp_token !== 'string' || !whatsapp_token.trim() ||
+        typeof whatsapp_phone_id !== 'string' || !whatsapp_phone_id.trim()
+      ) {
         console.error(
           '⛔ /enviar_botones llamado sin credenciales del tenant'
         );
@@ -575,20 +701,23 @@ app.post(
         });
       }
 
-      // WhatsApp reply buttons: máximo 3
-      const botones = opciones
-        .slice(0, 3)
-        .filter(opcion => opcion && opcion.id && opcion.title);
-
-      if (botones.length === 0) {
+      let botones;
+      try {
+        botones = normalizarBotonesWhatsApp(opciones);
+      } catch (_errorValidacion) {
         return res.status(400).json({
           error: 'Las opciones no tienen formato válido'
         });
       }
 
+      const enviarBotones = reportar_al_crm === false
+        ? (to, text, buttonOptions, token, phoneId) =>
+            sendWhatsAppButtons(to, text, buttonOptions, token, phoneId, false)
+        : sendWhatsAppButtons;
+
       await sendWithDelay(
         telefono,
-        sendWhatsAppButtons,
+        enviarBotones,
         delay,
         whatsapp_token,
         whatsapp_phone_id,
@@ -601,13 +730,15 @@ app.post(
       });
 
     } catch (e) {
-      console.error(
-        '❌ enviar_botones:',
-        e.response?.data || e.message
-      );
-
-      return res.status(500).json({
-        error: 'Error al enviar botones'
+      const esTimeout = e.code === 'ECONNABORTED' || e.code === 'ETIMEDOUT';
+      console.error('❌ enviar_botones upstream:', {
+        http_status: e.response?.status || null,
+        meta_code: e.response?.data?.error?.code || null,
+        error_type: e.code || e.name || 'Error'
+      });
+      return res.status(esTimeout ? 504 : 502).json({
+        ok: false,
+        error: 'Error al enviar botones a WhatsApp'
       });
     }
   }
