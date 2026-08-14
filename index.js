@@ -136,30 +136,49 @@ async function sendWhatsAppMessage(
   customPhoneId,
   reportarAlCRM = true
 ) {
-  try {
-    if (!customToken || !customPhoneId || !text) {
-      console.error("❌ Faltan credenciales o texto para enviar mensaje");
-      return;
-    }
-    if (shouldSkipDuplicateSend(to, `text:${text}`)) return;
-    
-    const url = `https://graph.facebook.com/${WABA_VERSION}/${customPhoneId}/messages`;
-    const headers = { Authorization: `Bearer ${customToken}`, 'Content-Type': 'application/json' };
+  if (!customToken || !customPhoneId || !text) {
+    throw new Error("datos_envio_texto_incompletos");
+  }
+  if (shouldSkipDuplicateSend(to, `text:${text}`)) {
+    return { skipped: true };
+  }
 
-    const { data } = await axios.post(url, {
+  const url = `https://graph.facebook.com/${WABA_VERSION}/${customPhoneId}/messages`;
+  const headers = { Authorization: `Bearer ${customToken}`, 'Content-Type': 'application/json' };
+  let data;
+
+  try {
+    const respuesta = await axios.post(url, {
       messaging_product: 'whatsapp',
       to,
       type: 'text',
       text: { body: text }
     }, { headers, timeout: 15000 });
-    
-    console.log("✅ WA text ok:", data?.messages?.[0]?.id || "ok");
-    if (reportarAlCRM) {
-      await reportMessageToCRM(to, text, "enviado", customPhoneId);
-    }
+    data = respuesta.data;
   } catch (e) {
-    console.error("❌ WA text:", e.response?.data || e.message);
+    console.error("❌ WA text upstream:", {
+      http_status: e.response?.status || null,
+      meta_code: e.response?.data?.error?.code || null,
+      error_type: e.code || e.name || "Error"
+    });
+    throw e;
   }
+
+  const messageId = data?.messages?.[0]?.id || null;
+  console.log("✅ WA text ok:", messageId || "ok");
+
+  if (reportarAlCRM) {
+    try {
+      await reportMessageToCRM(to, text, "enviado", customPhoneId);
+    } catch (e) {
+      console.error("❌ WA text reporting secundario:", {
+        http_status: e.response?.status || null,
+        error_type: e.code || e.name || "Error"
+      });
+    }
+  }
+
+  return { message_id: messageId };
 }
 
 async function sendImageMessage(to, imageUrl, caption, customToken, customPhoneId) {
@@ -388,13 +407,16 @@ app.post(
       });
 
     } catch (e) {
-      console.error(
-        '❌ enviar_mensaje:',
-        e.response?.data || e.message
-      );
+      const esTimeout = e.code === 'ECONNABORTED' || e.code === 'ETIMEDOUT';
+      console.error('❌ enviar_mensaje upstream:', {
+        http_status: e.response?.status || null,
+        meta_code: e.response?.data?.error?.code || null,
+        error_type: e.code || e.name || 'Error'
+      });
 
-      return res.status(500).json({
-        error: 'Error al enviar a WhatsApp'
+      return res.status(esTimeout ? 504 : 502).json({
+        ok: false,
+        error: 'Error al enviar mensaje a WhatsApp'
       });
     }
   }
